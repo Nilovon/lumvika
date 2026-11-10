@@ -2,7 +2,7 @@ import { tool, type ToolSet } from 'ai'
 import { basename, isAbsolute, relative } from 'node:path'
 import { stat } from 'node:fs/promises'
 import { z } from 'zod'
-import { CARD_MAX_FILES, type FileCard, type FileCardEntry } from '@rerun/contracts'
+import { CARD_MAX_FILES, type FileCard, type FileCardEntry } from '@lumvika/contracts'
 import { AGENT_HIDDEN_TABLES, getAgentDb } from '../../db/agentDb.js'
 import { getSharedDb, SHARED_HIDDEN_TABLES } from '../../db/sharedDb.js'
 import { deleteView, findView, listViews, saveView } from '../../db/tableViews.js'
@@ -105,8 +105,8 @@ export function cardTools(ctx: RunContext): ToolSet {
     }
 }
 
-// The foreman shows the files it made, but has no table panel for card_table or a saved view to open.
-export function foremanCardTools(ctx: RunContext): ToolSet {
+// The steward shows the files it made, but has no table panel for card_table or a saved view to open.
+export function stewardCardTools(ctx: RunContext): ToolSet {
     const { card_file } = cardTools(ctx)
     return { card_file }
 }

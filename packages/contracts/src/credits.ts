@@ -1,5 +1,5 @@
-// The user never sees the Rerun credit in dollars: one dollar of it is 100 credits. The ledger stays
-// in micro-dollars (`rerun_*_micros`, `billed_micros`) and the plan constants in whole dollars; only
+// The user never sees the Lumvika credit in dollars: one dollar of it is 100 credits. The ledger stays
+// in micro-dollars (`lumvika_*_micros`, `billed_micros`) and the plan constants in whole dollars; only
 // what is shown is converted, here.
 export const CREDITS_PER_USD = 100
 

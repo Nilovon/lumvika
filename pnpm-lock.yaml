@@ -37,7 +37,7 @@ overrides:
 
 patchedDependencies:
   ai-sdk-provider-codex-cli@1.3.1:
-    hash: c4iczjmmf7pnovr47opvnr6ydq
+    hash: ne3ltfo7fy2opndaco6g5rkfjm
     path: apps/engine/patches/ai-sdk-provider-codex-cli@1.3.1.patch
 
 importers:
@@ -86,12 +86,12 @@ importers:
       '@libsql/client':
         specifier: ^0.17.3
         version: 0.17.3
+      '@lumvika/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.6.7)
-      '@rerun/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
       ai:
         specifier: ^6.0.194
         version: 6.0.195(zod@4.6.7)
@@ -100,7 +100,7 @@ importers:
         version: 3.5.3(@anthropic-ai/sdk@1.7.0)(@modelcontextprotocol/sdk@1.32.2)(zod@4.6.7)
       ai-sdk-provider-codex-cli:
         specifier: ^1.3.1
-        version: 1.3.1(patch_hash=c4iczjmmf7pnovr47opvnr6ydq)(zod@4.6.7)
+        version: 1.3.1(patch_hash=ne3ltfo7fy2opndaco6g5rkfjm)(zod@4.6.7)
       croner:
         specifier: ^10.0.1
         version: 10.0.1
@@ -165,6 +165,15 @@ importers:
       '@expo/ui':
         specifier: ~58.0.27
         version: 58.0.27(@babel/core@7.29.7)(expo@58.0.23)(react-dom@19.2.4)(react-native-worklets@0.13.0)(react-native@0.88.1)(react@19.3.0)
+      '@lumvika/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lumvika/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lumvika/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@posthog/react-native-plugin':
         specifier: ^2.12.7
         version: 2.12.7(react-native@0.88.1)(react@19.3.0)
@@ -174,15 +183,6 @@ importers:
       '@react-native-masked-view/masked-view':
         specifier: 0.3.2
         version: 0.3.2(react-native@0.88.1)(react@19.3.0)
-      '@rerun/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@rerun/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@rerun/i18n':
-        specifier: workspace:*
-        version: link:../../packages/i18n
       '@supabase/supabase-js':
         specifier: ^2.106.1
         version: 2.107.0
@@ -325,7 +325,7 @@ importers:
         specifier: ^4.14.9
         version: 4.14.9(@types/react@19.2.16)(react@19.3.0)
     devDependencies:
-      '@rerun/analytics':
+      '@lumvika/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
       '@testing-library/react-native':
@@ -406,6 +406,24 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@lumvika/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
+      '@lumvika/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@lumvika/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lumvika/emails':
+        specifier: workspace:*
+        version: link:../../packages/emails
+      '@lumvika/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@lumvika/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@novnc/novnc':
         specifier: 1.5.0
         version: 1.5.0
@@ -418,24 +436,6 @@ importers:
       '@posthog/nextjs-config':
         specifier: ^1.11.5
         version: 1.11.5(next@16.4.4)(posthog-js@1.396.4)(webpack@5.112.0)
-      '@rerun/analytics':
-        specifier: workspace:*
-        version: link:../../packages/analytics
-      '@rerun/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@rerun/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@rerun/emails':
-        specifier: workspace:*
-        version: link:../../packages/emails
-      '@rerun/i18n':
-        specifier: workspace:*
-        version: link:../../packages/i18n
-      '@rerun/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@streamdown/cjk':
         specifier: ^1.0.3
         version: 1.0.3(micromark@4.0.2)(react@19.2.4)(unified@11.0.5)
@@ -703,12 +703,12 @@ importers:
 
   packages/emails:
     dependencies:
+      '@lumvika/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@react-email/components':
         specifier: ^1.0.12
         version: 1.0.12(react-dom@19.2.4)(react@19.2.4)
-      '@rerun/i18n':
-        specifier: workspace:*
-        version: link:../i18n
       react:
         specifier: ^19
         version: 19.2.4
@@ -743,10 +743,10 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.81.0)
-      '@rerun/contracts':
+      '@lumvika/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rerun/i18n':
+      '@lumvika/i18n':
         specifier: workspace:*
         version: link:../i18n
       '@tiptap/pm':
@@ -10181,7 +10181,7 @@ packages:
       - '@modelcontextprotocol/sdk'
     dev: false
 
-  /ai-sdk-provider-codex-cli@1.3.1(patch_hash=c4iczjmmf7pnovr47opvnr6ydq)(zod@4.6.7):
+  /ai-sdk-provider-codex-cli@1.3.1(patch_hash=ne3ltfo7fy2opndaco6g5rkfjm)(zod@4.6.7):
     resolution: {integrity: sha512-edTG3jkjF32ChGGctyivRi1Vyd/vLx6ktUuvlBTA5ennu4J3eKesLphKu+Lzv80nJQhrsqFXjM1aC1NfZc7elw==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -12784,7 +12784,7 @@ packages:
       eslint-import-resolver-webpack:
         optional: true
     dependencies:
-      '@typescript-eslint/parser': 8.60.1(eslint@9.39.4)(typescript@6.0.3)
+      '@typescript-eslint/parser': 8.60.1(eslint@9.39.4)(typescript@5.9.3)
       debug: 3.2.7
       eslint: 9.39.4
       eslint-import-resolver-node: 0.3.10
@@ -12818,7 +12818,7 @@ packages:
         optional: true
     dependencies:
       '@rtsao/scc': 1.1.0
-      '@typescript-eslint/parser': 8.60.1(eslint@9.39.4)(typescript@6.0.3)
+      '@typescript-eslint/parser': 8.60.1(eslint@9.39.4)(typescript@5.9.3)
       array-includes: 3.1.9
       array.prototype.findlastindex: 1.2.6
       array.prototype.flat: 1.3.3

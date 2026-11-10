@@ -1,10 +1,10 @@
-import { parseServiceRegistryKey, serviceRegistryKey } from '@rerun/contracts'
+import { parseServiceRegistryKey, serviceRegistryKey } from '@lumvika/contracts'
 
 import { workspaceActor, type Actor } from '@/app/api/_auth/access'
 import { AuthorizationError } from '@/app/api/_auth/ownership'
 import { resolveAgentTarget } from '@/app/api/_services/chat.service'
-import { unbindAgent } from '@rerun/cloud/apps.server'
-import { isAppSlug, type AppSlug } from '@rerun/cloud/apps'
+import { unbindAgent } from '@lumvika/cloud/apps.server'
+import { isAppSlug, type AppSlug } from '@lumvika/cloud/apps'
 import { deleteConnectedAccount } from '@/lib/composio/client'
 import { deleteMcpToken } from '@/lib/engine/client'
 import { getManagedProvider } from '@/lib/managed/registry'

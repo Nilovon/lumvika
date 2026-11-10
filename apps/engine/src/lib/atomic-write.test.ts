@@ -7,7 +7,7 @@ import { writeFileAtomic } from './atomic-write.js'
 
 describe('writeFileAtomic', () => {
     it('replaces the content and leaves no temp file', async () => {
-        const dir = mkdtempSync(resolve(tmpdir(), 'rerun-atomic-'))
+        const dir = mkdtempSync(resolve(tmpdir(), 'lumvika-atomic-'))
         const path = resolve(dir, 'file.md')
         await writeFile(path, 'old')
         await writeFileAtomic(path, 'new')
@@ -17,7 +17,7 @@ describe('writeFileAtomic', () => {
 
     // A reader racing the writers sees one whole version or another, never an empty file.
     it('never exposes an empty file to a concurrent reader', async () => {
-        const dir = mkdtempSync(resolve(tmpdir(), 'rerun-atomic-'))
+        const dir = mkdtempSync(resolve(tmpdir(), 'lumvika-atomic-'))
         const path = resolve(dir, 'file.md')
         await writeFile(path, 'version-start')
         const seen: string[] = []
@@ -30,7 +30,7 @@ describe('writeFileAtomic', () => {
     })
 
     it('applies the mode asked for, on a new file and over a wider existing one', async () => {
-        const dir = mkdtempSync(resolve(tmpdir(), 'rerun-atomic-'))
+        const dir = mkdtempSync(resolve(tmpdir(), 'lumvika-atomic-'))
         const mode = async (path: string) => (await stat(path)).mode & 0o777
         const fresh = resolve(dir, 'fresh.json')
         await writeFileAtomic(fresh, '{}', { mode: 0o600 })
@@ -46,7 +46,7 @@ describe('writeFileAtomic', () => {
     })
 
     it('cleans its temp file up when the target cannot be written', async () => {
-        const dir = mkdtempSync(resolve(tmpdir(), 'rerun-atomic-'))
+        const dir = mkdtempSync(resolve(tmpdir(), 'lumvika-atomic-'))
         await expect(writeFileAtomic(resolve(dir, 'missing', 'file.md'), 'x')).rejects.toThrow()
         expect(await readdir(dir)).toEqual([])
     })

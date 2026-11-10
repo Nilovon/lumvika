@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { CONNECTION_TOKEN_KEY, RERUN_CONNECTION_ID, connectionConfigSchema, type ConnectionSummary } from '@rerun/contracts'
+import { CONNECTION_TOKEN_KEY, LUMVIKA_CONNECTION_ID, connectionConfigSchema, type ConnectionSummary } from '@lumvika/contracts'
 import { connectionConfigPath, connectionEnvPath, connectionsDir } from '../config/paths.js'
 import { readEnvFile } from '../lib/env-file.js'
 import { env } from '../config/env.js'
@@ -28,12 +28,12 @@ export async function listConnectionIds(): Promise<string[]> {
     return entries.filter(e => e.isDirectory() && connectionExists(e.name)).map(e => e.name)
 }
 
-// The keyless `rerun` connection is served by the hub, which holds the shared key: it counts as
+// The keyless `lumvika` connection is served by the hub, which holds the shared key: it counts as
 // connected when the box knows where to reach the hub and how to authenticate against it.
 export function isConnected(connection: LoadedConnection): boolean {
-    if (connection.id === RERUN_CONNECTION_ID) {
-        const { RERUN_HUB_BASE_URL, RERUN_API_KEY } = env()
-        return !!RERUN_HUB_BASE_URL && !!RERUN_API_KEY
+    if (connection.id === LUMVIKA_CONNECTION_ID) {
+        const { LUMVIKA_HUB_BASE_URL, LUMVIKA_API_KEY } = env()
+        return !!LUMVIKA_HUB_BASE_URL && !!LUMVIKA_API_KEY
     }
     // A custom endpoint is reached by its address; the key is optional, a local server takes none.
     if (connection.config.provider === 'custom') return !!connection.config.baseUrl

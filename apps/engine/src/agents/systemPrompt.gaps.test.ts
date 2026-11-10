@@ -3,8 +3,8 @@ import type { ModelMessage } from 'ai'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-system-prompt-gaps-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-system-prompt-gaps-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { vi } = await import('vitest')
 
@@ -51,10 +51,10 @@ vi.mock('../memory/store.js', () => ({
 }))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
-const { agentConfigSchema } = await import('@rerun/contracts')
+const { agentConfigSchema } = await import('@lumvika/contracts')
 const { buildSystemPrompt: buildSystemPromptBlocks, systemPromptText, recallMemories, recallSection } = await import('./systemPrompt.js')
 const recallContext = async (agent: Parameters<typeof recallMemories>[0], userText: string, history?: ModelMessage[]) => recallSection(await recallMemories(agent, userText), history)
-const { contextTextPart } = await import('@rerun/contracts')
+const { contextTextPart } = await import('@lumvika/contracts')
 
 // The tests read the prompt as the model does, both blocks joined.
 const buildSystemPrompt = async (...args: Parameters<typeof buildSystemPromptBlocks>) => systemPromptText(await buildSystemPromptBlocks(...args))
@@ -64,11 +64,11 @@ const { workspaceDir, sharedDir } = await import('../config/paths.js')
 function agentWith(overrides: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) {
     return {
         id: 'gapsagent',
-        config: agentConfigSchema.parse({ name: 'Gaps', provider: 'rerun', ...overrides }),
+        config: agentConfigSchema.parse({ name: 'Gaps', provider: 'lumvika', ...overrides }),
         soul: 'You are a test agent.',
         install: '',
         env: {},
-        resolved: { connection: null, provider: 'rerun', model: 'rerun-max' },
+        resolved: { connection: null, provider: 'lumvika', model: 'lumvika-max' },
         ...extra,
     } as any
 }
@@ -255,20 +255,20 @@ describe('buildSystemPrompt shared schema', () => {
     })
 })
 
-describe('buildSystemPrompt for the foreman', () => {
-    const foreman = (overrides: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) =>
-        agentWith({ kind: 'foreman', name: 'Foreman', ...overrides }, { id: 'foremangaps', soul: 'Soul fallback.', brief: { instructions: '  You are the Foreman. Charter from the hub.  ', tools: [] }, ...extra })
+describe('buildSystemPrompt for the steward', () => {
+    const steward = (overrides: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) =>
+        agentWith({ kind: 'steward', name: 'Steward', ...overrides }, { id: 'stewardgaps', soul: 'Soul fallback.', brief: { instructions: '  You are the Steward. Charter from the hub.  ', tools: [] }, ...extra })
 
-    it('gives the foreman the company brain, and drops it when the brain tools are off', async () => {
-        expect(await buildSystemPrompt(foreman())).toContain('<company_brain>')
-        expect(await buildSystemPrompt(foreman({ tools: { brain: false } }))).not.toContain('<company_brain>')
+    it('gives the steward the company brain, and drops it when the brain tools are off', async () => {
+        expect(await buildSystemPrompt(steward())).toContain('<company_brain>')
+        expect(await buildSystemPrompt(steward({ tools: { brain: false } }))).not.toContain('<company_brain>')
     })
 
     it('uses the hub charter as its identity and roots it in its own workspace', async () => {
-        const prompt = await buildSystemPrompt(foreman())
+        const prompt = await buildSystemPrompt(steward())
 
-        expect(prompt).toContain('<identity>\nYou are the Foreman. Charter from the hub.\n</identity>')
-        expect(prompt).toContain(`Your own workspace is ${workspaceDir('foremangaps')}`)
+        expect(prompt).toContain('<identity>\nYou are the Steward. Charter from the hub.\n</identity>')
+        expect(prompt).toContain(`Your own workspace is ${workspaceDir('stewardgaps')}`)
         expect(prompt).toContain(sharedDir())
         expect(prompt).toContain('agent_files_')
         expect(prompt).toContain('<asking_the_user>')
@@ -278,7 +278,7 @@ describe('buildSystemPrompt for the foreman', () => {
     })
 
     it('shows what it asks about in the turn that asks, without the chat-only draft block', async () => {
-        const prompt = await buildSystemPrompt(foreman())
+        const prompt = await buildSystemPrompt(steward())
         const section = prompt.slice(prompt.indexOf('<asking_the_user>'), prompt.indexOf('</asking_the_user>'))
         expect(section).toContain('Having shown it a few messages earlier does not count')
         expect(section).toContain('a tag like <ask_user> shows to the user as raw text')
@@ -286,30 +286,30 @@ describe('buildSystemPrompt for the foreman', () => {
     })
 
     it('falls back to its soul when no brief arrived', async () => {
-        const prompt = await buildSystemPrompt(foreman({}, { brief: undefined }))
+        const prompt = await buildSystemPrompt(steward({}, { brief: undefined }))
         expect(prompt).toContain('<identity>\nSoul fallback.\n</identity>')
     })
 
     it('reads the shared database without a write licence', async () => {
-        const prompt = await buildSystemPrompt(foreman({ tools: { sharedDb: true } }))
+        const prompt = await buildSystemPrompt(steward({ tools: { sharedDb: true } }))
         expect(prompt).toContain('<shared_database>')
         expect(prompt).toContain('Write to it only when the user asked for it')
     })
 
     it('still answers when the shared schema cannot be read', async () => {
         sources.failing.add('sharedDb')
-        const prompt = await buildSystemPrompt(foreman({ tools: { sharedDb: true } }))
+        const prompt = await buildSystemPrompt(steward({ tools: { sharedDb: true } }))
         expect(prompt).toMatch(/<shared_database>\nThe workspace has one shared SQL database[^<]*without their approval\.\n<\/shared_database>/)
     })
 
     it('adds the bridge note and the call-first order on codex', async () => {
-        const prompt = await buildSystemPrompt(foreman(), { source: 'chat' }, 'codex')
+        const prompt = await buildSystemPrompt(steward(), { source: 'chat' }, 'codex')
         expect(prompt).toContain('<bridged_tools>')
         expect(prompt).toContain('a message written before a call does not reach the user as your message')
     })
 
     it('adds the bridge note and the call-first order on claude', async () => {
-        const prompt = await buildSystemPrompt(foreman(), { source: 'chat' }, 'claude')
+        const prompt = await buildSystemPrompt(steward(), { source: 'chat' }, 'claude')
         expect(prompt).toContain('<bridged_tools>')
         expect(prompt).toContain('a message written before a call does not reach the user as your message')
     })

@@ -8,15 +8,15 @@ describe('useIntake', () => {
         const submit = jest.fn(async () => {})
         const { result } = await renderHook(() => useIntake({ knownFirstName: null, decideIndustry, submit }))
 
-        await act(async () => result.current.set({ companyUrl: 'rerun.build' }))
+        await act(async () => result.current.set({ companyUrl: 'lumvika.com' }))
         await act(async () => result.current.next())
-        expect(decideIndustry).toHaveBeenCalledWith('rerun.build')
+        expect(decideIndustry).toHaveBeenCalledWith('lumvika.com')
         await act(async () => {})
         expect(result.current.step).toBe('role')
 
         await act(async () => result.current.choose({ position: 'Founder / CEO' }))
         await act(async () => result.current.set({ firstName: 'Clement' }))
         await act(async () => result.current.next())
-        expect(submit).toHaveBeenCalledWith(expect.objectContaining({ companyUrl: 'rerun.build', position: 'Founder / CEO', firstName: 'Clement', decidedIndustry: 'saas' }))
+        expect(submit).toHaveBeenCalledWith(expect.objectContaining({ companyUrl: 'lumvika.com', position: 'Founder / CEO', firstName: 'Clement', decidedIndustry: 'saas' }))
     })
 })

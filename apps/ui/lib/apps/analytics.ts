@@ -1,7 +1,7 @@
 // No 'server-only': the trial sweep reports from Trigger.dev.
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AnalyticsEventMap, EventName } from '@rerun/analytics'
-import { captureServer } from '@rerun/analytics/server'
+import type { AnalyticsEventMap, EventName } from '@lumvika/analytics'
+import { captureServer } from '@lumvika/analytics/server'
 import type { Database } from '@/app/api/database.types'
 import { selectMany } from '@/supabase/supabase-helpers'
 

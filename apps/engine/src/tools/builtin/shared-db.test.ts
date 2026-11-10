@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-shared-db-tool-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-shared-db-tool-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { sharedDbTools } = await import('./shared-db.js')
@@ -78,6 +78,6 @@ describe('shared database tools', () => {
         await run(alice, 'shared_db_execute', { sql: 'DROP TABLE deals' })
         const schema = await run(alice, 'shared_db_schema', {})
         expect(schema).toBe('leads(email TEXT, score INTEGER) created by alice')
-        expect(schema).not.toContain('_rerun_shared_tables')
+        expect(schema).not.toContain('_lumvika_shared_tables')
     })
 })

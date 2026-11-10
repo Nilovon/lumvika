@@ -1,7 +1,7 @@
-// Labels follow MODEL_LABEL in @rerun/contracts, groups follow ENGINE_MODEL_CATALOG on the web: the
-// Rerun tiers, then one group per AI connection of the workspace.
+// Labels follow MODEL_LABEL in @lumvika/contracts, groups follow ENGINE_MODEL_CATALOG on the web: the
+// Lumvika tiers, then one group per AI connection of the workspace.
 
-export type ModelProvider = 'rerun' | 'claude' | 'codex' | 'google' | 'opencode'
+export type ModelProvider = 'lumvika' | 'claude' | 'codex' | 'google' | 'opencode'
 
 export type Model = { id: string; label: string; provider: ModelProvider }
 
@@ -10,10 +10,10 @@ export type ModelGroup = { provider: ModelProvider; label: string; models: Model
 const group = (provider: ModelProvider, label: string, models: [string, string][]): ModelGroup => ({ provider, label, models: models.map(([id, name]) => ({ id, label: name, provider })) })
 
 export const MODEL_GROUPS: ModelGroup[] = [
-    group('rerun', 'Rerun', [
-        ['rerun-max', 'Rerun'],
-        ['rerun-smart', 'Smart'],
-        ['rerun-fast', 'Fast'],
+    group('lumvika', 'Lumvika', [
+        ['lumvika-max', 'Lumvika'],
+        ['lumvika-smart', 'Smart'],
+        ['lumvika-fast', 'Fast'],
     ]),
     group('claude', 'Claude (Subscription)', [
         ['claude-opus-5-5', 'Opus 5.5'],
@@ -32,7 +32,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
     ]),
 ]
 
-export const FAVORITE_MODEL_IDS = ['rerun-max', 'rerun-smart', 'rerun-fast', 'claude-opus-5-5', 'gpt-6-sol']
+export const FAVORITE_MODEL_IDS = ['lumvika-max', 'lumvika-smart', 'lumvika-fast', 'claude-opus-5-5', 'gpt-6-sol']
 
 const ALL_MODELS = MODEL_GROUPS.flatMap(entry => entry.models)
 

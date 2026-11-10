@@ -4,7 +4,7 @@ import { claudeScreenshotMiddleware, withoutPictures } from './claude-stream.js'
 const picture = { type: 'image', data: 'QUJD', mimeType: 'image/jpeg' }
 const text = (value: string) => ({ type: 'text', text: value })
 
-const result = (value: unknown, extra: Record<string, unknown> = {}) => ({ type: 'tool-result', toolCallId: 'c1', toolName: 'mcp__rerun__computer', result: value, ...extra }) as any
+const result = (value: unknown, extra: Record<string, unknown> = {}) => ({ type: 'tool-result', toolCallId: 'c1', toolName: 'mcp__lumvika__computer', result: value, ...extra }) as any
 
 describe('withoutPictures', () => {
     it('reads a result that came back with its picture as the JSON the tool returned', () => {

@@ -1,7 +1,7 @@
 import 'server-only'
 
 // No Stripe in this build: there is no trial to extend, no customer to keep in sync, and the
-// foreman's usage is not metered against a credit.
+// steward's usage is not metered against a credit.
 export async function extendTrial(_subscriptionId: string, _days: number, _idempotencyKey: string): Promise<boolean> {
     return false
 }
@@ -12,9 +12,9 @@ export async function subscriptionHasCard(_subscriptionId: string, _timeoutMs: n
     return false
 }
 
-export async function grantRerunTopup(_workspaceId: number, _micros: number): Promise<void> {}
+export async function grantLumvikaTopup(_workspaceId: number, _micros: number): Promise<void> {}
 
-export async function logRerunUsage(_params: { workspaceId: number; engineAgentId?: string | null; model: string; tier: string; inputTokens: number; outputTokens: number; costMicros: number }): Promise<void> {}
+export async function logLumvikaUsage(_params: { workspaceId: number; engineAgentId?: string | null; model: string; tier: string; inputTokens: number; outputTokens: number; costMicros: number }): Promise<void> {}
 
 export type OpenRouterUsage = { prompt_tokens?: number; completion_tokens?: number; cost?: number; cost_details?: { upstream_inference_cost?: number | null } | null }
 

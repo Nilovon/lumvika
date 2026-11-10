@@ -33,7 +33,7 @@ export interface EmailPreview {
   element: React.ReactElement;
 }
 
-const APP_URL = "https://app.rerun.build";
+const APP_URL = "https://app.lumvika.com";
 // The end-of-access notices are mandatory, so they carry no unsubscribe link at all.
 const BILLING_URL = `${APP_URL}/?billing=1`;
 
@@ -281,7 +281,7 @@ export const EMAIL_PREVIEWS: EmailPreview[] = [
         appUrl={APP_URL}
         context="outreach"
         cardImageUrl={`${APP_URL}/experts/alex-mercier/card.png`}
-        unsubscribeUrl="https://rerun.build/community/experts/unsubscribe/q3qmbe89"
+        unsubscribeUrl="https://lumvika.com/community/experts/unsubscribe/q3qmbe89"
       />
     ),
   },

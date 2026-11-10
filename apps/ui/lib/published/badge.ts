@@ -1,7 +1,7 @@
-import { R_PATH } from '@rerun/ui/logo'
+import { MARK_PATH } from '@lumvika/ui/logo'
 
-const LANDING_URL = 'https://rerun.build'
-const REPORT_EMAIL = 'help@rerun.build'
+const LANDING_URL = 'https://lumvika.com'
+const REPORT_EMAIL = 'help@lumvika.com'
 
 const BADGE_STYLE = `
 :host{all:initial}
@@ -21,7 +21,7 @@ function badgeMarkup(slug: string): string {
     return (
         `<style>${BADGE_STYLE}</style>` +
         `<div class="badge">` +
-        `<a href="${landing}" target="_blank" rel="noopener"><svg viewBox="0 0 512 512" aria-hidden="true"><path d="${R_PATH}" fill="currentColor"/></svg>Made with Rerun</a>` +
+        `<a href="${landing}" target="_blank" rel="noopener"><svg viewBox="0 0 512 512" aria-hidden="true"><path d="${MARK_PATH}" fill="currentColor"/></svg>Made with Lumvika</a>` +
         `<a class="report" href="${report}">Report</a>` +
         `<button type="button" aria-label="Hide">&#x2715;</button>` +
         `</div>`
@@ -31,11 +31,11 @@ function badgeMarkup(slug: string): string {
 // Rendered from a shadow root so nothing in the page's own CSS can restyle or hide it. Closing it
 // lasts for the tab only, enough to get it out of the way of a full-screen mini-app.
 function badgeScript(slug: string): string {
-    const key = `rerun-badge-hidden:${slug}`
+    const key = `lumvika-badge-hidden:${slug}`
     return (
         `<script>(function(){` +
         `try{if(sessionStorage.getItem(${JSON.stringify(key)}))return}catch(e){}` +
-        `var host=document.createElement('rerun-badge');` +
+        `var host=document.createElement('lumvika-badge');` +
         `var root=host.attachShadow({mode:'closed'});` +
         `root.innerHTML=${JSON.stringify(badgeMarkup(slug))};` +
         `root.querySelector('button').addEventListener('click',function(){host.remove();try{sessionStorage.setItem(${JSON.stringify(key)},'1')}catch(e){}});` +

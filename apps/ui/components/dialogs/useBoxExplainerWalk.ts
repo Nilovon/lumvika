@@ -1,7 +1,7 @@
 'use client'
 
-import { TOUR_AGENTS_PHASE, useTourBeat } from '@rerun/ui/tour'
-import { usePrefersReducedMotion } from '@rerun/ui/iso-grid'
+import { TOUR_AGENTS_PHASE, useTourBeat } from '@lumvika/ui/tour'
+import { usePrefersReducedMotion } from '@lumvika/ui/iso-grid'
 import { useState } from 'react'
 
 // The first two slides of the tour played as one scene, with nobody clicking Continue: the Boxes
@@ -15,7 +15,7 @@ import { useState } from 'react'
 //
 // The single hold is the cascade of the first phase plus a breath, so the agents do not start
 // falling while a Box is still drawing itself: three Boxes at 620ms apart drawing for 900ms. Taken
-// from the constants of @rerun/ui/tour's tour-board.ts, which are what actually time that wave.
+// from the constants of @lumvika/ui/tour's tour-board.ts, which are what actually time that wave.
 const WALK_BEATS: readonly { hold: number }[] = [{ hold: 2600 }]
 
 export function useBoxExplainerWalk(): number {

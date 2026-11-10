@@ -50,8 +50,8 @@
             "tools": "What tools do you have access to?"
         },
         "team": {
-            "greeting": "Hi, I'm Rerun",
-            "greetingNamed": "Hi {firstName}, I'm Rerun",
+            "greeting": "Hi, I'm Lumvika",
+            "greetingNamed": "Hi {firstName}, I'm Lumvika",
             "greetingWithTeam": "{greeting}. Here is your team.",
             "emptySubtitle": "You have no coworkers yet. Tell me a job you would hand off and I'll build the first one.",
             "buildPrompt": "Build me a coworker that ",
@@ -67,7 +67,7 @@
             "guide": {
                 "title": "How does this work?",
                 "description": "Coworkers, Boxes, routines, in two minutes",
-                "send": "How does Rerun work?"
+                "send": "How does Lumvika work?"
             },
             "checkWorking": {
                 "title": "What is {name} doing?",
@@ -93,8 +93,8 @@
     "error": {
         "connectChatGpt": "Connect ChatGPT",
         "connectClaude": "Connect Claude",
-        "creditsBody": "You've used up your Rerun credits for this period. Already paying for Claude or ChatGPT? Run your coworkers on that plan, at no extra cost here.",
-        "creditsTitle": "Rerun credits",
+        "creditsBody": "You've used up your Lumvika credits for this period. Already paying for Claude or ChatGPT? Run your coworkers on that plan, at no extra cost here.",
+        "creditsTitle": "Lumvika credits",
         "fallbackTitle": "Something went wrong",
         "reconnect": "Reconnect",
         "switchModel": "Switch model",
@@ -114,7 +114,7 @@
             "wrong_tool": "Wrong tool or app used"
         },
         "categoryLabel": "What type of issue do you wish to report?",
-        "disclaimer": "Submitting this report shares this conversation with the Rerun team so we can improve your coworkers.",
+        "disclaimer": "Submitting this report shares this conversation with the Lumvika team so we can improve your coworkers.",
         "negativePlaceholder": "What was unsatisfying about this response?",
         "negativeTitle": "Give negative feedback",
         "positivePlaceholder": "What was satisfying about this response?",
@@ -123,21 +123,21 @@
         "skip": "Skip",
         "submit": "Submit"
     },
-    "foreman": {
+    "steward": {
         "away": {
             "none": {
                 "body": "This workspace has no machine right now. Check it at {host}.",
-                "title": "Rerun is not running"
+                "title": "Lumvika is not running"
             },
             "onboarding": {
                 "body": "Finish setting it up at {host}.",
-                "title": "Rerun is setting up your workspace"
+                "title": "Lumvika is setting up your workspace"
             }
         },
         "retry": "Retry",
         "role": "Your workspace assistant",
         "unreachableBody": "Check your connection and try again.",
-        "unreachableTitle": "We could not reach Rerun"
+        "unreachableTitle": "We could not reach Lumvika"
     },
     "header": {
         "back": "Back",
@@ -166,7 +166,7 @@
         "image": "Image"
     },
     "messages": {
-        "askRerun": "Ask Rerun",
+        "askLumvika": "Ask Lumvika",
         "badResponse": "Bad response",
         "compacting": "Compacting",
         "copy": "Copy",
@@ -212,7 +212,7 @@
         "answerPlaceholder": "Answer {name}",
         "attachFailed": "Could not attach the files",
         "defaultModel": "Default · {model}",
-        "foremanPlaceholder": "Ask Rerun anything",
+        "stewardPlaceholder": "Ask Lumvika anything",
         "loadFailed": "We could not load this conversation.",
         "loading": "Loading the conversation",
         "messagePlaceholder": "Message {name}",
@@ -268,8 +268,8 @@
         "waitingForMicrophone": "Waiting for the microphone…"
     },
     "_context": {
-        "foreman.away.none.body": "{host} is the web address of the Rerun server the app is connected to (rerun.build, or a self-hosted one).",
-        "foreman.away.onboarding.body": "{host} is the web address of the Rerun server the app is connected to (rerun.build, or a self-hosted one).",
+        "steward.away.none.body": "{host} is the web address of the Lumvika server the app is connected to (lumvika.com, or a self-hosted one).",
+        "steward.away.onboarding.body": "{host} is the web address of the Lumvika server the app is connected to (lumvika.com, or a self-hosted one).",
         "desktop.keys.delete": "The Backspace key of a keyboard, on a button that sends it to a remote screen.",
         "desktop.keys.return": "The Return/Enter key of a keyboard, on a button that sends it to a remote screen.",
         "header.sections.needs-you": "Section of a menu: conversations waiting on the person.",
@@ -279,7 +279,7 @@
         "origins.payload": "The body of an HTTP request a webhook received.",
         "takeover.done": "Button: the person has finished using the coworker's browser and hands it back.",
         "empty.starters.capabilities": "One of four chips on an empty conversation with a coworker: tapped, it is sent as the user's own message to the coworker. Same for the other empty.starters keys.",
-        "empty.team.greetingWithTeam": "Title of the workspace assistant's empty conversation. {greeting} is the greeting sentence, for example \"Hi Alex, I'm Rerun\".",
+        "empty.team.greetingWithTeam": "Title of the workspace assistant's empty conversation. {greeting} is the greeting sentence, for example \"Hi Alex, I'm Lumvika\".",
         "empty.team.buildPrompt": "Prefilled in the composer: the start of the user's own sentence to the assistant, completed by them. Keep the trailing space.",
         "empty.team.handOff.prefill": "Prefilled in the composer: the start of the user's own sentence to the assistant. {mention} is a coworker's handle, like @scout. Keep the trailing space.",
         "empty.team.checkWorking.send": "Sent as the user's own message to the assistant. {mention} is a coworker's handle, like @scout. Same for checkIdle.send.",

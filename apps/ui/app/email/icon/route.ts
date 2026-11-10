@@ -1,4 +1,4 @@
-import { NOTE_ICONS, type NoteIcon } from '@rerun/emails'
+import { NOTE_ICONS, type NoteIcon } from '@lumvika/emails'
 import { buildIconSvg, ICON_SIZE } from './note-icon-art'
 
 export const runtime = 'nodejs'

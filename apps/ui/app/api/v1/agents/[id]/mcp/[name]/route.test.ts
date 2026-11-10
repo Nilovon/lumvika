@@ -19,7 +19,7 @@ const server = await import('./route')
 const connect = await import('./connect/route')
 
 const segment = { params: Promise.resolve({ id: 'agent-1', name: 'linear' }) }
-const request = (method: string) => new Request('https://app.rerun.build/api/v1/agents/agent-1/mcp/linear', { method })
+const request = (method: string) => new Request('https://app.lumvika.com/api/v1/agents/agent-1/mcp/linear', { method })
 const LINEAR = { name: 'linear', displayName: 'Linear', transport: 'http', host: 'mcp.linear.app', icon: 'https://cdn/linear.svg', signInUrl: 'https://mcp.linear.app/mcp' }
 
 describe('/api/v1/agents/:id/mcp/:name', () => {
@@ -42,7 +42,7 @@ describe('/api/v1/agents/:id/mcp/:name', () => {
 
     it('opens the sign-in through a ticket, and ends it in the app', async () => {
         const body = await (await connect.POST(request('POST'), segment)).json()
-        expect(body.returnUrl).toBe('rerun://oauth/callback')
+        expect(body.returnUrl).toBe('lumvika://oauth/callback')
         expect(body.url).toMatch(/\/api\/oauth\/mobile\/start\?t=/)
         expect(assertAgentInWorkspace).toHaveBeenCalledWith('agent-1', 'manage', ACTOR)
     })

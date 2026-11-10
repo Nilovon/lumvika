@@ -1,7 +1,7 @@
 // Deliberately no 'server-only' import, for the same reason as lib/email/client.ts: a Trigger.dev
 // task that pulls this in is bundled outside the Next.js RSC pipeline.
 
-import { DEFAULT_WHATSAPP_FROM } from '@rerun/cloud/senders'
+import { DEFAULT_WHATSAPP_FROM } from '@lumvika/cloud/senders'
 import { birdConfig } from '@/lib/bird/config'
 import type { WhatsAppComponent, WhatsAppLanguage } from './templates'
 

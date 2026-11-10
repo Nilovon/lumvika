@@ -54,14 +54,14 @@ export function Layout({
                       src={LOGO_URL}
                       width={LOGO_SIZE}
                       height={LOGO_SIZE}
-                      alt="Rerun"
+                      alt="Lumvika"
                       style={logo}
                     />
                   </Link>
                 </td>
                 <td style={brandCell}>
                   <Link href={SITE_URL} style={brand}>
-                    Rerun
+                    Lumvika
                   </Link>
                 </td>
               </tr>
@@ -81,7 +81,7 @@ export function Layout({
 }
 
 // The lockup points at the site, not at the app: the CTAs already carry `appUrl`.
-const SITE_URL = "https://rerun.build";
+const SITE_URL = "https://lumvika.com";
 
 const HEAD_STYLE = `
   :root { color-scheme: dark; supported-color-schemes: dark; }
@@ -116,7 +116,7 @@ const logoCell: React.CSSProperties = {
 
 // Colour stated rather than left to react-email, whose `Link` defaults to its own blue. It is
 // only ever seen when images are blocked: what is painted then is the `alt`, and the alt reads
-// "Rerun" right next to the wordmark.
+// "Lumvika" right next to the wordmark.
 const logoLink: React.CSSProperties = {
   color: theme.text.strong,
   display: "block",

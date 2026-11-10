@@ -4,8 +4,8 @@ import { useTranslations } from 'next-intl'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDownIcon, WorkflowIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { Markdown } from '@rerun/ui/markdown'
-import { Stripes } from '@rerun/ui/primitives'
+import { Markdown } from '@lumvika/ui/markdown'
+import { Stripes } from '@lumvika/ui/primitives'
 // Nucleo glyph with no lucide counterpart, so no name to add to the `@/lib/icons` shim.
 
 const HINT_CLASS_NAME = 'text-xs text-muted-foreground/80 [&_p]:leading-snug [&_code]:py-0 [&_code]:text-[0.8em]'

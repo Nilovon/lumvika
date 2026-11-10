@@ -1,48 +1,48 @@
 // Curated model catalog for the in-chat model selector.
 //
-// rerun-engine accepts any `${provider}:${model}` string (see engine providers.ts),
+// lumvika-engine accepts any `${provider}:${model}` string (see engine providers.ts),
 // so this list is purely a UI convenience: it gives friendly labels and groups the
 // models a user is likely to pick. The `keyName` ties each provider group to the
 // per-agent API key that must be set for its models to be "available". Edit freely to
 // add/remove models.
 
-import { DEFAULT_CONNECTION_MODELS, MODEL_LABEL, OPENCODE_SNAPSHOT, modelLabel } from '@rerun/contracts'
+import { DEFAULT_CONNECTION_MODELS, MODEL_LABEL, OPENCODE_SNAPSHOT, modelLabel } from '@lumvika/contracts'
 
-import { RERUN_DEMO_MODEL_IDS } from './constants'
+import { LUMVIKA_DEMO_MODEL_IDS } from './constants'
 
-export { modelContextWindow, modelLabel } from '@rerun/contracts'
+export { modelContextWindow, modelLabel } from '@lumvika/contracts'
 
 // `power` is a 1-6 capability rating on a single global scale (comparable across
 // providers), surfaced as ascending signal-style bars in the model picker. Optional:
 // custom/unknown models have none and show no bars.
 // Model context windows are not stored here: the authoritative values live in
-// `@rerun/contracts` (MODEL_CONTEXT_WINDOW) so the engine can read them too. Use
+// `@lumvika/contracts` (MODEL_CONTEXT_WINDOW) so the engine can read them too. Use
 // `modelContextWindow(id)` for the in-chat context gauge.
 export type CatalogModel = { id: string; label: string; power?: number }
 
-// The spelling of every label lives in `@rerun/contracts` (MODEL_LABEL) so the iOS app, which
+// The spelling of every label lives in `@lumvika/contracts` (MODEL_LABEL) so the iOS app, which
 // cannot import from here, names the same models the same way.
 const model = (id: string, power?: number): CatalogModel => ({ id, label: modelLabel(id), power })
 
 export type ProviderSection = 'free' | 'subscription' | 'api'
 export type CatalogProvider = { provider: string; label: string; keyName: string; section: ProviderSection; apiKeyUrl?: string; models: CatalogModel[] }
 
-// The `rerun` provider has no per-agent key (keyName: ''): requests are routed
+// The `lumvika` provider has no per-agent key (keyName: ''): requests are routed
 // through the hub which holds the shared OpenRouter key. Listed first so it is the
 // default a new user sees — try a model without any setup.
-const RERUN_DEMO_MODEL_POWER: Record<(typeof RERUN_DEMO_MODEL_IDS)[number], number> = {
-    'rerun-max': 4,
-    'rerun-fast': 2,
-    'rerun-smart': 5,
+const LUMVIKA_DEMO_MODEL_POWER: Record<(typeof LUMVIKA_DEMO_MODEL_IDS)[number], number> = {
+    'lumvika-max': 4,
+    'lumvika-fast': 2,
+    'lumvika-smart': 5,
 }
 
 export const ENGINE_MODEL_CATALOG: CatalogProvider[] = [
     {
-        provider: 'rerun',
-        label: 'Rerun',
+        provider: 'lumvika',
+        label: 'Lumvika',
         keyName: '',
         section: 'free',
-        models: RERUN_DEMO_MODEL_IDS.map(id => model(id, RERUN_DEMO_MODEL_POWER[id])),
+        models: LUMVIKA_DEMO_MODEL_IDS.map(id => model(id, LUMVIKA_DEMO_MODEL_POWER[id])),
     },
     {
         provider: 'anthropic',
@@ -182,12 +182,12 @@ export const ENGINE_MODEL_CATALOG: CatalogProvider[] = [
     },
 ]
 
-// Flat lookup of model id -> provider display label (e.g. `rerun-max` -> `Rerun`), built once.
+// Flat lookup of model id -> provider display label (e.g. `lumvika-max` -> `Lumvika`), built once.
 const MODEL_PROVIDER_LABEL: Record<string, string> = Object.fromEntries(ENGINE_MODEL_CATALOG.flatMap(p => p.models.map(m => [m.id, p.label])))
 
 // Fully-qualified label for logs: provider + model (e.g. `OpenAI GPT-5.5`). Falls back to the
 // bare label, then the raw id, for custom/unknown models. A label that already is the provider's
-// name (`Rerun`) is not doubled.
+// name (`Lumvika`) is not doubled.
 export function modelLogLabel(id: string | null | undefined): string {
     if (!id) return ''
     const label = MODEL_LABEL[id]

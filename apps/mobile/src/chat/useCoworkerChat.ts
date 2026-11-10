@@ -14,7 +14,7 @@ export type HistoryState = 'loading' | 'ready' | 'error'
 // Let go of the stream this long before iOS takes its time back, while the app can still run.
 const GRACE_MARGIN_S = 5
 
-// One conversation with a coworker or the Foreman, streamed from the engine through the hub.
+// One conversation with a coworker or the Steward, streamed from the engine through the hub.
 // `initialSessionId` is null for a new conversation, which the first send creates; the page keeps its
 // chat across that birth instead of starting over.
 // `onRefused` gets back a message the engine turned down because a run still held the conversation,

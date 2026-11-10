@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-agents-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-agents-'))
 
 const { describe, expect, it, beforeEach } = await import('vitest')
 const { agentRoutes } = await import('./agents.js')
@@ -45,9 +45,9 @@ describe('PATCH /agents/:id/mcp-servers under concurrency', () => {
     })
 
     it('rejects the reserved bridge name instead of saving a server no provider will load', async () => {
-        const res = await patchMcp({ upsert: [{ name: 'rerun', transport: 'http', url: 'https://app.rerun.build/api/mcp/account', args: [], env: {}, headers: {} }] })
+        const res = await patchMcp({ upsert: [{ name: 'lumvika', transport: 'http', url: 'https://app.lumvika.com/api/mcp/account', args: [], env: {}, headers: {} }] })
         expect(res.status).toBe(400)
-        expect(await currentServerNames()).not.toContain('rerun')
+        expect(await currentServerNames()).not.toContain('lumvika')
     })
 
     it('rejects setting mcpServers via PATCH /:id', async () => {
@@ -63,9 +63,9 @@ describe('PATCH /agents/:id/mcp-servers under concurrency', () => {
 describe('GET /agents/:id/keys', () => {
     beforeEach(seedAgent)
 
-    it('reports non-empty RERUN_* process env names as engineKeys, separate from the agent env', async () => {
-        process.env.RERUN_TEST_MARKER = 'from-process'
-        process.env.RERUN_TEST_EMPTY = ''
+    it('reports non-empty LUMVIKA_* process env names as engineKeys, separate from the agent env', async () => {
+        process.env.LUMVIKA_TEST_MARKER = 'from-process'
+        process.env.LUMVIKA_TEST_EMPTY = ''
         await agentRoutes.request(`/${id}/keys`, {
             method: 'PATCH',
             headers: { 'content-type': 'application/json' },
@@ -74,8 +74,8 @@ describe('GET /agents/:id/keys', () => {
         const res = await agentRoutes.request(`/${id}/keys`)
         const { keys, engineKeys } = (await res.json()) as { keys: string[]; engineKeys: string[] }
         expect(keys).toEqual(['AGENT_ONLY'])
-        expect(engineKeys).toContain('RERUN_TEST_MARKER')
-        expect(engineKeys).not.toContain('RERUN_TEST_EMPTY')
+        expect(engineKeys).toContain('LUMVIKA_TEST_MARKER')
+        expect(engineKeys).not.toContain('LUMVIKA_TEST_EMPTY')
         expect(engineKeys).not.toContain('PATH')
         expect(engineKeys).not.toContain('AGENT_ONLY')
     })

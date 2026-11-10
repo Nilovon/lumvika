@@ -1,4 +1,4 @@
-import { attachmentDisplayName, decodePeaks, parseAttachments, parseVoiceMessage, stripAttachmentsRef, stripVoiceMarker, type VoiceMessage } from '@rerun/contracts'
+import { attachmentDisplayName, decodePeaks, parseAttachments, parseVoiceMessage, stripAttachmentsRef, stripVoiceMarker, type VoiceMessage } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 
 export function textOf(message: UIMessage): string {

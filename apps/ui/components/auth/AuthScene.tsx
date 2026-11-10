@@ -1,6 +1,6 @@
 'use client'
 
-import { useResolvedIsMobile } from '@rerun/ui/primitives/use-is-mobile'
+import { useResolvedIsMobile } from '@lumvika/ui/primitives/use-is-mobile'
 import { AuthStageBoard } from './AuthStageBoard'
 
 // Le décor plein cadre des surfaces d'auth : la grille iso occupe tout le fond, un voile central

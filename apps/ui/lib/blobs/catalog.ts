@@ -1,4 +1,4 @@
-import { ILLUSTRATION_ENTRIES } from '@rerun/cloud/illustrations'
+import { ILLUSTRATION_ENTRIES } from '@lumvika/cloud/illustrations'
 
 export type BlobColor =
     | 'amber'

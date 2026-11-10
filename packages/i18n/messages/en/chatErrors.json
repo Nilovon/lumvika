@@ -18,7 +18,7 @@
         "message": "This model has no room right now. Try again in a moment or pick another model."
     },
     "titles": {
-        "budget": "Rerun credits used up",
+        "budget": "Lumvika credits used up",
         "unauthorized": "Connection signed out",
         "overloaded": "Provider overloaded",
         "context_window": "Conversation too long",
@@ -29,7 +29,7 @@
         "session_gone": "Conversation unavailable"
     },
     "messages": {
-        "budget": "Rerun credits used up for this period. Add credits or wait for the monthly reset.",
+        "budget": "Lumvika credits used up for this period. Add credits or wait for the monthly reset.",
         "unauthorized": "This connection needs to be signed in again before the coworker can run.",
         "overloaded": "The provider is overloaded right now. Try again in a moment.",
         "context_window": "This conversation no longer fits the model, and sending it again will hit the same wall. Switch to a model with a larger context window, or start a new conversation.",

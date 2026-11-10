@@ -1,4 +1,4 @@
-import { coworkerEndpoints, foremanEndpoints } from '@/chat/endpoints'
+import { coworkerEndpoints, stewardEndpoints } from '@/chat/endpoints'
 
 jest.mock('expo-crypto', () => ({ randomUUID: () => '7d3f2c1a-0000-4000-8000-000000000001' }))
 
@@ -19,13 +19,13 @@ describe('coworker endpoints', () => {
     })
 })
 
-describe('Foreman endpoints', () => {
+describe('Steward endpoints', () => {
     let filesOnEngine = false
-    const endpoints = foremanEndpoints(() => filesOnEngine)
+    const endpoints = stewardEndpoints(() => filesOnEngine)
 
     it('names a new conversation itself and keeps that name on every send', () => {
-        expect(endpoints.agentId).toBe('foreman')
-        expect(endpoints.sendPath).toBe('/api/chat/foreman/engine')
+        expect(endpoints.agentId).toBe('steward')
+        expect(endpoints.sendPath).toBe('/api/chat/steward/engine')
         expect(endpoints.sendBody(null, 'Hi')).toEqual({ sessionId: '7d3f2c1a-0000-4000-8000-000000000001', text: 'Hi' })
         expect(endpoints.sendBody('s1', 'Hi')).toEqual({ sessionId: 's1', text: 'Hi' })
     })
@@ -37,8 +37,8 @@ describe('Foreman endpoints', () => {
 
     it('keeps the files in the hub until the machine takes them, then in its own workspace there', () => {
         filesOnEngine = false
-        expect(endpoints.fileOwner('s1')).toEqual({ kind: 'foreman', sessionId: 's1' })
+        expect(endpoints.fileOwner('s1')).toEqual({ kind: 'steward', sessionId: 's1' })
         filesOnEngine = true
-        expect(endpoints.fileOwner('s1')).toEqual({ kind: 'agent', agentId: 'foreman' })
+        expect(endpoints.fileOwner('s1')).toEqual({ kind: 'agent', agentId: 'steward' })
     })
 })

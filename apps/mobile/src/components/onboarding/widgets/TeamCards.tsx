@@ -2,7 +2,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { ActivityIndicator, View } from 'react-native'
 import { useTranslations } from 'use-intl'
 
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { AppText } from '@/components/ui/AppText'
 import { Button } from '@/components/ui/Button'
 import { webHost } from '@/config/environment'
@@ -36,7 +36,7 @@ export function TeamStartCard({ state, onRetry }: { state: TeamStartState; onRet
     return (
         <Frame>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-                <ForemanOrb size={32} state={state === 'starting' ? 'thinking' : 'idle'} />
+                <StewardOrb size={32} state={state === 'starting' ? 'thinking' : 'idle'} />
                 <View style={{ flex: 1, gap: 2 }}>
                     <AppText variant="headline">{t(`team.${state}.title`)}</AppText>
                     <AppText variant="footnote" tone="muted">
@@ -109,7 +109,7 @@ export function WaitlistNotice() {
     const t = useTranslations('mobileOnboarding')
     return (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg, paddingHorizontal: spacing.xl }}>
-            <ForemanOrb size={64} />
+            <StewardOrb size={64} />
             <View style={{ alignItems: 'center', gap: spacing.xs }}>
                 <AppText variant="title" style={{ textAlign: 'center' }}>
                     {t('waitlist.title')}

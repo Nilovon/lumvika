@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-shareddb-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-shareddb-'))
 
 const { describe, expect, it } = await import('vitest')
 const { getSharedDb, readSharedDbSchema, recordTableOwnership, sharedDbExists, SHARED_HIDDEN_TABLES } = await import('./sharedDb.js')
@@ -17,7 +17,7 @@ describe('shared database', () => {
     it('hides its own bookkeeping table', async () => {
         const client = await getSharedDb()
         const names = (await listTables(client, SHARED_HIDDEN_TABLES)).map(t => t.name)
-        expect(names).not.toContain('_rerun_shared_tables')
+        expect(names).not.toContain('_lumvika_shared_tables')
     })
 
     it('remembers which agent created a table', async () => {

@@ -1,5 +1,5 @@
-import { cellText, formatText, isNumericFormat, isTruthyCell, type TableCard } from '@rerun/contracts'
-import { formatNumber } from '@rerun/i18n/format'
+import { cellText, formatText, isNumericFormat, isTruthyCell, type TableCard } from '@lumvika/contracts'
+import { formatNumber } from '@lumvika/i18n/format'
 import { SymbolView } from 'expo-symbols'
 import { useState } from 'react'
 import { View } from 'react-native'

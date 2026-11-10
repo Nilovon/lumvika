@@ -1,4 +1,4 @@
-import { parseQuery, searchItems, type Box, type ConversationHit } from '@rerun/contracts'
+import { parseQuery, searchItems, type Box, type ConversationHit } from '@lumvika/contracts'
 import { router } from 'expo-router'
 import { SymbolView } from 'expo-symbols'
 import { useEffect, useMemo, useState } from 'react'
@@ -11,7 +11,7 @@ import { searchConversations } from '@/api/search'
 import { useAuth } from '@/auth/AuthProvider'
 import { setPendingAsk } from '@/chat/pending-ask'
 import { AgentBuddy } from '@/components/buddy/AgentBuddy'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { lineOf, minutesSince, moodStatus, toHomeCoworkers, type HomeCoworker } from '@/components/home/board'
 import { CoworkerRow } from '@/components/home/CoworkerRow'
 import { SectionHeader } from '@/components/home/SectionHeader'
@@ -119,7 +119,7 @@ export default function Search() {
     const asked = query.trim()
 
     const openCoworker = (coworker: HomeCoworker) => router.push({ pathname: '/chat/[id]', params: { id: coworker.latest?.id ?? 'new', to: coworker.id } })
-    const askRerun = (text: string) => {
+    const askLumvika = (text: string) => {
         setPendingAsk(text)
         router.push({ pathname: '/chat/[id]', params: { id: 'new' } })
     }
@@ -135,11 +135,11 @@ export default function Search() {
             </View>
             <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}>
                 {asked.length > 0 && scope !== 'agents' && (
-                    <Pressable onPress={() => askRerun(asked)} accessibilityRole="button" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.xl, paddingVertical: spacing.md, backgroundColor: pressed ? theme.muted : 'transparent' })}>
-                        <ForemanOrb size={28} />
+                    <Pressable onPress={() => askLumvika(asked)} accessibilityRole="button" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.xl, paddingVertical: spacing.md, backgroundColor: pressed ? theme.muted : 'transparent' })}>
+                        <StewardOrb size={28} />
                         <View style={{ flex: 1, gap: 1 }}>
                             <AppText variant="callout" medium>
-                                {t('search.askRerun')}
+                                {t('search.askLumvika')}
                             </AppText>
                             <AppText variant="footnote" tone="muted" numberOfLines={1}>
                                 {t('search.quotedAsk', { query: asked })}

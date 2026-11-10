@@ -175,7 +175,7 @@ export const templateDocumentObject = z.object({
     gallery: z.array(templateImageSchema).default([]),
     videoUrl: z.string().default(''),
     ogImageUrl: z.string().default(''),
-    // The account that owns the template. null means Rerun itself authored it. The credited
+    // The account that owns the template. null means Lumvika itself authored it. The credited
     // expert is derived from it (`users.expert_profile_id`), so the marketplace fiche and the account
     // stay two separate objects.
     creatorId: z.string().uuid().nullable().default(null),

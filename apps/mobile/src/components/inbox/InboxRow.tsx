@@ -1,4 +1,4 @@
-import type { CoworkerRule, InboxItem } from '@rerun/contracts'
+import type { CoworkerRule, InboxItem } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { SymbolView } from 'expo-symbols'
 import { useRef } from 'react'

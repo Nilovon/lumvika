@@ -2,9 +2,9 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-notify-off-'))
-process.env.RERUN_HUB_BASE_URL = ''
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-notify-off-'))
+process.env.LUMVIKA_HUB_BASE_URL = ''
+process.env.LUMVIKA_API_KEY = ''
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const { sendNotification } = await import('./notify.js')

@@ -2,7 +2,7 @@ import 'server-only'
 
 import { randomInt } from 'node:crypto'
 
-import { SERVICE_INSTANCE_ID_RE } from '@rerun/contracts'
+import { SERVICE_INSTANCE_ID_RE } from '@lumvika/contracts'
 
 import { type ServiceRegistry, entriesOfSlug } from './registry'
 
@@ -31,7 +31,7 @@ const sanitizeEnvPart = (s: string) => s.replace(/[^A-Za-z0-9_]/g, '_').toUpperC
 
 export function defaultInstanceEnvVar(slug: string, instanceId: string | undefined, inputKey: string): string {
     const scope = instanceId ? `${sanitizeEnvPart(slug)}_${instanceId.toUpperCase()}` : sanitizeEnvPart(slug)
-    return `RERUN_SVC_${scope}_${sanitizeEnvPart(inputKey)}`
+    return `LUMVIKA_SVC_${scope}_${sanitizeEnvPart(inputKey)}`
 }
 
 // "Gmail 2", "Gmail 3"… the first number no other account of the app already shows.

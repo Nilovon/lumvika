@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_ROLES, INTAKE_INDUSTRIES, intakeBoxes, intakePreviewPlan, rolesForIndustry } from './intake'

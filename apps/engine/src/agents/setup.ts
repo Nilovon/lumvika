@@ -28,7 +28,7 @@ export async function markSetupComplete(id: string): Promise<string> {
 export type InstallClaim = { session: SessionRow } | { inFlight: string }
 
 // Starting the guided setup claims it for one conversation. Any later start, from another tab, the
-// foreman or another device, is pointed back at that conversation instead of opening a second
+// steward or another device, is pointed back at that conversation instead of opening a second
 // install beside it. The claim lapses with its session, and once the setup is no longer pending.
 export async function claimInstallSession(id: string, create: () => Promise<SessionRow>): Promise<InstallClaim> {
     return withAgentLock(id, async () => {

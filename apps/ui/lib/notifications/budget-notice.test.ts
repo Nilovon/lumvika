@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ENGINE_RESTARTED_ERROR_CODE, RERUN_BUDGET_ERROR_CODE, decideBudgetNotice, suppressesErrorEmail } from './budget-notice'
+import { ENGINE_RESTARTED_ERROR_CODE, LUMVIKA_BUDGET_ERROR_CODE, decideBudgetNotice, suppressesErrorEmail } from './budget-notice'
 
 describe('decideBudgetNotice', () => {
     it('inserts and emails a normal workspace on the first notice', () => {
@@ -18,7 +18,7 @@ describe('decideBudgetNotice', () => {
 
 describe('suppressesErrorEmail', () => {
     it('suppresses an error carrying the budget code', () => {
-        expect(suppressesErrorEmail('error', { errorCode: RERUN_BUDGET_ERROR_CODE })).toBe(true)
+        expect(suppressesErrorEmail('error', { errorCode: LUMVIKA_BUDGET_ERROR_CODE })).toBe(true)
         // A restart reports every conversation it interrupted at once.
         expect(suppressesErrorEmail('error', { errorCode: ENGINE_RESTARTED_ERROR_CODE })).toBe(true)
     })
@@ -31,7 +31,7 @@ describe('suppressesErrorEmail', () => {
     })
 
     it('never suppresses non-error kinds', () => {
-        expect(suppressesErrorEmail('done', { errorCode: RERUN_BUDGET_ERROR_CODE })).toBe(false)
-        expect(suppressesErrorEmail('info', { errorCode: RERUN_BUDGET_ERROR_CODE })).toBe(false)
+        expect(suppressesErrorEmail('done', { errorCode: LUMVIKA_BUDGET_ERROR_CODE })).toBe(false)
+        expect(suppressesErrorEmail('info', { errorCode: LUMVIKA_BUDGET_ERROR_CODE })).toBe(false)
     })
 })

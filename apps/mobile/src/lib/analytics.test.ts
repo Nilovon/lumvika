@@ -21,8 +21,8 @@ describe('analytics', () => {
     })
 
     it('identifies by email like the web, and flags a non-production person as internal', () => {
-        identifyPerson('33600000422@phone.rerun.build')
-        expect(client.identify).toHaveBeenCalledWith('33600000422@phone.rerun.build', { $set: { email: '33600000422@phone.rerun.build', is_internal: true } })
+        identifyPerson('33600000422@phone.lumvika.com')
+        expect(client.identify).toHaveBeenCalledWith('33600000422@phone.lumvika.com', { $set: { email: '33600000422@phone.lumvika.com', is_internal: true } })
     })
 
     it('sends what is queued before a sign-out wipes the person, and keeps the platform on every event after', async () => {

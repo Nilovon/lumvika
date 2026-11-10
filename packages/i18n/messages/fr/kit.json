@@ -101,7 +101,7 @@
         "region": "Consentement aux cookies",
         "title": "Cookies",
         "short": "Nous utilisons des cookies d'analyse. <policy>Politique de cookies</policy>",
-        "long": "Nous utilisons des cookies d'analyse pour comprendre comment Rerun est utilisé. Les cookies nécessaires pour vous connecter, faire fonctionner le chat d'assistance et retenir vos préférences sont toujours actifs. <policy>Politique de cookies</policy>"
+        "long": "Nous utilisons des cookies d'analyse pour comprendre comment Lumvika est utilisé. Les cookies nécessaires pour vous connecter, faire fonctionner le chat d'assistance et retenir vos préférences sont toujours actifs. <policy>Politique de cookies</policy>"
     },
     "experts": {
         "wizard": {
@@ -131,7 +131,7 @@
             "name": "Nom",
             "namePlaceholder": "ex. Mira Labs",
             "email": "E-mail",
-            "emailHelper": "Privé. Seule l'équipe Rerun peut le voir.",
+            "emailHelper": "Privé. Seule l'équipe Lumvika peut le voir.",
             "type": "Type",
             "location": "Localisation",
             "locationPlaceholder": "ex. Paris",
@@ -205,17 +205,17 @@
             "status": "Statut",
             "links": "Liens",
             "namePlaceholder": "Votre nom",
-            "rolePlaceholder": "Expert Rerun"
+            "rolePlaceholder": "Expert Lumvika"
         },
         "preview": {
             "hire": "Engager"
         }
     },
-    "foreman": {
-        "orbLabel": "Demander à Rerun",
+    "steward": {
+        "orbLabel": "Demander à Lumvika",
         "empty": {
             "title": "Posez n'importe quelle question sur votre workspace",
-            "description": "Rerun construit et fait tourner vos coworkers avec vous"
+            "description": "Lumvika construit et fait tourner vos coworkers avec vous"
         },
         "header": {
             "closeChat": "Fermer le chat",

@@ -1,6 +1,6 @@
 'use client'
 
-import { IsoGrid } from '@rerun/ui/iso-grid'
+import { IsoGrid } from '@lumvika/ui/iso-grid'
 
 import { useAuthStage } from './useAuthStage'
 

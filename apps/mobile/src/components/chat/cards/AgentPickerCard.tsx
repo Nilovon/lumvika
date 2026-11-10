@@ -46,7 +46,7 @@ function open({ agentId, tab, conversationId }: AgentPick) {
 }
 
 /**
- * The Foreman's shortcut to the coworkers it talks about: one chip per coworker, opening its chat or
+ * The Steward's shortcut to the coworkers it talks about: one chip per coworker, opening its chat or
  * the screen it named. Names come from the workspace, not from the model's arguments, so a made-up or
  * deleted coworker drops out.
  */

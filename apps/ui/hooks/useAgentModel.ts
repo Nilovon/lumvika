@@ -13,7 +13,7 @@ import { useCallback, useSyncExternalStore } from 'react'
 export type ModelSelection = { connectionId?: string; model?: string }
 
 function storageKey(agentId: string) {
-    return `rerun-agent-model-${agentId}`
+    return `lumvika-agent-model-${agentId}`
 }
 
 // A selection written before credentials moved to the Box named a provider, not a connection, and

@@ -1,4 +1,4 @@
-import type { AddonKey } from '@rerun/contracts'
+import type { AddonKey } from '@lumvika/contracts'
 import type { ErrorCode, ErrorParams } from '@/lib/i18n/action-error'
 import { APP_INFO, type AppInfo } from './catalog'
 import { LINKEDIN_WEBHOOK_EVENTS, linkedinProfile, linkedinSignInRefusal } from './linkedin/connect'
@@ -51,7 +51,7 @@ const APPS: Record<AppSlug, AppDefinition> = {
         envelopeKind: linkedinEvents.envelopeKind,
         wakePayload: linkedinEvents.wakePayload,
         attachmentBase: linkedinEvents.attachmentBase,
-        wakeTrigger: { name: 'LinkedIn events', description: 'Created by LinkedIn Pro. Fired by Rerun when one of the chosen LinkedIn events happens.', prompt: linkedinEvents.wakeTriggerPrompt },
+        wakeTrigger: { name: 'LinkedIn events', description: 'Created by LinkedIn Pro. Fired by Lumvika when one of the chosen LinkedIn events happens.', prompt: linkedinEvents.wakeTriggerPrompt },
         profile: linkedinProfile,
         signInRefusal: linkedinSignInRefusal,
         deleteProviderAccount: deleteAccount,
@@ -67,7 +67,7 @@ const APPS: Record<AppSlug, AppDefinition> = {
         envelopeKind: whatsappEvents.envelopeKind,
         wakePayload: whatsappEvents.wakePayload,
         attachmentBase: whatsappEvents.attachmentBase,
-        wakeTrigger: { name: 'WhatsApp messages', description: 'Created by WhatsApp Pro. Fired by Rerun when a message reaches the WhatsApp number.', prompt: whatsappEvents.wakeTriggerPrompt },
+        wakeTrigger: { name: 'WhatsApp messages', description: 'Created by WhatsApp Pro. Fired by Lumvika when a message reaches the WhatsApp number.', prompt: whatsappEvents.wakeTriggerPrompt },
         profile: whatsappProfile,
         signInRefusal: whatsappSignInRefusal,
         deleteProviderAccount: deleteAccount,

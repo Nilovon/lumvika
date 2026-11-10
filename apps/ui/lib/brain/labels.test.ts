@@ -1,5 +1,5 @@
 import { englishTranslator } from '@/lib/i18n/english-translator'
-import { loadMessages } from '@rerun/i18n/messages'
+import { loadMessages } from '@lumvika/i18n/messages'
 import { createTranslator } from 'use-intl'
 import { describe, expect, it } from 'vitest'
 import { brainAuthorLabel as authorIn, brainSlugify, brainSourceLabel as sourceIn, brainSourceLabels as sourcesIn } from './labels'
@@ -30,7 +30,7 @@ describe('brainSourceLabel', () => {
     it('names the sources in the reader\'s language and keeps a cited source as written', () => {
         expect(sourceIn('site:pricing', french)).toBe('Page Tarifs')
         expect(sourceIn('Call with Marie', french)).toBe('Call with Marie')
-        expect(authorIn('seed', french)).toBe("Rerun, d'après votre site web")
+        expect(authorIn('seed', french)).toBe("Lumvika, d'après votre site web")
     })
 
     it('shows a link by its host and path, shortened', () => {
@@ -52,9 +52,9 @@ describe('brainSourceLabels', () => {
 
 describe('labels', () => {
     it('names the author of a page', () => {
-        expect(brainAuthorLabel('seed')).toBe('Rerun, from your website')
+        expect(brainAuthorLabel('seed')).toBe('Lumvika, from your website')
         expect(brainAuthorLabel('agent:Sales')).toBe('Sales')
-        expect(brainAuthorLabel('agent:foreman')).toBe('Rerun coworker')
+        expect(brainAuthorLabel('agent:steward')).toBe('Lumvika coworker')
         expect(brainAuthorLabel('user:ana@acme.com')).toBe('ana@acme.com')
         expect(brainAuthorLabel('user')).toBe('user')
     })

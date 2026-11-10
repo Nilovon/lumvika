@@ -1,4 +1,4 @@
-import { isSetupAnswered } from '@rerun/contracts'
+import { isSetupAnswered } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_INSTALL_PROMPT } from './install-template'
 

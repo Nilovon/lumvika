@@ -7,9 +7,9 @@ type Caller = { accessToken: string; workspaceId: number }
 
 export type FileRef = { agentId: string; path: string; scope?: 'agent' | 'shared' }
 
-// Who holds a conversation's uploads: a coworker keeps them on its Box, the Foreman in a hub bucket
+// Who holds a conversation's uploads: a coworker keeps them on its Box, the Steward in a hub bucket
 // keyed by conversation.
-export type FileOwner = { kind: 'agent'; agentId: string } | { kind: 'foreman'; sessionId: string }
+export type FileOwner = { kind: 'agent'; agentId: string } | { kind: 'steward'; sessionId: string }
 
 // The hub streams a file back from the Box; the shared folder of the workspace has no agent to name.
 export function rawFileUrl({ agentId, path, scope = 'agent' }: FileRef): string {
@@ -19,7 +19,7 @@ export function rawFileUrl({ agentId, path, scope = 'agent' }: FileRef): string 
 
 export function ownedFileUrl(owner: FileOwner, path: string): string {
     if (owner.kind === 'agent') return rawFileUrl({ agentId: owner.agentId, path })
-    return `${environment.apiUrl}/api/foreman/files/raw?sessionId=${encodeURIComponent(owner.sessionId)}&path=${encodeURIComponent(path)}`
+    return `${environment.apiUrl}/api/steward/files/raw?sessionId=${encodeURIComponent(owner.sessionId)}&path=${encodeURIComponent(path)}`
 }
 
 // An image a card points at: a web address as is, a path on the Box through the hub, anything else
@@ -43,7 +43,7 @@ export function isHubFileUrl(url: string): boolean {
     return HUB_FILE_PREFIXES.some(prefix => url.startsWith(prefix))
 }
 
-const HUB_FILE_PREFIXES = [`${environment.apiUrl}/api/files/raw?`, `${environment.apiUrl}/api/foreman/files/raw?`]
+const HUB_FILE_PREFIXES = [`${environment.apiUrl}/api/files/raw?`, `${environment.apiUrl}/api/steward/files/raw?`]
 
 export function fileHeadersFor(caller: Caller | null, url: string): Record<string, string> | undefined {
     return isHubFileUrl(url) ? fileHeaders(caller) : undefined

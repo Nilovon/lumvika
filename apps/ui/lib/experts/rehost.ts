@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@rerun/db'
+import type { Database } from '@lumvika/db'
 
 // Re-hosts scraped images in our own bucket instead of hotlinking (LinkedIn and X CDN URLs expire).
 // Cover crop, webp. Best-effort — returns null on any

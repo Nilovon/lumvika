@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import type { AuthorProfile } from '@/lib/chat/message-author'
 import { XIcon } from '@/lib/icons'
-import { Badge } from '@rerun/ui/primitives'
-import { CardAvatar } from '@rerun/ui/chat'
+import { Badge } from '@lumvika/ui/primitives'
+import { CardAvatar } from '@lumvika/ui/chat'
 import { useTranslations } from 'next-intl'
 
 type BoxAccessPersonRowProps = {

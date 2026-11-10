@@ -1,8 +1,8 @@
-// A "managed" service: Rerun is the OAuth client (one app for everyone) AND the API gateway.
-// The agent's tool points at a Rerun endpoint (/api/mcp/managed/<provider>), not the third
-// party. Rerun runs the authenticated calls server-side, so the user never touches a
+// A "managed" service: Lumvika is the OAuth client (one app for everyone) AND the API gateway.
+// The agent's tool points at a Lumvika endpoint (/api/mcp/managed/<provider>), not the third
+// party. Lumvika runs the authenticated calls server-side, so the user never touches a
 // developer console. The OAuth token still lives on the ENGINE token store (never Supabase);
-// Rerun only sees it transiently, forwarded per request in the Authorization header.
+// Lumvika only sees it transiently, forwarded per request in the Authorization header.
 
 export type ManagedToolDef = {
     name: string

@@ -1,8 +1,8 @@
 'use client'
 
 import { Icon } from '@/components/ui/icon'
-import { TemplateBoardPreview } from '@rerun/ui/iso-grid'
-import { Badge } from '@rerun/ui/primitives'
+import { TemplateBoardPreview } from '@lumvika/ui/iso-grid'
+import { Badge } from '@lumvika/ui/primitives'
 import { TemplatePriceBadge } from '@/components/templates/TemplatePriceBadge'
 import { templateStatusLabel, templateStatusTone } from '@/lib/templates/status'
 import type { LibraryTemplate } from '@/lib/templates/library'

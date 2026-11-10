@@ -1,4 +1,4 @@
-import { nextPinnedIds, RELEASE_DELAY_MS, settledPinnedIds, type SkillProposal, type SkillProposalDecision } from '@rerun/contracts'
+import { nextPinnedIds, RELEASE_DELAY_MS, settledPinnedIds, type SkillProposal, type SkillProposalDecision } from '@lumvika/contracts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AppState } from 'react-native'
 
@@ -30,7 +30,7 @@ function reload(current: Loaded, sessionId: string, proposals: Map<string, Skill
 
 // The web's useSkillProposals: the rules a coworker offered to remember in one conversation, keyed by
 // their own id (the transcript finds a row through the id the tool returned). `pinned` is what the dock
-// above the composer holds, only what still waits on the person. Null `sessionId` for the Foreman,
+// above the composer holds, only what still waits on the person. Null `sessionId` for the Steward,
 // which proposes none, and for a conversation not created yet.
 export function useSkillProposals(sessionId: string | null, busy: boolean) {
     const { session, me } = useAuth()

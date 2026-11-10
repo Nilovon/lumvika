@@ -4,7 +4,7 @@ import { Layout } from "../components/Layout";
 import { Button } from "../components/Button";
 import { TemplateCard } from "../components/TemplateCard";
 import { strong } from "../components/rich";
-import { formatDuration } from "@rerun/i18n/format";
+import { formatDuration } from "@lumvika/i18n/format";
 import { emailTranslator, type EmailLocale } from "../i18n";
 import { text } from "../theme";
 
@@ -84,27 +84,27 @@ AgentRecommendations.PreviewProps = {
       title: "Turn slow Shopify stock into bundles and campaigns",
       line: "Finds what has stopped selling and drafts the bundle and the campaign to move it",
       setupMinutes: 5,
-      url: "https://app.rerun.build/?template=shopify-dead-stock-bundles",
-      imageUrl: "https://app.rerun.build/og/templates/shopify-dead-stock-bundles/email-card",
+      url: "https://app.lumvika.com/?template=shopify-dead-stock-bundles",
+      imageUrl: "https://app.lumvika.com/og/templates/shopify-dead-stock-bundles/email-card",
     },
     {
       title: "Log Fireflies call notes to HubSpot weekly",
       line: "Files every call of the week on the right deal, once you have approved the batch",
       setupMinutes: 5,
-      url: "https://app.rerun.build/?template=log-call-notes-to-hubspot",
-      imageUrl: "https://app.rerun.build/og/templates/log-call-notes-to-hubspot/email-card",
+      url: "https://app.lumvika.com/?template=log-call-notes-to-hubspot",
+      imageUrl: "https://app.lumvika.com/og/templates/log-call-notes-to-hubspot/email-card",
     },
     {
       title: "Compile a daily news digest and send it via Gmail",
       line: "Ranks and summarises your sources every morning and drops the digest in your inbox",
       setupMinutes: 5,
-      url: "https://app.rerun.build/?template=daily-news-digest-gmail",
-      imageUrl: "https://app.rerun.build/og/templates/daily-news-digest-gmail/email-card",
+      url: "https://app.lumvika.com/?template=daily-news-digest-gmail",
+      imageUrl: "https://app.lumvika.com/og/templates/daily-news-digest-gmail/email-card",
     },
   ],
-  browseUrl: "https://app.rerun.build",
-  appUrl: "https://app.rerun.build",
-  unsubscribeUrl: "https://app.rerun.build/unsubscribe",
+  browseUrl: "https://app.lumvika.com",
+  appUrl: "https://app.lumvika.com",
+  unsubscribeUrl: "https://app.lumvika.com/unsubscribe",
 } satisfies AgentRecommendationsProps;
 
 const cta: React.CSSProperties = {

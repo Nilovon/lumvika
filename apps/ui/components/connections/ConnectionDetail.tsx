@@ -13,17 +13,17 @@ import { PlanConnect } from '@/components/connections/plan-connect/PlanConnect'
 import { PlanLimitsBlock } from '@/components/connections/PlanLimitsBlock'
 import { DetailHeader } from '@/components/connections/SourceBits'
 import { Button } from '@/components/ui/button'
-import { CreditsUsageBar } from '@rerun/cloud/billing.client'
+import { CreditsUsageBar } from '@lumvika/cloud/billing.client'
 import { Input } from '@/components/ui/input'
 import { PanelScroller } from '@/components/ui/panel-list'
-import { connectMethod, isCreditUsedUp, sourceKind, type RerunCredit } from '@/lib/engine/ai-sources'
+import { connectMethod, isCreditUsedUp, sourceKind, type LumvikaCredit } from '@/lib/engine/ai-sources'
 import { catalogFor } from '@/lib/engine/models'
 import type { BoxConnection, UpdateBoxConnectionInput } from '@/lib/engine/types'
 import { AlertTriangle, CoinsIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useBillingStore } from '@/stores/billing.store'
-import { CONNECTION_SATELLITE_KEYS, CONNECTION_TOKEN_KEY, RERUN_CONNECTION_ID } from '@rerun/contracts'
-import { shortDate } from '@rerun/i18n/format'
+import { CONNECTION_SATELLITE_KEYS, CONNECTION_TOKEN_KEY, LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
+import { shortDate } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
 import { useCallback, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
@@ -32,7 +32,7 @@ type MutationResult = { success: boolean; error?: string }
 
 type ConnectionDetailProps = {
     connection: BoxConnection
-    credit: RerunCredit
+    credit: LumvikaCredit
     // The workspace default when it sits on this connection.
     defaultModel: string | null
     // The provider turned the credential away while it is still on file, so `connected` cannot tell.
@@ -101,7 +101,7 @@ export function ConnectionDetail({ connection, credit, defaultModel, reconnectRe
                 {isCustom && <CustomEndpointSettings key={connection.id} connection={connection} onPatch={next => void patch(next)} />}
                 </fieldset>
             </PanelScroller>
-            {connection.id !== RERUN_CONNECTION_ID && (
+            {connection.id !== LUMVIKA_CONNECTION_ID && (
                 <div className="border-t p-3">
                     <TooltipDisabledReason reason={readOnlyReason}>
                         <fieldset disabled={!!readOnlyReason} className="contents">
@@ -124,7 +124,7 @@ function AlertBlock({ children }: { children: ReactNode }) {
 }
 
 // Renders nothing while a source works: switching account or key is remove, then add again.
-function SourceAlert({ connection, credit, reconnectRequested, onKeys }: { connection: BoxConnection; credit: RerunCredit; reconnectRequested: boolean; onKeys: (keys: Record<string, string>) => Promise<MutationResult> }) {
+function SourceAlert({ connection, credit, reconnectRequested, onKeys }: { connection: BoxConnection; credit: LumvikaCredit; reconnectRequested: boolean; onKeys: (keys: Record<string, string>) => Promise<MutationResult> }) {
     const t = useTranslations('connections')
     const tCommon = useTranslations('common')
     const errorText = useErrorText()

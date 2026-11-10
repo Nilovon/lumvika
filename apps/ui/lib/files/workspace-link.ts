@@ -1,4 +1,4 @@
-import { agentImageRef, agentWorkspacePathFromHref } from '@rerun/contracts'
+import { agentImageRef, agentWorkspacePathFromHref } from '@lumvika/contracts'
 
 import { agentFileRawUrl, sharedFileRawUrl } from './raw-url'
 

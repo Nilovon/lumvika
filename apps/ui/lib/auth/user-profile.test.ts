@@ -10,9 +10,9 @@ describe('readProfile', () => {
     })
 
     it('puts the name and the photo the account chose ahead of the ones Google keeps rewriting', () => {
-        const chosen = { full_name: 'Ada Lovelace', avatar_url: 'https://cdn.rerun.build/user-avatars/ada.webp' }
+        const chosen = { full_name: 'Ada Lovelace', avatar_url: 'https://cdn.lumvika.com/user-avatars/ada.webp' }
 
-        expect(readProfile({ app_metadata: chosen, user_metadata: google })).toEqual({ name: 'Ada Lovelace', avatarUrl: 'https://cdn.rerun.build/user-avatars/ada.webp' })
+        expect(readProfile({ app_metadata: chosen, user_metadata: google })).toEqual({ name: 'Ada Lovelace', avatarUrl: 'https://cdn.lumvika.com/user-avatars/ada.webp' })
     })
 
     it('shows no photo once it was removed, even when Google holds one', () => {
@@ -26,8 +26,8 @@ describe('readProfile', () => {
 
 describe('displayNameOf', () => {
     it('falls back on the front of the address, never on a placeholder one', () => {
-        expect(displayNameOf({ app_metadata: {}, user_metadata: {}, email: 'ada@rerun.build' })).toBe('ada')
-        expect(displayNameOf({ app_metadata: {}, user_metadata: {}, email: '33612345678@phone.rerun.build' })).toBeNull()
+        expect(displayNameOf({ app_metadata: {}, user_metadata: {}, email: 'ada@lumvika.com' })).toBe('ada')
+        expect(displayNameOf({ app_metadata: {}, user_metadata: {}, email: '33612345678@phone.lumvika.com' })).toBeNull()
     })
 
     it('never shows the random front of an Apple relay address as a name', () => {

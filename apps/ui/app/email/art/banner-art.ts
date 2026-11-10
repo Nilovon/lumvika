@@ -20,7 +20,7 @@ const TILE = {
     radius: TILE_RADIUS,
 }
 
-// `Stripes` from @rerun/ui/primitives, transposed to SVG: repeating-linear-gradient(65deg, ink
+// `Stripes` from @lumvika/ui/primitives, transposed to SVG: repeating-linear-gradient(65deg, ink
 // 0 10px, transparent 10px 21px) with the default `bottom` fade. A CSS gradient angle is measured
 // on the gradient axis, so bands drawn 65deg from the top read as a -25deg pattern rotation here,
 // and every length doubles because the canvas renders at 2x.
@@ -103,11 +103,11 @@ const VARIANTS = {
     approval: { icon: 'thumbsUp', solid: '#f59e0b', ink: '#f59e0b' },
     connector: { icon: 'plug', solid: '#06b6d4', ink: '#06b6d4' },
     failed: { icon: 'warning', solid: '#f87171', ink: '#f87171' },
-    digest: { icon: 'inbox', solid: '#4d34f7', ink: '#b7a8ff' },
-    budget: { icon: 'gauge', solid: '#4d34f7', ink: '#b7a8ff' },
-    invite: { icon: 'userPlus', solid: '#4d34f7', ink: '#b7a8ff' },
-    library: { icon: 'grid', solid: '#4d34f7', ink: '#b7a8ff' },
-    schedule: { icon: 'calendar', solid: '#4d34f7', ink: '#b7a8ff' },
+    digest: { icon: 'inbox', solid: '#0b6e63', ink: '#7fdccb' },
+    budget: { icon: 'gauge', solid: '#0b6e63', ink: '#7fdccb' },
+    invite: { icon: 'userPlus', solid: '#0b6e63', ink: '#7fdccb' },
+    library: { icon: 'grid', solid: '#0b6e63', ink: '#7fdccb' },
+    schedule: { icon: 'calendar', solid: '#0b6e63', ink: '#7fdccb' },
 } as const satisfies Record<string, { icon: keyof typeof ICONS; solid: string; ink: string }>
 
 export const ART_VARIANTS = Object.keys(VARIANTS) as ArtVariant[]

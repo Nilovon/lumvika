@@ -28,7 +28,7 @@ import { selectMany, selectMaybeSingle, selectSingle } from '@/supabase/supabase
 // File publishing. An agent publishes a file from its engine workspace; the bytes are copied
 // server-to-server (engine /raw → Supabase Storage), NEVER through the LLM context. A
 // `published_files` row records the mapping, the identity (slug) and who may open it. Everything
-// is served from <slug>.rerun.site (lib/published/host.ts), which checks that access before any
+// is served from <slug>.lumvika.site (lib/published/host.ts), which checks that access before any
 // byte leaves the private bucket; /p/<slug> is the older link and redirects there.
 
 export const PUBLISHED_BUCKET = 'published'
@@ -51,7 +51,7 @@ type AgentContext = {
     conn: EngineConnection
 }
 
-// Resolve the calling agent (trusted: agentId comes from the Hub-authenticated x-rerun-agent
+// Resolve the calling agent (trusted: agentId comes from the Hub-authenticated x-lumvika-agent
 // header) to its engine connection + the workspace/space ids used for keying and isolation.
 // Dedicated resolver on purpose: getAgentChatTarget doesn't expose workspace_id/space_id.
 async function resolveAgent(agentId: string): Promise<AgentContext> {

@@ -1,7 +1,7 @@
 'use client'
 
-import { isPaid, priceLabel, type TemplatePricing } from '@rerun/contracts'
-import { Badge } from '@rerun/ui/primitives'
+import { isPaid, priceLabel, type TemplatePricing } from '@lumvika/contracts'
+import { Badge } from '@lumvika/ui/primitives'
 import { useLocale, useTranslations } from 'next-intl'
 import type { PurchaseAccess } from '@/lib/templates/entitlement'
 import { cn } from '@/lib/utils'

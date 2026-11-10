@@ -3,11 +3,11 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { cn } from '../cn'
-import { R_PATH } from './Logo'
+import { MARK_PATH } from './Logo'
 
-// Le R est composé de 3 sous-paths (barre gauche, chapeau, jambe droite) :
+// La marque est composée de 2 sous-paths (le L et le point) :
 // on les sépare pour pouvoir les dessiner en cascade (stagger).
-const R_SUBPATHS = R_PATH.split(/(?=M)/).map((s) => s.trim())
+const MARK_SUBPATHS = MARK_PATH.split(/(?=M)/).map((s) => s.trim())
 
 // Surface d'eau pour le mask de remplissage : sinusoïde de période 256,
 // large de 1024 (> 512 + une période) pour pouvoir défiler en translateX
@@ -17,12 +17,12 @@ const WAVE_PATH =
     'M0 24 Q64 0 128 24 T256 24 T384 24 T512 24 T640 24 T768 24 T896 24 T1024 24 V600 H0 Z'
 
 // Positions du niveau d'eau (translateY du groupe vague, en unités viewBox) :
-// en bas = entièrement sous le viewBox, en haut = crêtes au-dessus du R.
+// en bas = entièrement sous le viewBox, en haut = crêtes au-dessus de la marque.
 const WATER_DOWN = 'translateY(560px)'
 const WATER_UP = 'translateY(-60px)'
 
 // Même boîte que <Logo>, sans la grille ni le reflet : sur un écran de
-// chargement le R animé porte seul l'attention.
+// chargement la marque animée porte seul l'attention.
 const animatedLogoVariants = cva(
     'relative inline-flex shrink-0 items-center justify-center overflow-hidden text-foreground',
     {
@@ -59,27 +59,27 @@ type AnimatedLogoProps = React.ComponentProps<'span'> &
 // Le saut de fin (opacity 0 → état initial) est invisible car au départ rien
 // n'est tracé (dashoffset plein) et l'eau est sous le viewBox.
 const KEYFRAMES = `
-@keyframes rerun-logo-draw-loop {
+@keyframes lumvika-logo-draw-loop {
   0%        { stroke-dashoffset: 1; }
   45%, 100% { stroke-dashoffset: 0; }
 }
-@keyframes rerun-logo-draw-once {
+@keyframes lumvika-logo-draw-once {
   0%        { stroke-dashoffset: 1; }
   60%, 100% { stroke-dashoffset: 0; }
 }
-@keyframes rerun-logo-rise-loop {
+@keyframes lumvika-logo-rise-loop {
   0%, 38%   { transform: ${WATER_DOWN}; }
   78%, 100% { transform: ${WATER_UP}; }
 }
-@keyframes rerun-logo-rise-once {
+@keyframes lumvika-logo-rise-once {
   0%, 52%   { transform: ${WATER_DOWN}; }
   90%, 100% { transform: ${WATER_UP}; }
 }
-@keyframes rerun-logo-wave {
+@keyframes lumvika-logo-wave {
   from { transform: translateX(0); }
   to   { transform: translateX(-256px); }
 }
-@keyframes rerun-logo-fade {
+@keyframes lumvika-logo-fade {
   0%, 85% { opacity: 1; }
   100%    { opacity: 0; }
 }
@@ -100,19 +100,19 @@ export function AnimatedLogo({ size = 'md', frame = true, loop = true, duration,
                 viewBox="0 0 512 512"
                 aria-hidden
                 className="relative h-1/2 w-1/2 overflow-visible"
-                style={loop ? { animation: `rerun-logo-fade ${cycle}s ease-in-out infinite` } : undefined}
+                style={loop ? { animation: `lumvika-logo-fade ${cycle}s ease-in-out infinite` } : undefined}
             >
                 <defs>
                     <mask id={`water-${id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
                         {/* niveau qui monte (translateY) × vague qui défile (translateX) */}
-                        <g data-water style={{ transform: WATER_DOWN, animation: `rerun-logo-rise-${loop ? 'loop' : 'once'} ${cycle}s ease-in-out ${loop ? 'infinite' : 'forwards'}` }}>
-                            <path d={WAVE_PATH} fill="#fff" style={{ animation: 'rerun-logo-wave 1.4s linear infinite' }} />
+                        <g data-water style={{ transform: WATER_DOWN, animation: `lumvika-logo-rise-${loop ? 'loop' : 'once'} ${cycle}s ease-in-out ${loop ? 'infinite' : 'forwards'}` }}>
+                            <path d={WAVE_PATH} fill="#fff" style={{ animation: 'lumvika-logo-wave 1.4s linear infinite' }} />
                         </g>
                     </mask>
                 </defs>
 
                 {/* contour : se dessine en cascade */}
-                {R_SUBPATHS.map((d, i) => (
+                {MARK_SUBPATHS.map((d, i) => (
                     <path
                         key={i}
                         d={d}
@@ -124,13 +124,13 @@ export function AnimatedLogo({ size = 'md', frame = true, loop = true, duration,
                         style={{
                             strokeDasharray: 1,
                             strokeDashoffset: 1,
-                            animation: `rerun-logo-draw-${loop ? 'loop' : 'once'} ${cycle}s ease-in-out ${i * cycle * 0.1}s ${loop ? 'infinite' : 'forwards'}`,
+                            animation: `lumvika-logo-draw-${loop ? 'loop' : 'once'} ${cycle}s ease-in-out ${i * cycle * 0.1}s ${loop ? 'infinite' : 'forwards'}`,
                         }}
                     />
                 ))}
 
                 {/* remplissage : révélé par la vague qui monte */}
-                <path d={R_PATH} fillRule="evenodd" fill="currentColor" mask={`url(#water-${id})`} />
+                <path d={MARK_PATH} fillRule="evenodd" fill="currentColor" mask={`url(#water-${id})`} />
             </svg>
         </span>
     )

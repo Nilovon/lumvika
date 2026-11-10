@@ -15,7 +15,7 @@ const snapshots = new Map<string, McpServerStatuses>()
 const listeners = new Map<string, Set<() => void>>()
 const inflight = new Set<string>()
 // A refresh asked while a probe runs has to dial again once it lands: the probe may predate the change.
-const rerun = new Set<string>()
+const lumvika = new Set<string>()
 
 function emit(agentId: string) {
     for (const listener of listeners.get(agentId) ?? []) listener()
@@ -24,7 +24,7 @@ function emit(agentId: string) {
 // A failed read settles on an empty map: the rows show no status rather than a wrong one.
 async function load(agentId: string) {
     if (inflight.has(agentId)) {
-        rerun.add(agentId)
+        lumvika.add(agentId)
         return
     }
     inflight.add(agentId)
@@ -39,7 +39,7 @@ async function load(agentId: string) {
     inflight.delete(agentId)
     snapshots.set(agentId, { statuses: new Map(servers.map(s => [s.name, s])), loading: false })
     emit(agentId)
-    if (rerun.delete(agentId)) void load(agentId)
+    if (lumvika.delete(agentId)) void load(agentId)
 }
 
 function subscribe(agentId: string, listener: () => void) {

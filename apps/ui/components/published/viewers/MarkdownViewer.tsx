@@ -1,7 +1,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { relativeDate } from '@/lib/data/friendly-columns'
 import { FileTextIcon } from '@/lib/icons'
-import { Markdown } from '@rerun/ui/markdown'
+import { Markdown } from '@lumvika/ui/markdown'
 import { ViewerPage, ViewerTopBar } from './ViewerChrome'
 
 // The chat's rich text, opened up for a full document: a page title, tables and images.

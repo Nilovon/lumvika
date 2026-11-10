@@ -1,11 +1,11 @@
-import { R_PATH } from '@rerun/ui/logo'
+import { MARK_PATH } from '@lumvika/ui/logo'
 import type { Options, Shape } from 'canvas-confetti'
 
 const DURATION_MS = 2500
 const EMIT_INTERVAL_MS = 60
 const EMITTERS_PER_TICK = 3
 const PARTICLES_PER_EMITTER = 2
-const COLORS = ['#ffffff', '#e5e5e5', '#a3a3a3', '#4d34f7', '#b7a8ff']
+const COLORS = ['#ffffff', '#e5e5e5', '#a3a3a3', '#0b6e63', '#7fdccb']
 
 let rShape: Shape | null = null
 let firing = false
@@ -17,7 +17,7 @@ function rotatedColors() {
     return [...COLORS.slice(offset), ...COLORS.slice(0, offset)]
 }
 
-export async function fireRerunConfetti() {
+export async function fireLumvikaConfetti() {
     if (firing) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     firing = true
@@ -26,7 +26,7 @@ export async function fireRerunConfetti() {
     // canvas-confetti ne l'expose que sur le default export : le déstructurer casse au runtime.
     const { default: confetti } = await import('canvas-confetti')
 
-    rShape ??= confetti.shapeFromPath({ path: R_PATH })
+    rShape ??= confetti.shapeFromPath({ path: MARK_PATH })
 
     const baseOptions: Options = {
         shapes: [rShape],

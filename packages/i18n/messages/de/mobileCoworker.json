@@ -80,7 +80,7 @@
         "boxLabel": "Box",
         "submit": "Erstellen",
         "pausedTitle": "{name} ist pausiert",
-        "pausedMessage": "Dein Plan hat keinen freien Coworker-Platz. Starte Pro auf rerun.build für unbegrenzt viele Coworker.",
+        "pausedMessage": "Dein Plan hat keinen freien Coworker-Platz. Starte Pro auf lumvika.com für unbegrenzt viele Coworker.",
         "failed": "Der Coworker konnte nicht erstellt werden"
     }
 }

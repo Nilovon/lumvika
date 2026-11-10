@@ -21,9 +21,9 @@ function prunablePart(part: ToolResultPart): boolean {
 // A paid answer or a page saved whole stays reachable once its result is pruned: the pointer survives.
 function savedPointerOf(output: ToolResultOutput): string {
     const value = output.value as { saved?: unknown } | string | undefined
-    const page = typeof value === 'string' ? /Saved whole: (\.rerun\/pages\/\S+)/.exec(value)?.[1] : undefined
+    const page = typeof value === 'string' ? /Saved whole: (\.lumvika\/pages\/\S+)/.exec(value)?.[1] : undefined
     if (page) return `; the whole page is saved at ${page}, read or grep it`
-    const answer = typeof value === 'string' ? /"saved":"(\.rerun\/paid-data\/[^"]+)"/.exec(value)?.[1] : typeof value?.saved === 'string' ? value.saved : undefined
+    const answer = typeof value === 'string' ? /"saved":"(\.lumvika\/paid-data\/[^"]+)"/.exec(value)?.[1] : typeof value?.saved === 'string' ? value.saved : undefined
     return answer ? `; the whole answer is saved at ${answer}, read it with paid_data_read` : ''
 }
 

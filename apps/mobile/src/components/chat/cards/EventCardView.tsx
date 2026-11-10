@@ -1,4 +1,4 @@
-import { brainChangeHeadline, type BrainChange } from '@rerun/contracts'
+import { brainChangeHeadline, type BrainChange } from '@lumvika/contracts'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { useState, type ReactNode } from 'react'
 import { Alert, View } from 'react-native'
@@ -42,7 +42,7 @@ export function EventRow({ symbol, icon, title, note, trailing, children }: { sy
 
 type Undo = 'idle' | 'pending' | 'done'
 
-// A change the Rerun agent made to the Brain itself, already landed: an edit can still be undone from
+// A change the Lumvika agent made to the Brain itself, already landed: an edit can still be undone from
 // here, as on the web. Opening the page stays on the web, which has the Brain.
 function BrainChangeRow({ change }: { change: BrainChange }) {
     const t = useTranslations('mobileCards')

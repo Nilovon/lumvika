@@ -21,7 +21,7 @@ export const ISO_DIM_MS = 300
 // Une tile occupe un bloc span×span de cellules. Sa position (col,row) est l'ancre = cellule
 // nord (coin haut) du bloc. DEFAULT_SPAN reproduit l'ancien footprint d'agent (2×2).
 export const DEFAULT_SPAN = 2
-// Alias rétro-compatible : du code serveur/store consomme encore AGENT_SPAN via @rerun/iso-grid/iso.
+// Alias rétro-compatible : du code serveur/store consomme encore AGENT_SPAN via @lumvika/iso-grid/iso.
 export const AGENT_SPAN = DEFAULT_SPAN
 
 // Sentinelle « non placé ». On ne peut pas se fier à col < 0 : un space peut vivre à des colonnes
@@ -77,7 +77,7 @@ export function tilesOverlap(a: { col: number; row: number }, b: { col: number; 
     return a.col < b.col + spanB && b.col < a.col + spanA && a.row < b.row + spanB && b.row < a.row + spanA
 }
 
-// Alias rétro-compatibles (footprint 2×2) pour les consommateurs existants de @rerun/iso-grid/iso.
+// Alias rétro-compatibles (footprint 2×2) pour les consommateurs existants de @lumvika/iso-grid/iso.
 export const agentCoversCell = (col: number, row: number, c: number, r: number) => tileCoversCell(col, row, c, r, DEFAULT_SPAN)
 export const agentsOverlap = (a: { col: number; row: number }, b: { col: number; row: number }) => tilesOverlap(a, b, DEFAULT_SPAN, DEFAULT_SPAN)
 

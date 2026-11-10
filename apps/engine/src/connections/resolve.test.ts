@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cx-resolve-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cx-resolve-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { mkdir, rm, writeFile } = await import('node:fs/promises')
@@ -35,19 +35,19 @@ describe('resolveConnection', () => {
         await connection('newer', 'claude', '2026-03-01')
         await connection('zeta', 'claude', '2026-01-01')
         await connection('alpha', 'claude', '2026-01-01')
-        await connection('rerun', 'rerun', '2025-01-01')
+        await connection('lumvika', 'lumvika', '2025-01-01')
 
         expect((await connectionsOfProvider('claude')).map(c => c.id)).toEqual(['alpha', 'zeta', 'newer'])
         expect((await resolveConnection(null, 'claude'))?.id).toBe('alpha')
         expect((await resolveConnection('deleted-one', 'claude'))?.id).toBe('alpha')
     })
 
-    it('falls through to the Rerun connection', async () => {
-        await connection('rerun', 'rerun', '2025-01-01')
+    it('falls through to the Lumvika connection', async () => {
+        await connection('lumvika', 'lumvika', '2025-01-01')
         await connection('gpt', 'openai', '2026-01-01')
-        expect((await resolveConnection(null, 'claude'))?.id).toBe('rerun')
-        expect((await resolveConnection(undefined, null))?.id).toBe('rerun')
-        expect((await resolveConnection('gone', undefined))?.id).toBe('rerun')
+        expect((await resolveConnection(null, 'claude'))?.id).toBe('lumvika')
+        expect((await resolveConnection(undefined, null))?.id).toBe('lumvika')
+        expect((await resolveConnection('gone', undefined))?.id).toBe('lumvika')
     })
 
     it('answers null on a box with nothing to fall back on', async () => {

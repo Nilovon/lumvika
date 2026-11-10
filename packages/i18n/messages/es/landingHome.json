@@ -4,14 +4,14 @@
             "lead": "Contrata <keep><chip>Coworkers</chip> de IA</keep>",
             "tail": "Trabajan como tú."
         },
-        "subtitle": "Los chatbots te dicen qué hacer. Los Coworkers de IA hacen el trabajo. Conecta a Rerun el LLM que ya pagas y dales trabajo.",
+        "subtitle": "Los chatbots te dicen qué hacer. Los Coworkers de IA hacen el trabajo. Conecta a Lumvika el LLM que ya pagas y dales trabajo.",
         "cta": "Prueba 5 días por {price}",
-        "productHuntAlt": "Apoya a Rerun en Product Hunt",
-        "trust": "Más de {count, number} usuarios confían su negocio a Rerun",
+        "productHuntAlt": "Apoya a Lumvika en Product Hunt",
+        "trust": "Más de {count, number} usuarios confían su negocio a Lumvika",
         "pillLeads": {
             "jobs": "Contrata un",
             "tasks": "Contrata un Coworker para",
-            "sectors": "Rerun para"
+            "sectors": "Lumvika para"
         },
         "tiles": {
             "tour-research": {
@@ -66,7 +66,7 @@
         "screen": {
             "hint": {
                 "tap": "Toca un coworker para verlo trabajar",
-                "click": "Haz clic en un coworker para verlo trabajar, o pregunta a Rerun"
+                "click": "Haz clic en un coworker para verlo trabajar, o pregunta a Lumvika"
             },
             "inboxSettings": "Preferencias: disponibles en tu propio workspace",
             "useCases": {
@@ -349,7 +349,7 @@
                 "close": "Cerrar coworker",
                 "newConversation": "Nueva conversación"
             },
-            "foreman": {
+            "steward": {
                 "newTask": "Nueva tarea",
                 "unknown": "Coworker desconocido",
                 "running": {

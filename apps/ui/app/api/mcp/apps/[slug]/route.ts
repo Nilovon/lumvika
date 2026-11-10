@@ -10,7 +10,7 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 
 // A paid app's MCP server, hosted by the hub. Same trust model as /api/mcp/composio/<slug>: the
-// engine proves its workspace with `x-rerun-key`, names its coworker with `x-rerun-agent`, and the
+// engine proves its workspace with `x-lumvika-key`, names its coworker with `x-lumvika-agent`, and the
 // account the call acts with is looked up here from that coworker, never taken from the call. The
 // Linkup key stays on this server.
 export const dynamic = 'force-dynamic'
@@ -21,7 +21,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     if (!isAppSlug(slug)) return new Response('Unknown app', { status: 404 })
     const app = appDefinition(slug)
 
-    const engine = await authenticateEngineToken(req.headers.get('x-rerun-key') ?? '')
+    const engine = await authenticateEngineToken(req.headers.get('x-lumvika-key') ?? '')
     if (!engine) return new Response('Unauthorized', { status: 401 })
 
     let rpc: RpcRequest
@@ -35,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     if (typeof method === 'string' && method.startsWith('notifications/')) return new Response(null, { status: 202 })
 
     if (method === 'initialize') {
-        return rpcResult(id, { protocolVersion: negotiatedProtocolVersion(rpcParams?.protocolVersion), capabilities: { tools: {} }, serverInfo: { name: `rerun-app-${slug}`, version: '1.0.0' } })
+        return rpcResult(id, { protocolVersion: negotiatedProtocolVersion(rpcParams?.protocolVersion), capabilities: { tools: {} }, serverInfo: { name: `lumvika-app-${slug}`, version: '1.0.0' } })
     }
 
     if (method === 'tools/list') {
@@ -49,7 +49,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     if (!tool) return rpcError(id, -32601, `Unknown tool: ${String(rpcParams?.name)}`)
 
     const supabase = createServiceRoleClient()
-    const engineAgentId = req.headers.get('x-rerun-agent') ?? ''
+    const engineAgentId = req.headers.get('x-lumvika-agent') ?? ''
     const { data: agent } = engineAgentId ? await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId }) : { data: null }
     if (!agent) return rpcError(id, -32603, 'Coworker does not belong to the authenticated workspace')
 

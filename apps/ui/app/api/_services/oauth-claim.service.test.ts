@@ -22,10 +22,10 @@ describe('finishParkedSignIn', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.mocked(resolveAgentTarget).mockResolvedValue({ conn: CONN, engineAgentId: 'engine-agent' } as never)
-        vi.stubEnv('RERUN_ASANA_MCP_CLIENT_ID', 'asana-id')
-        vi.stubEnv('RERUN_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_ID', 'gh-id')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
+        vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_ID', 'asana-id')
+        vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_ID', 'gh-id')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
     })
 
     afterEach(() => {

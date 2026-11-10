@@ -1,4 +1,4 @@
-import { brainSeedPageSchema } from '@rerun/contracts'
+import { brainSeedPageSchema } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
 import type { CatalogFindings } from '@/lib/company/explore/catalog-collector'
@@ -89,7 +89,7 @@ describe('brief parsing', () => {
 
 describe('buildSeedPages', () => {
     it('builds the whole identity card from a full card', () => {
-        const pages = buildSeedPages({ card: FULL_CARD, brief: BRIEF, foreman: null })
+        const pages = buildSeedPages({ card: FULL_CARD, brief: BRIEF, steward: null })
         const bySlug = new Map(pages.map(page => [page.slug, page]))
 
         expect([...bySlug.keys()]).toEqual(['company', 'offering', 'market', 'team', 'voice', 'stack', 'open-questions', 'office-subscription', 'barista-training', 'nespresso-pro', 'cafe-richard'])
@@ -127,14 +127,14 @@ describe('buildSeedPages', () => {
     })
 
     it('outlines the identity pages by name and the entity pages by count', () => {
-        const pages = buildSeedPages({ card: FULL_CARD, brief: BRIEF, foreman: null })
+        const pages = buildSeedPages({ card: FULL_CARD, brief: BRIEF, steward: null })
 
         expect(seedPagesOutline(pages)).toEqual({ topics: ['Acme Café', 'Offering', 'Market', 'Team', 'Voice', 'Stack', 'Open questions'], products: 2, competitors: 2 })
     })
 
     it('keeps only the pages a sparse card can fill', () => {
         const sparse = card({ company: { ...card().company, name: 'Solo', industry: 'Unknown' }, voice: { tone: 'Direct \u2014 short', language: '' } })
-        const pages = buildSeedPages({ card: sparse, brief: '', foreman: {} })
+        const pages = buildSeedPages({ card: sparse, brief: '', steward: {} })
 
         expect(pages.map(page => page.slug)).toEqual(['company', 'voice'])
         const company = pages[0]
@@ -150,20 +150,20 @@ describe('buildSeedPages', () => {
             offering: { products: ['Widget', 'widget!', 'Stack', '  ', 'Wìdget'], pricing: '', businessModel: '' },
             market: { ...card().market, competitors: ['Widget', 'Rival'] },
         })
-        const slugs = buildSeedPages({ card: colliding, brief: '', foreman: null }).map(page => page.slug)
+        const slugs = buildSeedPages({ card: colliding, brief: '', steward: null }).map(page => page.slug)
 
         expect(slugs.filter(slug => slug === 'widget')).toHaveLength(1)
         expect(slugs).toContain('rival')
         expect(slugs.filter(slug => slug === 'stack')).toHaveLength(0)
-        const offering = buildSeedPages({ card: colliding, brief: '', foreman: null }).find(page => page.slug === 'offering')!
+        const offering = buildSeedPages({ card: colliding, brief: '', steward: null }).find(page => page.slug === 'offering')!
         expect(offering.content).toContain('- Stack')
     })
 
-    it('writes the priorities from the foreman interview', () => {
+    it('writes the priorities from the steward interview', () => {
         const pages = buildSeedPages({
             card: card({ company: { ...card().company, name: 'Acme' } }),
             brief: '',
-            foreman: { useCases: ['Answer support emails', 'Chase unpaid invoices'], needs: [{ job: 'Answer support emails', pain: 'Two hours a day', today: 'by hand in Gmail' }] },
+            steward: { useCases: ['Answer support emails', 'Chase unpaid invoices'], needs: [{ job: 'Answer support emails', pain: 'Two hours a day', today: 'by hand in Gmail' }] },
         })
         const priorities = pages.find(page => page.slug === 'priorities')!
 
@@ -192,7 +192,7 @@ describe('buildSeedPages', () => {
                 { name: 'Offering', url: 'https://acme.fr/products/offering', image: null, category: null, tags: [], description: 'A name that collides with a card page.' },
             ],
         }
-        const pages = buildSeedPages({ card: card({ ...FULL_CARD, offering: { ...FULL_CARD.offering, products: ['Coussin anti-chute', 'Office Subscription'] } }), brief: BRIEF, foreman: null, catalog })
+        const pages = buildSeedPages({ card: card({ ...FULL_CARD, offering: { ...FULL_CARD.offering, products: ['Coussin anti-chute', 'Office Subscription'] } }), brief: BRIEF, steward: null, catalog })
         const offering = pages.find(page => page.slug === 'offering')!
         const coussin = pages.find(page => page.slug === 'coussin-anti-chute')!
 
@@ -221,7 +221,7 @@ describe('buildSeedPages', () => {
         const pages = buildSeedPages({
             card: card({ ...FULL_CARD, market: { ...FULL_CARD.market, competitors } }),
             brief: '',
-            foreman: null,
+            steward: null,
             catalog: { platform: null, shopUrl: 'https://acme.fr', total: 25, totalIsLowerBound: false, collections: [], products },
         })
         expect(pages).toHaveLength(100)

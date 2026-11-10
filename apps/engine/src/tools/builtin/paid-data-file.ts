@@ -5,7 +5,7 @@ import { resolveInWorkspace } from '../sandbox.js'
 // Every paid answer is kept whole in the coworker's workspace: one too big for a tool result is
 // read back from here, a page at a time, for free rather than bought again. Kept out of any capture
 // or share of the agent, the data being the workspace's own.
-export const PAID_ANSWERS_DIR = '.rerun/paid-data'
+export const PAID_ANSWERS_DIR = '.lumvika/paid-data'
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 const MAX_TOTAL_BYTES = 200 * 1024 * 1024
 // Under what any provider takes as one tool result, with room for the path and the paging.

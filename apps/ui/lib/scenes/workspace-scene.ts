@@ -3,8 +3,8 @@
 // vocabulaire métier du board réel (SpacePublic / IsoAgent / AgentLink), pas avec des Tiles : c'est
 // l'adaptateur de l'app qui fait la traduction, donc l'image est celle que l'app rendrait.
 
-import { CONTAINER_SIDES, GRID_SIZE, hashUnit, isoPosition, TILE_H, TILE_W } from '@rerun/ui/iso-grid/iso'
-import type { IsoCamera } from '@rerun/ui/iso-grid'
+import { CONTAINER_SIDES, GRID_SIZE, hashUnit, isoPosition, TILE_H, TILE_W } from '@lumvika/ui/iso-grid/iso'
+import type { IsoCamera } from '@lumvika/ui/iso-grid'
 
 import type { AgentLink, AgentStatus, IsoAgent, SpacePublic } from '@/lib/board/types'
 import { findFreeRect, rectOnSide, type NewSpaceRect, type SpaceRect } from '@/lib/board/space-layout'

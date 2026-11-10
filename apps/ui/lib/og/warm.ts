@@ -8,7 +8,7 @@ const FALLBACK_HEADER = 'X-Og-Fallback'
 /**
  * Asks for a captured picture before an email links it, and says whether it is really there. A cold
  * capture is a real browser on a shared service, and a mail client's image proxy that gives up
- * leaves a hole in the message; a warm one is served from rerun-shot's disk cache. Never throws.
+ * leaves a hole in the message; a warm one is served from lumvika-shot's disk cache. Never throws.
  */
 export async function warmImage(url: string, timeoutMs: number): Promise<boolean> {
     try {

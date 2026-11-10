@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-memfiles-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-memfiles-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { existsSync } = await import('node:fs')
@@ -11,7 +11,7 @@ const { mkdir, readFile, writeFile } = await import('node:fs/promises')
 const { writeMemoryFile, updateMemoryFile, archiveMemoryFile, deleteMemoryFile, deleteAllMemoryFiles, readMemoryFile, listMemoryFiles, memoryFileExists } = await import('./files.js')
 const { HttpError } = await import('../lib/errors.js')
 
-const memoryDir = (agentId: string) => resolve(process.env.RERUN_DATA_DIR!, 'agents', agentId, 'memory')
+const memoryDir = (agentId: string) => resolve(process.env.LUMVIKA_DATA_DIR!, 'agents', agentId, 'memory')
 
 describe('writeMemoryFile', () => {
     it('writes a trimmed body with frontmatter and returns the parsed memory', async () => {

@@ -312,7 +312,7 @@
         "detailsLabel": "Bitte beschreibe die Details",
         "negativePlaceholder": "Was war an dieser Antwort unbefriedigend?",
         "positivePlaceholder": "Was war an dieser Antwort gut?",
-        "disclaimer": "Mit dieser Meldung teilst du diese Unterhaltung mit dem Rerun-Team, damit wir deine Coworker verbessern können.",
+        "disclaimer": "Mit dieser Meldung teilst du diese Unterhaltung mit dem Lumvika-Team, damit wir deine Coworker verbessern können.",
         "cancel": "Abbrechen",
         "submit": "Senden",
         "categories": {
@@ -366,11 +366,11 @@
         }
     },
     "budget": {
-        "title": "Rerun-Guthaben",
+        "title": "Lumvika-Guthaben",
         "paused": {
-            "title": "Rerun-Guthaben pausiert",
-            "body": "Deine Coworker können keine Rerun-Modelle oder kostenpflichtigen Daten nutzen, bis jemand sie wieder aktiviert.",
-            "actionTitle": "Rerun-Guthaben wieder aktivieren",
+            "title": "Lumvika-Guthaben pausiert",
+            "body": "Deine Coworker können keine Lumvika-Modelle oder kostenpflichtigen Daten nutzen, bis jemand sie wieder aktiviert.",
+            "actionTitle": "Lumvika-Guthaben wieder aktivieren",
             "actionDescription": "Die Ausgaben laufen sofort wieder.",
             "cta": "Fortsetzen"
         },
@@ -385,17 +385,17 @@
             "description": "{credits} jeden Monat inklusive."
         },
         "topUp": {
-            "title": "Rerun-Guthaben aufladen",
+            "title": "Lumvika-Guthaben aufladen",
             "cta": "Aufladen",
             "description": "Oder warte, es wird nächsten Monat zurückgesetzt."
         },
         "usedUp": {
-            "noCredit": "Dieser Workspace hat noch kein Rerun-Guthaben.",
+            "noCredit": "Dieser Workspace hat noch kein Lumvika-Guthaben.",
             "trial": "Du hast die {credits} deiner kostenlosen Testphase aufgebraucht.",
-            "period": "Du hast dein Rerun-Guthaben für diesen Zeitraum aufgebraucht."
+            "period": "Du hast dein Lumvika-Guthaben für diesen Zeitraum aufgebraucht."
         },
         "ownConnection": {
-            "body": "Diese Unterhaltung lief über Rerun, und dein {plan}-Abo ist verbunden."
+            "body": "Diese Unterhaltung lief über Lumvika, und dein {plan}-Abo ist verbunden."
         },
         "runOn": "Über {plan} ausführen",
         "or": "Oder",

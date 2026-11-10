@@ -3,8 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-trigger-gaps-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-trigger-gaps-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeEach, describe, expect, it, vi } = await import('vitest')
 
@@ -18,13 +18,13 @@ vi.mock('../../runtime/hub.js', () => ({
     },
 }))
 
-const { DEFAULT_CONNECTION_MODELS } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS } = await import('@lumvika/contracts')
 const { createConnection } = await import('../../connections/store.js')
 const { triggerTools } = await import('./trigger.js')
 const { markFired, readTrigger, triggerExists, writeTrigger } = await import('../../triggers/loader.js')
 const { triggerFile, triggersDir } = await import('../../config/paths.js')
 
-const NO_URL = "Its public URL is not available from here — open the coworker's Triggers tab in Rerun to copy it."
+const NO_URL = "Its public URL is not available from here — open the coworker's Triggers tab in Lumvika to copy it."
 
 let agentCount = 0
 
@@ -60,8 +60,8 @@ describe('trigger_list', () => {
 describe('trigger_create', () => {
     it('creates a POST trigger that follows the agent and hands back its public URL', async () => {
         const { id, run } = freshAgent()
-        hub.reply = { url: 'https://app.rerun.build/api/triggers/abc/new-lead' }
-        expect(await run('trigger_create', { name: 'New lead', description: 'Form submitted', body: 'Qualify the lead.' })).toBe('Created trigger new-lead (POST). Its public URL is https://app.rerun.build/api/triggers/abc/new-lead')
+        hub.reply = { url: 'https://app.lumvika.com/api/triggers/abc/new-lead' }
+        expect(await run('trigger_create', { name: 'New lead', description: 'Form submitted', body: 'Qualify the lead.' })).toBe('Created trigger new-lead (POST). Its public URL is https://app.lumvika.com/api/triggers/abc/new-lead')
         const trigger = await readTrigger(id, 'new-lead')
         expect(trigger).toMatchObject({ description: 'Form submitted', body: 'Qualify the lead.', methods: ['POST'], connectionId: null, provider: null, model: null, enabled: true })
         expect(hub.calls).toEqual([{ agentId: id, tool: 'trigger_url', args: { slug: 'new-lead', token: trigger.token } }])

@@ -1,1 +1,1 @@
-export { Switch } from '@rerun/ui/primitives'
+export { Switch } from '@lumvika/ui/primitives'

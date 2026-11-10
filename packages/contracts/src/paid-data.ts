@@ -1,4 +1,4 @@
-// The paid data a coworker buys with its workspace's Rerun credit: a catalog of routed capabilities
+// The paid data a coworker buys with its workspace's Lumvika credit: a catalog of routed capabilities
 // on Treg, reached through one `paid_data` tool. Treg picks the provider and falls back to the next
 // one on a miss, the hub bills what it was charged. Shared because the engine builds the tool and
 // its index from it, the hub validates and prices against it, and the UI labels calls with it.
@@ -24,7 +24,7 @@ export const PAID_DATA_ROUTE_MAX_COST_ERROR = 'route_max_cost'
 export const PAID_DATA_TOOL = 'paid_data'
 export const PAID_DATA_CATALOG_TOOL = 'paid_data_catalog'
 // Sent by an engine that saves each paid answer whole: the hub then adds it to its reply.
-export const PAID_DATA_FULL_ANSWER_HEADER = 'x-rerun-paid-data-full'
+export const PAID_DATA_FULL_ANSWER_HEADER = 'x-lumvika-paid-data-full'
 
 const text = z.string().min(1)
 const optionalText = text.optional()

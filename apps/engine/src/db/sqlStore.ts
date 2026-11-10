@@ -5,7 +5,7 @@ const pool = new Map<string, Client>()
 const opening = new Map<string, Promise<Client>>()
 
 // WAL is a persistent header flag, so posting it once also lets the sqlite3 and python processes
-// that open the same file through RERUN_AGENT_DB / RERUN_SHARED_DB read while we write.
+// that open the same file through LUMVIKA_AGENT_DB / LUMVIKA_SHARED_DB read while we write.
 // busy_timeout lives on the connection instead, so every client we open has to set its own.
 async function open(key: string, file: string, dir: string): Promise<Client> {
     mkdirSync(dir, { recursive: true })

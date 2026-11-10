@@ -4,7 +4,7 @@ import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { requireWorkspaceConnection } from '@/app/api/_auth/workspace-target'
 import { getWorkspaceConnection, NoEngineError } from '@/app/api/_services/workspace-engine.service'
 import * as engine from '@/lib/engine/client'
-import type { BrainPageSummary, BrainPageType, BrainProposal, BrainRevision } from '@rerun/contracts'
+import type { BrainPageSummary, BrainPageType, BrainProposal, BrainRevision } from '@lumvika/contracts'
 import { failureOf, refusal, refusalOf, type ActionFailure, type ActionRefusal } from '@/lib/i18n/action-error'
 
 // A box that predates the brain answers 404 on every /brain route: the dialog shows an "update

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { listConnectorCatalogAction } from '@/app/api/_actions/template.actions'
-import type { ConnectorCatalog } from '@rerun/ui/new-agent'
+import type { ConnectorCatalog } from '@lumvika/ui/new-agent'
 
 // One read per page load, shared by every opening of the dialog: the catalogue does not change
 // while someone is describing an agent.

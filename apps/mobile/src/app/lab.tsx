@@ -1,4 +1,4 @@
-import type { InboxItem, SkillProposal, SkillProposalStatus, WorkspaceSummary } from '@rerun/contracts'
+import type { InboxItem, SkillProposal, SkillProposalStatus, WorkspaceSummary } from '@lumvika/contracts'
 import { GlassView } from 'expo-glass-effect'
 import { Link, type Href } from 'expo-router'
 import type { ReactNode } from 'react'
@@ -30,7 +30,7 @@ import { WorkspaceMenuView } from '@/components/home/WorkspaceMenu'
 import { BUDDY_MOODS } from '@/components/buddy/look'
 import { CodeField } from '@/components/auth/CodeField'
 import { PhoneField } from '@/components/auth/PhoneField'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { PillButton } from '@/components/ui/PillButton'
 import { UpdateRequired } from '@/components/update/UpdateRequired'
 import { AppText } from '@/components/ui/AppText'
@@ -58,8 +58,8 @@ const SCREENS: { label: string; href: Href }[] = [
     { label: 'Home, 5 pinned, dark', href: '/lab-home?pins=5&scheme=dark' },
     { label: 'Home, 9 pinned', href: '/lab-home?pins=9' },
     { label: 'Home, nothing pinned', href: '/lab-home?pins=0' },
-    { label: 'Rerun, last conversation', href: '/chat/last' },
-    { label: 'Rerun, new conversation', href: '/chat/new' },
+    { label: 'Lumvika, last conversation', href: '/chat/last' },
+    { label: 'Lumvika, new conversation', href: '/chat/new' },
     { label: 'New coworker', href: '/new-coworker' },
     { label: 'Notifications', href: '/inbox' },
     { label: 'Sign-in sheet', href: '/lab-sign-in' },
@@ -94,13 +94,13 @@ const SCREENS: { label: string; href: Href }[] = [
     { label: 'Viewer: photos, PDF', href: '/lab-markdown?part=viewer' },
     { label: 'Message times, light', href: '/lab-message-times' },
     { label: 'Message times, dark', href: '/lab-message-times?scheme=dark' },
-    { label: 'Rerun on the Home', href: '/lab-foreman' },
-    { label: 'Rerun chat, conversation', href: '/lab-chat?coworker=foreman&tabs=1&state=conversation' },
-    { label: 'Rerun chat, running', href: '/lab-chat?coworker=foreman&tabs=1&state=running' },
-    { label: 'Rerun chat, question', href: '/lab-chat?coworker=foreman&tabs=1&state=question' },
-    { label: 'Rerun chat, empty', href: '/lab-chat?coworker=foreman&tabs=0' },
-    { label: 'Rerun chat, streaming', href: '/lab-chat?coworker=foreman&tabs=1&state=streaming' },
-    { label: 'Rerun chat, loading', href: '/lab-chat?coworker=foreman&tabs=1&state=loading' },
+    { label: 'Lumvika on the Home', href: '/lab-steward' },
+    { label: 'Lumvika chat, conversation', href: '/lab-chat?coworker=steward&tabs=1&state=conversation' },
+    { label: 'Lumvika chat, running', href: '/lab-chat?coworker=steward&tabs=1&state=running' },
+    { label: 'Lumvika chat, question', href: '/lab-chat?coworker=steward&tabs=1&state=question' },
+    { label: 'Lumvika chat, empty', href: '/lab-chat?coworker=steward&tabs=0' },
+    { label: 'Lumvika chat, streaming', href: '/lab-chat?coworker=steward&tabs=1&state=streaming' },
+    { label: 'Lumvika chat, loading', href: '/lab-chat?coworker=steward&tabs=1&state=loading' },
     { label: 'Chat, 1 tab', href: '/lab-chat?tabs=1' },
     { label: 'Chat, 3 tabs, first active', href: '/lab-chat?tabs=3&active=0' },
     { label: 'Chat, 6 tabs, middle active', href: '/lab-chat?tabs=6&active=3' },
@@ -151,7 +151,7 @@ const SCREENS: { label: string; href: Href }[] = [
     { label: 'Coworker notifications, muted', href: '/lab-notifications?screen=coworker&state=muted' },
     { label: 'Coworker notifications, no tasks', href: '/lab-notifications?screen=coworker&state=no-tasks' },
     { label: 'Coworker notifications, tasks failed', href: '/lab-notifications?screen=coworker&state=failed' },
-    { label: 'AI providers, Rerun only', href: '/lab-providers?state=rerun-only' },
+    { label: 'AI providers, Lumvika only', href: '/lab-providers?state=lumvika-only' },
     { label: 'AI providers, full', href: '/lab-providers?state=full' },
     { label: 'AI providers, API keys only', href: '/lab-providers?state=keys' },
     { label: 'AI providers, to reconnect', href: '/lab-providers?state=reconnect' },
@@ -159,7 +159,7 @@ const SCREENS: { label: string; href: Href }[] = [
     { label: 'AI providers, loading', href: '/lab-providers?state=loading' },
     { label: 'AI providers, member', href: '/lab-providers?state=full&role=member' },
     { label: 'AI providers, member, to reconnect', href: '/lab-providers?state=reconnect&role=member' },
-    { label: 'AI providers, member, Rerun only', href: '/lab-providers?state=rerun-only&role=member' },
+    { label: 'AI providers, member, Lumvika only', href: '/lab-providers?state=lumvika-only&role=member' },
     { label: 'Add a provider', href: '/lab-providers?screen=add' },
     { label: 'Claude, start', href: '/lab-providers?screen=claude' },
     { label: 'Claude, code pasted', href: '/lab-providers?screen=claude&state=waiting' },
@@ -178,8 +178,8 @@ const SCREENS: { label: string; href: Href }[] = [
     { label: 'Provider, OpenRouter', href: '/lab-providers?screen=detail&id=cnx-openrouter' },
     { label: 'Provider, OpenRouter key rejected', href: '/lab-providers?screen=detail&id=cnx-openrouter&state=reconnect' },
     { label: 'Provider, OpenCode key rejected', href: '/lab-providers?screen=detail&id=cnx-opencode&state=reconnect' },
-    { label: 'Provider, Rerun', href: '/lab-providers?screen=detail&id=rerun' },
-    { label: 'Provider, Rerun credits used up', href: '/lab-providers?screen=detail&id=rerun&state=credit' },
+    { label: 'Provider, Lumvika', href: '/lab-providers?screen=detail&id=lumvika' },
+    { label: 'Provider, Lumvika credits used up', href: '/lab-providers?screen=detail&id=lumvika&state=credit' },
     { label: 'Provider, OpenRouter, member', href: '/lab-providers?screen=detail&id=cnx-openrouter&role=member' },
     { label: 'Provider, OpenRouter key rejected, member', href: '/lab-providers?screen=detail&id=cnx-openrouter&state=reconnect&role=member' },
     { label: 'Add a provider, member', href: '/lab-providers?screen=add&role=member' },
@@ -214,7 +214,7 @@ const LAB_WORKSPACES: WorkspaceSummary[] = [
     { id: 3, name: 'Northwind', iconUrl: null, plan: 'solo', subscribed: true, role: 'admin' },
     { id: 4, name: 'Broken logo', iconUrl: 'https://example.invalid/logo.png', plan: 'solo', subscribed: false, role: 'admin' },
 ]
-const hitlProps = (toolCallId: string, input: Record<string, unknown>, kind: 'question' | 'approval' | 'secret' | 'takeover' = 'question', output?: unknown) => ({ pending: { kind, toolCallId, input, output }, agentId: 'agent-scout', coworkerName: 'Scout', webUrl: 'https://app.rerun.build', onAnswer: noop, onDismiss: noop })
+const hitlProps = (toolCallId: string, input: Record<string, unknown>, kind: 'question' | 'approval' | 'secret' | 'takeover' = 'question', output?: unknown) => ({ pending: { kind, toolCallId, input, output }, agentId: 'agent-scout', coworkerName: 'Scout', webUrl: 'https://app.lumvika.com', onAnswer: noop, onDismiss: noop })
 
 // The microphone records for real; the upload and the transcription take a beat, then nothing is sent.
 const LAB_VOICE: VoiceSender = {
@@ -276,11 +276,11 @@ function Pieces({ scheme }: { scheme: ColorScheme }) {
                 </View>
                 <View style={{ gap: spacing.sm, paddingHorizontal: spacing.xl }}>
                     <RunStatus coworker={byId('agent-recap')} phase="waking" />
-                    <RunStatus coworker={byId('foreman')} phase="thinking" />
+                    <RunStatus coworker={byId('steward')} phase="thinking" />
                     <RunStatus coworker={byId('agent-pulse')} phase="working" />
                 </View>
                 <View style={{ gap: spacing.sm, paddingHorizontal: spacing.md }}>
-                    <LabComposer placeholder="Ask Rerun anything" />
+                    <LabComposer placeholder="Ask Lumvika anything" />
                     <LabComposer placeholder="Message Pulse" running />
                     <LabComposer placeholder="Message Pulse" value="Make it weekly instead" />
                     <LabComposer placeholder="Message Pulse" value="And add the Q1 renewals" running />
@@ -295,7 +295,7 @@ function Pieces({ scheme }: { scheme: ColorScheme }) {
 }
 
 function LabComposer({ placeholder, value = '', running = false, target }: { placeholder: string; value?: string; running?: boolean; target?: boolean }) {
-    return <Composer value={value} onChangeText={noop} onSend={noop} onStop={noop} running={running} placeholder={placeholder} model={findModel('rerun-max')} onOpenModel={noop} target={target ? { coworker: byId('foreman'), choices: coworkers, onPick: noop } : undefined} />
+    return <Composer value={value} onChangeText={noop} onSend={noop} onStop={noop} running={running} placeholder={placeholder} model={findModel('lumvika-max')} onOpenModel={noop} target={target ? { coworker: byId('steward'), choices: coworkers, onPick: noop } : undefined} />
 }
 
 const VARIANTS: ButtonVariant[] = ['default', 'outline', 'secondary', 'ghost', 'destructive']
@@ -372,10 +372,10 @@ function Panel({ scheme }: { scheme: ColorScheme }) {
                     </View>
                 ))}
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm }}>
-                    <ForemanOrb size={20} />
-                    <ForemanOrb size={40} />
-                    <ForemanOrb size={56} />
-                    <ForemanOrb size={56} state="thinking" />
+                    <StewardOrb size={20} />
+                    <StewardOrb size={40} />
+                    <StewardOrb size={56} />
+                    <StewardOrb size={56} state="thinking" />
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                     {SAMPLE_IDS.map(id => (
@@ -410,7 +410,7 @@ export default function Lab() {
                 <Voice scheme="light" />
                 <Voice scheme="dark" />
             </Group>
-            <Group title="Buddies and the Foreman, light and dark">
+            <Group title="Buddies and the Steward, light and dark">
                 <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                     <Panel scheme="light" />
                     <Panel scheme="dark" />
@@ -528,7 +528,7 @@ export default function Lab() {
                         <ThemeScope key={scheme} scheme={scheme}>
                             <View style={{ gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, backgroundColor: palette[scheme].background, borderWidth: 1, borderColor: palette[scheme].border }}>
                                 <HitlBlock {...hitlProps('lab-1', { ...LAB_QUESTION, v: 9 })} />
-                                <UnknownCallBlock call={{ toolCallId: 'lab-2', toolName: 'request_signature', input: { reason: 'Sign the NDA with Acme before I send the proposal.' } }} coworkerName="Scout" webUrl="https://app.rerun.build" />
+                                <UnknownCallBlock call={{ toolCallId: 'lab-2', toolName: 'request_signature', input: { reason: 'Sign the NDA with Acme before I send the proposal.' } }} coworkerName="Scout" webUrl="https://app.lumvika.com" />
                             </View>
                         </ThemeScope>
                     ))}

@@ -12,7 +12,7 @@
         "workspaceMenu.brain": "Name of the workspace knowledge base feature.",
         "menu.weeklyRewind": "Name of a weekly recap feature (Rewind).",
         "controlCenter.title": "Command palette of the app (search agents, settings, conversations).",
-        "controlCenter.quotedQuery": "What the person typed, quoted, beside \"Ask Rerun\".",
+        "controlCenter.quotedQuery": "What the person typed, quoted, beside \"Ask Lumvika\".",
         "controlCenter.hints.searchPage": "Footer hint. <keys></keys> is replaced by the keyboard keys (⌘ F): pressing them again opens the browser's own find in page.",
         "controlCenter.hints.open": "Footer hint next to the Enter key: opens the selected row.",
         "controlCenter.hints.more": "Footer hint next to the Tab key: opens more options for the selected row.",
@@ -42,10 +42,11 @@
         "whatsNew": "What's new",
         "gettingStarted": "Getting started",
         "docs": "Docs",
-        "community": "Community",
         "shortcuts": "Shortcuts",
         "installApp": "Install app",
-        "hireExpert": "Hire an expert"
+        "hireExpert": "Hire an expert",
+        "about": "About",
+        "source": "Source"
     },
     "power": {
         "menuItem": "Restart machine",
@@ -151,18 +152,18 @@
         "reload": "Reload",
         "available": {
             "title": "New version available",
-            "description": "Reload to get the latest Rerun."
+            "description": "Reload to get the latest Lumvika."
         },
         "required": {
-            "title": "Rerun was updated",
+            "title": "Lumvika was updated",
             "description": "A new version is live. Reload to continue."
         }
     },
     "controlCenter": {
         "title": "Control center",
-        "description": "Jump to an agent, a setting or a conversation, or ask Rerun.",
+        "description": "Jump to an agent, a setting or a conversation, or ask Lumvika.",
         "back": "Back",
-        "askRerun": "Ask Rerun",
+        "askLumvika": "Ask Lumvika",
         "quotedQuery": "“{query}”",
         "unnamedBox": "Untitled Box",
         "pro": "Pro",
@@ -195,7 +196,7 @@
             "notificationsDetail": "When this agent reaches you"
         },
         "placeholder": {
-            "rootAssistant": "Search or ask Rerun…",
+            "rootAssistant": "Search or ask Lumvika…",
             "root": "Search agents, settings, conversations…",
             "agent": "Search in {name}…",
             "agentUnknown": "Search in this agent…",
@@ -236,6 +237,6 @@
     "boxNameSuggestions": "Or pick a name",
     "dashboard": {
         "metaTitle": "Dashboard",
-        "metaDescription": "Your Boxes and coworkers on Rerun."
+        "metaDescription": "Your Boxes and coworkers on Lumvika."
     }
 }

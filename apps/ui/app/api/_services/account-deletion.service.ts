@@ -2,7 +2,7 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/app/api/database.types'
-import { stopWorkspaceCharges, subscriptionStillCharges, uninstallWorkspaceApps } from '@rerun/cloud/account'
+import { stopWorkspaceCharges, subscriptionStillCharges, uninstallWorkspaceApps } from '@lumvika/cloud/account'
 import type { AccountDeletionBlocker } from '@/lib/auth/account-deletion'
 import { deletedAccountEmailFor } from '@/lib/auth/placeholder-email'
 import { DEFAULT_WORKSPACE_NAME } from '@/lib/naming/workspace-name'
@@ -112,7 +112,7 @@ async function erasePersonalData(admin: Client, userId: string) {
 }
 
 /**
- * Deletes an account the way Rerun does: the rows stay, nothing in them points to the person any
+ * Deletes an account the way Lumvika does: the rows stay, nothing in them points to the person any
  * more, and nobody can sign into them again. Every step can run twice, and the auth row goes last,
  * so a failure halfway leaves a session the user can retry from.
  */

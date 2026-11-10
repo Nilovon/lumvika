@@ -1,5 +1,5 @@
 import type { ModelMessage, streamText } from 'ai'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import { CLI_PROVIDERS } from './types.js'
 import { behaviourOf } from './opencode.js'
 import { systemPromptText, type SystemPrompt } from './systemPrompt.js'
@@ -37,12 +37,12 @@ export function applyCaching(runProvider: Provider, { system, messages, sessionI
     const provider = behaviourOf(runProvider, model)
     if (provider === 'anthropic') return { system: systemMessages(system, ephemeral), messages: withTailBreakpoint(messages) }
 
-    // Two system messages on the OpenAI chat format: the hub (for `rerun`) and `cacheBreakpointsFetch`
+    // Two system messages on the OpenAI chat format: the hub (for `lumvika`) and `cacheBreakpointsFetch`
     // (for an Anthropic model on the user's OpenRouter key) mark each one on the way out. The cache
     // key routes every request of a session to the same OpenAI cache, and OpenRouter reads it as its
     // sticky routing key when no `session_id` is given.
     if (provider === 'openai' || provider === 'openrouter') return { system: systemMessages(system), messages, providerOptions: { openai: { promptCacheKey: sessionId } } }
-    if (provider === 'rerun') return { system: systemMessages(system), messages }
+    if (provider === 'lumvika') return { system: systemMessages(system), messages }
 
     // The two CLIs take the prompt through their own settings (`systemPrompt` on Claude,
     // `baseInstructions` on Codex, see `resolveModel`): a `system` here would reach the model a

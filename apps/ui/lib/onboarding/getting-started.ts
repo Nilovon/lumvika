@@ -1,11 +1,11 @@
 // The five things a workspace does before it runs on its own, and the phone number of an account
 // whose signup asked for one. A step with a `panel` opens that settings dialog when clicked, the
 // payment method opens its card form, the phone the account dialog, and any other hands its
-// `prompt` to the Foreman, who walks them through.
+// `prompt` to the Steward, who walks them through.
 
-import { isPhoneStepDone, type PhoneStatus } from '@rerun/cloud/phone'
+import { isPhoneStepDone, type PhoneStatus } from '@lumvika/cloud/phone'
 import type { WorkspaceDialogPanel } from '@/lib/settings/panels'
-import { BILLING_ENABLED } from '@rerun/cloud/billing'
+import { BILLING_ENABLED } from '@lumvika/cloud/billing'
 
 export const GETTING_STARTED_REWARD_DAYS = 3
 

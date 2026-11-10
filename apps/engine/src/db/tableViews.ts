@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import type { Client } from '@libsql/client'
-import { CARD_FIELD_ROLES, CARD_FORMATS, isCardFormat, tableViewConfigSchema, type TableView, type TableViewConfig, type TableViewInput } from '@rerun/contracts'
+import { CARD_FIELD_ROLES, CARD_FORMATS, isCardFormat, tableViewConfigSchema, type TableView, type TableViewConfig, type TableViewInput } from '@lumvika/contracts'
 import { tableColumns, withBusyRetry } from './sqlStore.js'
 
-export const VIEWS_TABLE = '_rerun_views'
+export const VIEWS_TABLE = '_lumvika_views'
 
 // Created on the first write rather than when the database opens: most databases never get a view,
 // and an agent reading its file with sqlite3 should not find a table it never made.

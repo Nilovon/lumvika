@@ -1,17 +1,17 @@
-import type { AiConnectionView, AiConnectionsView, ConnectionUsage } from '@rerun/contracts'
+import type { AiConnectionView, AiConnectionsView, ConnectionUsage } from '@lumvika/contracts'
 
 // Dev only: what GET /api/v1/ai-connections answers, in the states the lab shows.
 
-const RERUN: AiConnectionView = {
-    id: 'rerun',
-    name: 'Rerun',
-    provider: 'rerun',
+const LUMVIKA: AiConnectionView = {
+    id: 'lumvika',
+    name: 'Lumvika',
+    provider: 'lumvika',
     kind: 'included',
     status: 'connected',
     credentialOnFile: true,
     summary: "20% of this month's credits used",
     isDefault: true,
-    models: [{ id: 'rerun-max', label: 'Rerun', enabled: true, locked: false }],
+    models: [{ id: 'lumvika-max', label: 'Lumvika', enabled: true, locked: false }],
     baseUrl: '',
     extraModels: [],
     planWindows: [],
@@ -162,7 +162,7 @@ const ADDABLE: AiConnectionsView['addable'] = [
         suggestedName: 'Anthropic',
         guide: {
             title: 'How to get your Anthropic key',
-            steps: '1. Open the [Anthropic Console](https://console.anthropic.com/settings/keys) and sign in.\n2. Click **Create Key** and name it, for example "Rerun".\n3. Copy the key (it starts with `sk-ant-`) and paste it above. It is shown only once.',
+            steps: '1. Open the [Anthropic Console](https://console.anthropic.com/settings/keys) and sign in.\n2. Click **Create Key** and name it, for example "Lumvika".\n3. Copy the key (it starts with `sk-ant-`) and paste it above. It is shown only once.',
         },
     },
     {
@@ -173,7 +173,7 @@ const ADDABLE: AiConnectionsView['addable'] = [
         suggestedName: 'OpenAI',
         guide: {
             title: 'How to get your OpenAI key',
-            steps: '1. Open [OpenAI API keys](https://platform.openai.com/api-keys) and sign in.\n2. Click **Create new secret key** and name it, for example "Rerun".\n3. Copy the key (it starts with `sk-`) and paste it above. It is shown only once.',
+            steps: '1. Open [OpenAI API keys](https://platform.openai.com/api-keys) and sign in.\n2. Click **Create new secret key** and name it, for example "Lumvika".\n3. Copy the key (it starts with `sk-`) and paste it above. It is shown only once.',
         },
     },
     {
@@ -202,15 +202,15 @@ const ADDABLE: AiConnectionsView['addable'] = [
 
 const CREDIT = { percent: 20, usedUp: false, backOn: 'on Nov 1' }
 
-export const AI_CONNECTIONS_RERUN_ONLY: AiConnectionsView = {
-    connections: [RERUN],
-    default: { connectionId: 'rerun', model: 'rerun-max', label: 'Rerun' },
+export const AI_CONNECTIONS_LUMVIKA_ONLY: AiConnectionsView = {
+    connections: [LUMVIKA],
+    default: { connectionId: 'lumvika', model: 'lumvika-max', label: 'Lumvika' },
     credit: CREDIT,
     addable: ADDABLE,
 }
 
 export const AI_CONNECTIONS_FULL: AiConnectionsView = {
-    connections: [{ ...RERUN, isDefault: false }, { ...CLAUDE, isDefault: true }, CHATGPT, OPENCODE, OPENROUTER],
+    connections: [{ ...LUMVIKA, isDefault: false }, { ...CLAUDE, isDefault: true }, CHATGPT, OPENCODE, OPENROUTER],
     default: { connectionId: 'cnx-claude', model: 'claude-sonnet-4-6', label: 'Sonnet 4.6' },
     credit: CREDIT,
     addable: ADDABLE.map(entry => (entry.provider === 'claude' ? { ...entry, suggestedName: 'Claude 2' } : entry.provider === 'codex' ? { ...entry, suggestedName: 'ChatGPT 2' } : entry.provider === 'openrouter' ? { ...entry, suggestedName: 'OpenRouter 2' } : entry)),
@@ -218,7 +218,7 @@ export const AI_CONNECTIONS_FULL: AiConnectionsView = {
 
 // Every provider plugged in with its own key, no subscription: the App Store screenshot.
 export const AI_CONNECTIONS_KEYS: AiConnectionsView = {
-    connections: [{ ...RERUN, isDefault: false }, { ...ANTHROPIC, isDefault: true }, OPENAI, GOOGLE, OPENROUTER],
+    connections: [{ ...LUMVIKA, isDefault: false }, { ...ANTHROPIC, isDefault: true }, OPENAI, GOOGLE, OPENROUTER],
     default: { connectionId: 'cnx-anthropic', model: 'claude-opus-5-5', label: 'Opus 5.5' },
     credit: CREDIT,
     addable: ADDABLE.filter(entry => entry.kind === 'key'),
@@ -227,7 +227,7 @@ export const AI_CONNECTIONS_KEYS: AiConnectionsView = {
 export const AI_CONNECTIONS_RECONNECT: AiConnectionsView = {
     ...AI_CONNECTIONS_FULL,
     connections: [
-        { ...RERUN, isDefault: false },
+        { ...LUMVIKA, isDefault: false },
         { ...CLAUDE, isDefault: true, status: 'reconnect', summary: 'Plan · 5 models', planWindows: [] },
         CHATGPT,
         { ...OPENCODE, status: 'reconnect', planWindows: [] },
@@ -236,8 +236,8 @@ export const AI_CONNECTIONS_RECONNECT: AiConnectionsView = {
 }
 
 export const AI_CONNECTIONS_CREDIT_USED_UP: AiConnectionsView = {
-    ...AI_CONNECTIONS_RERUN_ONLY,
-    connections: [{ ...RERUN, status: 'credit_used_up', summary: 'Monthly credits used up, back on Nov 1' }],
+    ...AI_CONNECTIONS_LUMVIKA_ONLY,
+    connections: [{ ...LUMVIKA, status: 'credit_used_up', summary: 'Monthly credits used up, back on Nov 1' }],
     credit: { percent: 100, usedUp: true, backOn: 'on Nov 1' },
 }
 

@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button'
 import { ArrowRightIcon } from '@/lib/icons'
-import { AgentBuddy } from '@rerun/ui/iso-grid'
-import { CoinStack, type CatalogEntry } from '@rerun/ui/new-agent'
-import { Spinner } from '@rerun/ui/primitives'
+import { AgentBuddy } from '@lumvika/ui/iso-grid'
+import { CoinStack, type CatalogEntry } from '@lumvika/ui/new-agent'
+import { Spinner } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { type ReactNode, useState } from 'react'
 
@@ -18,7 +18,7 @@ function setupMinutes(apps: CatalogEntry[]): number {
 // agent with no credentials and nothing connected. The escape hatch is deliberate: skipping is
 // the user's call, and it never tells the agent its install is done.
 // `modelSlot` carries the composer's model picker: the install is a normal run, so it has to be
-// switchable before it starts, or a workspace out of Rerun credit has no way through.
+// switchable before it starts, or a workspace out of Lumvika credit has no way through.
 // `inProgress`: the install already runs in another conversation, and starting it here would ask the
 // user everything a second time. The gate leads there instead.
 // `onStart` answers whether the install went out: false (no model ready) leaves the button ready.

@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cli-auth-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cli-auth-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const calls = vi.hoisted(() => [] as [string, unknown][])
 
@@ -50,7 +50,7 @@ describe('ensureCliAuth', () => {
     })
 
     it('does nothing for a provider that is not a CLI', async () => {
-        for (const provider of ['rerun', 'anthropic', 'openai', 'google', 'openrouter'] as const) await ensureCliAuth(provider, connection)
+        for (const provider of ['lumvika', 'anthropic', 'openai', 'google', 'openrouter'] as const) await ensureCliAuth(provider, connection)
         expect(calls).toEqual([])
     })
 })

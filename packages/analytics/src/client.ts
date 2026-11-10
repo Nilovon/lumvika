@@ -140,7 +140,7 @@ function referrerDomain(): string | undefined {
     if (typeof document === 'undefined' || !document.referrer) return undefined
     try {
         const host = new URL(document.referrer).hostname
-        if (host.endsWith('rerun.build')) return undefined
+        if (host.endsWith('lumvika.com')) return undefined
         return host || undefined
     } catch {
         return undefined

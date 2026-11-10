@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
-const edition = vi.hoisted(() => ({ rerunCloud: true }))
-vi.mock('@rerun/cloud/edition', () => ({ get RERUN_CLOUD() { return edition.rerunCloud } }))
+const edition = vi.hoisted(() => ({ lumvikaCloud: true }))
+vi.mock('@lumvika/cloud/edition', () => ({ get LUMVIKA_CLOUD() { return edition.lumvikaCloud } }))
 
 const { verifyCaptcha } = await import('./captcha')
 
@@ -26,7 +26,7 @@ afterEach(() => {
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
-    edition.rerunCloud = true
+    edition.lumvikaCloud = true
 })
 
 describe('verifyCaptcha', () => {
@@ -96,7 +96,7 @@ describe('verifyCaptcha', () => {
         vi.stubEnv('TURNSTILE_SECRET_KEY', '')
         vi.stubEnv('HCAPTCHA_SECRET_KEY', '')
         vi.stubEnv('NODE_ENV', 'production')
-        edition.rerunCloud = false
+        edition.lumvikaCloud = false
 
         expect(await verifyCaptcha(undefined, '203.0.113.7')).toBe(true)
     })

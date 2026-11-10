@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils'
 
 export type ScreenSide = 'left' | 'right'
 
-const SIDE_STORAGE_KEY = 'rerun:chat-screen-side'
-const WIDTH_STORAGE_KEY = 'rerun:chat-screen-width'
+const SIDE_STORAGE_KEY = 'lumvika:chat-screen-side'
+const WIDTH_STORAGE_KEY = 'lumvika:chat-screen-width'
 const DEFAULT_WIDTH = 200
 const MIN_WIDTH = 160
 const MAX_WIDTH = 360

@@ -1,5 +1,5 @@
 import { apiRoute } from '@/app/api/v1/_lib/api-route'
-import type { ClientConfig, ClientServer } from '@rerun/contracts'
+import type { ClientConfig, ClientServer } from '@lumvika/contracts'
 
 export const dynamic = 'force-dynamic'
 

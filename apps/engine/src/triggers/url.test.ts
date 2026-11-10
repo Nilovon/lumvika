@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-trigger-url-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-trigger-url-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const hub = vi.hoisted(() => ({ answer: undefined as unknown, fail: false, calls: [] as unknown[][] }))
 
@@ -29,8 +29,8 @@ beforeEach(() => {
 
 describe('triggerPublicUrl', () => {
     it('asks the hub for the URL of this slug and token', async () => {
-        hub.answer = { url: 'https://rerun.build/hooks/abc' }
-        expect(await triggerPublicUrl('agent1', trigger)).toBe('https://rerun.build/hooks/abc')
+        hub.answer = { url: 'https://lumvika.com/hooks/abc' }
+        expect(await triggerPublicUrl('agent1', trigger)).toBe('https://lumvika.com/hooks/abc')
         expect(hub.calls).toEqual([[{ id: 'agent1' }, 'trigger_url', { slug: 'stripe-refund', token: 'tok-secret' }]])
     })
 
@@ -47,7 +47,7 @@ describe('triggerPublicUrl', () => {
     })
 
     it('answers null without asking the hub when the trigger has no token', async () => {
-        hub.answer = { url: 'https://rerun.build/hooks/abc' }
+        hub.answer = { url: 'https://lumvika.com/hooks/abc' }
         expect(await triggerPublicUrl('agent1', { ...trigger, token: '' })).toBeNull()
         expect(hub.calls).toEqual([])
     })
@@ -55,7 +55,7 @@ describe('triggerPublicUrl', () => {
 
 describe('urlLine', () => {
     it('states the URL when there is one', () => {
-        expect(urlLine('https://rerun.build/hooks/abc')).toBe('Its public URL is https://rerun.build/hooks/abc')
+        expect(urlLine('https://lumvika.com/hooks/abc')).toBe('Its public URL is https://lumvika.com/hooks/abc')
     })
 
     it('points at the Triggers tab otherwise', () => {

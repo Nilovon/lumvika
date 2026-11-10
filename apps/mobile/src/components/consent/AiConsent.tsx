@@ -5,12 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslations } from 'use-intl'
 
 import { FORM_COLUMN_MAX_WIDTH } from '@/components/layout/split'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { AppText } from '@/components/ui/AppText'
 import { Button } from '@/components/ui/Button'
 import { spacing } from '@/theme/tokens'
 
-const PRIVACY_URL = 'https://rerun.build/privacy'
+const PRIVACY_URL = 'https://lumvika.com/privacy'
 
 // Asked before anything the person types or shares leaves for an AI provider (App Store guideline
 // 5.1.2(i)): the website of the onboarding is the first, then every message, photo and voice note.
@@ -27,7 +27,7 @@ export function AiConsent({ onAgree, onDecline }: { onAgree: () => Promise<void>
     return (
         <View style={{ flex: 1, width: '100%', maxWidth: FORM_COLUMN_MAX_WIDTH, alignSelf: 'center' }}>
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingVertical: spacing.xl, gap: spacing.lg }}>
-                <ForemanOrb size={48} />
+                <StewardOrb size={48} />
                 <View style={{ gap: spacing.sm }}>
                     <AppText variant="title">{t('consent.title')}</AppText>
                     <AppText variant="callout" tone="muted">

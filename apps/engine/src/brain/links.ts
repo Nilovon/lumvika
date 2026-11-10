@@ -1,4 +1,4 @@
-import { BRAIN_SLUG_RE } from '@rerun/contracts'
+import { BRAIN_SLUG_RE } from '@lumvika/contracts'
 
 const WIKILINK = /\[\[([^\]|#\n]+)(?:#[^\]|\n]*)?(?:\|[^\]\n]*)?\]\]/g
 

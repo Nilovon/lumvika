@@ -3,8 +3,8 @@ Pod::Spec.new do |s|
   s.version        = '1.0.0'
   s.summary        = 'Asks iOS for the time to keep a chat stream open after the app leaves the screen.'
   s.description    = 'Asks iOS for the time to keep a chat stream open after the app leaves the screen.'
-  s.author         = 'Rerun'
-  s.homepage       = 'https://rerun.build'
+  s.author         = 'Lumvika'
+  s.homepage       = 'https://lumvika.com'
   s.platforms      = {
     :ios => '16.4'
   }

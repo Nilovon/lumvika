@@ -1,7 +1,7 @@
 'use client'
 
 import { useErrorText } from '@/hooks/useErrorText'
-import { Button } from '@rerun/ui/primitives'
+import { Button } from '@lumvika/ui/primitives'
 import * as React from 'react'
 import { useFormContext } from 'react-hook-form'
 import { useTranslations } from 'next-intl'

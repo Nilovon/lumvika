@@ -8,7 +8,7 @@ import { selectCount, selectMany } from '@/supabase/supabase-helpers'
 import { AppError, failure, failureOf, type ActionFailure } from '@/lib/i18n/action-error'
 
 // Creating, renaming and deleting a Box, with the workspace handed in rather than read from a
-// session. The board's server actions are the browser's door onto these; the foreman, which
+// session. The board's server actions are the browser's door onto these; the steward, which
 // runs its own loop on the hub, is the second caller, and both have to mean the same thing.
 //
 // A Box is a rectangle on the board that holds agents, not a machine: creating one is an insert.
@@ -88,12 +88,12 @@ export async function createBox(params: { workspaceId: number; userId: string; a
     await ensureWorkspaceNamed({ workspaceId, userId })
     // The corner comes back so the caller can rebase the anchors picked during onboarding: they
     // were relative to the board's placeholder, which does not sit where this Space does. The far
-    // corner and the resolved name are for the foreman, which places agents inside those bounds
+    // corner and the resolved name are for the steward, which places agents inside those bounds
     // in the same turn, before any board map has been redrawn.
     return { ok: true, spaceId, name, colStart: rect.colStart, rowStart: rect.rowStart, colEnd: rect.colEnd, rowEnd: rect.rowEnd }
 }
 
-// Toute l'organisation d'un coup : le Foreman dessine les divisions de l'entreprise et les pose en
+// Toute l'organisation d'un coup : le Steward dessine les divisions de l'entreprise et les pose en
 // un seul geste, plutôt qu'en six allers-retours devant l'utilisateur. Séquentiel et non parallèle,
 // parce que chaque createBox relit le board pour choisir sa place : lancées ensemble, deux Box
 // viseraient le même créneau. C'est aussi ce qui dessine la rosace : la première du tableau est le

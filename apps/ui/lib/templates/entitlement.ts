@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/app/api/database.types'
-import { MARKETPLACE_ENABLED } from '@rerun/cloud/marketplace'
+import { MARKETPLACE_ENABLED } from '@lumvika/cloud/marketplace'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 
-// Who may install what. A purchase belongs to the workspace, like every other thing Rerun bills, so
+// Who may install what. A purchase belongs to the workspace, like every other thing Lumvika bills, so
 // this is always answered against a workspace id and never against the person clicking.
 //
 // `past_due` stays entitled on purpose: Stripe retries a failed invoice for weeks before emitting

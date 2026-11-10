@@ -90,7 +90,7 @@ async function handle(supabase: SupabaseClient<Database>, event: BirdEvent, webh
     return true
 }
 
-// Bird's events for the WhatsApp messages Rerun sends: what became of each one, who said stop and
+// Bird's events for the WhatsApp messages Lumvika sends: what became of each one, who said stop and
 // who answered.
 // And for the verification codes: whether each one reached the phone.
 // Anything but a 2xx is retried by Bird for about a day, which is what a refused signature and a

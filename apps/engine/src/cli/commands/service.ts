@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 
-const service = (): string => process.env.RERUN_SERVICE ?? 'rerun'
+const service = (): string => process.env.LUMVIKA_SERVICE ?? 'lumvika'
 
 function privileged(command: string, args: string[]): void {
     const useSudo = process.getuid?.() !== 0

@@ -1,4 +1,4 @@
-// The search's Ask Rerun hands its text to the Foreman page it opens, in memory: a route parameter
+// The search's Ask Lumvika hands its text to the Steward page it opens, in memory: a route parameter
 // could be set by any link the phone opens, and would send a message the person never typed.
 let pending: string | null = null
 

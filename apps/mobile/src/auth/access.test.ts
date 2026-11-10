@@ -1,4 +1,4 @@
-import { FOREMAN_AGENT_ID, type Box } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, type Box } from '@lumvika/contracts'
 
 import { AI_PROVIDERS_ADMIN_ONLY, BOX_MANAGE_REASON, boxForNewCoworker, canManage, isAdminRole, knownCoworkerAccess, manageableBoxes, manageLock, manageReason, NO_MANAGED_BOX, newCoworkerBlocker, OPEN_LOCK, UNKNOWN_ACCESS } from '@/auth/access'
 
@@ -51,9 +51,9 @@ describe('access', () => {
         expect(knownCoworkerAccess('a1', {})).toEqual(UNKNOWN_ACCESS)
     })
 
-    it('hands the Foreman to everyone without asking', () => {
-        expect(knownCoworkerAccess(FOREMAN_AGENT_ID, {})).toEqual({ known: true, access: 'manage' })
-        expect(knownCoworkerAccess(FOREMAN_AGENT_ID, { agents: [{ id: FOREMAN_AGENT_ID, access: 'use' }] })).toEqual({ known: true, access: 'manage' })
+    it('hands the Steward to everyone without asking', () => {
+        expect(knownCoworkerAccess(STEWARD_AGENT_ID, {})).toEqual({ known: true, access: 'manage' })
+        expect(knownCoworkerAccess(STEWARD_AGENT_ID, { agents: [{ id: STEWARD_AGENT_ID, access: 'use' }] })).toEqual({ known: true, access: 'manage' })
     })
 
     it('greys a control without a word while the level is unknown, with the reason for a Box only used', () => {

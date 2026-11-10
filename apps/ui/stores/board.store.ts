@@ -10,10 +10,10 @@ import { ATTENTION_STATUSES } from '@/lib/board/attention'
 import type { SpaceRect, SpaceSide } from '@/lib/board/space-layout'
 import { installSharedAgentAction } from '@/app/api/_actions/agent-share.actions'
 import { installTemplateAction } from '@/app/api/_actions/template.actions'
-import { fireRerunConfetti } from '@/lib/confetti'
+import { fireLumvikaConfetti } from '@/lib/confetti'
 import { clearPendingKickoff, readPendingKickoff, readPendingKickoffs, savePendingKickoff, type PendingKickoff } from '@/lib/onboarding/pending-kickoff'
 import { reportDuplicate, reportInstall, reportShareInstall } from '@/lib/templates/install-feedback'
-import { track } from '@rerun/analytics/client'
+import { track } from '@lumvika/analytics/client'
 import { toast } from 'sonner'
 import type { ReactNode } from 'react'
 import { refusalText, translated } from '@/lib/i18n/toast-text'
@@ -338,7 +338,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         if (kickoff || description) savePendingKickoff({ agentId, kickoff, description })
         // La pluie de logos salue l'agent qui atterrit pour de vrai, pas le drop sur le bloc fantôme :
         // en onboarding, celui-ci est suivi de la création de compte et du paiement.
-        void fireRerunConfetti()
+        void fireLumvikaConfetti()
         get().openAgentChat(agentId)
         void get().sendPendingKickoff(agentId)
     },

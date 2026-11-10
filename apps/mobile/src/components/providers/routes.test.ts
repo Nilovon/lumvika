@@ -15,6 +15,6 @@ describe('how a connection is put back on its feet', () => {
 
     it('shows OpenCode under its own mark', () => {
         expect(logoOf('opencode')).toBe('opencode')
-        expect(logoOf('openrouter')).toBe('rerun')
+        expect(logoOf('openrouter')).toBe('lumvika')
     })
 })

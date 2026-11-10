@@ -1,4 +1,4 @@
-import { RERUN_CONNECTION_ID, type Provider } from '@rerun/contracts'
+import { LUMVIKA_CONNECTION_ID, type Provider } from '@lumvika/contracts'
 import { findConnection, listConnections } from './registry.js'
 import type { LoadedConnection } from './types.js'
 
@@ -15,7 +15,7 @@ export async function connectionsOfProvider(provider: Provider): Promise<LoadedC
 // What an agent, a schedule or a trigger actually runs on. A connection id that resolves wins; a
 // bare provider is what a template imported from another box or an MCP `update_agent` call carries,
 // and it maps onto the box's oldest connection of that provider. Falling through to the keyless
-// Rerun connection keeps a freshly imported agent runnable rather than inert.
+// Lumvika connection keeps a freshly imported agent runnable rather than inert.
 export async function resolveConnection(connectionId: string | null | undefined, provider: Provider | null | undefined): Promise<LoadedConnection | null> {
     const direct = await findConnection(connectionId)
     if (direct) return direct
@@ -23,7 +23,7 @@ export async function resolveConnection(connectionId: string | null | undefined,
         const match = (await connectionsOfProvider(provider))[0]
         if (match) return match
     }
-    return findConnection(RERUN_CONNECTION_ID)
+    return findConnection(LUMVIKA_CONNECTION_ID)
 }
 
 // A connection serves a model when the model is one it was curated to offer. `extraModels` carries

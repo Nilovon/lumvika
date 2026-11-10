@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-schedule-loader-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-schedule-loader-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const sent = vi.hoisted(() => [] as unknown[])
 

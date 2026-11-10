@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
-import { CONNECTION_TOKEN_KEY } from '@rerun/contracts'
+import { CONNECTION_TOKEN_KEY } from '@lumvika/contracts'
 import { codexHomeDir } from '../config/paths.js'
 import { childProcessEnv } from '../lib/child-env.js'
 import { logger } from '../lib/logger.js'
@@ -87,7 +87,7 @@ export function readCodexSession(connectionId: string, timeoutMs = READ_TIMEOUT_
             }
         })
 
-        send({ id: INITIALIZE_ID, method: 'initialize', params: { clientInfo: { name: 'rerun-engine', version: '1' }, capabilities: { experimentalApi: true } } })
+        send({ id: INITIALIZE_ID, method: 'initialize', params: { clientInfo: { name: 'lumvika-engine', version: '1' }, capabilities: { experimentalApi: true } } })
     })
 }
 

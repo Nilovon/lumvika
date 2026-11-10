@@ -1,1 +1,1 @@
-export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent } from '@rerun/ui/primitives'
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent } from '@lumvika/ui/primitives'

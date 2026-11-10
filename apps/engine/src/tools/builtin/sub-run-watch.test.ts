@@ -78,10 +78,10 @@ describe('followSubRun', () => {
             end = e
         })
         const following = followSubRun(run, progress, { onChange: () => {} })
-        push(call('c1', 'mcp__rerun__shell_exec', { command: 'curl -s https://www.reddit.com/r/x.json\n| jq .' }))
+        push(call('c1', 'mcp__lumvika__shell_exec', { command: 'curl -s https://www.reddit.com/r/x.json\n| jq .' }))
         await vi.advanceTimersByTimeAsync(4_000)
         push(result('c1', 'Command failed: exit 22'))
-        push(call('c2', 'mcp__rerun__browser_navigate', { url: 'https://www.reddit.com/r/x/' }))
+        push(call('c2', 'mcp__lumvika__browser_navigate', { url: 'https://www.reddit.com/r/x/' }))
         await vi.advanceTimersByTimeAsync(1_000)
         push({ type: 'tool-error', toolCallId: 'c2', error: 'Navigation failed' })
         push(call('c3', 'web_fetch', { url: 'https://example.com/' }))
@@ -167,7 +167,7 @@ describe('followSubRun', () => {
         expect(aborted).toEqual([])
     })
 
-    it.each(['mcp__rerun__call_agent', 'call_agent', 'delegate_tasks'])('does not count a run waiting on %s as idle, then watches it again', async toolName => {
+    it.each(['mcp__lumvika__call_agent', 'call_agent', 'delegate_tasks'])('does not count a run waiting on %s as idle, then watches it again', async toolName => {
         let push!: (part: Part) => void
         const run = scriptedRun(p => {
             push = p

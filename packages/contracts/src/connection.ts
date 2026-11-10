@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { RERUN_MODELS, providerSchema, type Provider } from './agent.js'
+import { LUMVIKA_MODELS, providerSchema, type Provider } from './agent.js'
 import { OPENCODE_DEFAULT_MODEL, providerModelSchema, type ProviderModel } from './opencode.js'
 import { OPENCODE_SNAPSHOT } from './opencode-snapshot.js'
 
@@ -28,7 +28,7 @@ export type ConnectionConfig = z.infer<typeof connectionConfigSchema>
 
 // The id of the keyless connection every box carries: requests are proxied by the hub, which holds
 // the shared key. It has a config.json like any other but no `.env`, and cannot be deleted.
-export const RERUN_CONNECTION_ID = 'rerun'
+export const LUMVIKA_CONNECTION_ID = 'lumvika'
 
 // One metered window of a subscription: the rolling session, the week, a per-model weekly cap, or the
 // month (OpenCode Go).
@@ -162,9 +162,9 @@ export type ConnectionUsage = z.infer<typeof connectionUsageSchema>
 export const deleteConnectionResultSchema = z.object({ deleted: z.string(), released: connectionUsageSchema })
 
 // The env var name each provider's credential is stored under, and the satellites written
-// alongside it by the OAuth flows. `rerun` has none: it is keyless.
+// alongside it by the OAuth flows. `lumvika` has none: it is keyless.
 export const CONNECTION_TOKEN_KEY: Record<z.infer<typeof providerSchema>, string> = {
-    rerun: '',
+    lumvika: '',
     anthropic: 'ANTHROPIC_API_KEY',
     claude: 'CLAUDE_CODE_OAUTH_TOKEN',
     codex: 'CODEX_OAUTH_TOKEN',
@@ -191,7 +191,7 @@ export function claudeTokenIssue(value: string): ClaudeTokenIssue | null {
 }
 
 export const CONNECTION_SATELLITE_KEYS: Record<z.infer<typeof providerSchema>, string[]> = {
-    rerun: [],
+    lumvika: [],
     anthropic: [],
     claude: ['CLAUDE_CODE_OAUTH_REFRESH_TOKEN', 'CLAUDE_CODE_OAUTH_EXPIRES_AT'],
     codex: ['CODEX_OAUTH_REFRESH_TOKEN', 'CODEX_OAUTH_ID_TOKEN', 'CODEX_OAUTH_ACCOUNT_ID', 'CODEX_OAUTH_EXPIRES_AT'],
@@ -215,7 +215,7 @@ export const DEFAULT_CONNECTION_MODELS: Record<z.infer<typeof providerSchema>, s
     // A connection's first model is what it runs when none is named. On a subscription that is one
     // step below the top tier: not every plan includes the top model, and a box that adopts it on
     // connect fails its very first run ("Fable 5.1 requires usage credits").
-    rerun: [RERUN_MODELS.balanced, RERUN_MODELS.fast, RERUN_MODELS.smart],
+    lumvika: [LUMVIKA_MODELS.balanced, LUMVIKA_MODELS.fast, LUMVIKA_MODELS.smart],
     anthropic: [
         'claude-fable-5-2',
         'claude-fable-5-1',
@@ -279,7 +279,7 @@ export const DEFAULT_CONNECTION_MODELS: Record<z.infer<typeof providerSchema>, s
 // How a connection names itself when nobody has yet: the boot migration builds "Claude (Theo)"
 // from this, and the UI seeds the name field with it.
 export const PROVIDER_LABELS: Record<z.infer<typeof providerSchema>, string> = {
-    rerun: 'Rerun',
+    lumvika: 'Lumvika',
     anthropic: 'Anthropic',
     claude: 'Claude',
     codex: 'Codex',
@@ -319,7 +319,7 @@ export type SetAgentModelInput = z.infer<typeof setAgentModelSchema>
 
 // The AI providers screen of the app, shaped by the hub with the web dialog's own rules (catalog,
 // hidden and locked models, plan windows, credit), since those live in apps/ui.
-export const addableProviderSchema = providerSchema.exclude(['rerun'])
+export const addableProviderSchema = providerSchema.exclude(['lumvika'])
 export type AddableProvider = z.infer<typeof addableProviderSchema>
 
 export const aiConnectionKindSchema = z.enum(['included', 'plan', 'key'])
@@ -347,7 +347,7 @@ export type AiConnectionView = z.infer<typeof aiConnectionViewSchema>
 
 export const aiConnectionsViewSchema = z.object({
     connections: z.array(aiConnectionViewSchema),
-    // What coworkers with no model of their own run on, Rerun when nothing is set.
+    // What coworkers with no model of their own run on, Lumvika when nothing is set.
     default: z.object({ connectionId: z.string(), model: z.string(), label: z.string() }),
     credit: z.object({ percent: z.number(), usedUp: z.boolean(), backOn: z.string() }),
     addable: z.array(

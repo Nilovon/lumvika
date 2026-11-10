@@ -1,4 +1,4 @@
-import { BRAIN_CARD_TYPES, FOREMAN_AGENT_ID, type BrainPageType } from '@rerun/contracts'
+import { BRAIN_CARD_TYPES, STEWARD_AGENT_ID, type BrainPageType } from '@lumvika/contracts'
 
 export const isCardType = (type: BrainPageType) => (BRAIN_CARD_TYPES as readonly string[]).includes(type)
 
@@ -32,13 +32,13 @@ const SOURCE_KEYS = {
 type BrainSourceKey = `sources.${'website' | (typeof SITE_PAGE_KEYS)[keyof typeof SITE_PAGE_KEYS] | (typeof SOURCE_KEYS)[keyof typeof SOURCE_KEYS]}`
 
 // The `brain` namespace, as far as these labels read it.
-export type BrainLabelCopy = (key: BrainSourceKey | 'authors.seed' | 'authors.foreman') => string
+export type BrainLabelCopy = (key: BrainSourceKey | 'authors.seed' | 'authors.steward') => string
 
-// The engine stores who wrote a page as `seed`, `user:<email>` or `agent:<name>`. The foreman
-// writes as `agent:foreman`, a name the user never sees.
+// The engine stores who wrote a page as `seed`, `user:<email>` or `agent:<name>`. The steward
+// writes as `agent:steward`, a name the user never sees.
 export function brainAuthorLabel(author: string, t: BrainLabelCopy): string {
     if (author === 'seed') return t('authors.seed')
-    if (author === `agent:${FOREMAN_AGENT_ID}`) return t('authors.foreman')
+    if (author === `agent:${STEWARD_AGENT_ID}`) return t('authors.steward')
     if (author.startsWith('agent:')) return author.slice('agent:'.length)
     if (author.startsWith('user:')) return author.slice('user:'.length)
     return author

@@ -1,4 +1,4 @@
-import type { AddableProvider, AiConnectionsView } from '@rerun/contracts'
+import type { AddableProvider, AiConnectionsView } from '@lumvika/contracts'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Alert, View } from 'react-native'
@@ -15,13 +15,13 @@ import { ChatGptSignIn, ClaudeSignIn, type ChatGptPhase, type ClaudePhase, type 
 import { ProvidersList } from '@/components/providers/ProvidersList'
 import { ProvidersAdminOnly } from '@/components/providers/screens'
 import { AppText } from '@/components/ui/AppText'
-import { AI_CONNECTIONS_CREDIT_USED_UP, AI_CONNECTIONS_FULL, AI_CONNECTIONS_KEYS, AI_CONNECTIONS_RECONNECT, AI_CONNECTIONS_RERUN_ONLY, AI_CONNECTIONS_TRIAL, MOCK_USAGE } from '@/mocks/aiConnections'
+import { AI_CONNECTIONS_CREDIT_USED_UP, AI_CONNECTIONS_FULL, AI_CONNECTIONS_KEYS, AI_CONNECTIONS_RECONNECT, AI_CONNECTIONS_LUMVIKA_ONLY, AI_CONNECTIONS_TRIAL, MOCK_USAGE } from '@/mocks/aiConnections'
 import { spacing } from '@/theme/tokens'
 
 // Dev only: every AI providers screen in each of its states, on mock data, in the form sheet they
-// open in. `rerun://lab-providers?screen=list&state=full`, `&role=member` for the read-only copy.
+// open in. `lumvika://lab-providers?screen=list&state=full`, `&role=member` for the read-only copy.
 
-const VIEWS: Record<string, AiConnectionsView> = { 'rerun-only': AI_CONNECTIONS_RERUN_ONLY, full: AI_CONNECTIONS_FULL, keys: AI_CONNECTIONS_KEYS, reconnect: AI_CONNECTIONS_RECONNECT, credit: AI_CONNECTIONS_CREDIT_USED_UP, trial: AI_CONNECTIONS_TRIAL }
+const VIEWS: Record<string, AiConnectionsView> = { 'lumvika-only': AI_CONNECTIONS_LUMVIKA_ONLY, full: AI_CONNECTIONS_FULL, keys: AI_CONNECTIONS_KEYS, reconnect: AI_CONNECTIONS_RECONNECT, credit: AI_CONNECTIONS_CREDIT_USED_UP, trial: AI_CONNECTIONS_TRIAL }
 
 const noop = () => {}
 const back = () => router.back()
@@ -70,7 +70,7 @@ function DetailLab({ id, state, readOnlyReason }: { id?: string; state?: string;
 const ERRORS = [
     'claude 401: {"type":"error","error":{"type":"authentication_error","message":"OAuth token has expired."}}',
     "You've hit your session limit · resets 4pm",
-    '402 Payment Required: {"error":"rerun_budget_exhausted"}',
+    '402 Payment Required: {"error":"lumvika_budget_exhausted"}',
     'Request timed out',
 ]
 

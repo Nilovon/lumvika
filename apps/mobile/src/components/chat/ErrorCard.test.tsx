@@ -6,7 +6,7 @@ jest.mock('react-native-svg', () => ({ __esModule: true, default: () => null, Pa
 
 const SIGNED_OUT = 'claude 401: {"type":"error","error":{"type":"authentication_error","message":"OAuth token has expired."}}'
 const SESSION_LIMIT = "You've hit your session limit · resets 4pm"
-const CREDITS = '402 Payment Required: {"error":"rerun_budget_exhausted"}'
+const CREDITS = '402 Payment Required: {"error":"lumvika_budget_exhausted"}'
 const THINKING_REPLAY = 'ProviderRefusedError: Provider returned error: messages.1.content.0: Invalid `signature` in `thinking` block. The block is bound to a different conversation.'
 
 const actions = () => ({ onRetry: jest.fn(), onReconnect: jest.fn(), onSwitchModel: jest.fn(), onConnect: jest.fn() })

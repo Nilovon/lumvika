@@ -1,17 +1,17 @@
 'use client'
 
-import { IsoGrid, SPACE_COLOR, agentTileStyle, type Container, type ContainerSide, type IsoCamera, type IsoFocusRequest, type TileResults } from '@rerun/ui/iso-grid'
+import { IsoGrid, SPACE_COLOR, agentTileStyle, type Container, type ContainerSide, type IsoCamera, type IsoFocusRequest, type TileResults } from '@lumvika/ui/iso-grid'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useIsMobile } from '@rerun/ui/primitives/use-is-mobile'
+import { useIsMobile } from '@lumvika/ui/primitives/use-is-mobile'
 import { AnimatePresence, motion } from 'motion/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { type PlacementQueue, placementLabel, refuseUnmanagedBox, useBoardStore } from '@/stores/board.store'
 import { useBoardCoverStore } from '@/stores/board-cover.store'
-import { useForemanStore } from '@/stores/foreman.store'
+import { useStewardStore } from '@/stores/steward.store'
 import { useBillingStore } from '@/stores/billing.store'
 import { hasPendingStart, useOnboardingStore } from '@/stores/onboarding.store'
-import { isSubscriptionEntitled } from '@rerun/cloud/billing'
+import { isSubscriptionEntitled } from '@lumvika/cloud/billing'
 import { readHeroAgentApps, readHeroAgentName } from '@/lib/onboarding/hero-handoff'
 import { useResumePendingStart } from '@/lib/onboarding/useResumePendingStart'
 import { nameAgentFromPromptAction } from '@/app/api/_actions/onboarding.actions'
@@ -19,7 +19,7 @@ import { useSession } from '@/supabase/session/SessionProvider'
 import { BOX_FIRST_INTRO, ClaimSpaceDialog, type ClaimSpaceTarget } from '@/components/dialogs/ClaimSpaceDialog'
 import { CursorOverlay } from '@/components/layout/CursorOverlay'
 import { BoardContextMenu, type BoardContextTarget } from '@/components/builder/BoardContextMenu'
-import { isPlanPreviewId } from '@/lib/foreman/plan-scene'
+import { isPlanPreviewId } from '@/lib/steward/plan-scene'
 import { usePlanPreviewScene } from '@/components/builder/usePlanPreviewScene'
 import { BoardDiscoveries } from '@/components/builder/discoveries/BoardDiscoveries'
 import { useCompanyDiscoveries } from '@/components/builder/discoveries/useCompanyDiscoveries'
@@ -35,7 +35,7 @@ import { useNextRuns } from '@/hooks/useNextRuns'
 import { useUnseenGroups } from '@/hooks/useUnseenGroups'
 import { useUnseenRunsStore } from '@/stores/unseen-runs.store'
 import { containerFromSpace, linksFromSessions, tileFromAgent } from '@/lib/board/iso-adapter'
-import { useKitTranslations } from '@rerun/ui/locale'
+import { useKitTranslations } from '@lumvika/ui/locale'
 import { useAgentIdeas } from '@/lib/agent-ideas/useAgentIdeas'
 import { boxCtaExamples, boxCtaLabel } from '@/lib/onboarding/box-themes'
 import { localizeSuggestion } from '@/lib/onboarding/localize-suggestion'
@@ -83,8 +83,8 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
     const recenterSignal = useBoardStore(s => s.recenterSignal)
     const cameraFocus = useBoardStore(s => s.cameraFocus)
     const selectedSpaceId = useBoardStore(s => s.selectedSpaceId)
-    // Under md the side panel and the foreman are bottom sheets, the board stays live above them.
-    const foremanFunnel = useForemanStore(s => s.funnel)
+    // Under md the side panel and the steward are bottom sheets, the board stays live above them.
+    const stewardFunnel = useStewardStore(s => s.funnel)
     const belowMd = useIsMobile(PANEL_SHEET_QUERY)
     const dialogCoversBoard = useBoardCoverStore(s => s.covers > 0)
     const windowFocused = useWindowFocused()
@@ -137,22 +137,22 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
     // Une template parkée (lien partagé) remplace la promesse « recrute ton premier agent » par ce
     // qui va réellement atterrir, à l'attente comme au chargement.
     const parkedTitle = pendingTemplate ? clampLabel(pendingTemplate.title) : null
-    // L'onboarding se joue entièrement dans le Foreman, qui crée la Box lui-même : tant qu'elle n'est
+    // L'onboarding se joue entièrement dans le Steward, qui crée la Box lui-même : tant qu'elle n'est
     // pas là, le plan reste vide plutôt que de porter une promesse que personne ne vient tenir. Les
     // états qui disent quelque chose de vrai (attribution en cours, template parkée, placement en
     // cours) gardent leur fantôme, comme le compte déjà onboardé dont la Box a été supprimée : le
     // placeholder est son seul accès à la library.
     //
-    // C'est le tunnel qui fait foi, pas `onboarded_at` : le Foreman stampe celui-ci dès
+    // C'est le tunnel qui fait foi, pas `onboarded_at` : le Steward stampe celui-ci dès
     // save_profile, donc à la deuxième question, et le fantôme revenait au milieu de la conversation.
     // Tant que la phase n'est pas revenue du serveur on suit la même supposition que le kickoff,
     // sinon le fantôme s'affiche le temps d'un aller-retour.
-    const guidedByForeman = foremanFunnel === 'guided' || (foremanFunnel === 'unknown' && !workspace?.onboarded_at)
+    const guidedBySteward = stewardFunnel === 'guided' || (stewardFunnel === 'unknown' && !workspace?.onboarded_at)
     // The welcome card of a workspace that installed first is answered beside a board that is
     // already built: nothing is left to sketch on it.
-    const installedFirst = useForemanStore(s => s.arrival?.installed === true)
-    const emptyOnboardingBoard = !memberWithoutBox && !isSandbox && guidedByForeman && !startingFirstAgent && !placing && !parkedTitle && !installedFirst
-    // L'organisation que le Foreman vient de proposer, dessinée là où elle atterrira vraiment. Elle
+    const installedFirst = useStewardStore(s => s.arrival?.installed === true)
+    const emptyOnboardingBoard = !memberWithoutBox && !isSandbox && guidedBySteward && !startingFirstAgent && !placing && !parkedTitle && !installedFirst
+    // L'organisation que le Steward vient de proposer, dessinée là où elle atterrira vraiment. Elle
     // se superpose au board plutôt qu'elle ne le remplace : les Box viennent du même
     // `findRadialRect` des deux côtés, donc chaque vraie Box se pose exactement sur son fantôme, qui
     // s'efface. L'aperçu s'en va division par division au lieu de disparaître d'un bloc à la
@@ -163,7 +163,7 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
     // et le compte créé : avant, c'est le flux de la carte qui alimente les mêmes cartes.
     const discoveries = useDiscoveriesStore(s => s.state)
     const discoveriesDomain = useDiscoveriesStore(s => s.domain)
-    const intakeOpen = useForemanStore(s => s.intake)
+    const intakeOpen = useStewardStore(s => s.intake)
     useCompanyDiscoveries(emptyOnboardingBoard && !isAnonymous && !intakeOpen)
     const showDiscoveries = emptyOnboardingBoard && !!discoveriesDomain && discoveries.entries.length > 0
     const builtRects = useMemo(() => realSpaces.map(space => ({ col_start: space.col_start, row_start: space.row_start, col_end: space.col_end, row_end: space.row_end })), [realSpaces])
@@ -172,12 +172,12 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
 
     // Une Box sans agent invite à en recruter un : sa pastille ouvre la dialog New agent sur les
     // idées qui lui reviennent. Jamais avant l'hydratation, où toutes les Box paraissent vides, ni
-    // pendant le tunnel du Foreman, qui pose la Box puis l'agent, ni quand le bouton New agent de la
+    // pendant le tunnel du Steward, qui pose la Box puis l'agent, ni quand le bouton New agent de la
     // toolbar est lui-même fermé.
     const agentIdeas = useAgentIdeas()
     const industry = useOnboardingIndustry()
     const tSuggestions = useTranslations('agentSuggestions')
-    const invitesAgents = hydrated && !!workspace && !isSandbox && !isAnonymous && !needsMachineReason && !guidedByForeman && !startingFirstAgent && !placement && !placingAgentId && !previewing && mode !== 'space'
+    const invitesAgents = hydrated && !!workspace && !isSandbox && !isAnonymous && !needsMachineReason && !guidedBySteward && !startingFirstAgent && !placement && !placingAgentId && !previewing && mode !== 'space'
     const boxInvites = useMemo(() => {
         const invites = new Map<string, Pick<Container, 'cta' | 'ctaExamples'>>()
         if (!invitesAgents) return invites
@@ -226,19 +226,19 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
     const resumePendingStart = useResumePendingStart()
 
     // Cliquer le placeholder = lancer le recrutement du premier agent (au lieu de le sélectionner).
-    // Sous `md` le Foreman est une sheet : un tap sur le board la referme, sauf pendant le tunnel,
-    // que le Foreman mène et qui ne doit pas se fermer sous le doigt.
-    const dismissForemanSheet = useCallback(() => {
-        if (!belowMd || guidedByForeman) return
-        const foreman = useForemanStore.getState()
-        if (foreman.open) foreman.close()
-    }, [belowMd, guidedByForeman])
+    // Sous `md` le Steward est une sheet : un tap sur le board la referme, sauf pendant le tunnel,
+    // que le Steward mène et qui ne doit pas se fermer sous le doigt.
+    const dismissStewardSheet = useCallback(() => {
+        if (!belowMd || guidedBySteward) return
+        const steward = useStewardStore.getState()
+        if (steward.open) steward.close()
+    }, [belowMd, guidedBySteward])
     const unseenGroups = useUnseenGroups()
     // A coworker with results opens on the newest one: opening it is what marks it read, and the
     // runs of the same scheduled task go with it.
     const handleTileSelect = useCallback(
         (id: string | null) => {
-            dismissForemanSheet()
+            dismissStewardSheet()
             const latest = id ? unseenGroups.find(group => group.agentId === id) : undefined
             if (!id || !latest) {
                 selectAgent(id)
@@ -249,12 +249,12 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
             board.setPendingOpenSession({ agentId: id, sessionId: latest.latestSessionId, runId: null })
             void useUnseenRunsStore.getState().markSeen(latest.sessionIds)
         },
-        [dismissForemanSheet, selectAgent, unseenGroups]
+        [dismissStewardSheet, selectAgent, unseenGroups]
     )
 
     const handleSelectSpace = useCallback(
         (id: string | null) => {
-            dismissForemanSheet()
+            dismissStewardSheet()
             // Un fantôme de l'aperçu n'a pas de panneau à ouvrir : la Box n'existe pas encore.
             if (isPlanPreviewId(id)) return
             if (id === PLACEHOLDER_ID) {
@@ -275,7 +275,7 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
             selectSpace(id)
             if (id && boxInvites.has(id) && manageableSpaceIds.has(id)) onRequestBoxAgent?.(id)
         },
-        [dismissForemanSheet, startingFirstAgent, isSandbox, pendingTemplate, resumePendingStart, memberWithoutBox, onRequestRecruitAgent, selectSpace, boxInvites, manageableSpaceIds, onRequestBoxAgent]
+        [dismissStewardSheet, startingFirstAgent, isSandbox, pendingTemplate, resumePendingStart, memberWithoutBox, onRequestRecruitAgent, selectSpace, boxInvites, manageableSpaceIds, onRequestBoxAgent]
     )
 
     // Le prompt tapé dans le composer du hero de la landing, `?prompt=<texte>` : il devient le premier
@@ -289,7 +289,7 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
     // déjà parké.
     //
     // Quand l'onboarding n'a pas été fait, la chaîne ne repart pas d'ici : le prompt décrit l'agent
-    // voulu, pas encore l'équipe qui va avec. On pose le marqueur, et c'est le Foreman qui ouvre la
+    // voulu, pas encore l'équipe qui va avec. On pose le marqueur, et c'est le Steward qui ouvre la
     // conversation dessus (readArrivingIntent → marqueur de kickoff).
     const heroPromptStarted = useRef(false)
     useEffect(() => {
@@ -299,12 +299,12 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
         heroPromptStarted.current = true
         // Le sandbox n'a pas d'onboarding (useEnsureSandboxSpace lui pose son engine tout seul), donc
         // personne ne viendrait relever un marqueur posé là.
-        const foremanTakesOver = !workspace.is_sandbox && !workspace.onboarded_at
+        const stewardTakesOver = !workspace.is_sandbox && !workspace.onboarded_at
         void (async () => {
             const name = readHeroAgentName(searchParams) ?? (await nameAgentFromPromptAction(prompt))
             router.replace('/')
             setPendingFirstAgent({ name, serviceSlugs: readHeroAgentApps(searchParams), kickoff: prompt })
-            if (foremanTakesOver) {
+            if (stewardTakesOver) {
                 markFirstAgentFromPrompt()
                 return
             }
@@ -478,7 +478,7 @@ export function IsoBoard({ onRequestRecruitAgent, onRequestBoxAgent, initialSpac
                     drawColor={SPACE_COLOR}
                     showViewControls
                     viewControlsPlacement="top-right"
-                    viewControlsClassName={guidedByForeman ? 'max-md:hidden' : undefined}
+                    viewControlsClassName={guidedBySteward ? 'max-md:hidden' : undefined}
                     initialCamera={initialCamera}
                     // A member may reach only Boxes far from the centre of the board: their first view
                     // frames what they can see rather than the middle of the workspace.

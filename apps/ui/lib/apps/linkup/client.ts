@@ -1,4 +1,4 @@
-// Linkup, the gateway every paid app call goes through. One API key for Rerun, one account per
+// Linkup, the gateway every paid app call goes through. One API key for Lumvika, one account per
 // connected LinkedIn profile or WhatsApp number, selected by `account_id` in the body. No
 // 'server-only': the archive, expiry and reconciliation tasks delete accounts from Trigger.dev.
 //

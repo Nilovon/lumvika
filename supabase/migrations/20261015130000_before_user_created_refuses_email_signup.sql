@@ -1,4 +1,4 @@
--- Rerun never issues a password, and the hook that would refuse one at sign-in is not on our
+-- Lumvika never issues a password, and the hook that would refuse one at sign-in is not on our
 -- Supabase plan. What is left is to keep a password from being planted: the public `signup`, and
 -- `signInWithOtp` with `shouldCreateUser`, both create an account with `provider = 'email'`, and the
 -- first carries a password of the caller's choosing. The hook cannot tell the two apart, so it
@@ -20,7 +20,7 @@ begin
     if event -> 'user' -> 'app_metadata' ->> 'provider' in ('email', 'phone') then
         return jsonb_build_object(
             'error',
-            jsonb_build_object('http_code', 403, 'message', 'Sign up on rerun.build with the code sent to your email, or with Google.')
+            jsonb_build_object('http_code', 403, 'message', 'Sign up on lumvika.com with the code sent to your email, or with Google.')
         );
     end if;
 

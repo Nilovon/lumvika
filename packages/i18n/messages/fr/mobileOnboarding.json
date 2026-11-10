@@ -55,10 +55,10 @@
         "retry": "Réessayer"
     },
     "conversation": {
-        "foremanRole": "L'assistant de votre workspace",
+        "stewardRole": "L'assistant de votre workspace",
         "failed": "Cela n'a pas abouti.",
         "tryAgain": "Réessayer",
-        "composerPlaceholder": "Répondre à Rerun"
+        "composerPlaceholder": "Répondre à Lumvika"
     },
     "starter": {
         "title": "Votre équipe de départ",

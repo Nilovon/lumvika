@@ -56,7 +56,7 @@ export default function IncidentResolved({
       </Section>
       <Section style={cta}>
         <Button href={conversationUrl ?? appUrl}>
-          {conversationUrl ? t("common.openConversation") : t("common.openRerun")}
+          {conversationUrl ? t("common.openConversation") : t("common.openLumvika")}
         </Button>
       </Section>
     </Layout>
@@ -67,8 +67,8 @@ IncidentResolved.PreviewProps = {
   agentName: "Atlas",
   sourceLabel: 'Schedule "weekly-export"',
   reason: "You follow Atlas's scheduled tasks.",
-  appUrl: "https://app.rerun.build",
-  conversationUrl: "https://app.rerun.build/?notification=preview",
+  appUrl: "https://app.lumvika.com",
+  conversationUrl: "https://app.lumvika.com/?notification=preview",
 } satisfies IncidentResolvedProps;
 
 const reasonLine: React.CSSProperties = {

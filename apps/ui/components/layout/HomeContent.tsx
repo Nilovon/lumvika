@@ -1,21 +1,21 @@
 'use client'
 
-import { confirmTemplatePurchaseAction } from '@rerun/cloud/marketplace.client'
+import { confirmTemplatePurchaseAction } from '@lumvika/cloud/marketplace.client'
 import { AppLoader } from '@/components/layout/AppLoader'
 import { AuthDialog } from '@/components/dialogs/AuthDialog'
 import { EngineWaitlistDialog } from '@/components/dialogs/EngineWaitlistDialog'
 import { BuilderView } from '@/components/builder/BuilderView'
-import { ForemanDock } from '@/components/foreman/ForemanDock'
+import { StewardDock } from '@/components/steward/StewardDock'
 import { useRewindEnabled } from '@/components/layout/FeatureFlagsProvider'
-import { PhoneVerificationDialog } from '@rerun/cloud/phone.client'
-import { PostPaymentDialog, TemplatePurchaseSuccessDialog } from '@rerun/cloud/billing.client'
+import { PhoneVerificationDialog } from '@lumvika/cloud/phone.client'
+import { PostPaymentDialog, TemplatePurchaseSuccessDialog } from '@lumvika/cloud/billing.client'
 import { AgentShareDeepLinkDialog } from '@/components/dialogs/AgentShareDeepLinkDialog'
 import { TemplateDeepLinkDialog } from '@/components/dialogs/TemplateDeepLinkDialog'
 import { WorkspacePausedBanner } from '@/components/layout/WorkspacePausedBanner'
 import { WorkspaceSwitcher } from '@/components/layout/WorkspaceSwitcher'
 import { ChangelogDialog } from '@/components/changelog/ChangelogDialog'
 import { ControlCenter } from '@/components/control-center/ControlCenter'
-import { RewindViewer, useRewindLauncher, useRewindStore } from '@rerun/cloud/rewind.client'
+import { RewindViewer, useRewindLauncher, useRewindStore } from '@lumvika/cloud/rewind.client'
 import { useChangelogLauncher } from '@/components/changelog/useChangelogLauncher'
 import { useEnsureSandboxSpace } from '@/lib/sandbox/useEnsureSandboxSpace'
 import { useAgentHealthSync } from '@/hooks/useAgentHealthSync'
@@ -34,7 +34,7 @@ import { useAgentsRealtime } from '@/supabase/useAgentsRealtime'
 import { hasPendingStart, useOnboardingStore } from '@/stores/onboarding.store'
 import { useAgentShareStore } from '@/stores/agent-share.store'
 import { useTemplateFlowStore } from '@/stores/template-flow.store'
-import { selectForemanVisible, useForemanStore } from '@/stores/foreman.store'
+import { selectStewardVisible, useStewardStore } from '@/stores/steward.store'
 import { useResumePendingStart } from '@/lib/onboarding/useResumePendingStart'
 import { openConversationFromNotification } from '@/lib/notifications/open-conversation'
 import { createClient } from '@/supabase/client'
@@ -49,7 +49,7 @@ import { oauthErrorCode, oauthRetryCopy, withoutOAuthError } from '@/lib/auth/oa
 import { oauthProviderLeftFor } from '@/lib/auth/oauth-sign-in'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import { track } from '@rerun/analytics/client'
+import { track } from '@lumvika/analytics/client'
 
 // Durée minimale d'affichage du loader : le temps que le R se trace (45% d'un
 // cycle de 2.8s) pour que l'animation soit perceptible et pas un simple flash.
@@ -74,12 +74,12 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     const tOAuthRetry = useTranslations('auth.oauthRetry')
     const tLinkError = useTranslations('account.signIn.linkError')
     const { user, workspace, loading, isAnonymous, phoneStep } = useSession()
-    const foremanVisible = useForemanStore(selectForemanVisible)
-    const foremanFunnel = useForemanStore(state => state.funnel)
-    const foremanIntake = useForemanStore(state => state.intake)
-    const foremanOpen = useForemanStore(state => state.open)
-    const foremanArrival = useForemanStore(state => state.arrival)
-    const foremanWaitlisted = useForemanStore(state => state.waitlisted)
+    const stewardVisible = useStewardStore(selectStewardVisible)
+    const stewardFunnel = useStewardStore(state => state.funnel)
+    const stewardIntake = useStewardStore(state => state.intake)
+    const stewardOpen = useStewardStore(state => state.open)
+    const stewardArrival = useStewardStore(state => state.arrival)
+    const stewardWaitlisted = useStewardStore(state => state.waitlisted)
     const pendingIntake = useOnboardingStore(state => state.pendingIntake)
     const rewindEnabled = useRewindEnabled()
     const resumePendingStart = useResumePendingStart()
@@ -95,14 +95,14 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     // la colonne qui ouvre la dialog de compte, jamais elle qui surgit seule, même colonne refermée :
     // l'orbe la rouvre sur ce bouton. Le reste (colonne refermée pendant la carte, phase qui n'est
     // pas un tunnel) le ramène au mur.
-    const foremanHoldsTheWall = foremanFunnel === 'unknown' || (foremanFunnel === 'guided' && (foremanIntake ? foremanOpen !== false : pendingIntake !== null))
+    const stewardHoldsTheWall = stewardFunnel === 'unknown' || (stewardFunnel === 'guided' && (stewardIntake ? stewardOpen !== false : pendingIntake !== null))
     // Arrivé sur une template ou un partage : la colonne demande elle-même le compte puis le code du
     // téléphone, avec ce qu'il a cliqué sous les yeux, et les deux murs lui cèdent la place. Le lien
     // parké tient la supposition le temps que la phase revienne, sinon le mur du téléphone surgit
     // entre la création du compte et la reprise du tunnel.
     const readyMadeParked = useOnboardingStore(s => s.pendingTemplateLink !== null || s.pendingShareLink !== null)
-    const arrivalHoldsTheWall = foremanArrival ? foremanFunnel === 'guided' && !foremanArrival.installed && foremanOpen !== false : foremanFunnel === 'unknown' && readyMadeParked && !workspace?.onboarded_at
-    const accountWallOpen = isAnonymous && !accountClaimed && !foremanHoldsTheWall && !arrivalHoldsTheWall
+    const arrivalHoldsTheWall = stewardArrival ? stewardFunnel === 'guided' && !stewardArrival.installed && stewardOpen !== false : stewardFunnel === 'unknown' && readyMadeParked && !workspace?.onboarded_at
+    const accountWallOpen = isAnonymous && !accountClaimed && !stewardHoldsTheWall && !arrivalHoldsTheWall
     const retryCopy = signInRetry ? oauthRetryCopy(signInRetry.code, signInRetry.provider ? OAUTH_PROVIDER_CONFIG[signInRetry.provider].label : null, tOAuthRetry) : null
     const phoneWallOpen = phoneStep === 'pending' && !arrivalHoldsTheWall
     const templateLinkSlug = useTemplateFlowStore(s => s.linkSlug)
@@ -255,10 +255,10 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     // que la session est réelle.
     //
     // Un workspace jamais onboardé n'a pas encore vu la moindre explication du produit : le slug reste
-    // parké et c'est le Foreman qui le reprend dans son tunnel. L'onboarding est un fait du workspace,
+    // parké et c'est le Steward qui le reprend dans son tunnel. L'onboarding est un fait du workspace,
     // pas de l'user : un membre invité dans un workspace qui tourne voit la fiche tout de suite.
     //
-    // Avec le Foreman, c'est lui qui décide : tant que la phase n'est pas revenue (`unknown`) la
+    // Avec le Steward, c'est lui qui décide : tant que la phase n'est pas revenue (`unknown`) la
     // fiche attend, et elle ne s'ouvre jamais d'elle-même pendant le tunnel. Sans cette attente,
     // l'effet rejouerait à la seconde où save_profile stampe l'onboarding et poserait la fiche
     // par-dessus une conversation en cours.
@@ -268,17 +268,17 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
         if (!slug || searchParams.has('purchase') || templateLinkStarted.current || !workspace || !user) return
         // Le mur de waitlist passe le funnel en `companion`, et la fiche s'ouvrirait par-dessus avec
         // son bouton de trial : elle reste parkée jusqu'au chargement où une machine est libre.
-        if (isAnonymous || foremanWaitlisted || (!workspace.onboarded_at && !workspace.is_sandbox)) {
+        if (isAnonymous || stewardWaitlisted || (!workspace.onboarded_at && !workspace.is_sandbox)) {
             useOnboardingStore.getState().setPendingTemplateLink(slug)
             clearTemplateParam()
             return
         }
-        if (foremanFunnel !== 'companion') return
+        if (stewardFunnel !== 'companion') return
         templateLinkStarted.current = true
         useOnboardingStore.getState().clearPendingTemplateLink()
         useTemplateFlowStore.getState().openLink(slug)
         clearTemplateParam()
-    }, [searchParams, user, workspace, isAnonymous, foremanFunnel, foremanWaitlisted])
+    }, [searchParams, user, workspace, isAnonymous, stewardFunnel, stewardWaitlisted])
 
     // Lien de partage d'agent `?share=<token>` : le jumeau de `?template=`. Le token est parké dans
     // tous les cas (persisté, car le retour de Google perd la query string) et l'effet rejoue dès que
@@ -289,7 +289,7 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
         if (!token || shareLinkStarted.current || !workspace || !user) return
         // Ouverte derrière le mur d'auth, la fiche serait restée par-dessus le mur de waitlist avec son
         // bouton de trial : on la referme, le token reste parké pour le chargement suivant.
-        if (foremanWaitlisted && !isAnonymous) {
+        if (stewardWaitlisted && !isAnonymous) {
             useAgentShareStore.getState().closeLink()
             useOnboardingStore.getState().setPendingShareLink(token)
             clearSearchParams('share')
@@ -306,7 +306,7 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
         shareLinkStarted.current = true
         useOnboardingStore.getState().clearPendingShareLink()
         clearSearchParams('share')
-    }, [searchParams, user, workspace, isAnonymous, foremanWaitlisted])
+    }, [searchParams, user, workspace, isAnonymous, stewardWaitlisted])
 
     // Un email de cycle de vie pointe l'agent dont il parle. Le board doit être hydraté avant, sinon
     // la sélection porte sur un id que le store ne connaît pas encore et rien ne s'ouvre.
@@ -352,13 +352,13 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     useEffect(() => {
         if (loading || !workspace || phoneStep !== 'clear') return
         if (!hasPendingStart(useOnboardingStore.getState())) return
-        // Un brouillon posé par le composer de la landing chez quelqu'un qui n'a jamais vu Rerun
-        // n'attend pas le paywall : c'est le Foreman qui ouvre la conversation dessus, et qui le
+        // Un brouillon posé par le composer de la landing chez quelqu'un qui n'a jamais vu Lumvika
+        // n'attend pas le paywall : c'est le Steward qui ouvre la conversation dessus, et qui le
         // consomme. Le flag one-shot est consommé quand même, sinon il ressortirait plus tard,
         // par-dessus la conversation.
-        const foremanTakesOver = useOnboardingStore.getState().firstAgentFromPrompt && !workspace.onboarded_at
+        const stewardTakesOver = useOnboardingStore.getState().firstAgentFromPrompt && !workspace.onboarded_at
         if (!useOnboardingStore.getState().consumeResume()) return
-        if (foremanTakesOver) return
+        if (stewardTakesOver) return
         void resumePendingStart()
     }, [loading, workspace, phoneStep, resumePendingStart])
 
@@ -432,8 +432,8 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
             </main>
             {/* Hors du `<main>` comme il est hors du cadre : l'orbe est `fixed`, sa place ne dépend
                 pas de l'endroit où il est monté. Ici il reste derrière l'écran de chargement. Pas
-                de machine hors onboarding, pas de Foreman. */}
-            {foremanVisible && <ForemanDock />}
+                de machine hors onboarding, pas de Steward. */}
+            {stewardVisible && <StewardDock />}
             {/* Le mur d'entrée : le board reste visible derrière, mais rien n'est actionnable tant
                 qu'il n'y a pas de compte. Le signup upgrade la session anonyme en place, donc le
                 workspace déjà provisionné et tout ce qu'un deep link a parké lui restent attachés. */}
@@ -444,7 +444,7 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
             <PhoneVerificationDialog open={phoneWallOpen} />
             {/* Le mur de capacité : même mécanique, pour un compte créé alors que le pool d'engines
                 est vide. Il tombe tout seul au chargement suivant où une machine est disponible. */}
-            <EngineWaitlistDialog open={foremanWaitlisted && !isAnonymous} />
+            <EngineWaitlistDialog open={stewardWaitlisted && !isAnonymous} />
             <PostPaymentDialog open={postPaymentOpen} onOpenChange={setPostPaymentOpen} />
             {purchase && <TemplatePurchaseSuccessDialog slug={purchase.slug} sessionId={purchase.sessionId} onOpenChange={open => !open && useTemplateFlowStore.getState().closePurchase()} />}
             {templateLinkSlug && <TemplateDeepLinkDialog slug={templateLinkSlug} />}

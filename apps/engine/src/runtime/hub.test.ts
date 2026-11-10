@@ -2,13 +2,13 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-hub-'))
-process.env.RERUN_HUB_BASE_URL = 'https://hub.test/'
-process.env.RERUN_API_KEY = 'engine-token'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-hub-'))
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.test/'
+process.env.LUMVIKA_API_KEY = 'engine-token'
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const { callHub } = await import('./hub.js')
-const { FOREMAN_HUB_TOKEN_HEADER } = await import('@rerun/contracts')
+const { STEWARD_HUB_TOKEN_HEADER } = await import('@lumvika/contracts')
 
 const originalFetch = globalThis.fetch
 
@@ -33,18 +33,18 @@ describe('callHub', () => {
         const [url, init] = fetchMock.mock.calls[0]
         expect(url).toBe('https://hub.test/api/hub')
         expect(init.method).toBe('POST')
-        expect(init.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer engine-token', 'x-rerun-agent': 'agent-1' })
+        expect(init.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer engine-token', 'x-lumvika-agent': 'agent-1' })
         expect(JSON.parse(init.body as string)).toEqual({ tool: 'search_services', args: { query: 'pay' } })
     })
 
-    it('hands back the token of the foreman brief, and none for a caller without one', async () => {
+    it('hands back the token of the steward brief, and none for a caller without one', async () => {
         const fetchMock = mockFetch(async () => Response.json({}))
 
-        await callHub({ id: 'foreman', brief: { instructions: 'x', tools: [], hubToken: 'signed-by-hub' } }, 'list_agents', {})
-        await callHub({ id: 'foreman', brief: { instructions: 'x', tools: [] } }, 'list_agents', {})
+        await callHub({ id: 'steward', brief: { instructions: 'x', tools: [], hubToken: 'signed-by-hub' } }, 'list_agents', {})
+        await callHub({ id: 'steward', brief: { instructions: 'x', tools: [] } }, 'list_agents', {})
 
-        expect(fetchMock.mock.calls[0][1].headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer engine-token', 'x-rerun-agent': 'foreman', [FOREMAN_HUB_TOKEN_HEADER]: 'signed-by-hub' })
-        expect(fetchMock.mock.calls[1][1].headers).not.toHaveProperty(FOREMAN_HUB_TOKEN_HEADER)
+        expect(fetchMock.mock.calls[0][1].headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer engine-token', 'x-lumvika-agent': 'steward', [STEWARD_HUB_TOKEN_HEADER]: 'signed-by-hub' })
+        expect(fetchMock.mock.calls[1][1].headers).not.toHaveProperty(STEWARD_HUB_TOKEN_HEADER)
     })
 
     it('includes the response body in the error of a failed call', async () => {

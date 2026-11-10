@@ -1,6 +1,6 @@
 import { realEmail } from '@/lib/auth/placeholder-email'
 import { queue, task } from '@trigger.dev/sdk/v3'
-import { taskLogger as logger } from '@rerun/cloud/tasks'
+import { taskLogger as logger } from '@lumvika/cloud/tasks'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database, Json } from '@/app/api/database.types'
@@ -11,7 +11,7 @@ import { createDiscoveryTranslator, serviceIconLookup } from '@/lib/company/expl
 import { exploreCompany } from '@/lib/company/explore/explore'
 import { applyToRow, type CompanyFindingsRow, type DiscoveryEvent } from '@/lib/company/explore/findings'
 import type { SynthesisFindings } from '@/lib/company/explore/synthesize'
-import type { ForemanAnswers } from '@/lib/foreman/phase'
+import type { StewardAnswers } from '@/lib/steward/phase'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 
@@ -26,10 +26,10 @@ const companyExploreQueue = queue({ name: 'company-explore', concurrencyLimit: 1
 
 type Signup = { personName: string | null; email: string | null }
 
-export async function readAnswers(supabase: SupabaseClient<Database>, workspaceId: number): Promise<ForemanAnswers> {
+export async function readAnswers(supabase: SupabaseClient<Database>, workspaceId: number): Promise<StewardAnswers> {
     const { data } = await selectMaybeSingle(supabase, 'workspace_onboarding', ['answers'] as const, { workspace_id: workspaceId })
     const value = data?.answers
-    return value && typeof value === 'object' && !Array.isArray(value) ? (value as ForemanAnswers) : {}
+    return value && typeof value === 'object' && !Array.isArray(value) ? (value as StewardAnswers) : {}
 }
 
 function metadataString(metadata: Record<string, unknown> | undefined, key: string): string {
@@ -110,7 +110,7 @@ export async function exploreCompanyRun({ workspaceId, url }: ExploreCompanyPayl
         })
 
         if (synthesis) {
-            const pages = buildSeedPages({ card: synthesis.card, brief: synthesis.brief, foreman: answers.foreman, catalog })
+            const pages = buildSeedPages({ card: synthesis.card, brief: synthesis.brief, steward: answers.steward, catalog })
             if (pages.length) record(async () => [{ type: 'found', source: 'synthesis', findings: [{ kind: 'brain', source: 'synthesis', pages: pages.length, ...seedPagesOutline(pages) }] }])
         }
         record(async () => [{ type: 'end' }])

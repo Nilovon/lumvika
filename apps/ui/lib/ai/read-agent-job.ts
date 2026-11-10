@@ -1,14 +1,14 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { generateText } from 'ai'
 
-import { AGENT_NAME_MAX, EMPTY_READING, parseJobReading, type JobReading } from '@rerun/ui/new-agent/reading'
+import { AGENT_NAME_MAX, EMPTY_READING, parseJobReading, type JobReading } from '@lumvika/ui/new-agent/reading'
 import type { CatalogEntry } from '@/lib/templates/catalog'
 
 // Read while the user is still typing, so the model is picked on latency first. Measured on this
 // prompt on 5 Oct 2026: Gemini 2.5 Flash Lite answers in about 0.5 s, its 3.5 successor in about
 // 1 s for names of the same quality. 3.5 infers more apps from a three word job; the variable is
 // there to switch if that turns out to be missed.
-const JOB_READER_MODEL = process.env.RERUN_JOB_READER_MODEL ?? 'google/gemini-2.5-flash-lite'
+const JOB_READER_MODEL = process.env.LUMVIKA_JOB_READER_MODEL ?? 'google/gemini-2.5-flash-lite'
 const TIMEOUT_MS = 6000
 
 function jobReaderModel() {

@@ -3,8 +3,8 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-fs-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-fs-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { filesystemTools } = await import('./filesystem.js')

@@ -1,4 +1,4 @@
-import { isSetupAnswered } from '@rerun/contracts'
+import { isSetupAnswered } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
 // Four places ask the same question of a template author (the capture review, the agent's Install

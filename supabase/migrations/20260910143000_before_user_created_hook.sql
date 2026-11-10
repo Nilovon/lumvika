@@ -56,4 +56,4 @@ grant select on table public.blocked_email_domains to supabase_auth_admin;
 -- `security definer`, l'exposer donnerait la liste des domaines bloqués à qui la sonde.
 revoke execute on function public.before_user_created(jsonb) from public, anon, authenticated;
 
--- The domains blocked on Rerun Cloud are not shipped: a deployment fills blocked_email_domains itself.
+-- The domains blocked on Lumvika Cloud are not shipped: a deployment fills blocked_email_domains itself.

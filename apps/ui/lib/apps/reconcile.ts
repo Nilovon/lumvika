@@ -8,7 +8,7 @@ import { inNamespace } from './linkup/namespace'
 export const CONNECTING_GRACE_MS = 60 * 60_000
 
 // An account paused for want of a paid slot is kept a week for its owner to buy one back, then
-// deleted: it costs Rerun every day it stays connected.
+// deleted: it costs Lumvika every day it stays connected.
 export const UNPAID_PAUSE_GRACE_MS = 7 * 86_400_000
 
 export type LinkupAccountRef = { account_id: string; platform: string; account_name: string | null; created_at: string }

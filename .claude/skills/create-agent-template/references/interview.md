@@ -53,7 +53,7 @@ I recommend Express for a one-off creative job, Standard for most, Guided only i
 In every case the catalog stays open at runtime (`hub` + `suggestService`): it is what lets the agent offer Outlook to someone who doesn't use Gmail, and get the apps connected during the install. I don't turn it off.
 
 **Q6. Paid data.**
-- On: "to {concrete use: find the decision-makers' emails / read an account's last 30 posts}", paid in Rerun credits. In chat, the agent spends without asking up to 200 credits per task and asks for approval beyond that; in a routine (schedule, webhook), it spends without asking and says what it cost.
+- On: "to {concrete use: find the decision-makers' emails / read an account's last 30 posts}", paid in Lumvika credits. In chat, the agent spends without asking up to 200 credits per task and asks for approval beyond that; in a routine (schedule, webhook), it spends without asking and says what it cost.
 - Off: the free web is enough.
 The recommendation follows the grid in `capabilities.md`. I always name the use, never "just in case".
 

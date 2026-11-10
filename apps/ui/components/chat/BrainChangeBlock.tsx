@@ -5,15 +5,15 @@ import { revertBrainPageAction } from '@/app/api/_actions/brain.actions'
 import { BrainIcon } from '@/lib/icons'
 import { useBrainStore } from '@/stores/brain.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { brainChangeHeadline, type BrainChange } from '@rerun/contracts'
-import { Button, Icon } from '@rerun/ui/primitives'
+import { brainChangeHeadline, type BrainChange } from '@lumvika/contracts'
+import { Button, Icon } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-export { brainChangeOf, type BrainChange, type BrainChangeStatus } from '@rerun/contracts'
+export { brainChangeOf, type BrainChange, type BrainChangeStatus } from '@lumvika/contracts'
 
-// What the Rerun agent leaves in its conversation when it changed the company brain itself, the
+// What the Lumvika agent leaves in its conversation when it changed the company brain itself, the
 // counterpart of an agent's proposal row: here the change has already landed.
 export function BrainChangeBlock({ change }: { change: BrainChange }) {
     const openBrainPage = useWorkspaceSettingsStore(s => s.openBrainPage)

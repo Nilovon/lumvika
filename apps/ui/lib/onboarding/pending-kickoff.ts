@@ -19,8 +19,8 @@ type Parked = z.infer<typeof parkedSchema>
 
 // One entry per agent: two coworkers created a few seconds apart each keep their own first message,
 // where a single slot let the second overwrite the first.
-const STORAGE_KEY = 'rerun:pending-kickoffs'
-const LEGACY_STORAGE_KEY = 'rerun:pending-kickoff'
+const STORAGE_KEY = 'lumvika:pending-kickoffs'
+const LEGACY_STORAGE_KEY = 'lumvika:pending-kickoff'
 
 function readLegacy(): PendingKickoff | null {
     const raw = localStorage.getItem(LEGACY_STORAGE_KEY)

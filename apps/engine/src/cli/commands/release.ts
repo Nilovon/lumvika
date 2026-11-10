@@ -191,7 +191,7 @@ export type LayoutOptions = { service: string; user: string; config: string; nod
 // The installer runs as root and names the account the service runs under; an update runs as that
 // account itself.
 export function defaultLayoutOptions(): LayoutOptions {
-    return { service: process.env.RERUN_SERVICE ?? 'rerun', user: process.env.RERUN_SERVICE_USER ?? userInfo().username, config: resolve(dataDir(), 'config.env'), node: process.execPath }
+    return { service: process.env.LUMVIKA_SERVICE ?? 'lumvika', user: process.env.LUMVIKA_SERVICE_USER ?? userInfo().username, config: resolve(dataDir(), 'config.env'), node: process.execPath }
 }
 
 export type LayoutFile = { path: string; content: string; mode: string }
@@ -199,10 +199,10 @@ export type LayoutFile = { path: string; content: string; mode: string }
 // The files outside `root` that point at `current`: the launcher, the unit and its rollback.
 export function layoutFiles(root: string, options: LayoutOptions): LayoutFile[] {
     const current = currentLink(root)
-    const rollbackScript = '/usr/local/bin/rerun-rollback'
+    const rollbackScript = '/usr/local/bin/lumvika-rollback'
     return [
         {
-            path: '/usr/local/bin/rerun',
+            path: '/usr/local/bin/lumvika',
             mode: '755',
             content: `#!/bin/sh\nexec "${options.node}" "${releaseBin(current)}" "$@"\n`,
         },
@@ -234,7 +234,7 @@ export function layoutFiles(root: string, options: LayoutOptions): LayoutFile[] 
             mode: '644',
             content: [
                 '[Unit]',
-                'Description=rerun-engine',
+                'Description=lumvika-engine',
                 'After=network.target',
                 'StartLimitIntervalSec=300',
                 'StartLimitBurst=5',
@@ -257,7 +257,7 @@ export function layoutFiles(root: string, options: LayoutOptions): LayoutFile[] 
         {
             path: `/etc/systemd/system/${options.service}-rollback.service`,
             mode: '644',
-            content: ['[Unit]', `Description=rerun-engine rollback to the previous release`, '', '[Service]', 'Type=oneshot', `ExecStart=${rollbackScript}`, ''].join('\n'),
+            content: ['[Unit]', `Description=lumvika-engine rollback to the previous release`, '', '[Service]', 'Type=oneshot', `ExecStart=${rollbackScript}`, ''].join('\n'),
         },
     ]
 }

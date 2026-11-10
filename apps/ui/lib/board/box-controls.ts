@@ -1,4 +1,4 @@
-import type { Container, Tile } from '@rerun/ui/iso-grid'
+import type { Container, Tile } from '@lumvika/ui/iso-grid'
 import { BOX_MANAGE_ACTION_REASON, type BoxViewer } from './box-access'
 
 // A Box the caller only uses is drawn like any other, but its handles, its grip, its drops and its

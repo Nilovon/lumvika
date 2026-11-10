@@ -1,6 +1,6 @@
 'use client'
 
-import { TextShimmer } from '@rerun/ui'
+import { TextShimmer } from '@lumvika/ui'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 
@@ -12,7 +12,7 @@ import { TriangleAlertIcon, XIcon } from '@/lib/icons'
 import { statusPagesFor } from '@/lib/provider-status/provider-status'
 import { cn } from '@/lib/utils'
 
-const DISMISSED_KEY = 'rerun_provider_incidents_dismissed'
+const DISMISSED_KEY = 'lumvika_provider_incidents_dismissed'
 
 function readDismissed(): string[] {
     try {
@@ -23,7 +23,7 @@ function readDismissed(): string[] {
     }
 }
 
-// A workspace only hears about the providers it has its own connection to. The Rerun hub alone
+// A workspace only hears about the providers it has its own connection to. The Lumvika hub alone
 // never raises the banner: it goes through OpenRouter, which no status page here speaks for.
 export function ProviderStatusBanner() {
     const { connections } = useWorkspaceConnections()

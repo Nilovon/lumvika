@@ -1,7 +1,7 @@
 import { secretMatches } from '@/lib/secure-compare'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { triggerTask } from '@rerun/cloud/tasks'
+import { triggerTask } from '@lumvika/cloud/tasks'
 import type { prefillExpertApplicationTask } from '@/trigger/prefill-expert-application'
 
 // Called by the landing right after someone applies to the expert program: the scrape + LLM

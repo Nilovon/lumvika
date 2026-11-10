@@ -55,10 +55,10 @@
         "retry": "Erneut versuchen"
     },
     "conversation": {
-        "foremanRole": "Dein Workspace-Assistent",
+        "stewardRole": "Dein Workspace-Assistent",
         "failed": "Das hat nicht geklappt.",
         "tryAgain": "Erneut versuchen",
-        "composerPlaceholder": "Rerun antworten"
+        "composerPlaceholder": "Lumvika antworten"
     },
     "starter": {
         "title": "Dein Starter-Team",

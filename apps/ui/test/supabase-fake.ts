@@ -14,7 +14,7 @@ export type SupabaseResolver = (table: string, calls: readonly SupabaseCall[]) =
 const WRITE_METHODS = new Set(['insert', 'update', 'upsert', 'delete'])
 
 // A Supabase client that records every builder call instead of reaching a database. The helpers in
-// @rerun/db and the raw writes both go through `from(...)`, so the same fake serves a test of the
+// @lumvika/db and the raw writes both go through `from(...)`, so the same fake serves a test of the
 // read helpers themselves and a test asserting what a service writes.
 export function fakeSupabase(resolve: SupabaseResolver = () => undefined) {
     const calls: SupabaseCall[] = []

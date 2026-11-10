@@ -43,7 +43,7 @@ import {
     runStepsListSchema,
     toolCallSchema,
     toolCallsListSchema,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import type {
     Tools,
     ToolDescriptor,
@@ -81,7 +81,7 @@ import type {
     RunStepsList,
     ToolCall,
     ToolCallsList,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 
 // How to reach a box's engine. Not to be confused with a `BoxConnection`, which is an AI provider
 // credential held by that box.
@@ -184,7 +184,7 @@ export type EngineToolCallsList = ToolCallsList
 export const engineUploadResultSchema = z.object({ path: z.string(), bytes: z.number() })
 export type EngineUploadResult = z.infer<typeof engineUploadResultSchema>
 
-// What the last `rerun update` on a box did; `restarting` is the updater's last word before the
+// What the last `lumvika update` on a box did; `restarting` is the updater's last word before the
 // service restart kills it, the engine that comes back settles it.
 export const engineLastUpdateSchema = z.object({
     status: z.enum(['running', 'error', 'restarting', 'success']),
@@ -230,13 +230,13 @@ export {
     engineUsageSchema,
     dbQueryResultSchema,
     dbExecuteResultSchema,
-} from '@rerun/contracts'
-export type { EngineDbColumn, EngineDbTable, EngineDbRows, EngineDeleteRowsResult, EngineUsageBucket, DbQueryInput, DbQueryResult, DbExecuteInput, DbExecuteResult } from '@rerun/contracts'
+} from '@lumvika/contracts'
+export type { EngineDbColumn, EngineDbTable, EngineDbRows, EngineDeleteRowsResult, EngineUsageBucket, DbQueryInput, DbQueryResult, DbExecuteInput, DbExecuteResult } from '@lumvika/contracts'
 
-export { statsPointSchema as engineStatsPointSchema, statsResponseSchema as engineStatsResponseSchema } from '@rerun/contracts'
-export { engineDoctorSchema } from '@rerun/contracts'
-export type { EngineDoctor, EngineDoctorCheck } from '@rerun/contracts'
-export type { StatsPoint as EngineStatsPoint, StatsQuery as EngineStatsQuery } from '@rerun/contracts'
+export { statsPointSchema as engineStatsPointSchema, statsResponseSchema as engineStatsResponseSchema } from '@lumvika/contracts'
+export { engineDoctorSchema } from '@lumvika/contracts'
+export type { EngineDoctor, EngineDoctorCheck } from '@lumvika/contracts'
+export type { StatsPoint as EngineStatsPoint, StatsQuery as EngineStatsQuery } from '@lumvika/contracts'
 
 export type CronOutputEntry = {
     timestamp: string

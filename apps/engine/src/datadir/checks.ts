@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { createClient } from '@libsql/client'
-import { FOREMAN_AGENT_ID, RERUN_CONNECTION_ID, type EngineDoctor, type EngineDoctorCheck } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, LUMVIKA_CONNECTION_ID, type EngineDoctor, type EngineDoctorCheck } from '@lumvika/contracts'
 import { dbPath, sharedDbPath, systemDbPath } from '../config/paths.js'
 import { listAgentIndex } from '../db/repos/agents.js'
 import { sqliteVersion } from '../db/ladder.js'
@@ -49,12 +49,12 @@ export async function runDataDirChecks(): Promise<EngineDoctor> {
             return `v${dataVersion}`
         }),
         await check('index', async () => {
-            failIf(existsSync(dbPath()) ? [] : ['rerun.db is missing'])
+            failIf(existsSync(dbPath()) ? [] : ['lumvika.db is missing'])
             agentIds = (await listAgentIndex()).map(row => row.id)
             return `${agentIds.length} agent(s)`
         }),
         await check('agents-on-disk', async () => {
-            const onDisk = (await listAgentIdsOnDisk()).filter(id => id !== FOREMAN_AGENT_ID)
+            const onDisk = (await listAgentIdsOnDisk()).filter(id => id !== STEWARD_AGENT_ID)
             const missing = agentIds.filter(id => !onDisk.includes(id))
             const unindexed = onDisk.filter(id => !agentIds.includes(id))
             const unreadable: string[] = []
@@ -77,7 +77,7 @@ export async function runDataDirChecks(): Promise<EngineDoctor> {
             const ids = await listConnectionIds()
             const unreadable: string[] = []
             for (const id of ids) await loadConnectionFromDisk(id).catch(() => unreadable.push(id))
-            failIf([...(connectionExists(RERUN_CONNECTION_ID) ? [] : ['the Rerun connection is missing']), ...(unreadable.length ? [`unreadable: ${unreadable.join(', ')}`] : [])])
+            failIf([...(connectionExists(LUMVIKA_CONNECTION_ID) ? [] : ['the Lumvika connection is missing']), ...(unreadable.length ? [`unreadable: ${unreadable.join(', ')}`] : [])])
             return `${ids.length} connection(s)`
         }),
         await check('shared-db', async () => {

@@ -6,14 +6,14 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle, selectMany } from '@/supabase/supabase-helpers'
 import { findWorkspaceEngine } from './workspace-engine.service'
 
-// Result of verifying that a Space points at a real, reachable rerun-engine whose
-// RERUN_API_KEY we hold. Used at Space creation time to block invalid Spaces.
+// Result of verifying that a Space points at a real, reachable lumvika-engine whose
+// LUMVIKA_API_KEY we hold. Used at Space creation time to block invalid Spaces.
 export type EngineCheck =
     | { ok: true; activeAgents: number }
-    | { ok: false; reason: 'unreachable' | 'not-rerun' | 'unauthorized' }
+    | { ok: false; reason: 'unreachable' | 'not-lumvika' | 'unauthorized' }
 
 export async function verifyEngine(conn: EngineConnection): Promise<EngineCheck> {
-    // 1. /health is public — confirms reachability AND that this is a rerun-engine.
+    // 1. /health is public — confirms reachability AND that this is a lumvika-engine.
     let activeAgents: number
     try {
         const res = await fetch(`${conn.baseUrl}/health`, {
@@ -24,14 +24,14 @@ export async function verifyEngine(conn: EngineConnection): Promise<EngineCheck>
 
         const body = (await res.json()) as { status?: unknown; activeAgents?: unknown }
         if (body.status !== 'ok' || typeof body.activeAgents !== 'number') {
-            return { ok: false, reason: 'not-rerun' }
+            return { ok: false, reason: 'not-lumvika' }
         }
         activeAgents = body.activeAgents
     } catch {
         return { ok: false, reason: 'unreachable' }
     }
 
-    // 2. /tools is protected — confirms the RERUN_API_KEY is accepted.
+    // 2. /tools is protected — confirms the LUMVIKA_API_KEY is accepted.
     try {
         const res = await fetch(`${conn.baseUrl}/tools`, {
             signal: AbortSignal.timeout(4000),

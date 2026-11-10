@@ -12,7 +12,7 @@ import { selectMaybeSingle, selectSingle } from '@/supabase/supabase-helpers'
 type Profile = { companyName: string | null; companyUrl: string | null; industry: string | null; firstName: string | null }
 
 // What the workspace's onboarding knows about the company, read in service role rather than taken
-// from the client: a caller that acts in the same tick as the foreman's `save_profile` would still
+// from the client: a caller that acts in the same tick as the steward's `save_profile` would still
 // hold the answers from before it, which is how a Box ended up unnamed for someone whose company we
 // had just read off their site. The first name is the caller's own.
 async function onboardingProfile(workspaceId: number): Promise<Profile> {

@@ -13,11 +13,11 @@ const NO_SERVER = 'This workspace has no server yet. Add one from Servers, in th
 const UNIQUE_VIOLATION = '23505'
 
 // There is no pool of machines here. The engine started next to the app by docker compose
-// (RERUN_ENGINE_URL and RERUN_ENGINE_API_KEY) goes to the first workspace that needs one; every
+// (LUMVIKA_ENGINE_URL and LUMVIKA_ENGINE_API_KEY) goes to the first workspace that needs one; every
 // other workspace gets its engine by pairing a server from Servers, in the workspace menu.
 export async function claimPoolEngine(workspaceId: number): Promise<EngineClaim> {
-    const engineHost = process.env.RERUN_ENGINE_URL?.trim()
-    const engineApiKey = process.env.RERUN_ENGINE_API_KEY?.trim()
+    const engineHost = process.env.LUMVIKA_ENGINE_URL?.trim()
+    const engineApiKey = process.env.LUMVIKA_ENGINE_API_KEY?.trim()
     if (!engineHost || !engineApiKey) return { ok: false, raced: false, error: NO_SERVER }
 
     const supabase = createServiceRoleClient()
@@ -35,10 +35,10 @@ export async function claimPoolEngine(workspaceId: number): Promise<EngineClaim>
 }
 
 // The engine started by docker compose answers the app on its network name (http://engine:3000),
-// which no browser can open: its screen is reached on RERUN_ENGINE_BROWSER_URL instead.
+// which no browser can open: its screen is reached on LUMVIKA_ENGINE_BROWSER_URL instead.
 export async function desktopRelayBase(engineBaseUrl: string, _hostId: string | null, _boxIndex: number | null): Promise<string | null> {
-    const composeEngine = process.env.RERUN_ENGINE_URL?.trim().replace(/\/$/, '')
-    const browserUrl = process.env.RERUN_ENGINE_BROWSER_URL?.trim().replace(/\/$/, '')
+    const composeEngine = process.env.LUMVIKA_ENGINE_URL?.trim().replace(/\/$/, '')
+    const browserUrl = process.env.LUMVIKA_ENGINE_BROWSER_URL?.trim().replace(/\/$/, '')
     if (!composeEngine || !browserUrl || engineBaseUrl.replace(/\/$/, '') !== composeEngine) return null
     return browserUrl.replace(/^http/, 'ws')
 }

@@ -1,2 +1,2 @@
-export { Logo, R_PATH } from './Logo'
+export { Logo, MARK_PATH } from './Logo'
 export { AnimatedLogo } from './AnimatedLogo'

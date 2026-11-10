@@ -1,7 +1,7 @@
 import { readFile, readdir, mkdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import matter from 'gray-matter'
-import { providerSchema, type MessageAuthor, type Provider } from '@rerun/contracts'
+import { providerSchema, type MessageAuthor, type Provider } from '@lumvika/contracts'
 import { scheduleFile, schedulesDir } from '../config/paths.js'
 import { writeFileAtomic } from '../lib/atomic-write.js'
 import { nowIso, slugify } from '../lib/ids.js'
@@ -143,7 +143,7 @@ export async function writeSchedule(agentId: string, input: ScheduleInput, autho
         await writeFileAtomic(scheduleFile(agentId, slug), serialize(next))
         return { schedule: next, created: !existing }
     })
-    // Every author lands here (the API, the Foreman, the agent's own tool), so this is the one place
+    // Every author lands here (the API, the Steward, the agent's own tool), so this is the one place
     // that can tell the hub a first schedule exists. Fire and forget, like every notification.
     // `authorId` is the member whose chat message led the agent to create it, when there was one.
     if (created) void sendNotification({ event: 'agent.schedule.created', kind: 'info', agentId, message: schedule.name, metadata: { scheduleSlug: slug, ...authorMetadata(author) } })

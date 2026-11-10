@@ -1,6 +1,6 @@
 'use client'
 
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { Icon } from '@/components/ui/icon'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import { PlugIcon, ShieldCheckIcon, UsersIcon, type LucideIcon } from '@/lib/icons'
@@ -20,7 +20,7 @@ const TEAM_CONNECTIONS = ['claude', 'codex', 'openrouter'] as const
 
 export function OfferArguments() {
     const t = useTranslations('dialogs.subscriptionOffer.arguments')
-    const description = (key: OfferArgument['key']) => (key === 'unplug' ? t(RERUN_CLOUD ? 'unplug.descriptionCloud' : 'unplug.descriptionSelfHosted') : t(`${key}.description`))
+    const description = (key: OfferArgument['key']) => (key === 'unplug' ? t(LUMVIKA_CLOUD ? 'unplug.descriptionCloud' : 'unplug.descriptionSelfHosted') : t(`${key}.description`))
     return (
         <ul className="flex flex-col gap-4">
             {ARGUMENTS.map(point => (

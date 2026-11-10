@@ -15,5 +15,5 @@ build/
 .context/
 .claude/settings.local.json
 
-# The private cloud/ repository of Rerun Cloud, cloned inside the checkout by the team.
+# The private cloud/ repository of Lumvika Cloud, cloned inside the checkout by the team.
 /cloud/

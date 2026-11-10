@@ -64,7 +64,7 @@ describe('a workspace with a machine', () => {
     })
 
     it('names an engine that predates the shared database rather than calling it unreachable', async () => {
-        vi.mocked(engine.listDbTables).mockRejectedValue(new engine.EngineRequestError('rerun-engine GET /shared/db/tables failed: 404 Not Found', 404))
+        vi.mocked(engine.listDbTables).mockRejectedValue(new engine.EngineRequestError('lumvika-engine GET /shared/db/tables failed: 404 Not Found', 404))
         await expect(listWorkspaceTablesAction()).resolves.toEqual({
             success: false,
             error: 'This workspace runs on a machine that needs an engine update before it can host a shared database.',

@@ -1,7 +1,7 @@
 import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { relative, resolve, sep } from 'node:path'
-import { agentDuplicateResultSchema, type AgentDuplicateResult, type DuplicateAgentInput, type McpServer } from '@rerun/contracts'
+import { agentDuplicateResultSchema, type AgentDuplicateResult, type DuplicateAgentInput, type McpServer } from '@lumvika/contracts'
 import { agentDir, agentsDir, dataDir, skillsDir, soulPath, workspaceDir } from '../config/paths.js'
 import { newId } from '../lib/ids.js'
 import { badRequest } from '../lib/errors.js'
@@ -33,7 +33,7 @@ const DUPLICATE_ROOTS = [...ARCHIVE_ROOTS, 'mcp'] as const
 // `agents/` so a half-copied folder is never scanned as an agent.
 const stagingRoot = () => resolve(dataDir(), '.imports')
 
-// The compiler writes the agent's own id into MCP headers (`x-rerun-agent`) as a literal, and the
+// The compiler writes the agent's own id into MCP headers (`x-lumvika-agent`) as a literal, and the
 // copy has to answer for itself: left alone, every hub call the copy makes would be attributed to
 // the agent it was made from. The archive path has the same problem and solves it in two halves,
 // `scrubConfig` turning the id into `${agent.id}` on the way out and `rebindAgentId` substituting

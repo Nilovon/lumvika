@@ -1,11 +1,11 @@
 ---
 name: shared-badge
-description: Every status or label pill (In review, Published, Beta, Pro, Running…) goes through the shared Badge component from @rerun/ui/primitives, with a BadgeTone tone, never a span hand-styled with bg-x/15 text-x. Use whenever you display a status, add a pill in a list/table/dialog, or come across a `<span className="rounded ... text-[10px]">` that serves as a badge.
+description: Every status or label pill (In review, Published, Beta, Pro, Running…) goes through the shared Badge component from @lumvika/ui/primitives, with a BadgeTone tone, never a span hand-styled with bg-x/15 text-x. Use whenever you display a status, add a pill in a list/table/dialog, or come across a `<span className="rounded ... text-[10px]">` that serves as a badge.
 ---
 
 # shared-badge: a pill = the Badge component
 
-All of Rerun's pills come out of **a single component**: `Badge` (`packages/ui/src/primitives/badge.tsx`). It is the one that carries the `BorderBeam` ring, the glow, the soft background and the color tokens per tone. A pill copied by hand (`bg-amber-500/15 text-amber-500`) falls outside the design system: no ring, no glow, and a tint that drifts from one surface to another (case spotted: the "In review" badge in the My templates dialog did not look like the one in the admin table).
+All of Lumvika's pills come out of **a single component**: `Badge` (`packages/ui/src/primitives/badge.tsx`). It is the one that carries the `BorderBeam` ring, the glow, the soft background and the color tokens per tone. A pill copied by hand (`bg-amber-500/15 text-amber-500`) falls outside the design system: no ring, no glow, and a tint that drifts from one surface to another (case spotted: the "In review" badge in the My templates dialog did not look like the one in the admin table).
 
 ## Canonical reference
 
@@ -20,14 +20,14 @@ All of Rerun's pills come out of **a single component**: `Badge` (`packages/ui/s
 
 ## Rule
 
-> A pill (status, state, short label such as Beta / Pro / New, qualified counter) is written **only** with `Badge` from `@rerun/ui/primitives`, or one of the wrappers above. The color comes from the `tone` prop typed `BadgeTone`, never from `bg-*/10 text-*-500` classes put on a `<span>`.
+> A pill (status, state, short label such as Beta / Pro / New, qualified counter) is written **only** with `Badge` from `@lumvika/ui/primitives`, or one of the wrappers above. The color comes from the `tone` prop typed `BadgeTone`, never from `bg-*/10 text-*-500` classes put on a `<span>`.
 
 Available tones (`BadgeTone`, inherited from `BorderBeam`): `brand` (default), `white`, `neutral`, `green`, `red`, `orange`, `cyan`, `yellow`. No other color: if the need does not fit, add a tone in `styles.css` + `BorderBeam.tsx`, not a local class.
 
 ## Skeleton
 
 ```tsx
-import { Badge, type BadgeTone } from '@rerun/ui/primitives'
+import { Badge, type BadgeTone } from '@lumvika/ui/primitives'
 
 // Status pill in a list / table / dialog: the house form
 const STATUS_TONES: Record<string, BadgeTone> = {
@@ -68,7 +68,7 @@ const STATUS_CLASS: Record<string, string> = { published: 'bg-emerald-500/15 tex
 3. **An unknown status falls back to `'neutral'`**, never to a hardcoded gray: `STATUS_TONES[status] ?? 'neutral'`.
 4. **`Badge` is a `<span>`**: no `onClick` on it. A clickable pill = a `<button>` around it (see `StatusBadgeButton`).
 5. **`className` is for layout, not for color**: `shrink-0`, `absolute`, `font-medium`, `uppercase` yes; `text-*`, `bg-*`, `border-*` no.
-6. **Import**: `@rerun/ui/primitives` (subpath) rather than the `@rerun/ui` barrel, which pulls in the whole package.
+6. **Import**: `@lumvika/ui/primitives` (subpath) rather than the `@lumvika/ui` barrel, which pulls in the whole package.
 7. **Status pill placed on an image**: the Badge's soft background is not enough over a photo. Wrap it in a `<span className="absolute … rounded-full bg-background/70 backdrop-blur">` and let the Badge carry the color (`TemplateCard`, `TemplateDetailMedia`). No color on the wrapper.
 
 ## What is NOT a pill

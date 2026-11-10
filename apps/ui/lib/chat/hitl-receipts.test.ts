@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { billedMicrosOf } from '@rerun/contracts'
+import { billedMicrosOf } from '@lumvika/contracts'
 
 import { hitlCallBefore } from './hitl-receipts'
 
@@ -13,7 +13,7 @@ describe('hitlCallBefore', () => {
             { role: 'user', parts: [{ type: 'text' }] },
         ]
         expect(hitlCallBefore(messages, 1)).toBe(approvalCall)
-        const bridged = { type: 'dynamic-tool', toolName: 'mcp__rerun__ask_user', input: { question: 'Which domain?' } }
+        const bridged = { type: 'dynamic-tool', toolName: 'mcp__lumvika__ask_user', input: { question: 'Which domain?' } }
         expect(hitlCallBefore([{ role: 'assistant', parts: [bridged] }, { role: 'user', parts: [{ type: 'text' }] }], 1)).toBe(bridged)
     })
 

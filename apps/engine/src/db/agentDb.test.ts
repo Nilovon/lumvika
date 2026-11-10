@@ -2,8 +2,8 @@ import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-agentdb-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-agentdb-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { agentDbExists, checkpointAgentDb, closeAgentDb, getAgentDb, listAgentDbTables, readAgentDbSchema } = await import('./agentDb.js')

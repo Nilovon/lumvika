@@ -1,13 +1,13 @@
 'use client'
 
-import { ScrollFade } from '@rerun/ui/primitives'
+import { ScrollFade } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
 import type { SubscriptionProvider } from '@/components/agent/ModelPickerProviders'
 import { ChatGptPlanSteps } from '@/components/connections/plan-connect/ChatGptPlanSteps'
 import { ClaudePlanSteps } from '@/components/connections/plan-connect/ClaudePlanSteps'
-import type { TrackStep } from '@/components/connections/plan-connect/ForemanTrack'
+import type { TrackStep } from '@/components/connections/plan-connect/StewardTrack'
 import { LetsGoButton } from '@/components/connections/plan-connect/step-bits'
 import { useClaudeOAuth } from '@/components/connections/use-claude-oauth'
 import { useCodexDeviceAuth } from '@/components/connections/use-codex-device-auth'
@@ -62,7 +62,7 @@ function letsGo(provider: SubscriptionProvider, onDone: () => void, t: PlanTrans
 
 type PlanConnectFrameProps = { provider: SubscriptionProvider; connected: boolean; onBack: () => void; onSkip: () => void; children: ReactNode }
 
-// Once connected, "Let's go" in the last step is the way on: going back or staying on Rerun credits
+// Once connected, "Let's go" in the last step is the way on: going back or staying on Lumvika credits
 // no longer means anything, so the footer goes.
 function PlanConnectFrame({ provider, connected, onBack, onSkip, children }: PlanConnectFrameProps) {
     const t = useTranslations('dialogs.subscriptionOffer.plan')

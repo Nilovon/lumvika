@@ -1,4 +1,4 @@
-import type { CoworkerFile, CoworkerFiles, InstalledServiceView, RoutineView } from '@rerun/contracts'
+import type { CoworkerFile, CoworkerFiles, InstalledServiceView, RoutineView } from '@lumvika/contracts'
 
 // Mock data for the coworker details, in the hub's shapes (`/agents/:id/services`, `/routines`).
 

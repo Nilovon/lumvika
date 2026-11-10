@@ -1,4 +1,4 @@
-import type { SkillProposal, SkillProposalDecision } from '@rerun/contracts'
+import type { SkillProposal, SkillProposalDecision } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { useState } from 'react'
 import { ActivityIndicator, Pressable, View } from 'react-native'

@@ -13,7 +13,7 @@ export async function uploadPrivateFile(supabase: SupabaseClient<Database>, buck
     return path
 }
 
-export const STORAGE_BUSY_ERROR = 'Rerun is very busy right now and could not fetch this file. Try again in a minute.'
+export const STORAGE_BUSY_ERROR = 'Lumvika is very busy right now and could not fetch this file. Try again in a minute.'
 
 // Storage answers 429 SlowDown ("Too many connections issued to the database") while the project's
 // Postgres pooler is full, and those bursts last a few seconds: on the launch night it cost two

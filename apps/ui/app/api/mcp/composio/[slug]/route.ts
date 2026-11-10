@@ -1,4 +1,4 @@
-import { SERVICE_INSTANCE_ID_RE, serviceRegistryKey } from '@rerun/contracts'
+import { SERVICE_INSTANCE_ID_RE, serviceRegistryKey } from '@lumvika/contracts'
 import { loadManifest } from '@/app/api/_services/services.service'
 import { authenticateEngineToken, getWorkspaceConnection } from '@/app/api/_services/workspace-engine.service'
 import { ComposioApiError, composioUserId, executeTool, listToolkitTools } from '@/lib/composio/client'
@@ -10,11 +10,11 @@ import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 // but the third-party token never exists on our side at all: Composio holds it, and every
 // tools/call is forwarded to Composio scoped by a per-agent user_id.
 //
-// Auth model: the engine authenticates via `x-rerun-key` (its RERUN_API_KEY → space), and
-// `x-rerun-agent` (the ENGINE agent id) is resolved to the Supabase agent WITHIN that workspace —
+// Auth model: the engine authenticates via `x-lumvika-key` (its LUMVIKA_API_KEY → space), and
+// `x-lumvika-agent` (the ENGINE agent id) is resolved to the Supabase agent WITHIN that workspace —
 // so the user_id is derived server-side and a box can never reach another workspace's
 // connections, even with a forged header. The COMPOSIO_API_KEY stays on this server.
-// An extra account of the app is compiled with `x-rerun-instance: <instanceId>`, which picks its
+// An extra account of the app is compiled with `x-lumvika-instance: <instanceId>`, which picks its
 // own user_id, so each account of one coworker reaches its own connected account.
 export const dynamic = 'force-dynamic'
 
@@ -71,7 +71,7 @@ async function notConnectedResponse(id: unknown, ctx: { workspaceId: number; eng
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
     const { slug } = await params
 
-    const engineKey = req.headers.get('x-rerun-key') ?? ''
+    const engineKey = req.headers.get('x-lumvika-key') ?? ''
     const engine = await authenticateEngineToken(engineKey)
     if (!engine) {
         console.warn('[composio] rejected request with invalid/absent engine key')
@@ -79,8 +79,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     }
 
     // A malformed id must not fall back to the base account: that would act as the wrong mailbox.
-    const instanceHeader = req.headers.get('x-rerun-instance')
-    if (instanceHeader && !SERVICE_INSTANCE_ID_RE.test(instanceHeader)) return new Response('Invalid x-rerun-instance', { status: 400 })
+    const instanceHeader = req.headers.get('x-lumvika-instance')
+    if (instanceHeader && !SERVICE_INSTANCE_ID_RE.test(instanceHeader)) return new Response('Invalid x-lumvika-instance', { status: 400 })
     const instanceId = instanceHeader || undefined
 
     const manifest = await loadManifest(slug)
@@ -107,7 +107,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         return rpcResult(id, {
             protocolVersion,
             capabilities: { tools: {} },
-            serverInfo: { name: `rerun-composio-${slug}`, version: '1.0.0' },
+            serverInfo: { name: `lumvika-composio-${slug}`, version: '1.0.0' },
         })
     }
 
@@ -129,7 +129,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         if (allowedTools?.length && !allowedTools.includes(name)) return rpcError(id, -32601, `Unknown tool: ${name}`)
         const args = (rpcParams?.arguments ?? {}) as Record<string, unknown>
 
-        const engineAgentId = req.headers.get('x-rerun-agent') ?? ''
+        const engineAgentId = req.headers.get('x-lumvika-agent') ?? ''
         const supabase = createServiceRoleClient()
         const { data: agent } = engineAgentId ? await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId }) : { data: null }
         if (!agent) return rpcError(id, -32603, 'Coworker does not belong to the authenticated workspace')

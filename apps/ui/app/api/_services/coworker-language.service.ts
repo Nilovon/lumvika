@@ -4,7 +4,7 @@ import type { Database } from '@/app/api/database.types'
 import { getWorkspaceConnection } from '@/app/api/_services/workspace-engine.service'
 import { patchAgent } from '@/lib/engine/client'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { DEFAULT_LOCALE, isStableLocale } from '@rerun/i18n'
+import { DEFAULT_LOCALE, isStableLocale } from '@lumvika/i18n'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // The language a new coworker of this workspace is given, null to leave it on the language of its

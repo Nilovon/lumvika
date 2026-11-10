@@ -1,8 +1,8 @@
 'use client'
 
-import { BorderBeam } from '@rerun/ui'
-import { hashUnit, TemplateCardBoard, useBoardOnHover } from '@rerun/ui/iso-grid'
-import { Badge } from '@rerun/ui/primitives'
+import { BorderBeam } from '@lumvika/ui'
+import { hashUnit, TemplateCardBoard, useBoardOnHover } from '@lumvika/ui/iso-grid'
+import { Badge } from '@lumvika/ui/primitives'
 import { AnimatePresence } from 'motion/react'
 import { useTranslations } from 'next-intl'
 import { TemplateCardThumbnail } from '@/components/templates/TemplateCardThumbnail'
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 
 // The library's card: the board is the surface, the words sit under it on the dialog itself rather
 // than in a second box, which is what lets a grid of them read as one calm sheet.
-// Without `onSelect` the tile is a plain block: the foreman and the email capture show a template
+// Without `onSelect` the tile is a plain block: the steward and the email capture show a template
 // they do not let anyone pick.
 export function TemplateTile({ template, selected = false, showStatus = false, onSelect, className }: { template: LibraryTemplate; selected?: boolean; showStatus?: boolean; onSelect?: () => void; className?: string }) {
     const t = useTranslations('templates.creator')
@@ -59,7 +59,7 @@ export function TemplateTile({ template, selected = false, showStatus = false, o
             <span className="mt-2.5 flex items-center justify-between gap-3 px-0.5">
                 <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
                     <TemplateCreatorAvatar creator={template.creator} size={16} />
-                    <span className="truncate">{template.creator?.name ?? t('rerunTeam')}</span>
+                    <span className="truncate">{template.creator?.name ?? t('lumvikaTeam')}</span>
                 </span>
                 <TemplateConnectorLogos connectors={template.connectors} />
             </span>

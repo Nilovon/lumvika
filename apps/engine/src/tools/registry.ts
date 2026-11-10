@@ -6,7 +6,7 @@ import { webTools } from './builtin/web.js'
 import { memoryTools } from './builtin/memory.js'
 import { dbTools } from './builtin/db.js'
 import { sharedDbTools } from './builtin/shared-db.js'
-import { brainTools, foremanBrainTools } from './builtin/brain.js'
+import { brainTools, stewardBrainTools } from './builtin/brain.js'
 import { skillTools } from './builtin/skills.js'
 import { skillProposeTool } from './builtin/skill-propose.js'
 import { selfTools } from './builtin/self.js'
@@ -22,10 +22,10 @@ import { notifyTools } from './builtin/notify.js'
 import { hubTools } from './builtin/hub.js'
 import { paidDataTools } from './builtin/paid-data.js'
 import { paidDataOffered } from '../paid-data/price.js'
-import { cardTools, foremanCardTools } from './builtin/cards.js'
+import { cardTools, stewardCardTools } from './builtin/cards.js'
 import { askUserTool, offersTakeover, requestApprovalTool, requestSecretTool, requestTakeoverTool, suggestServiceTool } from './builtin/hitl.js'
 import { installTools } from './builtin/install.js'
-import { foremanTools } from './builtin/foreman.js'
+import { stewardTools } from './builtin/steward.js'
 import { agentFilesTools } from './builtin/agent-files.js'
 import { hasPendingSetup } from '../agents/setup.js'
 import { pooledMcpTools } from './mcp-pool.js'
@@ -36,7 +36,7 @@ import type { RunContext } from '../runtime/context.js'
 export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; close: () => Promise<void> }> {
     const cfg = ctx.agent.config.tools
     const tools: ToolSet = {}
-    if (ctx.agent.config.kind === 'foreman') Object.assign(tools, foremanTools(ctx), agentFilesTools())
+    if (ctx.agent.config.kind === 'steward') Object.assign(tools, stewardTools(ctx), agentFilesTools())
     if (cfg.filesystem) Object.assign(tools, filesystemTools(ctx))
     if (cfg.shared) Object.assign(tools, sharedTools(ctx))
     if (cfg.shell) Object.assign(tools, shellTools(ctx))
@@ -46,7 +46,7 @@ export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; clo
     if (cfg.memory) Object.assign(tools, memoryTools(ctx))
     if (cfg.db) Object.assign(tools, dbTools(ctx))
     if (cfg.sharedDb) Object.assign(tools, sharedDbTools(ctx))
-    if (cfg.brain) Object.assign(tools, ctx.agent.config.kind === 'foreman' ? foremanBrainTools() : brainTools(ctx))
+    if (cfg.brain) Object.assign(tools, ctx.agent.config.kind === 'steward' ? stewardBrainTools() : brainTools(ctx))
     if (cfg.skills) Object.assign(tools, skillTools(ctx))
     if (cfg.skills && ctx.agent.config.selfImprovement.enabled) Object.assign(tools, skillProposeTool(ctx))
     if (ctx.agent.config.selfImprovement.enabled) Object.assign(tools, selfTools(ctx))
@@ -63,7 +63,7 @@ export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; clo
     if (cfg.notify) Object.assign(tools, notifyTools(ctx))
     if (cfg.hub) Object.assign(tools, hubTools(ctx))
     if (cfg.paidData && (await paidDataOffered())) Object.assign(tools, paidDataTools(ctx))
-    if (cfg.cards) Object.assign(tools, ctx.agent.config.kind === 'foreman' ? foremanCardTools(ctx) : cardTools(ctx))
+    if (cfg.cards) Object.assign(tools, ctx.agent.config.kind === 'steward' ? stewardCardTools(ctx) : cardTools(ctx))
     if (cfg.askUser) Object.assign(tools, askUserTool(ctx))
     if (cfg.requestApproval) Object.assign(tools, requestApprovalTool(ctx))
     if (cfg.suggestService) Object.assign(tools, suggestServiceTool(ctx))

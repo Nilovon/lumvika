@@ -1,13 +1,13 @@
 ---
 name: create-agent-template
-description: Create, from a topic ("an agent that makes TikTok carousels" / « un agent qui fait des carrousels TikTok », "copy ads" / « copier des pubs », "find leads" / « trouver des leads »), a lead-magnet-quality Rerun coworker and its private template draft, with a short interview in blocks with recommended defaults (apps from the service catalog, paid data, computer use, how tightly the process is framed, install depth), a full build through the Rerun MCP (SOUL, short INSTALL.md, skill, schedule), a test bench of real runs on the situations where customers dropped off (Skip, "I need 10", ChatGPT challenge, refusal with no reason) against a control coworker, and a capture as a draft only if the bench is green. Use whenever someone wants to create / generate / prepare an agent template, an agent for the marketplace, a lead magnet agent, or turn an agent idea into a Rerun template.
+description: Create, from a topic ("an agent that makes TikTok carousels" / « un agent qui fait des carrousels TikTok », "copy ads" / « copier des pubs », "find leads" / « trouver des leads »), a lead-magnet-quality Lumvika coworker and its private template draft, with a short interview in blocks with recommended defaults (apps from the service catalog, paid data, computer use, how tightly the process is framed, install depth), a full build through the Lumvika MCP (SOUL, short INSTALL.md, skill, schedule), a test bench of real runs on the situations where customers dropped off (Skip, "I need 10", ChatGPT challenge, refusal with no reason) against a control coworker, and a capture as a draft only if the bench is green. Use whenever someone wants to create / generate / prepare an agent template, an agent for the marketplace, a lead magnet agent, or turn an agent idea into a Lumvika template.
 ---
 
-# Create a Rerun agent template (lead magnet)
+# Create a Lumvika agent template (lead magnet)
 
 I am given a topic. I turn it into **a coworker that delivers a real result from the first conversation**, then a **private template draft**, which only goes to capture after a **green test bench**. I ask few questions, always with my recommendation, and I leave the agent free to adapt to each owner.
 
-I talk to the user in their language; **everything I write in Rerun is in English** (SOUL, INSTALL.md, skill, schedule, template page). The agent replies in its user's language anyway.
+I talk to the user in their language; **everything I write in Lumvika is in English** (SOUL, INSTALL.md, skill, schedule, template page). The agent replies in its user's language anyway.
 
 ## The three golden rules
 
@@ -29,8 +29,8 @@ I count the words (`wc -w` on a file in `.context/`) before sending. Over budget
 
 ## Phase 0: Preflight (without asking anything)
 
-1. The `mcp__rerun__*` tools must exist. Otherwise I stop and give the command:
-   `claude mcp add --transport http rerun https://app.rerun.build/api/mcp/account --header "Authorization: Bearer rk_…"`, with the key of an **expert account** (docs: `apps/docs/api/connect.mdx`).
+1. The `mcp__lumvika__*` tools must exist. Otherwise I stop and give the command:
+   `claude mcp add --transport http lumvika https://app.lumvika.com/api/mcp/account --header "Authorization: Bearer rk_…"`, with the key of an **expert account** (docs: `apps/docs/api/connect.mdx`).
 2. `list_capture_sources` → the sandbox Box where the agent is created. Capture only accepts coworkers from an expert account's sandbox: I never create anywhere else.
 3. `list_templates` and `list_agents` on that Box → if a draft or an agent already exists for this topic, I pick it up instead of creating a second one. I never touch a template that is `in_review`, `published`, `unlisted` or `archived`.
 
@@ -51,7 +51,7 @@ Before any question, I prepare my recommendations (details: `references/intervie
 - **Round 2: the capabilities**: catalog apps (multiSelect, or none declared) · paid data · computer use.
 - **Round 3, only if useful**: outgoing actions that need approval, a real business constraint, price if paid.
 
-Then I show a **half-page brief** and wait for an explicit OK before writing anything in Rerun:
+Then I show a **half-page brief** and wait for an explicit OK before writing anything in Lumvika:
 
 ```
 Agent: {name}, {description}
@@ -81,7 +81,7 @@ Templates and good / bad examples: `references/writing.md`. Two complete example
 Full protocol, scenarios and grid: `references/benchmark.md`. **No green bench, no capture.**
 
 1. **Bench.** I play on the sandbox Box, with the brief's fictional owner:
-   - **S1** install, happy path: 3 runs on Rerun Max, 1 on a model from another family;
+   - **S1** install, happy path: 3 runs on Lumvika Max, 1 on a model from another family;
    - **S2** everything skipped (`[skipped]`) · **S3** "I need 3× more" with a strict criterion · **S4** "What can you do that ChatGPT can't?" · **S5** "Changes needed" with no reason;
    - **S6** explicit go-ahead and **S7** reasonable variant when they apply;
    - **T**, the control: the same request on a bare coworker (the `description` as SOUL, nothing else).
@@ -106,7 +106,7 @@ A short summary for the human:
 - what was created (agent, skill, schedule, draft) and the two dials chosen;
 - the bench: the scenario × verdict table, an excerpt of the S1 deliverable next to the control, what each fix round changed, the total cost;
 - what is missing to submit (the `get_template` checklist), and the cover image, recommended but not required;
-- the suggested next step, **without launching it**: `rerun-image-from-agent-task` → `add_template_image`; after publication, `template-story <slug>` then `rerun-x-article`.
+- the suggested next step, **without launching it**: `lumvika-image-from-agent-task` → `add_template_image`; after publication, `template-story <slug>` then `lumvika-x-article`.
 
 Then a JSON record:
 

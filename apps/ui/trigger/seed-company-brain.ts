@@ -1,7 +1,7 @@
 import { task } from '@trigger.dev/sdk/v3'
 
 import { findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
-import { taskLogger as logger, triggerTaskAndWait, waitMinutes as waitFor } from '@rerun/cloud/tasks'
+import { taskLogger as logger, triggerTaskAndWait, waitMinutes as waitFor } from '@lumvika/cloud/tasks'
 import { companyExploreIdempotencyKey, companyExploreKey, requestAgentIdeas } from '@/lib/brain/request-seed'
 import { buildSeedPages } from '@/lib/brain/seed-pages'
 import { companySiteUrl } from '@/lib/company/firecrawl'
@@ -65,7 +65,7 @@ export async function seedCompanyBrainRun({ workspaceId, exploreKey }: SeedCompa
         return null
     }
 
-    const pages = buildSeedPages({ card: synthesis.card, brief: synthesis.brief, foreman: answers.foreman, catalog: synthesis.catalog ?? null })
+    const pages = buildSeedPages({ card: synthesis.card, brief: synthesis.brief, steward: answers.steward, catalog: synthesis.catalog ?? null })
     if (!pages.length) {
         logger.warn('brain seed: the card filled no page', { workspaceId, url })
         return null

@@ -1,6 +1,6 @@
 'use client'
 
-import { InboxSurface as SharedInboxSurface, type InboxAnnouncement, type InboxEntry, type InboxSurfaceProps, type RowMenuProps } from '@rerun/ui/inbox'
+import { InboxSurface as SharedInboxSurface, type InboxAnnouncement, type InboxEntry, type InboxSurfaceProps, type RowMenuProps } from '@lumvika/ui/inbox'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
@@ -16,7 +16,7 @@ import type { AnnouncedNotification } from '@/lib/notifications/announcement'
 import { openConversationFromNotification } from '@/lib/notifications/open-conversation'
 import { reasonSentence } from '@/lib/notifications/reason-copy'
 import { useBoardStore } from '@/stores/board.store'
-import { useForemanStore } from '@/stores/foreman.store'
+import { useStewardStore } from '@/stores/steward.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useUnseenRunsStore } from '@/stores/unseen-runs.store'
 import { useSession } from '@/supabase/session/SessionProvider'
@@ -37,7 +37,7 @@ export function WorkspaceInbox() {
     const t = useTranslations('notifications.inbox')
     const tReasons = useTranslations('notifications.inbox.reasons')
     const { isAnonymous } = useSession()
-    const onEngine = useForemanStore(state => state.surface === 'engine')
+    const onEngine = useStewardStore(state => state.surface === 'engine')
     const agents = useBoardStore(s => s.agents)
     const hydrated = useBoardStore(s => s.hydrated)
     const setSessionStatus = useBoardStore(s => s.setSessionStatus)
@@ -216,7 +216,7 @@ export function WorkspaceInbox() {
     )
 }
 
-/** The shared surface, with « Mark all as read » asking first: the app's confirm dialog cannot live in `@rerun/ui`. */
+/** The shared surface, with « Mark all as read » asking first: the app's confirm dialog cannot live in `@lumvika/ui`. */
 export function InboxSurface({ items, onMarkAllRead, keepOpen = false, ...props }: InboxSurfaceProps<InboxItem>) {
     const t = useTranslations('notifications.inbox.markAll')
     const [confirmOpen, setConfirmOpen] = useState(false)

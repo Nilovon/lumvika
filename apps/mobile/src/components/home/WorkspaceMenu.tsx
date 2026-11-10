@@ -1,5 +1,5 @@
 import { Image, Label, Menu, Toggle } from '@expo/ui/swift-ui'
-import type { WorkspaceSummary } from '@rerun/contracts'
+import type { WorkspaceSummary } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'

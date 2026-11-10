@@ -14,9 +14,9 @@ afterEach(() => vi.unstubAllGlobals())
 describe('crisp identity', () => {
     it('tells Crisp the address of an email account', () => {
         const pushed = stubCrisp()
-        openCrisp('ada@rerun.build')
+        openCrisp('ada@lumvika.com')
         expect(pushed).toEqual([
-            ['set', 'user:email', ['ada@rerun.build']],
+            ['set', 'user:email', ['ada@lumvika.com']],
             ['do', 'chat:show'],
             ['do', 'chat:open'],
         ])
@@ -24,7 +24,7 @@ describe('crisp identity', () => {
 
     it('tells Crisp the number of a phone account, never its placeholder address', () => {
         const pushed = stubCrisp()
-        openCrisp('33612345678@phone.rerun.build')
+        openCrisp('33612345678@phone.lumvika.com')
         expect(pushed).toEqual([
             ['set', 'user:phone', ['+33612345678']],
             ['do', 'chat:show'],
@@ -41,7 +41,7 @@ describe('crisp identity', () => {
 
     it('sends the message under the number of a phone account', () => {
         const pushed = stubCrisp()
-        sendToCrisp({ email: '33612345678@phone.rerun.build', workspaceId: 7, text: 'Stuck on the card' })
+        sendToCrisp({ email: '33612345678@phone.lumvika.com', workspaceId: 7, text: 'Stuck on the card' })
         expect(pushed.slice(0, 3)).toEqual([
             ['set', 'user:phone', ['+33612345678']],
             [
@@ -50,7 +50,7 @@ describe('crisp identity', () => {
                 [
                     [
                         ['workspace_id', '7'],
-                        ['source', 'foreman'],
+                        ['source', 'steward'],
                     ],
                 ],
             ],

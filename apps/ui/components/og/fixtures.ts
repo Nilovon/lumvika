@@ -1,6 +1,6 @@
-import type { EngineUsageBucket } from '@rerun/contracts'
-import { agentTileStyle, connectorTileStyle, type AgentStatus, type Tile, type TileLink } from '@rerun/ui/iso-grid'
-import type { AgentStatusEntry } from '@rerun/ui/monitoring'
+import type { EngineUsageBucket } from '@lumvika/contracts'
+import { agentTileStyle, connectorTileStyle, type AgentStatus, type Tile, type TileLink } from '@lumvika/ui/iso-grid'
+import type { AgentStatusEntry } from '@lumvika/ui/monitoring'
 
 // Frozen board decorating the right column of the brand cards: a few agents laid out, all `idle`
 // (no continuous animation), with no toasts, links or callbacks. Same airy layout as the hero,

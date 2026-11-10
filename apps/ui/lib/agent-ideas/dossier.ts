@@ -1,11 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { BrainPage } from '@rerun/contracts'
+import type { BrainPage } from '@lumvika/contracts'
 
 import { findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
 import type { Database } from '@/app/api/database.types'
 import type { CompanyFindingsRow } from '@/lib/company/explore/findings'
 import { listBrainPages, readBrainPage } from '@/lib/engine/client'
-import type { ForemanAnswers } from '@/lib/foreman/phase'
+import type { StewardAnswers } from '@/lib/steward/phase'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { answersEvidence, brainEvidence, buildEvidence, findingsEvidence } from './evidence'
 import type { CompanyDossier } from './types'
@@ -38,7 +38,7 @@ export async function loadCompanyDossier(supabase: SupabaseClient<Database>, wor
     const [workspace, onboarding, agents, brain] = await Promise.all([selectMaybeSingle(supabase, 'workspaces', ['id', 'name'] as const, { id: workspaceId }), selectMaybeSingle(supabase, 'workspace_onboarding', ['answers', 'company_findings'] as const, { workspace_id: workspaceId }), selectMany(supabase, 'agents', ['name', 'description'] as const, { workspace_id: workspaceId }, { column: 'created_at' }), readBrain(workspaceId)])
     if (!workspace.data) throw new Error(`Workspace ${workspaceId} introuvable`)
 
-    const answers = asObject<ForemanAnswers>(onboarding.data?.answers) ?? {}
+    const answers = asObject<StewardAnswers>(onboarding.data?.answers) ?? {}
     const findings = asObject<CompanyFindingsRow>(onboarding.data?.company_findings)
 
     const evidence = buildEvidence(brainEvidence(brain.pages), answersEvidence(answers, { withProfile: brain.pages.length === 0 }), findingsEvidence(findings))

@@ -1,9 +1,9 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { McpServer } from '@rerun/contracts'
+import type { McpServer } from '@lumvika/contracts'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cw-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cw-'))
 
 const { describe, expect, it } = await import('vitest')
 const { mergeMcpServers, writeAgentConfig } = await import('./config-write.js')

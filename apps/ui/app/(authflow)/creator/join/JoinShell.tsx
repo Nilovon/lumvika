@@ -1,4 +1,4 @@
-import { Stripes } from '@rerun/ui/primitives'
+import { Stripes } from '@lumvika/ui/primitives'
 import { Card } from '@/components/ui/card'
 
 // Les écrans du programme creator portent les rayures ambrées du sandbox, en effet par-dessus le

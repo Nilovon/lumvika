@@ -4,7 +4,7 @@ import { AGENT_SHEET_VIEWS, agentSheetViewOf, isAgentViewTab } from '@/lib/board
 import { AGENT_FOCUS_TABS } from '@/lib/board/types'
 
 describe('the screens of the coworker card', () => {
-    // A deep link from the foreman, the inbox or the board names a panel tab: one that no screen
+    // A deep link from the steward, the inbox or the board names a panel tab: one that no screen
     // holds would open the panel on nothing.
     it('give every panel tab but the thread a screen', () => {
         expect(AGENT_FOCUS_TABS.filter(tab => !isAgentViewTab(tab))).toEqual(['chat', 'actions'])

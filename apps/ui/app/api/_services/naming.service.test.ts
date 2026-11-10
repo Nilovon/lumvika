@@ -50,7 +50,7 @@ describe('ensureWorkspaceNamed and the company favicon', () => {
     })
 
     it('keeps a logo picked by hand', async () => {
-        workspaceWithIcon('https://db.rerun.test/storage/v1/object/public/workspace-logos/7/logo.webp')
+        workspaceWithIcon('https://db.lumvika.test/storage/v1/object/public/workspace-logos/7/logo.webp')
 
         await ensureWorkspaceNamed({ workspaceId: WORKSPACE_ID, userId: FOUNDER })
 

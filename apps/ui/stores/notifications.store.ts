@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import type { AnnouncedNotification } from '@/lib/notifications/announcement'
-import { useForemanStore } from '@/stores/foreman.store'
+import { useStewardStore } from '@/stores/steward.store'
 
 type NotificationsState = {
     open: boolean
@@ -34,7 +34,7 @@ export const useNotificationsStore = create<NotificationsState>()(
             permissionPromptOpen: false,
             permissionAsked: false,
             askPermission: () => {
-                if (get().permissionAsked || useForemanStore.getState().funnel !== 'companion') return
+                if (get().permissionAsked || useStewardStore.getState().funnel !== 'companion') return
                 set({ permissionPromptOpen: true })
             },
             answerPermission: () => set({ permissionPromptOpen: false, permissionAsked: true }),
@@ -42,7 +42,7 @@ export const useNotificationsStore = create<NotificationsState>()(
             announce: notification => set(state => ({ arrivals: [...state.arrivals, notification] })),
         }),
         {
-            name: 'rerun:notifications-ui',
+            name: 'lumvika:notifications-ui',
             partialize: state => ({ permissionAsked: state.permissionAsked }),
         }
     )

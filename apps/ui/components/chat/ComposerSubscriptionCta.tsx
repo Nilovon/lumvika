@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import { ArrowRightIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { Stripes } from '@rerun/ui/primitives'
+import { Stripes } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 
 type ComposerSubscriptionCtaProps = {
@@ -12,7 +12,7 @@ type ComposerSubscriptionCtaProps = {
     onClick: () => void
 }
 
-// Strip clipped under the composer while the chat runs on Rerun's own models: the one moment where
+// Strip clipped under the composer while the chat runs on Lumvika's own models: the one moment where
 // it is worth saying that the Claude or ChatGPT plan the user already pays for can run this agent
 // instead. It says nothing about credits, on purpose.
 //

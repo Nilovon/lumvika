@@ -4,7 +4,7 @@ import { Appearance } from 'react-native'
 
 export type AppearancePreference = 'system' | 'light' | 'dark'
 
-const APPEARANCE_KEY = 'rerun.appearance'
+const APPEARANCE_KEY = 'lumvika.appearance'
 
 let current: AppearancePreference = 'system'
 

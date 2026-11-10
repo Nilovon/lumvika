@@ -4,7 +4,7 @@
  * so the chat never shows it and the search index never holds it, and it is persisted with the
  * message: the history the next turn replays is then byte for byte what the provider already cached.
  */
-export const CONTEXT_PART_OPTIONS = { rerun: { context: true } } as const;
+export const CONTEXT_PART_OPTIONS = { lumvika: { context: true } } as const;
 
 export type ContextTextPart = {
   type: "text";
@@ -19,9 +19,9 @@ export function contextTextPart(text: string): ContextTextPart {
 export function isContextPart(part: unknown): boolean {
   if (!part || typeof part !== "object") return false;
   const options = (
-    part as { providerOptions?: { rerun?: { context?: unknown } } }
+    part as { providerOptions?: { lumvika?: { context?: unknown } } }
   ).providerOptions;
-  return options?.rerun?.context === true;
+  return options?.lumvika?.context === true;
 }
 
 /** The text of a message as the user wrote it: a string as is, text parts without the context ones. */

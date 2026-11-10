@@ -1,4 +1,4 @@
-import { FOREMAN_AGENT_ID, type BoardAgent, type Box, type BoxAccessLevel, type WorkspaceRole } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, type BoardAgent, type Box, type BoxAccessLevel, type WorkspaceRole } from '@lumvika/contracts'
 
 // The app's copy of the web's rules. They only decide which controls are open: the hub checks every
 // write again and answers 403.
@@ -46,9 +46,9 @@ export const UNKNOWN_ACCESS: CoworkerAccess = { access: undefined, known: false 
 type AccessSources = { agents?: readonly Pick<BoardAgent, 'id' | 'access'>[] | null; views?: readonly ({ agent: Pick<BoardAgent, 'access'> } | null | undefined)[] }
 
 // What the phone already knows of the caller's level on a coworker, before the hub is asked: the board
-// first, then the copies of the coworker, in the order given. The Foreman is everyone's.
+// first, then the copies of the coworker, in the order given. The Steward is everyone's.
 export function knownCoworkerAccess(agentId: string, sources: AccessSources): CoworkerAccess {
-    if (agentId === FOREMAN_AGENT_ID) return { access: 'manage', known: true }
+    if (agentId === STEWARD_AGENT_ID) return { access: 'manage', known: true }
     const agent = sources.agents?.find(candidate => candidate.id === agentId)
     if (agent) return { access: agent.access, known: true }
     const view = sources.views?.find(candidate => !!candidate)

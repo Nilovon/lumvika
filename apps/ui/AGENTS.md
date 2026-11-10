@@ -8,17 +8,17 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Rerun — Web UI for rerun-engine
+# Lumvika — Web UI for lumvika-engine
 
 ## Vision
 
-Interface web moderne pour **rerun-engine** : un moteur d'agents IA autonomes, auto-hébergeable, exposé via une API HTTP (voir `apps/engine`). Rerun lui donne une UI riche et visuelle (grille isométrique).
+Interface web moderne pour **lumvika-engine** : un moteur d'agents IA autonomes, auto-hébergeable, exposé via une API HTTP (voir `apps/engine`). Lumvika lui donne une UI riche et visuelle (grille isométrique).
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Rerun Web UI (Next.js)                     │
+│  Lumvika Web UI (Next.js)                     │
 │                                             │
 │  ┌─────────────────────────────────────┐    │
 │  │  Isometric Grid                     │    │
@@ -31,7 +31,7 @@ Interface web moderne pour **rerun-engine** : un moteur d'agents IA autonomes, a
          │
          ▼
 ┌─────────────────────────────────────────────┐
-│  1 workspace = 1 machine (rerun-engine)     │
+│  1 workspace = 1 machine (lumvika-engine)     │
 │  engine_pool.claimed_by_workspace_id        │
 │                                             │
 │  ┌───────────────────────────────────┐      │
@@ -51,7 +51,7 @@ Interface web moderne pour **rerun-engine** : un moteur d'agents IA autonomes, a
 ## Labs et UI kit
 
 Les labs de composants (`/render/lab/*`) et la galerie du UI kit (`/render/kit`) vivent dans l'app
-admin de Rerun Cloud (`cloud/apps/admin`, privée), qui tourne sur les sources de cette app :
+admin de Lumvika Cloud (`cloud/apps/admin`, privée), qui tourne sur les sources de cette app :
 `pnpm --dir cloud/apps/admin dev` (port `ADMIN_PORT`, 3052 par défaut). Les labs y répondent 404 sur
 un hôte déployé sans le jeton `BRAND_GATE_TOKEN` (`?key=<jeton>` une fois, puis le cookie).
 
@@ -68,7 +68,7 @@ variable (prod, local), la porte n'existe pas. Logique dans `lib/staging-gate.ts
 | Concept       | Description                                                                                                                                  |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Workspace** | Le compte. Il tient le plan, les membres, et **la machine** : une par workspace, dans `engine_pool.claimed_by_workspace_id` (service-role).    |
-| **Machine**   | L'instance rerun-engine du workspace, atteinte via `engine_pool.engine_host` + `engine_api_key`. Toute porte dessus passe par `workspace-engine.service.ts`. |
+| **Machine**   | L'instance lumvika-engine du workspace, atteinte via `engine_pool.engine_host` + `engine_api_key`. Toute porte dessus passe par `workspace-engine.service.ts`. |
 | **Box**       | Un rectangle sur la grille iso, qui regroupe les agents par équipe, client ou projet. Ni machine, ni cloison : gratuite, instantanée, illimitée. |
 | **Agent**     | Un agent du workspace, adressé par `/agents/:id` sur l'engine. Personnalité (SOUL), skills, mémoire propres. Il se déplace d'une Box à l'autre sans rien perdre. |
 | **Session**   | Conversation avec un Agent. Historique persistant côté engine (`engine_session_id`), contexte maintenu.                                        |
@@ -85,4 +85,4 @@ variable (prod, local), la porte n'existe pas. Logique dans `lib/staging-gate.ts
 
 - **Frontend**: Next.js, isometric grid UI
 - **Backend**: Supabase (auth, DB, realtime)
-- **Agents**: rerun-engine (HTTP), self-hostable — voir `apps/engine`
+- **Agents**: lumvika-engine (HTTP), self-hostable — voir `apps/engine`

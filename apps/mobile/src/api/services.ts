@@ -1,4 +1,4 @@
-import { connectTargetSchema, installResultSchema, resolvedServiceSchema, type ConnectTarget, type InstallResultView, type ResolvedService } from '@rerun/contracts'
+import { connectTargetSchema, installResultSchema, resolvedServiceSchema, type ConnectTarget, type InstallResultView, type ResolvedService } from '@lumvika/contracts'
 
 import { api } from '@/api/client'
 

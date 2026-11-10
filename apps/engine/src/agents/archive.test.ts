@@ -1,9 +1,9 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { McpServer } from '@rerun/contracts'
+import type { McpServer } from '@lumvika/contracts'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-ar-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-ar-'))
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { buildArchive, listArchivablePaths, planArchive, scrubConfig } = await import('./archive.js')
@@ -33,13 +33,13 @@ const config = agentConfigSchema.parse({
         srv('stripe', { STRIPE_KEY: 'sk_live_AAAAAAAAAAAAAAAAAAAAAAAA' }, { Authorization: 'Bearer abcdefghijklmnopqrstuvwxyz0123' }),
         // The two shapes the UI compiler emits: a reference embedded in a larger string, and the
         // source agent id carried in a header for the managed proxy.
-        srv('fal', { FAL_KEY: '${RERUN_SVC_FAL_FAL_KEY}' }, { Authorization: 'Bearer ${RERUN_SVC_FAL_FAL_KEY}', 'x-rerun-agent': AGENT_ID }),
+        srv('fal', { FAL_KEY: '${LUMVIKA_SVC_FAL_FAL_KEY}' }, { Authorization: 'Bearer ${LUMVIKA_SVC_FAL_FAL_KEY}', 'x-lumvika-agent': AGENT_ID }),
     ],
 })
 
 beforeAll(async () => {
     const root = agentDir(AGENT_ID)
-    await mkdir(resolve(root, 'workspace/.rerun'), { recursive: true })
+    await mkdir(resolve(root, 'workspace/.lumvika'), { recursive: true })
     await mkdir(resolve(root, 'workspace/.secrets'), { recursive: true })
     await mkdir(resolve(root, 'workspace/node_modules/left-pad'), { recursive: true })
     await mkdir(resolve(root, 'workspace/scripts/__pycache__'), { recursive: true })
@@ -49,13 +49,13 @@ beforeAll(async () => {
     await mkdir(resolve(root, 'mcp'), { recursive: true })
     await mkdir(resolve(root, 'data'), { recursive: true })
     await mkdir(resolve(root, 'memory/archive'), { recursive: true })
-    await mkdir(resolve(root, 'workspace/.rerun/paid-data'), { recursive: true })
-    await mkdir(resolve(root, 'workspace/.rerun/pages/acme.com'), { recursive: true })
+    await mkdir(resolve(root, 'workspace/.lumvika/paid-data'), { recursive: true })
+    await mkdir(resolve(root, 'workspace/.lumvika/pages/acme.com'), { recursive: true })
 
     await writeFile(resolve(root, 'config.json'), JSON.stringify(config, null, 2))
     await writeFile(resolve(root, 'SOUL.md'), 'You are a research agent.')
     await writeFile(resolve(root, 'INSTALL.md'), 'Connect the Stripe connector, then confirm you can read a customer.')
-    await writeFile(resolve(root, '.env'), 'RERUN_SVC_FAL_FAL_KEY=fal-AAAAAAAAAAAAAAAAAAAA\nCLAUDE_CODE_OAUTH_TOKEN=sk-ant-CCCCCCCCCCCCCCCCCCCCCC\nOPENCODE_API_KEY=oc_sk_DDDDDDDDDDDDDDDDDDDD\n')
+    await writeFile(resolve(root, '.env'), 'LUMVIKA_SVC_FAL_FAL_KEY=fal-AAAAAAAAAAAAAAAAAAAA\nCLAUDE_CODE_OAUTH_TOKEN=sk-ant-CCCCCCCCCCCCCCCCCCCCCC\nOPENCODE_API_KEY=oc_sk_DDDDDDDDDDDDDDDDDDDD\n')
     await writeFile(resolve(root, 'mcp/fal.json'), JSON.stringify({ accessToken: 'secret-token' }))
     await writeFile(resolve(root, 'mcp/fal.pending.json'), JSON.stringify({ startedAt: 0 }))
     await writeFile(resolve(root, 'data/agent.db'), 'the agent own tables')
@@ -74,15 +74,15 @@ beforeAll(async () => {
         '---\nname: Leaky\nenabled: true\ntoken: 0000000000000000\nmethods:\n  - POST\ncreatedAt: \'2026-01-01T00:00:00.000Z\'\n---\n\nCall the API with sk-ant-DDDDDDDDDDDDDDDDDDDDDD and report.',
     )
     await writeFile(resolve(root, 'workspace/brief.md'), 'A reference brief.')
-    await writeFile(resolve(root, 'workspace/.rerun/paid-data/people.email.find-2026-10-15-call_1.json'), JSON.stringify({ output: { email: 'jane@acme.com' } }))
-    await writeFile(resolve(root, 'workspace/.rerun/pages/acme.com/index.served.html'), '<html><body>Acme</body></html>')
+    await writeFile(resolve(root, 'workspace/.lumvika/paid-data/people.email.find-2026-10-15-call_1.json'), JSON.stringify({ output: { email: 'jane@acme.com' } }))
+    await writeFile(resolve(root, 'workspace/.lumvika/pages/acme.com/index.served.html'), '<html><body>Acme</body></html>')
     await writeFile(resolve(root, 'workspace/leaked.md'), 'key is sk-ant-BBBBBBBBBBBBBBBBBBBBBBBB')
     await writeFile(resolve(root, 'workspace/.secrets/linkedin_cookie.json'), JSON.stringify({ li_at: 'AQEDAoPaqueOpaque' }))
     await writeFile(
-        resolve(root, 'workspace/.rerun/services.json'),
+        resolve(root, 'workspace/.lumvika/services.json'),
         JSON.stringify({
             services: {
-                fal: { status: 'active', envKeys: ['RERUN_SVC_FAL_FAL_KEY'], mcpServers: ['fal'] },
+                fal: { status: 'active', envKeys: ['LUMVIKA_SVC_FAL_FAL_KEY'], mcpServers: ['fal'] },
                 'google-indexing': { status: 'active', envKeys: [], managed: { provider: 'google-indexing', serverName: 'google-indexing', accountEmail: 'someone@example.com' } },
                 gmail: { status: 'active', label: 'me@acme.com', mcpServers: ['gmail'], composio: { serverName: 'gmail', accountLabel: 'me@acme.com' } },
                 'gmail@k3x9ab': { status: 'active', instanceId: 'k3x9ab', label: 'support@acme.com', mcpServers: ['gmail-k3x9ab'], composio: { serverName: 'gmail-k3x9ab', accountLabel: 'support@acme.com' } },
@@ -105,19 +105,19 @@ describe('listArchivablePaths', () => {
         expect(paths).toContain('schedules/daily.md')
         expect(paths).toContain('triggers/inbound.md')
         expect(paths).toContain('workspace/brief.md')
-        expect(paths).toContain('workspace/.rerun/services.json')
+        expect(paths).toContain('workspace/.lumvika/services.json')
         expect(paths).toContain('memory/mem1.md')
         expect(paths).toContain('data/agent.db')
     })
 
     it('never carries the data the workspace bought', async () => {
         const paths = await listArchivablePaths(AGENT_ID)
-        expect(paths.some(p => p.startsWith('workspace/.rerun/paid-data'))).toBe(false)
+        expect(paths.some(p => p.startsWith('workspace/.lumvika/paid-data'))).toBe(false)
     })
 
     it('never carries the pages the coworker read', async () => {
         const paths = await listArchivablePaths(AGENT_ID)
-        expect(paths.some(p => p.startsWith('workspace/.rerun/pages'))).toBe(false)
+        expect(paths.some(p => p.startsWith('workspace/.lumvika/pages'))).toBe(false)
     })
 
     it('never exposes OAuth bundles, transcripts, retired memories or caches', async () => {
@@ -133,8 +133,8 @@ describe('listArchivablePaths', () => {
 describe('scrubConfig', () => {
     it('replaces a literal value with a placeholder and reports it', () => {
         const { config: scrubbed, strippedKeys } = scrubConfig(config, AGENT_ID)
-        expect(scrubbed.mcpServers[0].env.STRIPE_KEY).toBe('${RERUN_SVC_STRIPE_STRIPE_KEY}')
-        expect(scrubbed.mcpServers[0].headers.Authorization).toBe('${RERUN_SVC_STRIPE_AUTHORIZATION}')
+        expect(scrubbed.mcpServers[0].env.STRIPE_KEY).toBe('${LUMVIKA_SVC_STRIPE_STRIPE_KEY}')
+        expect(scrubbed.mcpServers[0].headers.Authorization).toBe('${LUMVIKA_SVC_STRIPE_AUTHORIZATION}')
         expect(strippedKeys).toEqual(['stripe.env.STRIPE_KEY', 'stripe.headers.Authorization'])
     })
 
@@ -142,14 +142,14 @@ describe('scrubConfig', () => {
     // lose the name of the variable the copy has to be given.
     it('leaves a reference untouched, embedded or not', () => {
         const { config: scrubbed, strippedKeys } = scrubConfig(config, AGENT_ID)
-        expect(scrubbed.mcpServers[1].env.FAL_KEY).toBe('${RERUN_SVC_FAL_FAL_KEY}')
-        expect(scrubbed.mcpServers[1].headers.Authorization).toBe('Bearer ${RERUN_SVC_FAL_FAL_KEY}')
+        expect(scrubbed.mcpServers[1].env.FAL_KEY).toBe('${LUMVIKA_SVC_FAL_FAL_KEY}')
+        expect(scrubbed.mcpServers[1].headers.Authorization).toBe('Bearer ${LUMVIKA_SVC_FAL_FAL_KEY}')
         expect(strippedKeys.some(key => key.startsWith('fal.'))).toBe(false)
     })
 
     it('hands the source agent id back as the token the compiler substitutes', () => {
         const { config: scrubbed } = scrubConfig(config, AGENT_ID)
-        expect(scrubbed.mcpServers[1].headers['x-rerun-agent']).toBe('${agent.id}')
+        expect(scrubbed.mcpServers[1].headers['x-lumvika-agent']).toBe('${agent.id}')
     })
 
     // A connection id names a credential on this box and nothing on the one receiving the copy.
@@ -191,7 +191,7 @@ describe('planArchive', () => {
         const env = plan.files.find(f => f.path === '.env')
         expect(env?.flagged).toEqual([])
         expect(env?.defaultExcluded).toBe(false)
-        expect(plan.envKeys).toEqual(['RERUN_SVC_FAL_FAL_KEY'])
+        expect(plan.envKeys).toEqual(['LUMVIKA_SVC_FAL_FAL_KEY'])
         expect(plan.redactions.some(r => r.path === '.env')).toBe(true)
     })
 
@@ -266,8 +266,8 @@ describe('buildArchive', () => {
         expect(found).toContain('SOUL.md')
         expect(found).toContain('.env')
         expect(found).toContain('data/agent.db')
-        expect(found).toContain('workspace/.rerun/services.json')
-        expect(found).toContain('.rerun-capture.json')
+        expect(found).toContain('workspace/.lumvika/services.json')
+        expect(found).toContain('.lumvika-capture.json')
         expect(found.some(p => p.startsWith('mcp/') || p.startsWith('data/system.db') || p.includes('node_modules'))).toBe(false)
     })
 
@@ -277,7 +277,7 @@ describe('buildArchive', () => {
 
     it('writes redacted bytes, not the originals', async () => {
         const { stream } = await buildArchive(AGENT_ID)
-        const staged = mkdtempSync(resolve(tmpdir(), 'rerun-unpack-'))
+        const staged = mkdtempSync(resolve(tmpdir(), 'lumvika-unpack-'))
         const { extract } = await import('tar')
         await new Promise<void>((done, fail) => {
             stream
@@ -287,15 +287,15 @@ describe('buildArchive', () => {
         })
 
         const env = await readFile(resolve(staged, '.env'), 'utf8')
-        expect(env).toBe('RERUN_SVC_FAL_FAL_KEY=\n')
+        expect(env).toBe('LUMVIKA_SVC_FAL_FAL_KEY=\n')
         expect(env).not.toContain('CLAUDE_CODE_OAUTH_TOKEN')
         expect(env).not.toContain('OPENCODE_API_KEY')
 
         const scrubbed = JSON.parse(await readFile(resolve(staged, 'config.json'), 'utf8')) as typeof config
-        expect(scrubbed.mcpServers[1].headers.Authorization).toBe('Bearer ${RERUN_SVC_FAL_FAL_KEY}')
-        expect(scrubbed.mcpServers[0].env.STRIPE_KEY).toBe('${RERUN_SVC_STRIPE_STRIPE_KEY}')
+        expect(scrubbed.mcpServers[1].headers.Authorization).toBe('Bearer ${LUMVIKA_SVC_FAL_FAL_KEY}')
+        expect(scrubbed.mcpServers[0].env.STRIPE_KEY).toBe('${LUMVIKA_SVC_STRIPE_STRIPE_KEY}')
 
-        const registry = JSON.parse(await readFile(resolve(staged, 'workspace/.rerun/services.json'), 'utf8')) as {
+        const registry = JSON.parse(await readFile(resolve(staged, 'workspace/.lumvika/services.json'), 'utf8')) as {
             services: Record<string, { status: string; label?: string; instanceId?: string; managed?: { accountEmail?: string }; composio?: Record<string, string> }>
         }
         expect(registry.services.fal.status).toBe('needs_config')
@@ -316,9 +316,9 @@ describe('buildArchive', () => {
         expect(trigger).toContain('A Stripe refund event arrives, record it.')
         expect(trigger).toContain('fireCount: 0')
 
-        const manifest = JSON.parse(await readFile(resolve(staged, '.rerun-capture.json'), 'utf8')) as { envKeys: string[]; sourceAgentId: string }
+        const manifest = JSON.parse(await readFile(resolve(staged, '.lumvika-capture.json'), 'utf8')) as { envKeys: string[]; sourceAgentId: string }
         expect(manifest.sourceAgentId).toBe(AGENT_ID)
-        expect(manifest.envKeys).toEqual(['RERUN_SVC_FAL_FAL_KEY'])
+        expect(manifest.envKeys).toEqual(['LUMVIKA_SVC_FAL_FAL_KEY'])
     })
 })
 

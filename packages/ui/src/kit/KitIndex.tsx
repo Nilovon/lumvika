@@ -15,7 +15,7 @@ export function KitIndex({ here, landingBase, appBase }: { here: 'landing' | 'ap
         <div className="flex flex-col gap-10">
             <KitIndexGroup
                 title="Shared bricks"
-                description="Everything in the @rerun/ui package: the pieces the marketing site and the app both render, from the same source."
+                description="Everything in the @lumvika/ui package: the pieces the marketing site and the app both render, from the same source."
                 offset={0}
                 categories={LANDING_CATEGORIES}
                 hrefOf={hrefOf}
@@ -64,7 +64,7 @@ function KitIndexGroup({
                         <span className="shrink-0 font-mono text-xs text-foreground/25">{String(offset + index + 1).padStart(2, '0')}</span>
                         <span className="w-56 shrink-0 text-sm font-medium text-foreground">{category.label}</span>
                         <span className="text-sm text-foreground/50">{category.blurb}</span>
-                        {external && <span className="shrink-0 font-mono text-[11px] text-foreground/25 sm:ml-auto">{category.host === 'app' ? 'app' : 'rerun.build'}</span>}
+                        {external && <span className="shrink-0 font-mono text-[11px] text-foreground/25 sm:ml-auto">{category.host === 'app' ? 'app' : 'lumvika.com'}</span>}
                     </a>
                 ))}
             </div>

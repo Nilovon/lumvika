@@ -38,7 +38,7 @@ describe('signHistoryMessage', () => {
             role: 'user' as const,
             content: [
                 { type: 'text' as const, text: 'hello' },
-                { type: 'text' as const, text: '<now>\n2026-08-16T14:32:07Z\n</now>', providerOptions: { rerun: { context: true } } },
+                { type: 'text' as const, text: '<now>\n2026-08-16T14:32:07Z\n</now>', providerOptions: { lumvika: { context: true } } },
             ],
         }
         expect(signHistoryMessage(turn, { role: 'user', authorId: 'u1', authorName: 'Marie' })).toEqual({

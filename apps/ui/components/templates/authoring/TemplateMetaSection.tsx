@@ -1,7 +1,7 @@
 'use client'
 
-import { TEMPLATE_CATEGORIES } from '@rerun/contracts'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@rerun/ui/primitives'
+import { TEMPLATE_CATEGORIES } from '@lumvika/contracts'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@lumvika/ui/primitives'
 import { Controller, useFormContext } from 'react-hook-form'
 import { useTranslations } from 'next-intl'
 import { Field } from '@/components/ui/field'

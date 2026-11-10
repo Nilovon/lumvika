@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-schedules-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-schedules-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it, beforeEach } = await import('vitest')
 const { scheduleTools } = await import('./schedule.js')

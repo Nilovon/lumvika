@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { RERUN_CONNECTION_ID, boxDefaultModelSchema, createConnectionSchema, customProbeInputSchema, updateConnectionKeysSchema, updateConnectionSchema } from '@rerun/contracts'
+import { LUMVIKA_CONNECTION_ID, boxDefaultModelSchema, createConnectionSchema, customProbeInputSchema, updateConnectionKeysSchema, updateConnectionSchema } from '@lumvika/contracts'
 import { connectionExists, isConnected, toSummary } from '../../connections/loader.js'
 import { findConnection, getConnection, listConnections } from '../../connections/registry.js'
 import { assertConnectionDeletable, createConnection, deleteConnection, patchConnection, updateConnectionKeys } from '../../connections/store.js'
@@ -39,7 +39,7 @@ async function awaitPendingPlanLimits(connections: LoadedConnection[]): Promise<
 // Tells the hub the box now runs on the workspace's own AI, which ticks its getting-started step.
 // Fire and forget: an unreachable hub never fails the write that just succeeded.
 function announceConnected(connection: LoadedConnection): void {
-    if (connection.id === RERUN_CONNECTION_ID || !isConnected(connection)) return
+    if (connection.id === LUMVIKA_CONNECTION_ID || !isConnected(connection)) return
     void sendNotification({ event: 'box.connection.connected', kind: 'info', agentId: null, message: connection.config.provider })
 }
 
@@ -96,7 +96,7 @@ connectionRoutes.patch('/:id', async c => {
     const connection = await patchConnection(id, patch)
     if (patch.baseUrl !== undefined) await refreshCustomCatalog(connection)
     // Switching off the model the box default names would leave every agent that picked nothing
-    // dropping to Rerun with nothing on screen saying so. This is the one write that can see it.
+    // dropping to Lumvika with nothing on screen saying so. This is the one write that can see it.
     const boxDefault = await readBoxDefault()
     if (boxDefault?.connectionId === id && !servesModel(connection, boxDefault.model)) await writeBoxDefault({ connectionId: id, model: defaultModelOf(connection) })
     return c.json(toSummary(connection))
@@ -144,15 +144,15 @@ async function readCliModelsBeforeAdopting(connection: LoadedConnection): Promis
 }
 
 // Plugging the first credential into a box is the whole setup, and on its own it changes nothing:
-// with no default written, the resolution ladder keeps every agent on the keyless Rerun connection
+// with no default written, the resolution ladder keeps every agent on the keyless Lumvika connection
 // until someone finds the star in the connection detail. So the first one adopts the default.
 //
 // Only while nothing else is plugged in — moving the default onto a connection added next to a
 // working one would move the bill without anyone asking.
 async function adoptBoxDefault(connection: LoadedConnection): Promise<void> {
-    if (connection.id === RERUN_CONNECTION_ID || !isConnected(connection)) return
+    if (connection.id === LUMVIKA_CONNECTION_ID || !isConnected(connection)) return
     if (await readBoxDefault()) return
-    const others = (await listConnections()).filter(c => c.id !== connection.id && c.id !== RERUN_CONNECTION_ID)
+    const others = (await listConnections()).filter(c => c.id !== connection.id && c.id !== LUMVIKA_CONNECTION_ID)
     if (others.some(isConnected)) return
     const model = defaultModelOf(connection)
     // `defaultModelOf` falls back to the provider default on a connection offering nothing, and a

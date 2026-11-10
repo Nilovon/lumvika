@@ -1,4 +1,4 @@
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import { connectionsOfProvider } from '../../connections/resolve.js'
 import type { RunContext } from '../../runtime/context.js'
 
@@ -6,7 +6,7 @@ export type PinnedModel = { connectionId: string | null; provider: Provider | nu
 
 // The triple an automation the agent writes for itself is stored under. Nothing named stores nothing,
 // so the automation follows the agent: freezing the running model instead kept every task written
-// during a run on Rerun credit billing Rerun after the workspace plugged in its own subscription.
+// during a run on Lumvika credit billing Lumvika after the workspace plugged in its own subscription.
 //
 // A pin carries its connection, because that is the one key `automationModel` reads at run time: a
 // bare provider next to a model resolves against the agent's own connection and is dropped in

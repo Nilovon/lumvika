@@ -21,8 +21,8 @@ Before digging, make sure the bug is not already known or fixed:
 - Search the history for the symptom and the area: `git log -i --grep=<keyword>`,
   `git log -S<symbol> -- <path>`, and the PRs, merged and open
   (`gh pr list --state all --search "<keyword>"`). History before 2026-10-29 lives in the private
-  `rerun-build/rerun-monorepo-archive`; what Rerun Cloud runs differently lives in `cloud/`
-  (`git -C cloud log`, repo `rerun-build/rerun-cloud`).
+  `schnebel-technologie/lumvika-monorepo-archive`; what Lumvika Cloud runs differently lives in `cloud/`
+  (`git -C cloud log`, repo `schnebel-technologie/lumvika-cloud`).
 - Search Notion for a card with the same symptom (done or in progress).
 - A fix found: check it reached where the bug was seen. Is the commit on `master`? Is the app's
   `/api/version` (staging or prod) at or after it? Does the customer's engine box run a version
@@ -50,7 +50,7 @@ Investigating on the real account is allowed, still read-only:
   through the engine API (`/agents/:id`, `/sessions/:sid/messages`, `/runs`, `/runs/:rid/tools`).
   Transcripts live on the box, not in Supabase.
 - When the API is not enough, SSH into the box: engine logs, `journalctl`, the data-dir, disk and
-  memory. Look only: no restart, no `rerun update`, no file edited, no data deleted.
+  memory. Look only: no restart, no `lumvika update`, no file edited, no data deleted.
 - Read the model and provider the customer actually used before any reproduction, it changes the
   behaviour.
 - Never paste the engine API key, tokens or the customer's private content in a message, a commit

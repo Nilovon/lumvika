@@ -1,4 +1,4 @@
-import type { BrainSeedPage, BrainSeedResult } from '@rerun/contracts'
+import type { BrainSeedPage, BrainSeedResult } from '@lumvika/contracts'
 import { readPageFile, SEED_AUTHOR, seedOwnsPage, writePage } from './pages.js'
 
 // Run again whenever the hub re-explores the company, so it may only touch what it wrote itself:

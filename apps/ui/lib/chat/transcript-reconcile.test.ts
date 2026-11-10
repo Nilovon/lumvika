@@ -66,7 +66,7 @@ describe('needsReconcile', () => {
 
     it('does not wait on the quick replies, which never get an output', () => {
         expect(needsReconcile([user, { role: 'assistant', parts: [{ type: 'text' }, { type: 'tool-suggest_replies', toolCallId: 'q1', state: 'input-available' }] }])).toBe(false)
-        expect(needsReconcile([user, { role: 'assistant', parts: [{ type: 'text' }, { type: 'dynamic-tool', toolName: 'mcp__rerun__suggest_replies', toolCallId: 'q1', state: 'input-available' }] }])).toBe(false)
+        expect(needsReconcile([user, { role: 'assistant', parts: [{ type: 'text' }, { type: 'dynamic-tool', toolName: 'mcp__lumvika__suggest_replies', toolCallId: 'q1', state: 'input-available' }] }])).toBe(false)
     })
 
     it('does not mistake a pending approval for a missing output', () => {

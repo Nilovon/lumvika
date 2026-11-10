@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import type { RunContext } from '../../runtime/context.js'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-callagent-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-callagent-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it, beforeAll, vi } = await import('vitest')
 const { migrate } = await import('../../db/migrate.js')

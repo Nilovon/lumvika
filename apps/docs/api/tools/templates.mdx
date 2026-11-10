@@ -20,7 +20,7 @@ Two rules every tool here shares. Publication is never the caller's decision: yo
   <Step title="capture_template_agents">Archive the coworkers into the template.</Step>
   <Step title="add_template_image">Add the cover.</Step>
   <Step title="get_template">Read `submitChecklist` and fix what is missing.</Step>
-  <Step title="submit_template">Hand it to the Rerun team.</Step>
+  <Step title="submit_template">Hand it to the Lumvika team.</Step>
 </Steps>
 
 ## list_templates
@@ -29,7 +29,7 @@ Lists the templates this account authors, with `templateId`, `slug`, `title`, `s
 
 Takes no arguments. Call it first: every other template tool takes the `templateId` it returns.
 
-Statuses are `draft` (yours, editable), `in_review` (handed over, frozen), `published` and `unlisted` (live, maintained by Rerun from then on), and `archived`.
+Statuses are `draft` (yours, editable), `in_review` (handed over, frozen), `published` and `unlisted` (live, maintained by Lumvika from then on), and `archived`.
 
 ## get_template
 
@@ -112,7 +112,7 @@ Writes the editorial page of a draft. Only the fields you pass change.
 
 ## submit_template
 
-Hands a draft to the Rerun team for review.
+Hands a draft to the Lumvika team for review.
 
 <ParamField body="templateId" type="string" required />
 
@@ -121,7 +121,7 @@ It enforces the list `get_template` returns: a title, a tagline, a description, 
 Once it succeeds the template is frozen: still private, no longer editable. `withdraw_template` is the only way back to a draft.
 
 <Note>
-  Payout onboarding cannot happen from here. It needs a browser: in the Rerun app, board toolbar, **My templates**, **Payouts**.
+  Payout onboarding cannot happen from here. It needs a browser: in the Lumvika app, board toolbar, **My templates**, **Payouts**.
 </Note>
 
 ## withdraw_template
@@ -130,7 +130,7 @@ Takes a template back from review into draft so it can be edited again.
 
 <ParamField body="templateId" type="string" required />
 
-Only works while it is `in_review`. Once published, the page is maintained by Rerun and this is refused.
+Only works while it is `in_review`. Once published, the page is maintained by Lumvika and this is refused.
 
 ## delete_template
 
@@ -221,6 +221,6 @@ Adds one image to the gallery from a URL that is already hosted somewhere public
   Put it first, making it the cover and the social preview.
 </ParamField>
 
-The bytes are downloaded and re-encoded into Rerun storage, so the gallery never points at a host that can expire or swap the picture after the review. Unlike `update_template(gallery)` this appends: the images already there are kept.
+The bytes are downloaded and re-encoded into Lumvika storage, so the gallery never points at a host that can expire or swap the picture after the review. Unlike `update_template(gallery)` this appends: the images already there are kept.
 
 There is no upload and no image generation here. Produce or host the image elsewhere, then pass its https URL.

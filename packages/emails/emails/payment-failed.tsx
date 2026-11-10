@@ -90,8 +90,8 @@ PaymentFailed.PreviewProps = {
   declinedLabel: "12 March",
   pausedLabel: "13 March, 16:00 UTC",
   keptUntilLabel: "10 June",
-  billingUrl: "https://app.rerun.build/?billing=1",
-  appUrl: "https://app.rerun.build",
+  billingUrl: "https://app.lumvika.com/?billing=1",
+  appUrl: "https://app.lumvika.com",
 } satisfies PaymentFailedProps;
 
 const meta: React.CSSProperties = {

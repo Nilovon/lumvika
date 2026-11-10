@@ -31,7 +31,7 @@
         "asleep": "Endormi",
         "asleepAbout": "Endormi · {about}"
     },
-    "foreman": {
+    "steward": {
         "askAnything": "Demandez ce que vous voulez"
     },
     "header": {
@@ -42,7 +42,7 @@
         "contactSupport": "Contacter le support",
         "signOut": "Se déconnecter",
         "subscriptionTitle": "Résiliez d'abord l'abonnement",
-        "subscriptionMessage": "{workspaces} se renouvelle encore. Résiliez-le depuis Facturation sur rerun.build, puis supprimez votre compte.",
+        "subscriptionMessage": "{workspaces} se renouvelle encore. Résiliez-le depuis Facturation sur lumvika.com, puis supprimez votre compte.",
         "deleteTitle": "Supprimer votre compte ?",
         "deleteMessage": "Vous quittez les workspaces que vous partagez. Un workspace dont vous êtes le seul membre s'arrête définitivement, avec ses coworkers et ses fichiers. Cette action est irréversible.",
         "delete": "Supprimer",
@@ -52,7 +52,7 @@
         "deleteFailedTitle": "Impossible de supprimer votre compte",
         "deleteFailedMessage": "Réessayez dans un instant.",
         "leaveServerTitle": "Quitter {host} ?",
-        "leaveServerMessage": "Vous serez déconnecté, et Rerun se rouvrira sur Rerun Cloud.",
+        "leaveServerMessage": "Vous serez déconnecté, et Lumvika se rouvrira sur Lumvika Cloud.",
         "leaveServer": "Quitter"
     },
     "workspace": {
@@ -66,7 +66,7 @@
         "title": "Rechercher",
         "back": "Retour",
         "placeholder": "Rechercher des coworkers et des conversations",
-        "askRerun": "Demander à Rerun",
+        "askLumvika": "Demander à Lumvika",
         "quotedAsk": "« {query} »",
         "coworkers": "Coworkers",
         "conversations": "Conversations",

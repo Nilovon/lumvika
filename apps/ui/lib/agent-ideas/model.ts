@@ -4,7 +4,7 @@ import type { z } from 'zod'
 import { openrouter } from '@/lib/ai/openrouter'
 import type { CollectorCost } from '@/lib/company/explore/types'
 
-export const IDEAS_MODEL = process.env.RERUN_AGENT_IDEAS_MODEL ?? 'anthropic/claude-opus-5.5'
+export const IDEAS_MODEL = process.env.LUMVIKA_AGENT_IDEAS_MODEL ?? 'anthropic/claude-opus-5.5'
 
 const TIMEOUT_MS = 180_000
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The picker writes the conversation's override, which the chat transport sends with every message.
 // One it writes on its own pins the conversation for good: a workspace running on Claude ended up
-// spending its Rerun credit, and being told it was used up, after a single failed read of the agent.
+// spending its Lumvika credit, and being told it was used up, after a single failed read of the agent.
 
 const mocks = vi.hoisted(() => ({ getAgentContextAction: vi.fn(), listAiConnectionsAction: vi.fn(), updateAgentConfigAction: vi.fn(), canManage: true, boardAgentIds: [] as string[] }))
 
@@ -20,16 +20,16 @@ vi.mock('@/app/api/_actions/workspace-connection.actions', () => ({
     updateAiConnectionKeysAction: vi.fn(),
 }))
 vi.mock('@/supabase/session/SessionProvider', () => ({
-    useSession: () => ({ workspace: { id: 1, subscription_status: 'trialing', is_sandbox: false, rerun_budget_micros: 0, rerun_used_micros: 0, rerun_topup_micros: 0 } }),
+    useSession: () => ({ workspace: { id: 1, subscription_status: 'trialing', is_sandbox: false, lumvika_budget_micros: 0, lumvika_used_micros: 0, lumvika_topup_micros: 0 } }),
     useOptionalSession: () => null,
 }))
-vi.mock('@rerun/analytics/client', () => ({ track: vi.fn() }))
+vi.mock('@lumvika/analytics/client', () => ({ track: vi.fn() }))
 vi.mock('@/hooks/useBoxAccess', () => ({ useCanManageAgent: () => mocks.canManage }))
 vi.mock('@/stores/board.store', () => ({ useBoardStore: (select: (state: { agents: { id: string }[] }) => unknown) => select({ agents: mocks.boardAgentIds.map(id => ({ id })) }) }))
 
 const connection = (id: string, provider: string, models: string[]) => ({
     id,
-    name: id === 'rerun' ? 'Rerun' : 'Claude',
+    name: id === 'lumvika' ? 'Lumvika' : 'Claude',
     provider,
     models,
     extraModels: [],
@@ -42,7 +42,7 @@ const connection = (id: string, provider: string, models: string[]) => ({
 })
 
 const CLAUDE_DEFAULT = {
-    connections: [connection('rerun', 'rerun', ['rerun-max', 'rerun-fast', 'rerun-smart']), connection('claude-1', 'claude', ['claude-sonnet-5-5', 'claude-opus-5-5'])],
+    connections: [connection('lumvika', 'lumvika', ['lumvika-max', 'lumvika-fast', 'lumvika-smart']), connection('claude-1', 'claude', ['claude-sonnet-5-5', 'claude-opus-5-5'])],
     default: { connectionId: 'claude-1', model: 'claude-sonnet-5-5' },
     opencodeOffered: false,
     customOffered: false,
@@ -71,7 +71,7 @@ async function mount(agentId: string, onReadyChange?: (ready: boolean) => void) 
 }
 
 const storedOverride = (agentId: string) => {
-    const raw = localStorage.getItem(`rerun-agent-model-${agentId}`)
+    const raw = localStorage.getItem(`lumvika-agent-model-${agentId}`)
     return raw ? (JSON.parse(raw) as Record<string, unknown>) : null
 }
 
@@ -107,14 +107,14 @@ describe('ModelSelector override', REIMPORT_TIMEOUT, () => {
     })
 
     it('leaves an agent following the Box alone when the picker cannot show what the engine resolved', async () => {
-        mocks.getAgentContextAction.mockResolvedValue(modelContext({ resolvedConnectionId: 'rerun', resolvedModel: 'rerun-fast' }))
+        mocks.getAgentContextAction.mockResolvedValue(modelContext({ resolvedConnectionId: 'lumvika', resolvedModel: 'lumvika-fast' }))
         const onReadyChange = vi.fn()
         await mount('hidden-default', onReadyChange)
         expect(storedOverride('hidden-default')).toBeNull()
         expect(onReadyChange).toHaveBeenLastCalledWith(true)
     })
 
-    it('repoints a pin that no longer resolves at the Box default, not at Rerun', async () => {
+    it('repoints a pin that no longer resolves at the Box default, not at Lumvika', async () => {
         mocks.getAgentContextAction.mockResolvedValue(modelContext({ connectionId: 'gone', model: 'gpt-6-astra', resolvedConnectionId: 'gone', resolvedModel: 'gpt-6-astra' }))
         await mount('stale-pin')
         expect(storedOverride('stale-pin')).toEqual({ connectionId: 'claude-1', model: 'claude-sonnet-5-5' })

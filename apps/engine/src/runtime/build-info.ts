@@ -67,5 +67,5 @@ export function isBuildCommit(commit: string): boolean {
 
 // How the engine names itself to OpenCode, which sees every box behind one product.
 export function opencodeUserAgent(): string {
-    return `rerun-engine/${buildCommit() ?? 'dev'}`
+    return `lumvika-engine/${buildCommit() ?? 'dev'}`
 }

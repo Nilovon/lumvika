@@ -1,4 +1,4 @@
-import type { InboxItem } from '@rerun/contracts'
+import type { InboxItem } from '@lumvika/contracts'
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AppState } from 'react-native'
 

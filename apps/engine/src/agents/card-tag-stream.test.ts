@@ -38,7 +38,7 @@ describe('CardTagSplitter', () => {
     })
 
     it('cuts every card tool, bridged names and attributes included', () => {
-        const { text, cuts } = split(['Done.\n<request_approval>\n</request_approval>\n<mcp__rerun__suggest_service slug="stripe" />\n<rerun__request_secret>\n'])
+        const { text, cuts } = split(['Done.\n<request_approval>\n</request_approval>\n<mcp__lumvika__suggest_service slug="stripe" />\n<lumvika__request_secret>\n'])
         expect(text.join('')).toBe('Done.')
         expect(cuts).toEqual(['request_approval', 'request_approval', 'suggest_service', 'request_secret'])
     })
@@ -82,7 +82,7 @@ describe('CardTagSplitter', () => {
 describe('cutsCardTag', () => {
     it('spots a card tag, bridged or not, and nothing else', () => {
         expect(cutsCardTag(`${MESSAGE}\n\n${EMPTY_TAG}`)).toBe(true)
-        expect(cutsCardTag('<mcp__rerun__request_approval>')).toBe(true)
+        expect(cutsCardTag('<mcp__lumvika__request_approval>')).toBe(true)
         expect(cutsCardTag('Call ask_user now. <b>bold</b>')).toBe(false)
         expect(cutsCardTag('')).toBe(false)
     })
@@ -108,7 +108,7 @@ describe('createCardTagGuard', () => {
     }
 
     it('cuts the tag out of a stream and lets a real tool call through', async () => {
-        const toolCall = { type: 'tool-call', toolCallId: 'c1', toolName: 'mcp__rerun__ask_user', input: '{}' }
+        const toolCall = { type: 'tool-call', toolCallId: 'c1', toolName: 'mcp__lumvika__ask_user', input: '{}' }
         const seen = await run([{ type: 'text-start', id: 't' }, { type: 'text-delta', id: 't', delta: `${MESSAGE}\n\n` }, { type: 'text-delta', id: 't', delta: EMPTY_TAG }, { type: 'text-end', id: 't' }, toolCall, { type: 'finish' }])
         const text = seen
             .filter(part => part.type === 'text-delta')
@@ -134,7 +134,7 @@ describe('createCardTagGuard', () => {
     })
 
     it('cleans a one-shot answer and drops a text part left empty', async () => {
-        const wrapped = await createCardTagGuard('agent-1', 'rerun').wrapGenerate!({
+        const wrapped = await createCardTagGuard('agent-1', 'lumvika').wrapGenerate!({
             doGenerate: async () => ({
                 content: [
                     { type: 'text', text: `${MESSAGE}\n\n${EMPTY_TAG}` },
@@ -147,7 +147,7 @@ describe('createCardTagGuard', () => {
 
     it('returns a one-shot answer without a card tag as it was', async () => {
         const content = [{ type: 'text', text: 'Plain.\n' }]
-        const wrapped = await createCardTagGuard('agent-1', 'rerun').wrapGenerate!({ doGenerate: async () => ({ content }) } as never)
+        const wrapped = await createCardTagGuard('agent-1', 'lumvika').wrapGenerate!({ doGenerate: async () => ({ content }) } as never)
         expect(wrapped.content).toEqual(content)
     })
 })

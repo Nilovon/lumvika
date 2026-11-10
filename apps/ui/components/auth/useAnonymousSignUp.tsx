@@ -8,16 +8,16 @@ import { AnonymousEmailStep } from '@/components/auth/AnonymousEmailStep'
 import type { GetCaptchaToken } from '@/components/auth/captcha/captcha-error'
 import { EmailSendError, trackEmailSend } from '@/components/auth/email-send'
 import { OAuthSignInButton } from '@/components/auth/OAuthSignInButton'
-import { PHONE_ENABLED } from '@rerun/cloud/phone'
-import { PhoneSignIn } from '@rerun/cloud/phone.client'
+import { PHONE_ENABLED } from '@lumvika/cloud/phone'
+import { PhoneSignIn } from '@lumvika/cloud/phone.client'
 import { useSignupFunnel } from '@/components/auth/useSignupFunnel'
 import { rememberSignInMethod } from '@/lib/auth/last-sign-in'
 import { signupStep } from '@/lib/auth/signup-abandon'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { createClient } from '@/supabase/client'
 import { useOptionalSession } from '@/supabase/session/SessionProvider'
-import { SIGNUP_INTENT_COOKIE, type SignupSurface } from '@rerun/analytics'
-import { setSharedCookie } from '@rerun/analytics/client'
+import { SIGNUP_INTENT_COOKIE, type SignupSurface } from '@lumvika/analytics'
+import { setSharedCookie } from '@lumvika/analytics/client'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, type ReactNode } from 'react'
@@ -82,7 +82,7 @@ export function useAnonymousSignUp({ surface, active, onEntered }: { surface: Si
         await enter(emailIsNew.current)
     }
 
-    // The signup is stamped by the server on the next request, and the phone wall or the foreman
+    // The signup is stamped by the server on the next request, and the phone wall or the steward
     // only rise once this tab holds the stamp. Waiting for it here, with the code button still
     // pending, is what lets the dialog close onto the right screen. Never throws: the code was
     // right, and the forms would show it as wrong. Should the wait fail, the provider keeps asking.

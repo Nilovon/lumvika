@@ -36,8 +36,8 @@ function substituteBasic(value: string, ctx: SubstituteContext): string {
 }
 
 // ${agent.id} is resolved here (the engine's ${VAR} resolver can't — it disallows the dot),
-// so a managed proxy server can carry the agent id in a header. ${RERUN_API_KEY} /
-// ${RERUN_HUB_BASE_URL} are left intact for the engine to resolve from its own env.
+// so a managed proxy server can carry the agent id in a header. ${LUMVIKA_API_KEY} /
+// ${LUMVIKA_HUB_BASE_URL} are left intact for the engine to resolve from its own env.
 function substitute(value: string, ctx: SubstituteContext): string {
     return substituteBasic(value, ctx).replaceAll('${agent.id}', ctx.engineAgentId).replace(/\$\{input\.([A-Za-z0-9_]+)\}/g, (_, key) => {
         if (ctx.inputMap.get(key)?.secret) {
@@ -126,7 +126,7 @@ export async function compileService(
     const compiled = method.mcpServers.map(t => {
         const server = compileMcpServer(t, ctx, serverNameFor(t.name))
         // The Composio proxy derives the instance's own Composio user from this header.
-        if (instanceId && method.kind === 'composio') server.headers = { ...server.headers, 'x-rerun-instance': instanceId }
+        if (instanceId && method.kind === 'composio') server.headers = { ...server.headers, 'x-lumvika-instance': instanceId }
         return server
     })
     const compiledSkills = manifest.skills.map(s => ({ ...s, body: substitute(s.body, ctx) }))
@@ -217,7 +217,7 @@ export async function decompileService(conn: EngineConnection, engineAgentId: st
         await updateAgentKeys(conn, engineAgentId, { remove: envKeys })
     }
 
-    // 2. Remove the service's MCP servers (engine removes by name — keeps rerun_hub + others).
+    // 2. Remove the service's MCP servers (engine removes by name — keeps lumvika_hub + others).
     if (mcpServers.length > 0) {
         await patchMcpServers(conn, engineAgentId, { remove: mcpServers })
     }

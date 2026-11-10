@@ -8,7 +8,7 @@ import { resolveSitePath } from '@/lib/published/site-path'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 
-// Everything `<slug>.rerun.site` decides before it serves a byte: which link the host names, whether
+// Everything `<slug>.lumvika.site` decides before it serves a byte: which link the host names, whether
 // the visitor may open it, and what they see when they may not (the gate) or when the link is a
 // single file a browser would only download (the viewer).
 
@@ -17,8 +17,8 @@ export const PUBLISHED_VIEW_ROUTE = '/published-view'
 export { PUBLISHED_PAGE_MARKER } from '@/lib/published/marker'
 
 // The paths a published host keeps for itself, out of any site's reach: a site file can never be
-// named `__rerun`, since a published folder skips nothing but dotfiles.
-export const RESERVED_PREFIX = '/__rerun/'
+// named `__lumvika`, since a published folder skips nothing but dotfiles.
+export const RESERVED_PREFIX = '/__lumvika/'
 
 export const GATE_ERROR_PARAM = 'rr_error'
 export const GATE_EMAIL_PARAM = 'rr_email'
@@ -40,7 +40,7 @@ export type WorkspaceBrand = { name: string; iconUrl: string | null }
 
 export async function loadWorkspaceBrand(workspaceId: number): Promise<WorkspaceBrand> {
     const { data } = await selectMaybeSingle(createServiceRoleClient(), 'workspaces', ['name', 'icon_url'] as const, { id: workspaceId })
-    return { name: data?.name ?? 'Rerun', iconUrl: data?.icon_url ?? null }
+    return { name: data?.name ?? 'Lumvika', iconUrl: data?.icon_url ?? null }
 }
 
 export function isHtmlContentType(contentType: string): boolean {
@@ -126,5 +126,5 @@ export function gateKindOf(access: PublishedAccess): GateKind | null {
 // The preview card's address names the state it was drawn for, so a crawler that cached the card of
 // a public link fetches a fresh one once the link is protected, and the other way round.
 export function previewImageUrl(entry: Pick<PublishedEntry, 'access_version' | 'updated_at'>, origin: string): string {
-    return `${origin}/__rerun/og.png?v=${entry.access_version}-${Date.parse(entry.updated_at)}`
+    return `${origin}/__lumvika/og.png?v=${entry.access_version}-${Date.parse(entry.updated_at)}`
 }

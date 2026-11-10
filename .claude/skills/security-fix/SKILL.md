@@ -1,6 +1,6 @@
 ---
 name: security-fix
-description: Fix a vulnerability in private, through the temporary private fork of a GitHub security advisory, never through a branch of the public repository (every branch pushed to rerun-build/rerun is public at once). Use whenever the work is a vulnerability fix, a security audit finding, a private report (help@rerun.build or "Report a vulnerability"), or when someone says "security fix", "fix this vulnerability", « correctif de sécurité », « corrige cette faille », « fix de sécu », or when the pre-push hook refused a push for mentioning a vulnerability.
+description: Fix a vulnerability in private, through the temporary private fork of a GitHub security advisory, never through a branch of the public repository (every branch pushed to schnebel-technologie/lumvika is public at once). Use whenever the work is a vulnerability fix, a security audit finding, a private report (help@lumvika.com or "Report a vulnerability"), or when someone says "security fix", "fix this vulnerability", « correctif de sécurité », « corrige cette faille », « fix de sécu », or when the pre-push hook refused a push for mentioning a vulnerability.
 ---
 
 # security-fix: a vulnerability fix stays private until it is published
@@ -9,10 +9,10 @@ Reply in the user's language.
 
 ## Why
 
-`rerun-build/rerun` is public and is the working repository: a pushed branch is visible at once, even
+`schnebel-technologie/lumvika` is public and is the working repository: a pushed branch is visible at once, even
 without a pull request, and its commit message alone can point at the hole. A fix is written in the
 temporary private fork of a GitHub security advisory, and becomes public only when the advisory is
-published, once Rerun Cloud already runs it.
+published, once Lumvika Cloud already runs it.
 
 ## The flow
 
@@ -32,8 +32,8 @@ published, once Rerun Cloud already runs it.
 3. **Fix and test locally.** GitHub Actions does not run in an advisory fork: run the typecheck, the
    tests and the in-app check yourself.
 4. **Push and open the pull request in the fork:** `git push`, then
-   `gh pr create --repo rerun-build/rerun-ghsa-xxxx-xxxx-xxxx --base dev`.
-5. **Ship Rerun Cloud before publishing.** Rerun Cloud builds from a public commit. Deploy it from the
+   `gh pr create --repo schnebel-technologie/lumvika-ghsa-xxxx-xxxx-xxxx --base dev`.
+5. **Ship Lumvika Cloud before publishing.** Lumvika Cloud builds from a public commit. Deploy it from the
    fork first (its Dockerfiles take `UPSTREAM_REPO` and `UPSTREAM_TOKEN` for a private upstream), following
    the release notes in `cloud/`.
 6. **Merge and publish** from the advisory page, then release. Fill in the advisory's description

@@ -6,7 +6,7 @@ import { internalPath } from '@/lib/auth/internal-path'
 import { PENDING_INVITE_COOKIE } from '@/lib/auth/pending-invite'
 import { routes } from '@/lib/routes'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { SIGNUP_INTENT_COOKIE, sharedCookieDomain } from '@rerun/analytics'
+import { SIGNUP_INTENT_COOKIE, sharedCookieDomain } from '@lumvika/analytics'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
     if (linking) return backToAccount(request, { code: errorCode ?? 'failed', provider: providerIn(cookieStore.get(LINK_INTENT_COOKIE)?.value) })
 
     // An anonymous visitor who picked a provider is first linked to it, and Supabase only refuses
-    // here, on the way back, when that identity already has a Rerun account: sign into that one.
+    // here, on the way back, when that identity already has a Lumvika account: sign into that one.
     // Google already asked for consent on the way out, so the second trip skips it.
     if (errorCode === 'identity_already_exists') {
         const provider = providerIn(cookieStore.get(OAUTH_PROVIDER_COOKIE)?.value)

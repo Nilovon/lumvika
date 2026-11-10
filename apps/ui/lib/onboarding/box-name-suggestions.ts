@@ -1,5 +1,5 @@
 import { isTemplateCategory } from '@/lib/onboarding/industries'
-import type { TemplateCategory } from '@rerun/contracts'
+import type { TemplateCategory } from '@lumvika/contracts'
 
 // Names offered under the Box name field, so the field is not an empty page.
 //

@@ -1,4 +1,4 @@
-# rerun-engine — Complete Guide
+# lumvika-engine — Complete Guide
 
 This document explains the whole project: what it is, how it is built, how data is stored, how to run it, and how every part (agents, the run loop, tools, skills, memory, self-improvement) works together. For the exact HTTP contract see [API.md](./API.md).
 
@@ -6,9 +6,9 @@ This document explains the whole project: what it is, how it is built, how data 
 
 ## 1. What it is
 
-`rerun-engine` is a small, self-hostable server that runs **autonomous AI agents**. A single process manages **many independent agents** and exposes everything over HTTP. There is no UI here on purpose — a separate project (the `rerun` app) is the front end.
+`lumvika-engine` is a small, self-hostable server that runs **autonomous AI agents**. A single process manages **many independent agents** and exposes everything over HTTP. There is no UI here on purpose — a separate project (the `lumvika` app) is the front end.
 
-Each agent is fully self-contained: its own personality, its own memory, its own skills, its own enabled tools, and its own API keys. You start the server once (`rerun run`), then create agents and talk to them over the API.
+Each agent is fully self-contained: its own personality, its own memory, its own skills, its own enabled tools, and its own API keys. You start the server once (`lumvika run`), then create agents and talk to them over the API.
 
 It is a lighter, TypeScript replacement for a Hermes-style agent host, built on the **Vercel AI SDK** (`ai` + `@ai-sdk/*`).
 
@@ -43,17 +43,17 @@ HTTP (Hono)
 ```
 
 - **Files** are canonical for anything readable: identity, config, keys, skills, memories, the workspace.
-- **libSQL** (`data/rerun.db`) stores only: conversation `sessions` + `messages`, the `memories` retrieval index (embedding + FTS, each row points back to its `.md` file), a light `agents` index, and `runs` audit logs.
+- **libSQL** (`data/lumvika.db`) stores only: conversation `sessions` + `messages`, the `memories` retrieval index (embedding + FTS, each row points back to its `.md` file), a light `agents` index, and `runs` audit logs.
 
 ---
 
 ## 3. Storage layout
 
-Everything lives under `RERUN_DATA_DIR` (default `~/.rerun`):
+Everything lives under `LUMVIKA_DATA_DIR` (default `~/.lumvika`):
 
 ```
 data/
-  rerun.db                      libSQL database (transcripts + indexes + audit)
+  lumvika.db                      libSQL database (transcripts + indexes + audit)
   shared/                       common space every agent can read and write (shared tools)
   shared-db/
     shared.db                   SQL database every agent shares (shared_db_* tools)
@@ -74,7 +74,7 @@ data/
 
 Two filesystems coexist: each agent's private `workspace/` (the `filesystem` / `fs_*` tools), and the global `shared/` space (the `shared` / `shared_*` tools) that every agent can read and write to hand files to each other.
 
-Two SQL databases coexist the same way: each agent's private `data/agent.db` (the `db` / `db_*` tools), and the engine-wide `shared-db/shared.db` (the `sharedDb` / `shared_db_*` tools) that every agent reads and writes. The shared file sits outside `shared/` on purpose, so no file tool can truncate it. A script reaches them through `RERUN_AGENT_DB` and `RERUN_SHARED_DB`.
+Two SQL databases coexist the same way: each agent's private `data/agent.db` (the `db` / `db_*` tools), and the engine-wide `shared-db/shared.db` (the `sharedDb` / `shared_db_*` tools) that every agent reads and writes. The shared file sits outside `shared/` on purpose, so no file tool can truncate it. A script reaches them through `LUMVIKA_AGENT_DB` and `LUMVIKA_SHARED_DB`.
 
 ### What is in the database (and why)
 
@@ -97,7 +97,7 @@ pnpm install
 pnpm build                 # compiles to dist/
 node dist/cli/bin.js run   # starts the server (runs migrations first)
 # during development:
-pnpm dev                   # tsx watch, same as `rerun run`
+pnpm dev                   # tsx watch, same as `lumvika run`
 ```
 
 Check it:
@@ -106,28 +106,28 @@ Check it:
 curl localhost:3000/health     # {"status":"ok","activeAgents":0}
 ```
 
-### The CLI (`rerun`)
+### The CLI (`lumvika`)
 
-After `pnpm build`, the `rerun` bin is `dist/cli/bin.js`:
+After `pnpm build`, the `lumvika` bin is `dist/cli/bin.js`:
 
 ```
-rerun run                       Start the API server (migrates first)
-rerun migrate                   Create or update the database
-rerun agent create --name X     Create an agent  (--provider, --model, --key KEY=VALUE)
-rerun agent list                List agents
-rerun agent delete <id>         Delete an agent and its files
-rerun skill list <agentId>      List an agent's skills
-rerun schedule list <agentId>   List an agent's scheduled tasks
-rerun doctor                    Check env, database and vector support
+lumvika run                       Start the API server (migrates first)
+lumvika migrate                   Create or update the database
+lumvika agent create --name X     Create an agent  (--provider, --model, --key KEY=VALUE)
+lumvika agent list                List agents
+lumvika agent delete <id>         Delete an agent and its files
+lumvika skill list <agentId>      List an agent's skills
+lumvika schedule list <agentId>   List an agent's scheduled tasks
+lumvika doctor                    Check env, database and vector support
 ```
 
-`rerun doctor` is the fastest way to confirm a machine is healthy:
+`lumvika doctor` is the fastest way to confirm a machine is healthy:
 
 ```
 data dir: /…/data ok
 api key: open (no auth)
 embed key: unset (memory recall falls back to FTS only)
-db: /…/data/rerun.db ok
+db: /…/data/lumvika.db ok
 tables: agents, memories, messages, runs, sessions
 vector support: yes
 ```
@@ -140,12 +140,12 @@ Instance-level env (parsed and validated at startup, see `src/config/env.ts`):
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `RERUN_DATA_DIR` | `~/.rerun` | Root for the database and agent files |
-| `RERUN_PORT` | `3000` | HTTP port |
-| `RERUN_HOST` | `0.0.0.0` | Bind address |
-| `RERUN_API_KEY` | _unset_ | Bearer token for the API (open if unset); also used to authenticate to the UI's `/api/embed` |
-| `RERUN_HUB_BASE_URL` | _unset_ | Public UI base URL for embeddings and agent notifications |
-| `RERUN_LOG_LEVEL` | `info` | pino log level |
+| `LUMVIKA_DATA_DIR` | `~/.lumvika` | Root for the database and agent files |
+| `LUMVIKA_PORT` | `3000` | HTTP port |
+| `LUMVIKA_HOST` | `0.0.0.0` | Bind address |
+| `LUMVIKA_API_KEY` | _unset_ | Bearer token for the API (open if unset); also used to authenticate to the UI's `/api/embed` |
+| `LUMVIKA_HUB_BASE_URL` | _unset_ | Public UI base URL for embeddings and agent notifications |
+| `LUMVIKA_LOG_LEVEL` | `info` | pino log level |
 
 Per-agent provider keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, …) are **not** global — they live in each agent's `.env` and are supplied when you create the agent.
 
@@ -167,7 +167,7 @@ Per-agent provider keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, …) are **not**
 }
 ```
 
-- `provider` is one of `rerun`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. The credentials live on the box connection the agent points at (`connectionId`), see `docs/API.md`.
+- `provider` is one of `lumvika`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. The credentials live on the box connection the agent points at (`connectionId`), see `docs/API.md`.
 - `tools` switches whole tool families on/off.
 - `selfImprovement` controls the curator and whether the agent may install tools / register MCP servers.
 
@@ -183,12 +183,12 @@ curl -X POST localhost:3000/agents -H 'content-type: application/json' -d '{
 }'
 ```
 
-Only `config.name` is required. `soul` becomes `SOUL.md`, and an optional `install` becomes `INSTALL.md`, the setup the agent walks a new owner through when `config.setup.required` is true. `keys` are written to `.env`. Vector memory recall is enabled automatically when the engine can reach the UI's `/api/embed` (set `RERUN_HUB_BASE_URL` + `RERUN_API_KEY`); no per-agent embedding key is needed.
+Only `config.name` is required. `soul` becomes `SOUL.md`, and an optional `install` becomes `INSTALL.md`, the setup the agent walks a new owner through when `config.setup.required` is true. `keys` are written to `.env`. Vector memory recall is enabled automatically when the engine can reach the UI's `/api/embed` (set `LUMVIKA_HUB_BASE_URL` + `LUMVIKA_API_KEY`); no per-agent embedding key is needed.
 
 Via CLI:
 
 ```bash
-rerun agent create --name Scout --provider anthropic --model claude-sonnet-4-6 --key "ANTHROPIC_API_KEY=sk-ant-..."
+lumvika agent create --name Scout --provider anthropic --model claude-sonnet-4-6 --key "ANTHROPIC_API_KEY=sk-ant-..."
 ```
 
 ### The system prompt
@@ -226,14 +226,14 @@ Tools are built per run and gated by `config.tools` (`src/tools/`). Each is a ty
 | `filesystem` | `fs_read`, `fs_write`, `fs_list`, `fs_edit`, `fs_search` | Jailed to the agent's private `workspace/`; `fs_edit` is a surgical string-replace, `fs_search` is a regex content grep |
 | `shared` | `shared_read`, `shared_write`, `shared_list`, `shared_edit`, `shared_search` | Same operations against the global `shared/` space every agent can read and write — use it to pass files between agents |
 | `shell` | `shell_exec` | Runs in `workspace/`, with a command-policy denylist |
-| `web` | `web_fetch`, `web_search`, `download` | Fetch/strip a URL (a page the site refuses is read through the Rerun hub instead), search the web (through the Rerun hub), download a file into the workspace |
+| `web` | `web_fetch`, `web_search`, `download` | Fetch/strip a URL (a page the site refuses is read through the Lumvika hub instead), search the web (through the Lumvika hub), download a file into the workspace |
 | `memory` | `memory_write`, `memory_recall` | Writes `.md` files + index; hybrid recall |
 | `skills` | `skill_list`, `skill_read`, `skill_create`, `skill_update`, `skill_delete` | Reads/writes/deletes `SKILL.md` files. A connector's own skills are read-only |
 | `self` | `tool_install`, `mcp_register` | `npm install` into the workspace; add an MCP server |
 | `schedule` | `schedule_list`, `schedule_create`, `schedule_update`, `schedule_delete` | Reads/writes schedule `.md` files; the agent can plan its own recurring tasks |
 | `delegate` | `delegate_task` | Spawns a fresh ephemeral sub-agent (inherits config/keys), runs a subtask to completion, returns its answer, then deletes it. Sub-agents cannot delegate further |
-| `browser` | `browser_navigate`, `request_takeover` | Chromium driven by patchright, windowed on the agent's own Xvfb display, which the engine starts (headless when there is none), with a persistent profile per agent: renders JS, waits out bot-protection challenges, accepts cookie banners, returns visible text, optional full-page screenshot into the workspace. Requires `rerun install-browser`. `request_takeover` pauses the run and hands that browser to the user for a sign-in or a captcha; it only exists on a box with the desktop packages (see Desktop in `API.md`) |
-| `computer` | `computer`, `computer_open_app` | The agent's own hands on its screen (see Desktop in `API.md`): `computer` takes a screenshot, clicks, drags, scrolls, types and presses keys with `xdotool`, and answers every action with a fresh screenshot scaled to 1280x720; `computer_open_app` opens the browser, the file manager or the terminal. Only exists on a box with the desktop packages and `maim`, for an agent that is neither a delegate nor the foreman. Screenshots never enter the stored conversation: the run keeps the latest in memory and attaches them to each model call (inside the tool result, in a user message for `rerun` and `openrouter`, as an MCP image block for `claude`); `codex` gets the path of a temporary file to open with its own `view_image`. One run drives an agent's screen at a time, capped at 200 actions (60 on `claude` and `codex`), and it is refused while a person drives that screen |
+| `browser` | `browser_navigate`, `request_takeover` | Chromium driven by patchright, windowed on the agent's own Xvfb display, which the engine starts (headless when there is none), with a persistent profile per agent: renders JS, waits out bot-protection challenges, accepts cookie banners, returns visible text, optional full-page screenshot into the workspace. Requires `lumvika install-browser`. `request_takeover` pauses the run and hands that browser to the user for a sign-in or a captcha; it only exists on a box with the desktop packages (see Desktop in `API.md`) |
+| `computer` | `computer`, `computer_open_app` | The agent's own hands on its screen (see Desktop in `API.md`): `computer` takes a screenshot, clicks, drags, scrolls, types and presses keys with `xdotool`, and answers every action with a fresh screenshot scaled to 1280x720; `computer_open_app` opens the browser, the file manager or the terminal. Only exists on a box with the desktop packages and `maim`, for an agent that is neither a delegate nor the steward. Screenshots never enter the stored conversation: the run keeps the latest in memory and attaches them to each model call (inside the tool result, in a user message for `lumvika` and `openrouter`, as an MCP image block for `claude`); `codex` gets the path of a temporary file to open with its own `view_image`. One run drives an agent's screen at a time, capped at 200 actions (60 on `claude` and `codex`), and it is refused while a person drives that screen |
 | `vision` | `vision_analyze` | Analyzes a workspace image with the agent's multimodal model (e.g. a screenshot from `browser_navigate`) |
 
 A few tools sit outside those families because they answer to a state rather than a setting: the human-in-the-loop ones (`ask_user`, `request_approval`, `suggest_service`, `request_secret`) follow `config.tools` flags of their own (`request_takeover` is the exception and rides with `browser`), and `install_complete` only exists while the agent still has a guided setup to run (`config.setup.required` true, `completedAt` null, `INSTALL.md` present). Calling it also switches on the schedules and triggers the agent carries, because a captured template usually arrives with its crons off and this is the moment its folder is finally configured (see `POST /agents/:id/automations/activate` in API.md).
@@ -275,9 +275,9 @@ How they are used, in three layers of progressive disclosure:
 
 The agent writes its own skills: `skill_create` / `skill_edit` for the procedure, `skill_write_file` / `skill_delete_file` for the bundled files, `skill_import` to adopt a markdown file or a whole skill folder sitting in its workspace. A skill can read a sibling skill's file (`../other-skill/references/x.md`); it cannot write outside its own folder, nor read outside `skills/`.
 
-A skill installed by a **connector** is the exception: the agent reads it, never writes it. The UI records each install's footprint in the agent workspace at `.rerun/services.json`, and `src/services/registry.ts` turns the `skills` of that footprint into a slug → connector map. Every writing skill tool consults it at call time, so a connector attached mid-conversation is protected from the very next tool call: `skill_update`, `skill_edit`, `skill_delete`, `skill_write_file` and `skill_delete_file` refuse by slug, `skill_create` and `skill_import` refuse on `slugify(name)` because `writeSkill` overwrites whatever sits at that slug. `skill_list` and `skill_read` say so up front, so the model does not try. The HTTP routes stay open: they are how the connector installs its own skills.
+A skill installed by a **connector** is the exception: the agent reads it, never writes it. The UI records each install's footprint in the agent workspace at `.lumvika/services.json`, and `src/services/registry.ts` turns the `skills` of that footprint into a slug → connector map. Every writing skill tool consults it at call time, so a connector attached mid-conversation is protected from the very next tool call: `skill_update`, `skill_edit`, `skill_delete`, `skill_write_file` and `skill_delete_file` refuse by slug, `skill_create` and `skill_import` refuse on `slugify(name)` because `writeSkill` overwrites whatever sits at that slug. `skill_list` and `skill_read` say so up front, so the model does not try. The HTTP routes stay open: they are how the connector installs its own skills.
 
-Manage them over the API (`GET/POST /agents/:id/skills`, `GET/PATCH /agents/:id/skills/:slug`, `/agents/:id/skills/:slug/files`, `GET /agents/:id/skills/:slug/archive`) or with `rerun skill list <agentId>`.
+Manage them over the API (`GET/POST /agents/:id/skills`, `GET/PATCH /agents/:id/skills/:slug`, `/agents/:id/skills/:slug/files`, `GET /agents/:id/skills/:slug/archive`) or with `lumvika skill list <agentId>`.
 
 ---
 
@@ -307,12 +307,12 @@ The markdown **body is the prompt** the agent runs when the task fires. A task i
 
 How it works (`src/runtime/scheduler.ts`):
 
-- `startScheduler()` is launched from `rerun run` (right after migration) and ticks every ~30s.
+- `startScheduler()` is launched from `lumvika run` (right after migration) and ticks every ~30s.
 - Each tick lists every agent on disk, loads its schedules, and asks `isDue(schedule, now)` (`src/schedules/cron.ts`, backed by [`croner`](https://www.npmjs.com/package/croner)).
 - For each due task it starts a **fresh session** (`schedule: <slug>`) and calls the same `runAgent` used by the HTTP routes — so the run is fully audited in the `runs` table. Continuity across fires comes from the agent's memory/RAG, not the session.
 - On success it writes `lastRunAt` back into the file (and disables one-shots). A **failed** run is **not** marked, so it is retried on the next tick. An in-memory guard prevents the same task from overlapping itself.
 
-Manage tasks over the API (`GET/POST /agents/:id/schedules`, `GET/PATCH/DELETE /agents/:id/schedules/:slug`), with `rerun schedule list <agentId>`, or let the agent manage its own via the `schedule_*` tools (gated by `config.tools.schedule`) — a natural extension of the self-improvement model.
+Manage tasks over the API (`GET/POST /agents/:id/schedules`, `GET/PATCH/DELETE /agents/:id/schedules/:slug`), with `lumvika schedule list <agentId>`, or let the agent manage its own via the `schedule_*` tools (gated by `config.tools.schedule`) — a natural extension of the self-improvement model.
 
 ---
 
@@ -339,7 +339,7 @@ The user prefers concise answers in English.
 - **Recall** (`memory_recall` or `POST /agents/:id/memories/recall`): embed the query, run libSQL `vector_top_k` KNN, merge with an FTS5 keyword search, dedupe, and re-read the canonical text from the `.md` files.
 - Relevant memories are also injected into the system prompt automatically at the start of each run.
 
-Embeddings use OpenAI `text-embedding-3-small` (1536 dims), computed by the UI's `/api/embed` endpoint — the engine POSTs the text there (reached via `RERUN_HUB_BASE_URL`, authenticated with `RERUN_API_KEY`) so the provider key lives only in the UI. **Without a reachable UI, recall still works using FTS keyword search only** (no vectors).
+Embeddings use OpenAI `text-embedding-3-small` (1536 dims), computed by the UI's `/api/embed` endpoint — the engine POSTs the text there (reached via `LUMVIKA_HUB_BASE_URL`, authenticated with `LUMVIKA_API_KEY`) so the provider key lives only in the UI. **Without a reachable UI, recall still works using FTS keyword search only** (no vectors).
 
 ---
 
@@ -361,7 +361,7 @@ Combined with the `self` tools (`tool_install`, `mcp_register`), an agent can ex
 - **Command policy:** `shell_exec` blocks a denylist of destructive commands (e.g. `rm -rf /`, `mkfs`, fork bombs).
 - **Keys never leave:** agent `.env` files are `chmod 600` and are never returned by the API.
 - **Containment:** self-improvement is powerful by design (real shell, real `npm install`). The intended deployment is the engine **inside its own Docker container**, so the blast radius is that container. For stronger isolation, run one container per agent.
-- **API auth:** set `RERUN_API_KEY` to require a bearer token on every route except `/health`.
+- **API auth:** set `LUMVIKA_API_KEY` to require a bearer token on every route except `/health`.
 
 ---
 
@@ -370,8 +370,8 @@ Combined with the `self` tools (`tool_install`, `mcp_register`), an agent can ex
 ### Docker
 
 ```bash
-docker build -t rerun-engine .
-docker run -p 3000:3000 -v rerun-data:/app/data -e RERUN_API_KEY=secret rerun-engine
+docker build -t lumvika-engine .
+docker run -p 3000:3000 -v lumvika-data:/app/data -e LUMVIKA_API_KEY=secret lumvika-engine
 ```
 
 The image is a single Node process; `/app/data` is a volume so agents and the database persist across restarts.

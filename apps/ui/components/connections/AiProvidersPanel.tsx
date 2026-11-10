@@ -14,7 +14,7 @@ import { PanelRow } from '@/components/ui/panel-row'
 import { PanelSteps } from '@/components/ui/panel-steps'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TooltipDisabledReason } from '@/components/ui/tooltip'
-import { useRerunCredit } from '@/hooks/useRerunCredit'
+import { useLumvikaCredit } from '@/hooks/useLumvikaCredit'
 import { useIsWorkspaceAdmin } from '@/supabase/session/SessionProvider'
 import { useWorkspaceConnections } from '@/hooks/useWorkspaceConnections'
 import {
@@ -25,7 +25,7 @@ import {
     providerPitch,
     effectiveDefault,
     isCreditExhausted,
-    isRerunPaused,
+    isLumvikaPaused,
     isUsable,
     livePlanWindows,
     modelName,
@@ -34,17 +34,17 @@ import {
     sourceSummary,
     tightestPlanWindow,
     type AddableProvider,
-    type RerunCredit,
+    type LumvikaCredit,
     type SourceKind,
 } from '@/lib/engine/ai-sources'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import type { BoxConnection, BoxDefault } from '@/lib/engine/types'
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { RERUN_CONNECTION_ID } from '@rerun/contracts'
-import { BorderBeam } from '@rerun/ui'
-import { Stripes } from '@rerun/ui/primitives'
-import { shortDate } from '@rerun/i18n/format'
+import { LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
+import { BorderBeam } from '@lumvika/ui'
+import { Stripes } from '@lumvika/ui/primitives'
+import { shortDate } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { toast } from 'sonner'
@@ -76,7 +76,7 @@ export function AiProvidersPanel({
     const t = useTranslations('connections')
     const errorText = useErrorText()
     const { connections, boxDefault, opencodeOffered, customOffered, loading, create, update, updateKeys, remove, setDefault } = useWorkspaceConnections({ revalidate: true })
-    const credit = useRerunCredit()
+    const credit = useLumvikaCredit()
     const needsPlan = useNeedsPlanToConnect()
     const workspaceAdmin = useIsWorkspaceAdmin()
     const readOnlyReason = workspaceAdmin ? undefined : t('panel.adminOnly')
@@ -102,7 +102,7 @@ export function AiProvidersPanel({
     const stepKey = page.kind === 'add' ? `add:${page.provider}` : (selected?.id ?? 'list')
     const current = effectiveDefault(boxDefault)
     // Same rule as the engine's: the first connection plugged in adopts the default.
-    const willBecomeBoxDefault = !boxDefault && connections.every(c => c.id === RERUN_CONNECTION_ID || !c.connected)
+    const willBecomeBoxDefault = !boxDefault && connections.every(c => c.id === LUMVIKA_CONNECTION_ID || !c.connected)
 
     const open = (connectionId: string) => setPage({ kind: 'detail', connectionId })
     const add = (provider: AddableProvider) => setPage({ kind: 'add', provider })
@@ -206,7 +206,7 @@ export function Group({ title, addMenu, children }: { title: string; addMenu?: R
 type DefaultRowProps = {
     connections: BoxConnection[]
     current: BoxDefault
-    credit: RerunCredit
+    credit: LumvikaCredit
     onPick: (pick: BoxDefault) => void
     onFix: (connectionId: string) => void
     readOnlyReason?: string
@@ -218,11 +218,11 @@ function DefaultRow({ connections, current, credit, onPick, onFix, readOnlyReaso
     const source = connections.find(c => c.id === current.connectionId)
     const broken = source && !isUsable(source, credit)
     const creditGone = source && isCreditExhausted(source, credit)
-    const creditPaused = source && isRerunPaused(source, credit)
+    const creditPaused = source && isLumvikaPaused(source, credit)
     const canChange = connections.some(c => isUsable(c, credit))
 
     const description = !broken
-        ? t('panel.default.via', { source: source?.name ?? 'Rerun' })
+        ? t('panel.default.via', { source: source?.name ?? 'Lumvika' })
         : creditPaused
           ? canChange
               ? t('panel.default.pausedPick')
@@ -238,7 +238,7 @@ function DefaultRow({ connections, current, credit, onPick, onFix, readOnlyReaso
             <Stripes fade="right" color={broken ? ORANGE_STRIPES : BRAND_STRIPES} />
             <PanelRow
                 className={cn('relative', broken && 'border-orange-500/30 bg-orange-500/5')}
-                leading={<SourceAvatar provider={source?.provider ?? 'rerun'} />}
+                leading={<SourceAvatar provider={source?.provider ?? 'lumvika'} />}
                 title={modelName(current.connectionId, current.model)}
                 description={description}
                 actions={
@@ -270,7 +270,7 @@ type SourceGroupProps = {
     title: string
     only: 'plan' | 'key'
     sources: BoxConnection[]
-    credit: RerunCredit
+    credit: LumvikaCredit
     taken: Set<string>
     onOpen: (connectionId: string) => void
     // Absent for a workspace with no plan: what it already holds stays reachable, nothing new can be added.
@@ -327,7 +327,7 @@ export function SourceGroup({ title, only, sources, credit, taken, onOpen, onAdd
     )
 }
 
-function SourceRow({ source, credit, onClick, children }: { source: BoxConnection; credit: RerunCredit; onClick: () => void; children?: ReactNode }) {
+function SourceRow({ source, credit, onClick, children }: { source: BoxConnection; credit: LumvikaCredit; onClick: () => void; children?: ReactNode }) {
     const t = useTranslations('connections')
     const locale = useLocale()
     return (

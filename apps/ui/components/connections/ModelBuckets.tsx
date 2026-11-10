@@ -9,8 +9,8 @@ import type { CatalogModel } from '@/lib/engine/models'
 import type { BoxConnection } from '@/lib/engine/types'
 import { EyeOffIcon, PlusIcon, StarIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { RERUN_CONNECTION_ID } from '@rerun/contracts'
-import { BorderBeam } from '@rerun/ui'
+import { LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
+import { BorderBeam } from '@lumvika/ui'
 import { useTranslations } from 'next-intl'
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -128,7 +128,7 @@ export function ModelBuckets({ connection, defaultModel, onModelsChange }: Model
     const available = offered.filter(m => isModelEnabled(connection, m.id))
     const hidden = offered.filter(m => !isModelEnabled(connection, m.id))
 
-    if (connection.id === RERUN_CONNECTION_ID || offered.length <= 1) {
+    if (connection.id === LUMVIKA_CONNECTION_ID || offered.length <= 1) {
         // A custom endpoint's lone model is still the one thing saying what the server answered.
         if (available.length === 0 || (available.length === 1 && connection.provider !== 'custom')) return null
         return (

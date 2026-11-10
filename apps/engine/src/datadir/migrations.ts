@@ -42,7 +42,7 @@ async function listAgentFolders(): Promise<string[]> {
 }
 
 // One change to the layout of the data-dir: a file or folder moved, renamed, rewritten, or a schema
-// change of `rerun.db`. A shipped step is never edited nor removed, because an archived data-dir may
+// change of `lumvika.db`. A shipped step is never edited nor removed, because an archived data-dir may
 // come back from before it. `up` must be re-runnable: a crash between the step and the version write
 // replays it on the next boot. Per-agent `system.db` and `shared.db` carry their own ladders.
 export type DataDirMigration = { version: number; id: string; up: () => Promise<void> }

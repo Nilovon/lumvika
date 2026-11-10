@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-self-mcp-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-self-mcp-'))
+process.env.LUMVIKA_API_KEY = ''
 
 type Probe = { ok: boolean; transport: string; toolNames: string[]; error?: string }
 
@@ -101,8 +101,8 @@ describe('mcp_register', () => {
     const register = (args: Record<string, unknown>) => call('mcp_register', { args: [], headers: {}, ...args })
 
     it('refuses the name of the builtin bridge without probing', async () => {
-        const out = await register({ name: 'rerun', url: 'https://x.example/mcp' })
-        expect(out).toMatch(/"rerun" is reserved/)
+        const out = await register({ name: 'lumvika', url: 'https://x.example/mcp' })
+        expect(out).toMatch(/"lumvika" is reserved/)
         expect(out).toMatch(/\nNothing was saved\.$/)
         expect(mocks.probed).toHaveLength(0)
         expect(await storedServers()).toEqual([])
@@ -267,11 +267,11 @@ describe('mcp_status', () => {
         await seedServers([{ name: 'dataforseo', command: 'npx' }])
         mocks.probes.set('dataforseo', { ok: true, transport: 'stdio', toolNames: ['api_request'] })
         expect(await call('mcp_status', {}, { ...ctxWith(), provider: 'claude' })).toBe('connected dataforseo (stdio): 1 tools — mcp__dataforseo__api_request')
-        expect(await call('mcp_status', {}, { ...ctxWith(), provider: 'rerun' })).toBe('connected dataforseo (stdio): 1 tools — dataforseo_api_request')
+        expect(await call('mcp_status', {}, { ...ctxWith(), provider: 'lumvika' })).toBe('connected dataforseo (stdio): 1 tools — dataforseo_api_request')
     })
 
     it('reports an app the user has not connected yet without probing it', async () => {
-        const registryDir = resolve(workspaceDir(id), '.rerun')
+        const registryDir = resolve(workspaceDir(id), '.lumvika')
         await mkdir(registryDir, { recursive: true })
         await writeFile(resolve(registryDir, 'services.json'), JSON.stringify({ services: { gmail: { status: 'needs_auth', mcpServers: ['gmail'] }, linear: { status: 'active', mcpServers: ['linear'] } } }), 'utf8')
         try {
@@ -288,7 +288,7 @@ describe('mcp_status', () => {
     })
 
     it('names the account of an app the user has not connected yet when the agent holds several', async () => {
-        const registryDir = resolve(workspaceDir(id), '.rerun')
+        const registryDir = resolve(workspaceDir(id), '.lumvika')
         await mkdir(registryDir, { recursive: true })
         await writeFile(
             resolve(registryDir, 'services.json'),

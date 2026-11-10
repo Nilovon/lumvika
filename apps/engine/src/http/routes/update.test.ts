@@ -4,8 +4,8 @@ import { resolve } from 'node:path'
 import { EventEmitter } from 'node:events'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-update-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-update-'))
+process.env.LUMVIKA_API_KEY = ''
 
 type FakeChild = EventEmitter & { unref: () => void; unrefCalled: boolean }
 
@@ -88,7 +88,7 @@ describe('POST /update', () => {
         expect(options.detached).toBe(true)
         expect(options.env?.CI).toBe('true')
         expect(child.unrefCalled).toBe(true)
-        expect(existsSync(resolve(process.env.RERUN_DATA_DIR!, 'update.log'))).toBe(true)
+        expect(existsSync(resolve(process.env.LUMVIKA_DATA_DIR!, 'update.log'))).toBe(true)
         unregisterRunAbort('busy-run')
     })
 

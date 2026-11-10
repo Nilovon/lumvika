@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-compact-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-compact-'))
+process.env.LUMVIKA_API_KEY = ''
 
 type Row = { id: string; role: string; contentJson: string; createdAt: string }
 
@@ -69,7 +69,7 @@ function longHistory(): Row[] {
     const rows = [
         row(0, 'user', [
             { type: 'text', text: 'first question ' + 'x'.repeat(CHUNK) },
-            { type: 'text', text: '<relevant_memories>\n- (fact) RECALLED MEMORY\n</relevant_memories>', providerOptions: { rerun: { context: true } } },
+            { type: 'text', text: '<relevant_memories>\n- (fact) RECALLED MEMORY\n</relevant_memories>', providerOptions: { lumvika: { context: true } } },
         ]),
         row(1, 'assistant', [
             { type: 'text', text: 'Listing files.' },
@@ -126,14 +126,14 @@ describe('prepareRunHistory', () => {
     // longer exists. A call-first turn held nothing but the call, and goes with it.
     it('drops the calls of the old quick replies tool, and the turn that only held one', async () => {
         state.rows = [
-            row(0, 'assistant', [{ type: 'tool-call', toolCallId: 'q1', toolName: 'mcp__rerun__suggest_replies', input: { replies: ['Go on'] } }]),
-            row(1, 'tool', [{ type: 'tool-result', toolCallId: 'q1', toolName: 'mcp__rerun__suggest_replies', output: { type: 'text', value: 'Shown.' } }]),
+            row(0, 'assistant', [{ type: 'tool-call', toolCallId: 'q1', toolName: 'mcp__lumvika__suggest_replies', input: { replies: ['Go on'] } }]),
+            row(1, 'tool', [{ type: 'tool-result', toolCallId: 'q1', toolName: 'mcp__lumvika__suggest_replies', output: { type: 'text', value: 'Shown.' } }]),
             row(2, 'assistant', [{ type: 'text', text: 'answer' }, { type: 'tool-call', toolCallId: 'q2', toolName: 'suggest_replies', input: { replies: ['Go on'] } }, { type: 'tool-call', toolCallId: 'c1', toolName: 'shell_exec', input: {} }]),
         ]
         const { ctx } = context('no-such-model')
 
         expect(await prepareRunHistory(ctx, 'system')).toEqual([
-            { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'q1', toolName: 'mcp__rerun__suggest_replies', output: { type: 'text', value: 'Shown.' } }] },
+            { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'q1', toolName: 'mcp__lumvika__suggest_replies', output: { type: 'text', value: 'Shown.' } }] },
             { role: 'assistant', content: [{ type: 'text', text: 'answer' }, { type: 'tool-call', toolCallId: 'c1', toolName: 'shell_exec', input: {} }] },
         ])
     })

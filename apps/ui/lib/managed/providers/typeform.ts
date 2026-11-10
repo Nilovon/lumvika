@@ -326,8 +326,8 @@ export const typeformProvider: ManagedProvider = {
         // Typeform spells the refresh-token scope "offline" (not the usual offline_access), and
         // without it access tokens simply expire after a week with no way to renew them.
         scopes: ['offline', 'accounts:read', 'forms:read', 'forms:write', 'responses:read', 'themes:read', 'images:read', 'workspaces:read', 'webhooks:read', 'webhooks:write'],
-        clientIdEnv: 'RERUN_TYPEFORM_CLIENT_ID',
-        clientSecretEnv: 'RERUN_TYPEFORM_CLIENT_SECRET',
+        clientIdEnv: 'LUMVIKA_TYPEFORM_CLIENT_ID',
+        clientSecretEnv: 'LUMVIKA_TYPEFORM_CLIENT_SECRET',
         accountEmail: async accessToken => {
             const data = (await typeformApi(accessToken, 'GET', '/me').catch(() => null)) as { email?: string; alias?: string } | null
             return typeof data?.email === 'string' ? data.email : typeof data?.alias === 'string' ? data.alias : undefined

@@ -27,7 +27,7 @@ const updateRequestSchema = z.object({ force: z.boolean().optional(), artifact: 
 
 let updating = false
 
-// Self-update: spawn a detached `rerun update` (download or git pull → migrate → restart). The child
+// Self-update: spawn a detached `lumvika update` (download or git pull → migrate → restart). The child
 // stays in the systemd cgroup but finishes its work before it triggers the restart, and the restart
 // job is owned by systemd (PID 1), so the engine comes back on the new build even though the child
 // is killed by that very restart. Refuses while a run is in flight.

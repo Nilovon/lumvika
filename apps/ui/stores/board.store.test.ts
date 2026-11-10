@@ -17,9 +17,9 @@ vi.mock('@/app/api/_actions/session.actions', () => ({ fetchSessionActiveRun: vi
 vi.mock('@/app/api/_actions/space.actions', () => ({ claimSpaceAction: vi.fn(), deleteSpaceAction: vi.fn(), renameSpaceAction: vi.fn() }))
 vi.mock('@/app/api/_actions/agent-share.actions', () => ({ installSharedAgentAction: actions.installSharedAgentAction }))
 vi.mock('@/app/api/_actions/template.actions', () => ({ installTemplateAction: actions.installTemplateAction }))
-vi.mock('@/lib/confetti', () => ({ fireRerunConfetti: vi.fn() }))
+vi.mock('@/lib/confetti', () => ({ fireLumvikaConfetti: vi.fn() }))
 vi.mock('@/lib/templates/install-feedback', () => ({ reportDuplicate: vi.fn(), reportInstall: vi.fn(), reportShareInstall: vi.fn() }))
-vi.mock('@rerun/analytics/client', () => ({ track: vi.fn() }))
+vi.mock('@lumvika/analytics/client', () => ({ track: vi.fn() }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), warning: vi.fn(), success: vi.fn() } }))
 // The store builds its client once, at import: the fake lives here so a test can read its writes
 // and make a table refuse them.
@@ -412,7 +412,7 @@ describe('kickoff of a coworker created right after another one', () => {
             { agentId: 'gig', sessionId: 'gig-session', runId: 'gig-run' },
             { agentId: 'tracker', sessionId: 'tracker-session', runId: 'tracker-run' },
         ])
-        expect(storage.get('rerun:pending-kickoffs')).toBeUndefined()
+        expect(storage.get('lumvika:pending-kickoffs')).toBeUndefined()
     })
 
     it('sends a kickoff once when the wizard and the boot replay ask for it together', async () => {
@@ -426,19 +426,19 @@ describe('kickoff of a coworker created right after another one', () => {
     })
 
     it('replays at boot every kickoff still parked, and keeps the one that failed on a transient error', async () => {
-        storage.set('rerun:pending-kickoffs', JSON.stringify({ gig: { kickoff: 'Gig brief' }, tracker: { kickoff: 'Tracker brief' } }))
+        storage.set('lumvika:pending-kickoffs', JSON.stringify({ gig: { kickoff: 'Gig brief' }, tracker: { kickoff: 'Tracker brief' } }))
         const answer = deferredKickoffs()
         const replay = useBoardStore.getState().sendPendingKickoff()
         answer('gig', { ok: false, error: 'engine unreachable', agentGone: false })
         answer('tracker', { ok: true, sessionId: 'tracker-session', runId: 'tracker-run' })
 
         expect(await replay).toEqual({ agentId: 'tracker', sessionId: 'tracker-session' })
-        expect(JSON.parse(storage.get('rerun:pending-kickoffs')!)).toEqual({ gig: { kickoff: 'Gig brief' } })
+        expect(JSON.parse(storage.get('lumvika:pending-kickoffs')!)).toEqual({ gig: { kickoff: 'Gig brief' } })
         expect(useBoardStore.getState().pendingOpenSession).toEqual({ agentId: 'tracker', sessionId: 'tracker-session', runId: 'tracker-run' })
     })
 
     it('opens at boot the conversation of the coworker it selects, whichever kickoff answers last', async () => {
-        storage.set('rerun:pending-kickoffs', JSON.stringify({ gig: { kickoff: 'Gig brief' }, tracker: { kickoff: 'Tracker brief' } }))
+        storage.set('lumvika:pending-kickoffs', JSON.stringify({ gig: { kickoff: 'Gig brief' }, tracker: { kickoff: 'Tracker brief' } }))
         const answer = deferredKickoffs()
         const replay = useBoardStore.getState().sendPendingKickoff()
         answer('tracker', { ok: true, sessionId: 'tracker-session', runId: 'tracker-run' })

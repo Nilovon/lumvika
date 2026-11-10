@@ -1,11 +1,11 @@
 import type { Database, Json } from '@/app/api/database.types'
-import { grantRerunTopup } from '@rerun/cloud/billing.server'
-import { BASE_PLAN_SLUG, baseLimitsToColumns, SIGNUP_BUDGET_MICROS, type PriceArm } from '@rerun/cloud/billing'
+import { grantLumvikaTopup } from '@lumvika/cloud/billing.server'
+import { BASE_PLAN_SLUG, baseLimitsToColumns, SIGNUP_BUDGET_MICROS, type PriceArm } from '@lumvika/cloud/billing'
 import { randomBlob } from '@/lib/blobs/catalog'
 import { DEFAULT_NOTIFICATION_PREFS } from '@/lib/notifications/prefs'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { DEFAULT_LOCALE, type Locale } from '@rerun/i18n'
+import { DEFAULT_LOCALE, type Locale } from '@lumvika/i18n'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 
 // Just-in-time provisioning: the first time an authenticated user (real or anonymous) is seen, seed
@@ -55,8 +55,8 @@ export async function provisionUser(
             ...baseLimitsToColumns(),
             // The plan's credit belongs to the plan: an account with no subscription gets the
             // signup allowance below and nothing else, or a visitor who never pays walks off with
-            // five dollars of Rerun credit.
-            rerun_budget_micros: 0,
+            // five dollars of Lumvika credit.
+            lumvika_budget_micros: 0,
             price_arm: priceArm,
             locale,
         })
@@ -95,7 +95,7 @@ export async function provisionUser(
     // An account created already signed in, a Google sign-up rather than an anonymous visit that
     // was upgraded, never passes through stampSignup: its allowance is granted here.
     if (!user.is_anonymous) {
-        await grantRerunTopup(workspace.id, SIGNUP_BUDGET_MICROS)
+        await grantLumvikaTopup(workspace.id, SIGNUP_BUDGET_MICROS)
         if (phoneStep) await requirePhone(user.id)
     }
     return { signedUp: !user.is_anonymous }
@@ -135,7 +135,7 @@ async function stampSignup(user: User, signedUpAt: string | null, workspaceId: n
     if (error) return false
     if (!stamped?.length) return true
     // Same write, same one-shot guard: the allowance is granted exactly when an account stops being
-    // anonymous, which is also when the foreman starts talking to it.
-    await grantRerunTopup(workspaceId, SIGNUP_BUDGET_MICROS)
+    // anonymous, which is also when the steward starts talking to it.
+    await grantLumvikaTopup(workspaceId, SIGNUP_BUDGET_MICROS)
     return true
 }

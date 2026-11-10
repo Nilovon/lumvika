@@ -1,5 +1,5 @@
 // MCP OAuth (authorization-code + PKCE + Dynamic Client Registration), driven by the UI
-// because rerun.build has a domain + TLS the engine (raw IP) does not. The resulting token
+// because lumvika.com has a domain + TLS the engine (raw IP) does not. The resulting token
 // is handed to the engine token store (apps/engine mcp-auth.ts) — never persisted in
 // Supabase. Mirrors the hand-rolled PKCE style of lib/engine/claude-oauth.ts.
 //
@@ -177,7 +177,7 @@ export function clientMetadataDocumentUrl(req: Request): string {
 export function clientMetadataDocument(req: Request): Record<string, unknown> {
     return {
         client_id: clientMetadataDocumentUrl(req),
-        client_name: 'Rerun',
+        client_name: 'Lumvika',
         client_uri: appOrigin(req),
         redirect_uris: [callbackUrl(req)],
         grant_types: ['authorization_code', 'refresh_token'],
@@ -192,7 +192,7 @@ export async function registerClient(registrationEndpoint: string, redirectUri: 
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-            client_name: 'Rerun',
+            client_name: 'Lumvika',
             redirect_uris: [redirectUri],
             grant_types: ['authorization_code', 'refresh_token'],
             response_types: ['code'],
@@ -208,15 +208,15 @@ export async function registerClient(registrationEndpoint: string, redirectUri: 
 type PreRegisteredClient = { mcpOrigin: string; clientIdEnv: string; clientSecretEnv: string; engineRefreshes?: boolean }
 
 // For authorization servers offering neither DCR nor Client ID Metadata Documents, an OAuth app
-// registered by Rerun itself. Keyed on the MCP origin rather than the authorization server, so
+// registered by Lumvika itself. Keyed on the MCP origin rather than the authorization server, so
 // another MCP server naming github.com as its issuer cannot borrow our app. Its secret never
 // reaches the browser or the context cookie, and reaches the engine token store only when the
 // provider's tokens expire and its token endpoint refuses a refresh without it.
 const PRE_REGISTERED_CLIENTS: PreRegisteredClient[] = [
     // GitHub OAuth App tokens never expire, so the engine never needs the secret to refresh.
-    { mcpOrigin: 'https://api.githubcopilot.com', clientIdEnv: 'RERUN_GITHUB_MCP_CLIENT_ID', clientSecretEnv: 'RERUN_GITHUB_MCP_CLIENT_SECRET' },
+    { mcpOrigin: 'https://api.githubcopilot.com', clientIdEnv: 'LUMVIKA_GITHUB_MCP_CLIENT_ID', clientSecretEnv: 'LUMVIKA_GITHUB_MCP_CLIENT_SECRET' },
     // Asana access tokens last one hour and its token endpoint only takes authenticated clients.
-    { mcpOrigin: 'https://mcp.asana.com', clientIdEnv: 'RERUN_ASANA_MCP_CLIENT_ID', clientSecretEnv: 'RERUN_ASANA_MCP_CLIENT_SECRET', engineRefreshes: true },
+    { mcpOrigin: 'https://mcp.asana.com', clientIdEnv: 'LUMVIKA_ASANA_MCP_CLIENT_ID', clientSecretEnv: 'LUMVIKA_ASANA_MCP_CLIENT_SECRET', engineRefreshes: true },
 ]
 
 // Their registration endpoint answers every caller with one shared client and keeps its own

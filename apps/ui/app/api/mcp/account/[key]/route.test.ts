@@ -42,7 +42,7 @@ function resolveRow(table: string, calls: readonly SupabaseCall[]) {
 }
 
 function rpc(body: unknown, headers: Record<string, string> = {}) {
-    return new Request('https://rerun.test/api/mcp/account/x', { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) })
+    return new Request('https://lumvika.test/api/mcp/account/x', { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) })
 }
 
 const toolCall = (name: string, args: Record<string, unknown>) => ({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } })

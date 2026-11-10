@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-paid-sources-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-paid-sources-'))
 
 const { describe, expect, it } = await import('vitest')
 const { createClient } = await import('@libsql/client')
@@ -12,7 +12,7 @@ const { readPaidSources, writePaidSources } = await import('./store.js')
 
 let files = 0
 async function freshIndex() {
-    const client = createClient({ url: `file:${resolve(process.env.RERUN_DATA_DIR!, `index-${files++}.db`)}` })
+    const client = createClient({ url: `file:${resolve(process.env.LUMVIKA_DATA_DIR!, `index-${files++}.db`)}` })
     await migrateSystemDb(client, 'index.db')
     return client
 }

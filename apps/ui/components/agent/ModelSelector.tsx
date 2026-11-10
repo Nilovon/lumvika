@@ -5,7 +5,7 @@ import { DotSpinner } from '@/components/ui/dot-spinner'
 import { AddProviderItem, SUBSCRIPTION_PROVIDERS, SubscriptionNudge, SubscriptionPitch, type AddableProvider, type SubscriptionProvider } from '@/components/agent/ModelPickerProviders'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ModelPillTrigger } from '@/components/agent/ModelPillTrigger'
-import { PlanLimitDetail, PlanLimitHint, RerunCreditHint, usePlanWindowsSummary, useRerunCreditDetail } from '@/components/agent/PlanLimitHint'
+import { PlanLimitDetail, PlanLimitHint, LumvikaCreditHint, usePlanWindowsSummary, useLumvikaCreditDetail } from '@/components/agent/PlanLimitHint'
 import { ModelTierRow } from '@/components/agent/ModelTierRow'
 import { PowerBars } from '@/components/ui/power-bars'
 import { TooltipDisabledReason, TooltipLabeled } from '@/components/ui/tooltip'
@@ -13,7 +13,7 @@ import { useAgentModel } from '@/hooks/useAgentModel'
 import { useAvailableModels, type ConnectionGroup } from '@/hooks/useAvailableModels'
 import { useCanManageAgent } from '@/hooks/useBoxAccess'
 import { refusedModelReason } from '@/lib/engine/model-groups'
-import { useRerunCredit } from '@/hooks/useRerunCredit'
+import { useLumvikaCredit } from '@/hooks/useLumvikaCredit'
 import { PREMIUM_MODEL_BILLING_TRIGGER, pillUsage } from '@/lib/engine/ai-sources'
 import { modelLabel } from '@/lib/engine/models'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
@@ -22,8 +22,8 @@ import { useBillingStore } from '@/stores/billing.store'
 import { useBoardStore } from '@/stores/board.store'
 import { useModelPickerStore } from '@/stores/model-picker.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { track } from '@rerun/analytics/client'
-import { RERUN_CONNECTION_ID } from '@rerun/contracts'
+import { track } from '@lumvika/analytics/client'
+import { LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -32,7 +32,7 @@ type ModelSelectorProps = {
     // Notified whenever the effective model becomes usable (an active connection + a picked model)
     // or not — lets the composer block sending until a connection is set up.
     onReadyChange?: (ready: boolean) => void
-    // Notified whether the Box holds a connection of its own beyond the keyless Rerun one — lets
+    // Notified whether the Box holds a connection of its own beyond the keyless Lumvika one — lets
     // the composer pitch bringing an AI subscription only to those who have none.
     onOwnConnectionChange?: (hasOwn: boolean) => void
     // Notified of the connection the next turn runs on, so an auth error can open that one.
@@ -54,18 +54,18 @@ type ModelSelectorProps = {
 export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, onConnectionChange, onRefusedModelChange, pickerKey }: ModelSelectorProps) {
     const t = useTranslations('agent.modelSelector')
     const tShared = useTranslations('agent.modelsShared')
-    const creditDetail = useRerunCreditDetail()
+    const creditDetail = useLumvikaCreditDetail()
     const windowsSummary = usePlanWindowsSummary()
     const [open, setOpen] = useState(false)
     const { availableGroups, connectionOf, pinnedModel, pinnedConnectionId, resolvedModel, resolvedConnectionId, followsBoxDefault, supportsBoxDefault, boxDefaultPick, setDefault, followBoxDefault, refreshConnections, loading } =
         useAvailableModels(agentId)
     const { selection, select } = useAgentModel(agentId)
     // Picking a model for this conversation stays open: only what the coworker runs by default is
-    // managed through its Box. The foreman has no Box, so its default is left as it was.
+    // managed through its Box. The steward has no Box, so its default is left as it was.
     const canManageCoworker = useCanManageAgent(agentId)
     const isBoardCoworker = useBoardStore(state => state.agents.some(agent => agent.id === agentId))
     const canSetDefault = canManageCoworker || !isBoardCoworker
-    const rerunCredit = useRerunCredit()
+    const lumvikaCredit = useLumvikaCredit()
     const openAiProviders = useWorkspaceSettingsStore(state => state.openAiProviders)
     const addAiProvider = useWorkspaceSettingsStore(state => state.addAiProvider)
     const pickerRequestedFor = useModelPickerStore(state => state.openFor)
@@ -76,7 +76,7 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
     const hasAvailable = availableGroups.length > 0
     const connectedProviders = useMemo(() => new Set(availableGroups.map(group => group.provider)), [availableGroups])
     const missingSubscriptions = SUBSCRIPTION_PROVIDERS.filter(provider => !connectedProviders.has(provider))
-    const hasOwnConnection = availableGroups.some(group => group.connectionId !== RERUN_CONNECTION_ID)
+    const hasOwnConnection = availableGroups.some(group => group.connectionId !== LUMVIKA_CONNECTION_ID)
     // Only when nothing at all was chosen: an override on this conversation is still a choice, and
     // the trigger has to say which model that turn will bill.
     const showingBoxDefault = followsBoxDefault && !selection.model
@@ -98,7 +98,7 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
     const refusedMessage = refusedReason ? t('refused', { model: modelText, reason: refusedReason }) : null
 
     // A pin or an override that no longer resolves (a template just imported, a connection removed)
-    // is repointed at whatever the Box can actually run, the Box default first: Rerun only heads the
+    // is repointed at whatever the Box can actually run, the Box default first: Lumvika only heads the
     // list, it is not what the owner chose. Writing the override rather than just the display
     // matters: the chat transport sends the stored selection.
     useEffect(() => {
@@ -175,9 +175,9 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
         [addProvider]
     )
 
-    const usage = active ? pillUsage(active, rerunCredit) : null
-    const usageOfCredit = active?.connectionId === RERUN_CONNECTION_ID
-    const usageLabel = !usage || !active ? null : usageOfCredit ? creditDetail(rerunCredit) : windowsSummary(usage.windows, active.provider)
+    const usage = active ? pillUsage(active, lumvikaCredit) : null
+    const usageOfCredit = active?.connectionId === LUMVIKA_CONNECTION_ID
+    const usageLabel = !usage || !active ? null : usageOfCredit ? creditDetail(lumvikaCredit) : windowsSummary(usage.windows, active.provider)
     const usageDetail = !usage || !active ? null : usageOfCredit ? usageLabel : <PlanLimitDetail windows={active.planWindows} provider={active.provider} />
 
     const label = !hasAvailable ? t('setUp') : engineResolvesModel ? t('defaultLabel', { model: modelText }) : !active ? t('select') : modelText
@@ -244,13 +244,13 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
                                     <span className="flex min-w-0 items-center gap-1.5">
                                         <ProviderIcon provider={group.provider} className="size-3.5 shrink-0" />
                                         <span className="truncate">{group.label}</span>
-                                        {group.connectionId === RERUN_CONNECTION_ID ? <RerunCreditHint credit={rerunCredit} /> : <PlanLimitHint windows={group.planWindows} provider={group.provider} />}
+                                        {group.connectionId === LUMVIKA_CONNECTION_ID ? <LumvikaCreditHint credit={lumvikaCredit} /> : <PlanLimitHint windows={group.planWindows} provider={group.provider} />}
                                     </span>
                                 }
                             >
                                 {group.models.map(m => {
                                     const isDefault = pinnedConnectionId === group.connectionId && pinnedModel === m.id
-                                    const disabledReason = group.connectionId === RERUN_CONNECTION_ID && rerunCredit.paused ? tShared('creditPaused') : m.unavailable
+                                    const disabledReason = group.connectionId === LUMVIKA_CONNECTION_ID && lumvikaCredit.paused ? tShared('creditPaused') : m.unavailable
                                     if (disabledReason) {
                                         return (
                                             <TooltipDisabledReason key={m.id} reason={disabledReason} side="right" className="flex w-full">

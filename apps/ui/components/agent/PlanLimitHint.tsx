@@ -1,11 +1,11 @@
 'use client'
 
 import { TooltipLabeled } from '@/components/ui/tooltip'
-import { isCreditUsedUp, planLimitTone, planWindowPercent, tightestPlanWindow, type PlanLimitTone, type RerunCredit } from '@/lib/engine/ai-sources'
+import { isCreditUsedUp, planLimitTone, planWindowPercent, tightestPlanWindow, type PlanLimitTone, type LumvikaCredit } from '@/lib/engine/ai-sources'
 import { shortRelativeTime, shortUntil } from '@/lib/time'
 import { cn } from '@/lib/utils'
-import type { PlanLimitWindow } from '@rerun/contracts'
-import { shortDate } from '@rerun/i18n/format'
+import type { PlanLimitWindow } from '@lumvika/contracts'
+import { shortDate } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
 
 const TONE_CLASS: Record<PlanLimitTone, string> = { brand: 'text-muted-foreground', warning: 'text-amber-500', destructive: 'text-destructive' }
@@ -52,10 +52,10 @@ export function usePlanWindowsSummary() {
     return (windows: PlanLimitWindow[], provider?: string) => windows.map(window => t('windowUsed', { name: windowName(window, provider), percent: planWindowPercent(window) })).join(', ')
 }
 
-export function useRerunCreditDetail() {
+export function useLumvikaCreditDetail() {
     const t = useTranslations('agent.planLimitHint')
     const locale = useLocale()
-    return (credit: RerunCredit) => {
+    return (credit: LumvikaCredit) => {
         const date = credit.resetAt ? shortDate(credit.resetAt, locale) : null
         if (isCreditUsedUp(credit)) return date ? t('credit.usedUpOn', { date }) : t('credit.usedUpNextMonth')
         return date ? t('credit.usageOn', { percent: credit.percent, date }) : t('credit.usageNextMonth', { percent: credit.percent })
@@ -79,13 +79,13 @@ export function PlanLimitHint({ windows, provider }: { windows: PlanLimitWindow[
     )
 }
 
-// The same figure for the Rerun group, whose usage is the workspace's monthly credit rather than a
+// The same figure for the Lumvika group, whose usage is the workspace's monthly credit rather than a
 // plan's rate windows.
-export function RerunCreditHint({ credit }: { credit: RerunCredit }) {
+export function LumvikaCreditHint({ credit }: { credit: LumvikaCredit }) {
     const t = useTranslations('agent.planLimitHint')
     const tShared = useTranslations('agent.modelsShared')
     const locale = useLocale()
-    const creditDetail = useRerunCreditDetail()
+    const creditDetail = useLumvikaCreditDetail()
 
     if (credit.paused) {
         return (

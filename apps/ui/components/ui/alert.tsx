@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { BorderBeam, type BorderBeamProps } from "@rerun/ui"
-import { Stripes } from "@rerun/ui/primitives"
+import { BorderBeam, type BorderBeamProps } from "@lumvika/ui"
+import { Stripes } from "@lumvika/ui/primitives"
 
 import { cn } from "@/lib/utils"
 

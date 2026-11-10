@@ -8,7 +8,7 @@ type FileLinkOptions = { onOpen: (path: string) => void }
 export const SHARED_FILE_SCHEME = 'shared:'
 
 // Dragged from the Files tree of the sidebar onto a page.
-export const SHARED_FILE_DRAG_TYPE = 'application/x-rerun-shared-file'
+export const SHARED_FILE_DRAG_TYPE = 'application/x-lumvika-shared-file'
 
 const fileName = (path: string) => path.split('/').filter(Boolean).pop() ?? path
 

@@ -137,9 +137,9 @@ describe('offersComputer', () => {
         expect(offersComputer(config())).toBe(false)
     })
 
-    it('skips a delegate nobody watches and the foreman', () => {
+    it('skips a delegate nobody watches and the steward', () => {
         expect(offersComputer(config({ ephemeral: true }))).toBe(false)
-        expect(offersComputer(config({ kind: 'foreman' }))).toBe(false)
+        expect(offersComputer(config({ kind: 'steward' }))).toBe(false)
     })
 })
 
@@ -328,7 +328,7 @@ describe('computer', () => {
         const built = build(ctx)
         const first = await settled(act(built, { action: 'screenshot' }))
         const second = await settled(act(built, { action: 'screenshot' }))
-        expect(first).toEqual({ status: 'done', screen: [1280, 720], screenshotPath: expect.stringMatching(/rerun-desktop\/screens\/codex-agent\/.+\.jpg$/), next: expect.stringContaining('view_image') })
+        expect(first).toEqual({ status: 'done', screen: [1280, 720], screenshotPath: expect.stringMatching(/lumvika-desktop\/screens\/codex-agent\/.+\.jpg$/), next: expect.stringContaining('view_image') })
         expect(readFileSync(first.screenshotPath).toString()).toBe('shot-1')
         expect(second.screenshotPath).not.toBe(first.screenshotPath)
         expect(ctx.screenshots).toBeUndefined()

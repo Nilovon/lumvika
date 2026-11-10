@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// What Rerun reads in a job description as it is typed: the name the agent could carry, the apps
+// What Lumvika reads in a job description as it is typed: the name the agent could carry, the apps
 // the job needs, and when it runs. `source` is the passage the timing was read from, which the
 // field underlines; null when the model reworded it past recognition.
 export type JobSchedule = { label: string; source: string | null }

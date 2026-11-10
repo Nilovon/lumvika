@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-catalog-families-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-catalog-families-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({ desktop: true, paidData: true }))
 
@@ -12,7 +12,7 @@ vi.mock('../config/env.js', async importOriginal => ({ ...(await importOriginal<
 vi.mock('../paid-data/price.js', () => ({ paidDataOfferedSoFar: () => state.paidData }))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
-const { TOOL_KEYS } = await import('@rerun/contracts')
+const { TOOL_KEYS } = await import('@lumvika/contracts')
 const { agentToolCatalog, toolCatalog } = await import('./catalog.js')
 const { agentConfigSchema } = await import('../agents/types.js')
 beforeEach(() => {
@@ -57,7 +57,7 @@ describe('toolCatalog', () => {
         const byFamily = Object.fromEntries(toolCatalog().map(f => [f.family, f.tools.map(t => t.name)]))
         expect(byFamily.skills).toContain('skill_propose')
         expect(byFamily.self).toEqual(['soul_update', 'verbosity_set', 'tool_install', 'mcp_register', 'mcp_login', 'mcp_login_complete', 'mcp_status', 'request_mcp_sign_in'])
-        expect(byFamily.hub.every((name: string) => name.startsWith('rerun_hub_'))).toBe(true)
+        expect(byFamily.hub.every((name: string) => name.startsWith('lumvika_hub_'))).toBe(true)
     })
 
     it('shows neither the computer nor the takeover on a box whose desktop is switched off', () => {

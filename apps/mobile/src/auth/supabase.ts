@@ -1,4 +1,4 @@
-import type { Database } from '@rerun/db/types'
+import type { Database } from '@lumvika/db/types'
 import { createClient } from '@supabase/supabase-js'
 import { AppState } from 'react-native'
 

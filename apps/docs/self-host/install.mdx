@@ -1,5 +1,5 @@
 ---
-title: "Install Rerun"
+title: "Install Lumvika"
 sidebarTitle: "Install"
 description: "From an empty machine to your first coworker, with docker compose."
 ---
@@ -12,12 +12,12 @@ This page takes about ten minutes, plus the time Docker needs to build the two i
 - **Node.js 22**, for `npx supabase` and the setup check.
 - **Git**.
 - **On a server:** a domain for the app, one for the engine, and a reverse proxy for HTTPS. See [On a server](#on-a-server).
-- **An OpenRouter key** from [openrouter.ai/keys](https://openrouter.ai/keys). It runs the Foreman's onboarding and the default models of every coworker. Without it, connect your own AI in the app, your Claude or ChatGPT plan included.
+- **An OpenRouter key** from [openrouter.ai/keys](https://openrouter.ai/keys). It runs the Steward's onboarding and the default models of every coworker. Without it, connect your own AI in the app, your Claude or ChatGPT plan included.
 
 ## 1. Get the code
 
 ```bash
-git clone https://github.com/rerun-build/rerun.git && cd rerun
+git clone https://github.com/schnebel-technologie/lumvika.git && cd lumvika
 cp .env.example .env
 ```
 
@@ -25,7 +25,7 @@ Every command below runs from this folder.
 
 ## 2. Set up Supabase
 
-Pick one. The first is simpler to keep running, the second is the full open source stack on your own server, the third is for trying Rerun on your own computer.
+Pick one. The first is simpler to keep running, the second is the full open source stack on your own server, the third is for trying Lumvika on your own computer.
 
 <Tabs>
   <Tab title="A project on supabase.com (recommended)">
@@ -42,16 +42,16 @@ Pick one. The first is simpler to keep running, the second is the full open sour
 
     4. In **Authentication > Sign In / Providers**, turn on **Allow anonymous sign-ins** and keep **Confirm email** on. A visitor lands on the board as an anonymous user, and signing up turns that user into an account.
     5. In **Authentication > Emails > SMTP Settings**, turn on **Custom SMTP** and enter your SMTP server. This step is required: on the Free plan, a project that keeps Supabase's own mailer cannot edit its email templates, so the email arrives without the code. That mailer also sends only 2 emails an hour, and only to the members of your Supabase organization.
-    6. Once SMTP is saved, in **Authentication > Email Templates**, paste the template below into **Magic Link**, **Confirm signup** and **Change Email Address**. Rerun signs people in with a 6-digit code, and Supabase's default templates only carry a link.
+    6. Once SMTP is saved, in **Authentication > Email Templates**, paste the template below into **Magic Link**, **Confirm signup** and **Change Email Address**. Lumvika signs people in with a 6-digit code, and Supabase's default templates only carry a link.
     7. In **Authentication > URL Configuration**, set the **Site URL** to the address people open, the same as `NEXT_PUBLIC_APP_URL` below.
 
     ```html Email template
     <!doctype html>
     <html>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; padding: 24px">
-        <p>Your Rerun code:</p>
+        <p>Your Lumvika code:</p>
         <p style="font-size: 28px; font-weight: 600; letter-spacing: 6px">{{ .Token }}</p>
-        <p>It works for 15 minutes. Or open this link on the same device: <a href="{{ .ConfirmationURL }}">sign in to Rerun</a>.</p>
+        <p>It works for 15 minutes. Or open this link on the same device: <a href="{{ .ConfirmationURL }}">sign in to Lumvika</a>.</p>
         <p style="color: #666; font-size: 13px">If you did not ask for it, ignore this email.</p>
       </body>
     </html>
@@ -68,10 +68,10 @@ Pick one. The first is simpler to keep running, the second is the full open sour
     ```
   </Tab>
   <Tab title="Open source Supabase on your server">
-    Run the official [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting/docker) next to Rerun. Everything stays on your machines.
+    Run the official [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting/docker) next to Lumvika. Everything stays on your machines.
 
     <Warning>
-      Building Rerun with Supabase running next to it takes more than 8 GB of memory: without swap, the build can kill Supabase services. Use a server with 16 GB, or add 4 GB of swap to a server with 8 GB.
+      Building Lumvika with Supabase running next to it takes more than 8 GB of memory: without swap, the build can kill Supabase services. Use a server with 16 GB, or add 4 GB of swap to a server with 8 GB.
 
       ```bash
       fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
@@ -79,7 +79,7 @@ Pick one. The first is simpler to keep running, the second is the full open sour
       ```
     </Warning>
 
-    1. Get the stack and generate its secrets, from a folder outside your Rerun clone:
+    1. Get the stack and generate its secrets, from a folder outside your Lumvika clone:
 
     ```bash
     git clone --depth 1 https://github.com/supabase/supabase
@@ -88,13 +88,13 @@ Pick one. The first is simpler to keep running, the second is the full open sour
     sh utils/generate-keys.sh --update-env
     ```
 
-    2. Set these values in `supabase-stack/.env`. `api.example.com` is the domain that serves Supabase, `rerun.example.com` the one that serves Rerun:
+    2. Set these values in `supabase-stack/.env`. `api.example.com` is the domain that serves Supabase, `lumvika.example.com` the one that serves Lumvika:
 
     ```bash supabase-stack/.env
     COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml
-    POOLER_TENANT_ID=rerun
-    SITE_URL=https://rerun.example.com
-    ADDITIONAL_REDIRECT_URLS=https://rerun.example.com/**
+    POOLER_TENANT_ID=lumvika
+    SITE_URL=https://lumvika.example.com
+    ADDITIONAL_REDIRECT_URLS=https://lumvika.example.com/**
     SUPABASE_PUBLIC_URL=https://api.example.com
     API_EXTERNAL_URL=https://api.example.com/auth/v1
     ENABLE_ANONYMOUS_USERS=true
@@ -103,12 +103,12 @@ Pick one. The first is simpler to keep running, the second is the full open sour
     SMTP_USER=<your SMTP user>
     SMTP_PASS=<your SMTP password>
     SMTP_ADMIN_EMAIL=<the address codes are sent from>
-    SMTP_SENDER_NAME=Rerun
+    SMTP_SENDER_NAME=Lumvika
     ```
 
     `SMTP_HOST` must be reachable from inside the `auth` container. Supabase refuses to send a password over an unencrypted connection: a test server without TLS, such as Mailpit, takes an empty `SMTP_USER` and `SMTP_PASS`, and runs as a service of the same stack.
 
-    3. Rerun signs people in with a 6-digit code, and the default Supabase emails only carry a link. Add this file next to the stack's `docker-compose.yml`, with the path of your Rerun clone. It serves the email templates of your clone to Supabase:
+    3. Lumvika signs people in with a 6-digit code, and the default Supabase emails only carry a link. Add this file next to the stack's `docker-compose.yml`, with the path of your Lumvika clone. It serves the email templates of your clone to Supabase:
 
     ```yaml supabase-stack/docker-compose.override.yml
     services:
@@ -116,7 +116,7 @@ Pick one. The first is simpler to keep running, the second is the full open sour
         image: nginx:1.27-alpine
         restart: unless-stopped
         volumes:
-          - /path/to/rerun/supabase/templates:/usr/share/nginx/html:ro
+          - /path/to/lumvika/supabase/templates:/usr/share/nginx/html:ro
       auth:
         depends_on:
           mail-templates:
@@ -136,14 +136,14 @@ Pick one. The first is simpler to keep running, the second is the full open sour
     curl -H "apikey: <ANON_KEY>" https://api.example.com/auth/v1/health
     ```
 
-    5. Apply the schema and the seed from your Rerun clone. Replace `<password>` with `POSTGRES_PASSWORD` from `supabase-stack/.env`:
+    5. Apply the schema and the seed from your Lumvika clone. Replace `<password>` with `POSTGRES_PASSWORD` from `supabase-stack/.env`:
 
     ```bash
     npx supabase db push --include-seed --yes \
-      --db-url "postgresql://postgres.rerun:<password>@127.0.0.1:5432/postgres?sslmode=disable"
+      --db-url "postgresql://postgres.lumvika:<password>@127.0.0.1:5432/postgres?sslmode=disable"
     ```
 
-    Fill Rerun's `.env` with `ANON_KEY` and `SERVICE_ROLE_KEY` from `supabase-stack/.env`. That file also has empty `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` lines: ignore them.
+    Fill Lumvika's `.env` with `ANON_KEY` and `SERVICE_ROLE_KEY` from `supabase-stack/.env`. That file also has empty `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` lines: ignore them.
 
     ```bash .env
     NEXT_PUBLIC_SUPABASE_URL=https://api.example.com
@@ -178,7 +178,7 @@ Pick one. The first is simpler to keep running, the second is the full open sour
     No email leaves this machine: every code is in Mailpit. That is fine for you alone, and not for a team.
 
     <Warning>
-      This stack is made for trying Rerun on your own machine. Its keys are public defaults, and Studio and Postgres listen on every network interface with no password of yours. On a server reachable from the internet, use a project on supabase.com or open source Supabase on your server.
+      This stack is made for trying Lumvika on your own machine. Its keys are public defaults, and Studio and Postgres listen on every network interface with no password of yours. On a server reachable from the internet, use a project on supabase.com or open source Supabase on your server.
     </Warning>
   </Tab>
 </Tabs>
@@ -193,7 +193,7 @@ OPENROUTER_API_KEY=sk-or-...
 ADMIN_EMAILS=you@example.com
 ```
 
-`NEXT_PUBLIC_APP_URL` is the address people type in their browser, without a trailing slash. Keep `http://localhost:3000` to try Rerun on this machine. For a team, use the address they will reach it at, for example `https://rerun.example.com`. `ADMIN_EMAILS` is baked in by the build, so set it now. Every other variable is optional: see [Configuration](/self-host/configuration).
+`NEXT_PUBLIC_APP_URL` is the address people type in their browser, without a trailing slash. Keep `http://localhost:3000` to try Lumvika on this machine. For a team, use the address they will reach it at, for example `https://lumvika.example.com`. `ADMIN_EMAILS` is baked in by the build, so set it now. Every other variable is optional: see [Configuration](/self-host/configuration).
 
 ## 4. Run the check
 
@@ -201,9 +201,9 @@ ADMIN_EMAILS=you@example.com
 node scripts/self-host-check.mjs
 ```
 
-It generates the three secrets left empty (`RERUN_ENGINE_API_KEY`, `FOREMAN_HUB_TOKEN_SECRET`, `BOARD_IMAGE_SECRET`), checks the required values, then asks Supabase whether the schema is in place and `SUPABASE_SECRET_KEY` is the secret key. It stops with a plain message on anything only you can fix, warns when `OPENROUTER_API_KEY` is empty, and prints the exact command to start.
+It generates the three secrets left empty (`LUMVIKA_ENGINE_API_KEY`, `STEWARD_HUB_TOKEN_SECRET`, `BOARD_IMAGE_SECRET`), checks the required values, then asks Supabase whether the schema is in place and `SUPABASE_SECRET_KEY` is the secret key. It stops with a plain message on anything only you can fix, warns when `OPENROUTER_API_KEY` is empty, and prints the exact command to start.
 
-## 5. Start Rerun
+## 5. Start Lumvika
 
 <Tabs>
   <Tab title="Supabase on supabase.com or your server">
@@ -239,19 +239,19 @@ docker compose logs -f app engine
 
 ## On a server
 
-On your own computer, skip this section. On a server, people reach Rerun over HTTPS and nothing else stays open.
+On your own computer, skip this section. On a server, people reach Lumvika over HTTPS and nothing else stays open.
 
 Set the engine's address in `.env`, before the build:
 
 ```bash .env
-NEXT_PUBLIC_APP_URL=https://rerun.example.com
-RERUN_ENGINE_BROWSER_URL=https://engine.example.com
+NEXT_PUBLIC_APP_URL=https://lumvika.example.com
+LUMVIKA_ENGINE_BROWSER_URL=https://engine.example.com
 ```
 
 The engine needs its own domain: a browser connects to it directly to show a coworker's screen. Point the domains at the server, then put a reverse proxy in front. With [Caddy](https://caddyserver.com), which gets its certificates on its own and forwards WebSockets:
 
 ```text Caddyfile
-rerun.example.com {
+lumvika.example.com {
     reverse_proxy localhost:3000
 }
 
@@ -272,7 +272,7 @@ api.example.com {
 Without a firewall at your provider, this `nftables` rule does the same. Replace `eth0` with your network interface:
 
 ```text /etc/nftables.conf
-table inet rerun_edge {
+table inet lumvika_edge {
   chain prerouting {
     type filter hook prerouting priority -300; policy accept;
     iifname "eth0" tcp dport { 3000, 3001, 5432, 6543, 8000 } drop
@@ -292,11 +292,11 @@ The emails in `ADMIN_EMAILS` see the admin switches in the app. See [Administrat
 
 ## 8. Meet your first coworker
 
-The Foreman, Rerun's guide, greets you and asks what you need done. Answer in plain words: it plans a team and builds it. You can also click the board to create a coworker yourself and describe its job in the chat.
+The Steward, Lumvika's guide, greets you and asks what you need done. Answer in plain words: it plans a team and builds it. You can also click the board to create a coworker yourself and describe its job in the chat.
 
 The first coworker you place on the board needs a machine to run on. Your first workspace takes the engine that docker compose started, with nothing to configure. The second workspace, and every one after it, needs a [server of its own](/self-host/servers).
 
-From here, the coworker works exactly as on Rerun Cloud: see the [Quickstart](/quickstart) from step 4.
+From here, the coworker works exactly as on Lumvika Cloud: see the [Quickstart](/quickstart) from step 4.
 
 ## Updating
 

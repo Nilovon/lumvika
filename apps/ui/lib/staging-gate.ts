@@ -5,7 +5,7 @@
 // prompt to answer and its route authenticates itself, and the PostHog relay under /ingest must
 // not lose a beacon to a 401.
 
-export const STAGING_GATE_CHALLENGE = 'Basic realm="Rerun staging", charset="UTF-8"'
+export const STAGING_GATE_CHALLENGE = 'Basic realm="Lumvika staging", charset="UTF-8"'
 
 const OPEN_PREFIXES = ['/api/', '/ingest/'] as const
 

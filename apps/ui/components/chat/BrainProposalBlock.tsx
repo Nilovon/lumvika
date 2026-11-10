@@ -2,7 +2,7 @@
 
 import { BrainIcon } from '@/lib/icons'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { Button, Icon } from '@rerun/ui/primitives'
+import { Button, Icon } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 
 // What an agent leaves in the conversation when it proposes a change to the company brain. The

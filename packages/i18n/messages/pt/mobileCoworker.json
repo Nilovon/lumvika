@@ -80,7 +80,7 @@
         "boxLabel": "Box",
         "submit": "Criar",
         "pausedTitle": "{name} está pausado",
-        "pausedMessage": "Seu plano não tem vaga livre para coworker. Assine o Pro em rerun.build para ter coworkers ilimitados.",
+        "pausedMessage": "Seu plano não tem vaga livre para coworker. Assine o Pro em lumvika.com para ter coworkers ilimitados.",
         "failed": "Não foi possível criar o coworker"
     }
 }

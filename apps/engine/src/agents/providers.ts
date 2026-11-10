@@ -14,12 +14,12 @@ import {
     type LocalTool,
 } from 'ai-sdk-provider-codex-cli'
 import type { ZodObject, ZodRawShape, ZodType } from 'zod'
-import type { ContextOccupancy, McpServer, Provider } from '@rerun/contracts'
+import type { ContextOccupancy, McpServer, Provider } from '@lumvika/contracts'
 import { env } from '../config/env.js'
 import { codexPath } from '../runtime/codex-cli.js'
 import { codexHomeDir } from '../config/paths.js'
 import { allowedModel } from '../connections/plan.js'
-import { CONNECTION_TOKEN_KEY, RERUN_CONNECTION_ID } from '@rerun/contracts'
+import { CONNECTION_TOKEN_KEY, LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
 import { childProcessEnv, envOverlay } from '../lib/child-env.js'
 import { newId } from '../lib/ids.js'
 import { resolveTransport } from '../tools/mcp.js'
@@ -51,19 +51,19 @@ const OPENROUTER_DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1'
 // speaks landed in 0.144.
 const CODEX_MIN_VERSION = '0.144.0'
 
-// The bridged server carries Rerun's own tools, so a `tools/call` is a shell command or a whole
+// The bridged server carries Lumvika's own tools, so a `tools/call` is a shell command or a whole
 // agent run, not an RPC. Both CLIs default to a 300s tool timeout, which abandons work the engine
 // finishes fine and leaves the caller with no way to recover the result.
 const BRIDGE_TOOL_TIMEOUT_SEC = 3600
 
 // The CLI is a transport for the subscription and nothing more: no built-in tool but WebSearch
-// (Rerun's reach it bridged over MCP), no settings file, no prompt of its own. What it still does
-// on its own initiative is switched off here so a run holds only what Rerun put in it. Every name exists in
+// (Lumvika's reach it bridged over MCP), no settings file, no prompt of its own. What it still does
+// on its own initiative is switched off here so a run holds only what Lumvika put in it. Every name exists in
 // the CLI the Agent SDK ships (2.1.322); the provider forwards any `CLAUDE_*` through its allowlist
 // and merges these over it, so the unprefixed one passes too.
 export const CLAUDE_HARNESS_ENV = {
-    // Rerun compacts the session before the run. A second compaction inside the CLI would rewrite
-    // a history Rerun keeps sending in full, and the two would never agree on what was said.
+    // Lumvika compacts the session before the run. A second compaction inside the CLI would rewrite
+    // a history Lumvika keeps sending in full, and the two would never agree on what was said.
     DISABLE_AUTO_COMPACT: '1',
     // Update checks, telemetry, surveys.
     CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
@@ -83,7 +83,7 @@ export const CODEX_DISABLED_FEATURES = ['multi_agent', 'multi_agent_v2'] as cons
 
 // Codex ships a skill system of its own, discovered under `$CODEX_HOME/skills` and fronted by a
 // `.system/skill-creator`. An agent asked for a skill reaches for it instead of `skill_create`, and
-// what it writes lands outside the Rerun store: invisible in the UI, absent from the agent archive,
+// what it writes lands outside the Lumvika store: invisible in the UI, absent from the agent archive,
 // and sitting in a home that belongs to the connection rather than to the agent. There is no
 // `features.skills` flag, so the `[skills]` table of config.toml is what closes it.
 export const CODEX_SKILL_OVERRIDES = { 'skills.bundled.enabled': false, 'skills.include_instructions': false } as const
@@ -96,7 +96,7 @@ type CodexConfigOverrides = NonNullable<CodexAppServerSettings['configOverrides'
 // without a word, so every line here was read back from a run against 0.154 rather than trusted.
 // `features.view_image` and `features.image_generation` are left on deliberately: vision and image
 // generation stay. Two natives outlive the list: `apply_patch`, which has no switch at all, and
-// `update_plan`, whose switch below 0.154 ignores. Neither reaches anything a Rerun tool does not.
+// `update_plan`, whose switch below 0.154 ignores. Neither reaches anything a Lumvika tool does not.
 export const CODEX_HARNESS_OVERRIDES: CodexConfigOverrides = {
     // An AGENTS.md in the workspace would become a second prompt.
     project_doc_max_bytes: 0,
@@ -117,7 +117,7 @@ export const CODEX_HARNESS_OVERRIDES: CodexConfigOverrides = {
     'features.tool_suggest': false,
     'features.hooks': false,
     'features.code_mode': false,
-    // Running a command is shell_exec, the Rerun tool. These two close Codex's own shell whole:
+    // Running a command is shell_exec, the Lumvika tool. These two close Codex's own shell whole:
     // with them the model answers that it has no way to run a command.
     'features.shell_tool': false,
     'features.unified_exec': false,
@@ -252,8 +252,8 @@ function oneShotSessionId(agent: LoadedAgent, options?: { sessionId?: string }):
     return options?.sessionId ?? `${agent.id}:one-shot`
 }
 
-// The subscription pays for the CLI's own web search, where Rerun's web_search would bill Brave to
-// Rerun. Its WebFetch stays closed: it hands back a summary of the page, web_fetch the page itself.
+// The subscription pays for the CLI's own web search, where Lumvika's web_search would bill Brave to
+// Lumvika. Its WebFetch stays closed: it hands back a summary of the page, web_fetch the page itself.
 export const CLAUDE_RUN_TOOLS = ['WebSearch'] as const
 
 // A token handed over by environment variable is read by the CLI as inference-only whatever it was
@@ -323,7 +323,7 @@ function codexShared(agent: LoadedAgent): CodexExecSettings & CodexAppServerSett
     const path = codexPath()
     return {
         cwd,
-        env: envOverlay(childProcessEnv(agentEnv, { CODEX_HOME: codexHomeDir(agent.resolved.connection?.id ?? RERUN_CONNECTION_ID) })),
+        env: envOverlay(childProcessEnv(agentEnv, { CODEX_HOME: codexHomeDir(agent.resolved.connection?.id ?? LUMVIKA_CONNECTION_ID) })),
         ...(path ? { codexPath: path } : {}),
     }
 }
@@ -362,11 +362,11 @@ function codexAppServerProvider(agent: LoadedAgent, tools?: ToolSet, mcpServers:
             minCodexVersion: CODEX_MIN_VERSION,
             rmcpClient: true,
             personality: 'none',
-            // The Rerun prompt replaces Codex's base instructions rather than following them as
+            // The Lumvika prompt replaces Codex's base instructions rather than following them as
             // developer instructions, so the model reads one identity, not two.
             ...(options.system !== undefined ? { baseInstructions: options.system } : {}),
             // Pin the tool namespace: without it recent Codex builds expose the bridged tools as
-            // `rerun__ask_user` on some versions and `mcp__rerun__ask_user` on others.
+            // `lumvika__ask_user` on some versions and `mcp__lumvika__ask_user` on others.
             // The reasoning summary is stated rather than left to whichever Codex build the box has
             // installed, so the chat shows the same thing everywhere.
             configOverrides: {
@@ -381,12 +381,12 @@ function codexAppServerProvider(agent: LoadedAgent, tools?: ToolSet, mcpServers:
     })
 }
 
-// The two providers that speak the OpenAI chat format to OpenRouter: the keyless `rerun` one
+// The two providers that speak the OpenAI chat format to OpenRouter: the keyless `lumvika` one
 // through the hub proxy, and the user's own key straight to OpenRouter (or to the router they
 // pointed their connection at).
-function openrouterCompatibleOptions(agent: LoadedAgent, provider: 'rerun' | 'openrouter'): Parameters<typeof createOpenAI>[0] {
-    if (provider === 'rerun') {
-        const { RERUN_HUB_BASE_URL: hub, RERUN_API_KEY: hubKey } = env()
+function openrouterCompatibleOptions(agent: LoadedAgent, provider: 'lumvika' | 'openrouter'): Parameters<typeof createOpenAI>[0] {
+    if (provider === 'lumvika') {
+        const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: hubKey } = env()
         return { apiKey: hubKey ?? '', baseURL: `${(hub ?? '').replace(/\/$/, '')}/api/llm`, headers: hubCallerHeaders(agent) }
     }
     return {
@@ -417,7 +417,7 @@ function customOptions(agent: LoadedAgent): Parameters<typeof createOpenAI>[0] {
 function registryFor(agent: LoadedAgent, tools?: ToolSet, mcpServers?: McpServer[], options?: CliModelOptions) {
     const e = connectionEnv(agent)
     return createProviderRegistry({
-        rerun: openaiChat(openrouterCompatibleOptions(agent, 'rerun')),
+        lumvika: openaiChat(openrouterCompatibleOptions(agent, 'lumvika')),
         anthropic: createAnthropic({ apiKey: e.ANTHROPIC_API_KEY }),
         claude: claudeProvider(agent, tools, mcpServers, undefined, options),
         codex: codexExecProvider(agent),
@@ -476,7 +476,7 @@ export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools
         const claude = claudeProvider(agent, tools, mcpServers, capture, { system, screenshots, claudeTools: agent.config.tools.web ? CLAUDE_RUN_TOOLS : [] }).languageModel(model)
         return { model: wrapLanguageModel({ model: claude, middleware: [claudeScreenshotMiddleware, replies.middleware, cardTags, guard] }), close: noClose, contextUsage: capture.read, quickReplies: replies.read }
     }
-    // OpenCode runs in Rerun's own loop, on the SDK of whichever format the model is served on.
+    // OpenCode runs in Lumvika's own loop, on the SDK of whichever format the model is served on.
     if (provider === 'opencode') {
         const opencode = opencodeLanguageModel(agent.resolved.connection, model, sessionId ?? oneShotSessionId(agent))
         return { model: wrapLanguageModel({ model: opencode.model, middleware: [...opencode.middleware, opencodeUsageMiddleware, replies.middleware, cardTags, guard] }), close: noClose, quickReplies: replies.read }
@@ -484,7 +484,7 @@ export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools
     // Asking for the reasoning and reading it back are both off the OpenAI chat format, so they are
     // wired here rather than in the registry: the one-shot calls that go through `modelFor`
     // (compaction, curator, vision, memory reconcile) have no one to show a thought to.
-    if (provider === 'rerun' || provider === 'openrouter') {
+    if (provider === 'lumvika' || provider === 'openrouter') {
         const openrouter = openaiChat({ ...openrouterCompatibleOptions(agent, provider), fetch: provider === 'openrouter' ? cacheBreakpointsFetch(reasoningFetch) : reasoningFetch })
         return { model: wrapLanguageModel({ model: openrouter.languageModel(model), middleware: [openrouterStreamRetryMiddleware, openrouterReasoningMiddleware, replies.middleware, cardTags, guard] }), close: noClose, quickReplies: replies.read }
     }

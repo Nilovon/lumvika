@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_ADMIN_EMAILS } from './admin'
 import { activeAgentLimitFor, BILLING_ENABLED, isMachineEntitled, isPaidSubscription, isPremiumModelEntitled, isSubscriptionEntitled, isWorkspaceApiEntitled } from './billing'
-import { RERUN_CLOUD } from './edition'
+import { LUMVIKA_CLOUD } from './edition'
 import { DESKTOP_DIRECT } from './engines'
 import { ILLUSTRATION_ENTRIES } from './illustrations'
 import { MARKETPLACE_ENABLED } from './marketplace'
@@ -12,10 +12,10 @@ import { SERVERS_ENABLED } from './servers'
 import { SUPPORT_CHAT_ENABLED } from './support'
 
 // What a checkout without `cloud/` runs: a self-hosted install that sells nothing, sends no email of
-// its own, has its own servers and nobody of Rerun's behind a chat.
-describe('the self-hosted side of @rerun/cloud', () => {
-    it('is not Rerun Cloud and sells nothing', () => {
-        expect(RERUN_CLOUD).toBe(false)
+// its own, has its own servers and nobody of Lumvika's behind a chat.
+describe('the self-hosted side of @lumvika/cloud', () => {
+    it('is not Lumvika Cloud and sells nothing', () => {
+        expect(LUMVIKA_CLOUD).toBe(false)
         expect(BILLING_ENABLED).toBe(false)
         expect(MARKETPLACE_ENABLED).toBe(false)
     })
@@ -57,8 +57,8 @@ describe('the email of a self-hosted install', () => {
         expect(email.EMAIL_DELIVERY).toBe(true)
     })
 
-    it('sends from no domain of Rerun until its own senders are set, and has no WhatsApp number', () => {
-        for (const sender of [DEFAULT_SENDERS.transactional, DEFAULT_SENDERS.experts, DEFAULT_SENDERS.marketing]) expect(sender).toBe('Rerun <onboarding@resend.dev>')
+    it('sends from no domain of Lumvika until its own senders are set, and has no WhatsApp number', () => {
+        for (const sender of [DEFAULT_SENDERS.transactional, DEFAULT_SENDERS.experts, DEFAULT_SENDERS.marketing]) expect(sender).toBe('Lumvika <onboarding@resend.dev>')
         expect(DEFAULT_SENDERS.replyTo).toBeUndefined()
         expect(DEFAULT_WHATSAPP_FROM).toBeNull()
     })

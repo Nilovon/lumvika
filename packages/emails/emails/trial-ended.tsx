@@ -4,7 +4,7 @@ import { Layout } from "../components/Layout";
 import { Button } from "../components/Button";
 import { MetaTable } from "../components/MetaTable";
 import { strong } from "../components/rich";
-import { formatNumber } from "@rerun/i18n/format";
+import { formatNumber } from "@lumvika/i18n/format";
 import { emailTranslator, type EmailLocale } from "../i18n";
 import { text } from "../theme";
 
@@ -111,8 +111,8 @@ TrialEnded.PreviewProps = {
   pausedLabel: "12 March, 16:00 UTC",
   keptUntilLabel: "10 June",
   summary: { agents: 3, runs: 41 },
-  billingUrl: "https://app.rerun.build/?billing=1",
-  appUrl: "https://app.rerun.build",
+  billingUrl: "https://app.lumvika.com/?billing=1",
+  appUrl: "https://app.lumvika.com",
 } satisfies TrialEndedProps;
 
 const meta: React.CSSProperties = {

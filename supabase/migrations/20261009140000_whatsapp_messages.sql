@@ -1,5 +1,5 @@
 -- Lifecycle email lands in spam, so the trial sequence moves to WhatsApp. This is the record of
--- every WhatsApp template Rerun sends: what was sent to whom, and what became of it, which only the
+-- every WhatsApp template Lumvika sends: what was sent to whom, and what became of it, which only the
 -- Bird webhook knows (delivered, read, failed). The row is written before the send, so a message
 -- that left always has one, and its id travels with the message as the webhook's way back.
 

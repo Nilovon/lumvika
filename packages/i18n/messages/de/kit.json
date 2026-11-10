@@ -101,7 +101,7 @@
         "region": "Cookie-Einwilligung",
         "title": "Cookies",
         "short": "Wir nutzen Analyse-Cookies. <policy>Cookie-Richtlinie</policy>",
-        "long": "Wir nutzen Analyse-Cookies, um zu verstehen, wie Rerun genutzt wird. Cookies, die für deine Anmeldung, den Support-Chat und deine Einstellungen nötig sind, sind immer aktiv. <policy>Cookie-Richtlinie</policy>"
+        "long": "Wir nutzen Analyse-Cookies, um zu verstehen, wie Lumvika genutzt wird. Cookies, die für deine Anmeldung, den Support-Chat und deine Einstellungen nötig sind, sind immer aktiv. <policy>Cookie-Richtlinie</policy>"
     },
     "experts": {
         "wizard": {
@@ -131,7 +131,7 @@
             "name": "Name",
             "namePlaceholder": "z. B. Mira Labs",
             "email": "E-Mail",
-            "emailHelper": "Privat. Nur das Rerun-Team kann sie sehen.",
+            "emailHelper": "Privat. Nur das Lumvika-Team kann sie sehen.",
             "type": "Typ",
             "location": "Standort",
             "locationPlaceholder": "z. B. Berlin",
@@ -205,17 +205,17 @@
             "status": "Status",
             "links": "Links",
             "namePlaceholder": "Dein Name",
-            "rolePlaceholder": "Rerun-Experte"
+            "rolePlaceholder": "Lumvika-Experte"
         },
         "preview": {
             "hire": "Beauftragen"
         }
     },
-    "foreman": {
-        "orbLabel": "Rerun fragen",
+    "steward": {
+        "orbLabel": "Lumvika fragen",
         "empty": {
             "title": "Frag alles zu deinem Workspace",
-            "description": "Rerun baut und betreibt deine Coworker mit dir"
+            "description": "Lumvika baut und betreibt deine Coworker mit dir"
         },
         "header": {
             "closeChat": "Chat schließen",

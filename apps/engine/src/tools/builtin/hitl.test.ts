@@ -235,7 +235,7 @@ describe('request_mcp_sign_in', () => {
     })
 
     it('pauses the run like every other card', () => {
-        expect(isHitlToolName('mcp__rerun__request_mcp_sign_in')).toBe(true)
+        expect(isHitlToolName('mcp__lumvika__request_mcp_sign_in')).toBe(true)
         const call = { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 's1', toolName: 'request_mcp_sign_in', input: { name: 'mobbin' } }] } as unknown as ModelMessage
         expect(findPendingHitl([call])).toEqual({ toolCallId: 's1', toolName: 'request_mcp_sign_in', input: { name: 'mobbin' } })
         expect(hitlTurnIsOver([{ text: 'Sign in to Mobbin to use it.', toolCalls: [{ toolName: 'request_mcp_sign_in' }] }], false)).toBe(true)
@@ -288,7 +288,7 @@ describe('findPendingHitl', () => {
     })
 
     it('canonicalizes a bridged tool name', () => {
-        const pending = findPendingHitl([askUserCall('c1', 'mcp__rerun__ask_user'), toolResult('c1', { type: 'text', value: 'delivered' }, 'mcp__rerun__ask_user')])
+        const pending = findPendingHitl([askUserCall('c1', 'mcp__lumvika__ask_user'), toolResult('c1', { type: 'text', value: 'delivered' }, 'mcp__lumvika__ask_user')])
         expect(pending?.toolName).toBe('ask_user')
     })
 
@@ -298,7 +298,7 @@ describe('findPendingHitl', () => {
 
     // A CLI that proposes a skill after its card would otherwise hide the card it sent.
     it('looks past the skill proposal that follows a card', () => {
-        const trailing = { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'p1', toolName: 'mcp__rerun__skill_propose', input: {} }] } as unknown as ModelMessage
+        const trailing = { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'p1', toolName: 'mcp__lumvika__skill_propose', input: {} }] } as unknown as ModelMessage
         const pending = findPendingHitl([askUserCall('c1'), toolResult('c1', { type: 'text', value: 'delivered' }), trailing])
         expect(pending).toMatchObject({ toolCallId: 'c1', toolName: 'ask_user' })
     })
@@ -331,7 +331,7 @@ describe('lastStepHasHitlCall', () => {
     // A card is displayed and the agent keeps working. Widening the HITL set to canonicalize other
     // bridged names would end the turn here instead.
     it('does not stop the turn on a bridged card call', () => {
-        expect(lastStepHasHitlCall([{ toolCalls: [{ toolName: 'mcp__rerun__card_table' }] }])).toBe(false)
+        expect(lastStepHasHitlCall([{ toolCalls: [{ toolName: 'mcp__lumvika__card_table' }] }])).toBe(false)
     })
 })
 
@@ -415,8 +415,8 @@ describe('request_takeover', () => {
 
     it('ends the turn like the other human-in-the-loop tools, under its bridged names too', () => {
         expect(isHitlToolName('request_takeover')).toBe(true)
-        expect(isHitlToolName('mcp__rerun__request_takeover')).toBe(true)
-        expect(lastStepHasHitlCall([{ toolCalls: [{ toolName: 'rerun__request_takeover' }] }])).toBe(true)
+        expect(isHitlToolName('mcp__lumvika__request_takeover')).toBe(true)
+        expect(lastStepHasHitlCall([{ toolCalls: [{ toolName: 'lumvika__request_takeover' }] }])).toBe(true)
     })
 
     it('summarises the request for the notification', () => {

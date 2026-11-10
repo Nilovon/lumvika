@@ -1,4 +1,4 @@
-import type { WorkspaceSummary } from '@rerun/contracts'
+import type { WorkspaceSummary } from '@lumvika/contracts'
 import { Directory, File, Paths } from 'expo-file-system'
 import type { SFSymbol } from 'expo-symbols'
 import { useEffect, useState } from 'react'

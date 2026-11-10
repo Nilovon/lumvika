@@ -58,9 +58,9 @@ export default function CreatorPitch({
 CreatorPitch.PreviewProps = {
   firstName: "Clément",
   agentName: "Atlas",
-  creatorUrl: "https://app.rerun.build/creator",
-  appUrl: "https://app.rerun.build",
-  unsubscribeUrl: "https://app.rerun.build/unsubscribe",
+  creatorUrl: "https://app.lumvika.com/creator",
+  appUrl: "https://app.lumvika.com",
+  unsubscribeUrl: "https://app.lumvika.com/unsubscribe",
 } satisfies CreatorPitchProps;
 
 const cta: React.CSSProperties = {

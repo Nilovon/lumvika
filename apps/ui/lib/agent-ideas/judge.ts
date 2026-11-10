@@ -8,7 +8,7 @@ import { CRITERIA, type CompanyDossier, type Criterion, type CriterionScore, typ
 // OpenRouter serves it through its alpha decisions endpoint rather than /chat/completions, hence
 // the hand-written fetch (see lib/company/decide-industry.ts).
 const DECISIONS_URL = 'https://openrouter.ai/api/alpha/decisions'
-const DECISION_MODEL = process.env.RERUN_DECISION_MODEL ?? 'typesafe/jev-1.13'
+const DECISION_MODEL = process.env.LUMVIKA_DECISION_MODEL ?? 'typesafe/jev-1.13'
 const MAX_ATTEMPTS = 3
 const TIMEOUT_MS = 30_000
 const PARALLEL = 5

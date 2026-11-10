@@ -1,7 +1,7 @@
 import 'server-only'
 import { readFile } from 'node:fs/promises'
 import { ImageResponse } from 'next/og'
-import { R_PATH } from '@rerun/ui/logo'
+import { MARK_PATH } from '@lumvika/ui/logo'
 
 const WIDTH = 1200
 const HEIGHT = 630
@@ -76,9 +76,9 @@ export async function publishedOgImage(input: PublishedOgInput): Promise<ImageRe
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 24, color: 'rgba(250,250,250,0.6)' }}>
                         <svg width={26} height={26} viewBox="0 0 512 512">
-                            <path d={R_PATH} fill="#fafafa" />
+                            <path d={MARK_PATH} fill="#fafafa" />
                         </svg>
-                        rerun.site
+                        lumvika.site
                     </div>
                 </div>
                 <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', paddingRight: 60, position: 'relative' }}>
@@ -88,7 +88,7 @@ export async function publishedOgImage(input: PublishedOgInput): Promise<ImageRe
                                 <Lock size={84} color="rgba(250,250,250,0.4)" />
                             ) : (
                                 <svg width={84} height={84} viewBox="0 0 512 512">
-                                    <path d={R_PATH} fill="rgba(250,250,250,0.3)" />
+                                    <path d={MARK_PATH} fill="rgba(250,250,250,0.3)" />
                                 </svg>
                             )}
                         </div>

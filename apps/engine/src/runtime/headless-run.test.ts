@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-headless-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-headless-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({
     started: 0,
@@ -76,9 +76,9 @@ describe('startHeadlessRun', () => {
     })
 
     it('labels the stream with the override model when there is one', async () => {
-        await startHeadlessRun(agent, 'sess-4', 'do it', { provider: 'rerun', model: 'fast' }, trigger)
+        await startHeadlessRun(agent, 'sess-4', 'do it', { provider: 'lumvika', model: 'fast' }, trigger)
 
-        expect(state.merges[0].meta).toEqual({ provider: 'rerun', model: 'fast' })
+        expect(state.merges[0].meta).toEqual({ provider: 'lumvika', model: 'fast' })
     })
 
     it('fills a partial override from the agent', async () => {

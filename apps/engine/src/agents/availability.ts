@@ -1,4 +1,4 @@
-import { DEFAULT_PROVIDER_MODEL, RERUN_CONNECTION_ID, RERUN_MODEL, cliServesModel, opencodeServesModel, type AgentConfig, type Provider } from '@rerun/contracts'
+import { DEFAULT_PROVIDER_MODEL, LUMVIKA_CONNECTION_ID, LUMVIKA_MODEL, cliServesModel, opencodeServesModel, type AgentConfig, type Provider } from '@lumvika/contracts'
 import { liveOpencodeProviderModels } from '../connections/opencode-catalog.js'
 import { readCliModels } from '../connections/cli-models.js'
 import { readBoxDefault, writeBoxDefault } from '../connections/default.js'
@@ -62,7 +62,7 @@ function pick(connection: LoadedConnection, model: string): RunModel {
 }
 
 // What the box runs for every agent that named no model of its own, and the only place the fallback
-// ladder is written down: the pair the owner set, then the keyless Rerun connection, then whatever
+// ladder is written down: the pair the owner set, then the keyless Lumvika connection, then whatever
 // else is plugged in.
 //
 // The last line is what makes this change invisible on a box nobody has configured: no default set
@@ -72,20 +72,20 @@ export async function boxDefaultModel(): Promise<RunModel> {
     const direct = await findConnection(configured?.connectionId)
     if (configured && isUsable(direct, configured.model)) return pick(direct!, configured.model)
     // The owner's connection is fine, only its model is refused: walking the ladder would start on
-    // the keyless Rerun connection and move the bill.
+    // the keyless Lumvika connection and move the bill.
     if (configured && direct && isConnected(direct) && servesModel(direct, configured.model)) {
         const model = defaultModelOf(direct)
         if (isUsable(direct, model)) return pick(direct, model)
     }
 
     const all = await listConnections()
-    const rerun = all.find(c => c.id === RERUN_CONNECTION_ID)
-    const candidates = [...(rerun ? [rerun] : []), ...all]
+    const lumvika = all.find(c => c.id === LUMVIKA_CONNECTION_ID)
+    const candidates = [...(lumvika ? [lumvika] : []), ...all]
     for (const connection of candidates) {
         const model = defaultModelOf(connection)
         if (isUsable(connection, model)) return pick(connection, model)
     }
-    return { connection: rerun ?? null, provider: 'rerun', model: RERUN_MODEL }
+    return { connection: lumvika ?? null, provider: 'lumvika', model: LUMVIKA_MODEL }
 }
 
 // What a stored config runs on. `model === null` is the whole switch: the agent picked nothing, so
@@ -94,7 +94,7 @@ export async function boxDefaultModel(): Promise<RunModel> {
 export async function resolveConfiguredModel(config: Pick<AgentConfig, 'connectionId' | 'provider' | 'model'>): Promise<RunModel> {
     if (!config.model) return boxDefaultModel()
     const connection = await resolveConnection(config.connectionId, config.provider)
-    const provider = connection?.config.provider ?? config.provider ?? 'rerun'
+    const provider = connection?.config.provider ?? config.provider ?? 'lumvika'
     return { connection, provider, model: allowedModel(provider, config.model) }
 }
 

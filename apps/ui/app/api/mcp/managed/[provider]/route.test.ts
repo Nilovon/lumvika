@@ -20,9 +20,9 @@ const provider: ManagedProvider = {
 }
 
 function request(body: unknown, headers: Record<string, string> = {}) {
-    return new Request('https://rerun.test/api/mcp/managed/typeform', {
+    return new Request('https://lumvika.test/api/mcp/managed/typeform', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-rerun-key': BOX_KEY, authorization: 'Bearer third-party-token', ...headers },
+        headers: { 'content-type': 'application/json', 'x-lumvika-key': BOX_KEY, authorization: 'Bearer third-party-token', ...headers },
         body: JSON.stringify(body),
     })
 }
@@ -45,7 +45,7 @@ describe('POST /api/mcp/managed/[provider]', () => {
         listForms.mockResolvedValue({ items: [] })
     })
 
-    it('answers 404 for a provider Rerun does not manage', async () => {
+    it('answers 404 for a provider Lumvika does not manage', async () => {
         const response = await POST(request(toolCall('list_forms')), context('gmail'))
 
         expect(response.status).toBe(404)
@@ -53,14 +53,14 @@ describe('POST /api/mcp/managed/[provider]', () => {
     })
 
     it('answers 401 without an engine key', async () => {
-        const response = await POST(request(toolCall('list_forms'), { 'x-rerun-key': '' }), context())
+        const response = await POST(request(toolCall('list_forms'), { 'x-lumvika-key': '' }), context())
 
         expect(response.status).toBe(401)
         expect(listForms).not.toHaveBeenCalled()
     })
 
     it('answers 401 with an engine key that names no machine', async () => {
-        const response = await POST(request(toolCall('list_forms'), { 'x-rerun-key': 'forged-key' }), context())
+        const response = await POST(request(toolCall('list_forms'), { 'x-lumvika-key': 'forged-key' }), context())
 
         expect(response.status).toBe(401)
         expect(authenticateEngineToken).toHaveBeenCalledWith('forged-key')
@@ -95,7 +95,7 @@ describe('POST /api/mcp/managed/[provider]', () => {
     })
 
     it('answers a parse error on a body that is not JSON', async () => {
-        const response = await POST(new Request('https://rerun.test/api/mcp/managed/typeform', { method: 'POST', headers: { 'x-rerun-key': BOX_KEY }, body: '{oops' }), context())
+        const response = await POST(new Request('https://lumvika.test/api/mcp/managed/typeform', { method: 'POST', headers: { 'x-lumvika-key': BOX_KEY }, body: '{oops' }), context())
 
         expect(await response.json()).toMatchObject({ error: { code: -32700 } })
     })

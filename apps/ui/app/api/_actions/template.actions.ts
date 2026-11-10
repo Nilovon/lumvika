@@ -1,6 +1,6 @@
 'use server'
 
-import { isPublicStatus, type TemplateStatus } from '@rerun/contracts'
+import { isPublicStatus, type TemplateStatus } from '@lumvika/contracts'
 import { z } from 'zod'
 import { assertAdminUser, getAdminEmail } from '@/lib/auth/admin'
 import { assertSpaceAccess } from '@/app/api/_auth/access'

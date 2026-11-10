@@ -1,4 +1,4 @@
-import type { AddableProvider } from '@rerun/contracts'
+import type { AddableProvider } from '@lumvika/contracts'
 import { router, type Href } from 'expo-router'
 
 // `reconnect` signs an existing connection in again instead of adding one.

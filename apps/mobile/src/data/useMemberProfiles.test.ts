@@ -1,4 +1,4 @@
-import type { MemberProfile } from '@rerun/contracts'
+import type { MemberProfile } from '@lumvika/contracts'
 import { act, renderHook } from '@testing-library/react-native'
 
 import { cachedMembers, clearLocalCache } from './local-cache'

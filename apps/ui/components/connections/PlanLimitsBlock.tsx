@@ -13,7 +13,7 @@ function isUnderAMinuteOld(iso: string): boolean {
     return Date.now() - new Date(iso).getTime() < MINUTE_MS
 }
 
-// Where a subscription stands against its own plan: what the provider meters, not what Rerun bills.
+// Where a subscription stands against its own plan: what the provider meters, not what Lumvika bills.
 export function PlanLimitsBlock({ connection }: { connection: Pick<BoxConnection, 'planLimits' | 'provider'> }) {
     const t = useTranslations('connections')
     const locale = useLocale()

@@ -7,7 +7,7 @@ import { OAUTH_PROVIDER_CONFIG, type OAuthProvider } from '@/lib/auth/oauth-prov
 import { startOAuthSignIn } from '@/lib/auth/oauth-sign-in'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import { useInAppBrowser } from '@/lib/use-in-app-browser'
-import { track } from '@rerun/analytics/client'
+import { track } from '@lumvika/analytics/client'
 import { useTranslations } from 'next-intl'
 
 // Where the provider refuses an in-app browser the button is not drawn at all, and the other ways in

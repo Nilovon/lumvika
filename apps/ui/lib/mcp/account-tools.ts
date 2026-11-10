@@ -5,10 +5,10 @@ export const MAX_MEMORIES_PER_CALL = 100
 export const MAX_MEMORY_CHARS = 20_000
 export const MAX_UPLOAD_MB = 5
 
-// Static MCP tool definitions advertised by the Rerun account server for `tools/list`.
+// Static MCP tool definitions advertised by the Lumvika account server for `tools/list`.
 // Pure data (no server deps) so the route can serve them without importing the service layer.
 //
-// Audience: an AI coding agent (Claude Code and friends) configuring a Rerun account from
+// Audience: an AI coding agent (Claude Code and friends) configuring a Lumvika account from
 // outside the app. The surface covers shaping an agent — prompt, skills, scheduled tasks,
 // webhook triggers, connectors, private database — and checking what it did: send_message and
 // the run tools exist so an agent can be tested without first inventing a routine for it.
@@ -41,12 +41,12 @@ const MODEL_PIN_PROPERTIES = {
     provider: {
         type: 'string',
         description:
-            'rerun | anthropic | claude | codex | openai | google | openrouter | opencode | custom. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider; with several, the call is refused and lists them. It replaces whatever connection the coworker was pinned to.',
+            'lumvika | anthropic | claude | codex | openai | google | openrouter | opencode | custom. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider; with several, the call is refused and lists them. It replaces whatever connection the coworker was pinned to.',
     },
     model: {
         type: ['string', 'null'],
         description:
-            'A model the connection serves, as list_ai_connections spells it. Omit it at creation and the coworker runs the workspace default model, following it whenever that default changes. Pass null to go back to that after pinning one: it also drops the pinned connection. On the `rerun` provider: rerun-max. On `opencode` the id carries its catalog: `go/…` is paid by the Go plan, `console/…` by the account credits.',
+            'A model the connection serves, as list_ai_connections spells it. Omit it at creation and the coworker runs the workspace default model, following it whenever that default changes. Pass null to go back to that after pinning one: it also drops the pinned connection. On the `lumvika` provider: lumvika-max. On `opencode` the id carries its catalog: `go/…` is paid by the Go plan, `console/…` by the account credits.',
     },
 } as const
 
@@ -146,7 +146,7 @@ const AGENT_TOOL_DEFS = [
     {
         name: 'list_ai_connections',
         description:
-            'The AI connections of the workspace, which is what every coworker runs on: the subscriptions (Claude, ChatGPT, OpenCode) and API keys plugged into it, plus the keyless Rerun one. For each: its `id`, the name the user gave it (often the account email), its provider, the models it serves, whether it is signed in, and whether it holds the workspace default. `default` is the connection and model every coworker that picked nothing runs on. Read this before changing what a coworker runs on, and whenever the user names a subscription or an account: the id is the only way to tell two accounts of the same provider apart. Connections are added and removed by the user, in AI providers.',
+            'The AI connections of the workspace, which is what every coworker runs on: the subscriptions (Claude, ChatGPT, OpenCode) and API keys plugged into it, plus the keyless Lumvika one. For each: its `id`, the name the user gave it (often the account email), its provider, the models it serves, whether it is signed in, and whether it holds the workspace default. `default` is the connection and model every coworker that picked nothing runs on. Read this before changing what a coworker runs on, and whenever the user names a subscription or an account: the id is the only way to tell two accounts of the same provider apart. Connections are added and removed by the user, in AI providers.',
         inputSchema: { type: 'object', properties: {} },
     },
     {
@@ -525,7 +525,7 @@ const AGENT_TOOL_DEFS = [
     {
         name: 'search_connectors',
         description:
-            'Semantic search over the Rerun app library (Stripe, Gmail, Notion, Slack, …) — the ready-made integrations a coworker can be given. Describe the capability in natural language ("send emails", "read a CRM") and use the returned slug with attach_connector. `setup` tells you what declaring it will actually leave behind: "active" (works straight away), "needs_auth" (waiting for a sign-in) or "needs_config" (waiting for a credential, or for the owner to pick between several ways to connect). This search returns the best matches only — use list_connectors when you need to know whether something exists at all.',
+            'Semantic search over the Lumvika app library (Stripe, Gmail, Notion, Slack, …) — the ready-made integrations a coworker can be given. Describe the capability in natural language ("send emails", "read a CRM") and use the returned slug with attach_connector. `setup` tells you what declaring it will actually leave behind: "active" (works straight away), "needs_auth" (waiting for a sign-in) or "needs_config" (waiting for a credential, or for the owner to pick between several ways to connect). This search returns the best matches only — use list_connectors when you need to know whether something exists at all.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -559,7 +559,7 @@ const AGENT_TOOL_DEFS = [
     {
         name: 'attach_connector',
         description:
-            'Declare an app on a coworker. When the app needs no credentials and no sign-in it is installed right away; otherwise it is recorded as pending and the account owner finishes the connection from the Rerun app, where the sign-in and the credential form live. The returned `status` is the truth, whatever the catalog suggested, and `key` names the account it declared. NEVER ask anyone for an API key, a password or a token: this tool takes no secret, by design. Declaring an app on a coworker that will become a template is exactly the intended use — the person installing the template connects their own account.',
+            'Declare an app on a coworker. When the app needs no credentials and no sign-in it is installed right away; otherwise it is recorded as pending and the account owner finishes the connection from the Lumvika app, where the sign-in and the credential form live. The returned `status` is the truth, whatever the catalog suggested, and `key` names the account it declared. NEVER ask anyone for an API key, a password or a token: this tool takes no secret, by design. Declaring an app on a coworker that will become a template is exactly the intended use — the person installing the template connects their own account.',
         inputSchema: {
             type: 'object',
             properties: {

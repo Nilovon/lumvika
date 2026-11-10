@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 // OpenCode sells one API key that reaches two catalogs: Go, a subscription whose models are paid by
 // the plan, and Console, paid per token from the account's credits. A model listed on both sides is
-// two distinct picks, so the plan is part of the Rerun id: `go/<id>` and `console/<id>`.
+// two distinct picks, so the plan is part of the Lumvika id: `go/<id>` and `console/<id>`.
 export const OPENCODE_PLANS = ['go', 'console'] as const
 export type OpencodePlan = (typeof OPENCODE_PLANS)[number]
 
@@ -80,7 +80,7 @@ export function opencodePlanOf(id: string): OpencodePlan | null {
     return OPENCODE_PLANS.find(plan => id.startsWith(`${plan}/`)) ?? null
 }
 
-// The id without its plan, for a caller that has nothing but the Rerun id (a GPT has to be told
+// The id without its plan, for a caller that has nothing but the Lumvika id (a GPT has to be told
 // apart from a Claude whichever plan serves it).
 export function opencodeUpstreamId(id: string): string {
     const plan = opencodePlanOf(id)

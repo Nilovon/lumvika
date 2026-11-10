@@ -1,4 +1,4 @@
-import type { TemplateCategory } from '@rerun/contracts'
+import type { TemplateCategory } from '@lumvika/contracts'
 
 // The job function the survey asked before the company website replaced it. Nothing writes these
 // any more: they are kept so a user row from that version still promotes the right template

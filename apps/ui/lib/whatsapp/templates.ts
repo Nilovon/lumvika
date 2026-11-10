@@ -8,16 +8,16 @@ export type WhatsAppLanguage = (typeof WHATSAPP_LANGUAGES)[number]
 export type WhatsAppCategory = 'marketing' | 'utility'
 
 export const WHATSAPP_TEMPLATES = {
-    access_ends_recap: { slug: 'rerun_access_ends_coworker', category: 'marketing' },
-    access_ends_help: { slug: 'rerun_access_ends_help', category: 'marketing' },
-    payment_failed: { slug: 'rerun_payment_failed', category: 'utility' },
-    trial_first_job_done: { slug: 'rerun_trial_first_job_done', category: 'marketing' },
-    trial_morning_report: { slug: 'rerun_trial_morning_report', category: 'marketing' },
-    trial_no_first_job: { slug: 'rerun_trial_no_first_job', category: 'marketing' },
-    trial_idea_for_you: { slug: 'rerun_trial_idea_for_you', category: 'marketing' },
-    trial_anything_blocking: { slug: 'rerun_trial_anything_blocking', category: 'marketing' },
-    trial_needs_your_ok: { slug: 'rerun_trial_needs_your_ok', category: 'marketing' },
-    trial_week_recap: { slug: 'rerun_trial_week_recap', category: 'marketing' },
+    access_ends_recap: { slug: 'lumvika_access_ends_coworker', category: 'marketing' },
+    access_ends_help: { slug: 'lumvika_access_ends_help', category: 'marketing' },
+    payment_failed: { slug: 'lumvika_payment_failed', category: 'utility' },
+    trial_first_job_done: { slug: 'lumvika_trial_first_job_done', category: 'marketing' },
+    trial_morning_report: { slug: 'lumvika_trial_morning_report', category: 'marketing' },
+    trial_no_first_job: { slug: 'lumvika_trial_no_first_job', category: 'marketing' },
+    trial_idea_for_you: { slug: 'lumvika_trial_idea_for_you', category: 'marketing' },
+    trial_anything_blocking: { slug: 'lumvika_trial_anything_blocking', category: 'marketing' },
+    trial_needs_your_ok: { slug: 'lumvika_trial_needs_your_ok', category: 'marketing' },
+    trial_week_recap: { slug: 'lumvika_trial_week_recap', category: 'marketing' },
 } as const satisfies Record<string, { slug: string; category: WhatsAppCategory }>
 
 export type WhatsAppTemplateKey = keyof typeof WHATSAPP_TEMPLATES
@@ -54,7 +54,7 @@ function trackedPath(path: string, key: WhatsAppTemplateKey): string {
     return `${pathname}?${params}`
 }
 
-// Every template ends on one button whose URL is `https://app.rerun.build/{{1}}`, so the variable is
+// Every template ends on one button whose URL is `https://app.lumvika.com/{{1}}`, so the variable is
 // a path without its leading slash.
 function build(key: WhatsAppTemplateKey, { imageUrl, body, path }: Parts): WhatsAppMessage {
     const components: WhatsAppComponent[] = []

@@ -37,7 +37,7 @@ export async function fireSchedule(agentId: string, schedule: Schedule, opts?: {
     // tick after the latch clears, with no session, no run and no notification in the meantime.
     // Only the managed provider burns the workspace budget, so an agent on its own key still fires.
     const override = await automationModel(agent, schedule, 'schedule')
-    if (!opts?.manual && override.provider === 'rerun' && isBudgetLatched()) throw budgetExhausted()
+    if (!opts?.manual && override.provider === 'lumvika' && isBudgetLatched()) throw budgetExhausted()
     if (!opts?.manual && override.connectionId && isPlanLimitLatched(override.connectionId)) throw subscriptionLimited()
     // Stamped before the launch, not after: a schedule whose run preparation keeps throwing would
     // otherwise stay due forever and re-fire on every 30s tick. The trade-off is at-most-once — a
@@ -72,7 +72,7 @@ export async function fireSchedule(agentId: string, schedule: Schedule, opts?: {
 }
 
 const SKIP_REASONS: Record<string, string> = {
-    budget_latched: 'rerun budget latched',
+    budget_latched: 'lumvika budget latched',
     coworker_busy: 'another run of the coworker is live',
     subscription_limited: 'subscription limit latched',
 }

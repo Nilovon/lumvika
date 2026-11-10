@@ -1,9 +1,9 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { McpServer } from '@rerun/contracts'
+import type { McpServer } from '@lumvika/contracts'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-dup-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-dup-'))
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { duplicateAgent } = await import('./duplicate.js')
@@ -38,13 +38,13 @@ const config = agentConfigSchema.parse({
     provider: 'anthropic',
     model: SOURCE_MODEL,
     setup: { required: true, completedAt: '2026-01-01T00:00:00.000Z', sessionId: 'source-install' },
-    mcpServers: [srv('fal', { FAL_KEY: '${RERUN_SVC_FAL_FAL_KEY}' }, { 'x-rerun-agent': SOURCE_ID })],
+    mcpServers: [srv('fal', { FAL_KEY: '${LUMVIKA_SVC_FAL_FAL_KEY}' }, { 'x-lumvika-agent': SOURCE_ID })],
 })
 
 beforeAll(async () => {
     await migrate()
     const root = agentDir(SOURCE_ID)
-    await mkdir(resolve(root, 'workspace/.rerun'), { recursive: true })
+    await mkdir(resolve(root, 'workspace/.lumvika'), { recursive: true })
     await mkdir(resolve(root, 'workspace/node_modules/left-pad'), { recursive: true })
     await mkdir(resolve(root, 'skills/research'), { recursive: true })
     await mkdir(resolve(root, 'schedules'), { recursive: true })
@@ -56,7 +56,7 @@ beforeAll(async () => {
     await writeFile(resolve(root, 'config.json'), JSON.stringify(config, null, 2))
     await writeFile(resolve(root, 'SOUL.md'), 'You are the source agent.')
     await writeFile(resolve(root, 'INSTALL.md'), 'Connect the fal connector, then generate one test image.')
-    await writeFile(resolve(root, '.env'), `RERUN_SVC_FAL_FAL_KEY=${SOURCE_KEY_VALUE}\n`)
+    await writeFile(resolve(root, '.env'), `LUMVIKA_SVC_FAL_FAL_KEY=${SOURCE_KEY_VALUE}\n`)
     await writeFile(resolve(root, 'mcp/fal.json'), JSON.stringify({ accessToken: 'secret-token' }))
     await writeFile(resolve(root, 'skills/research/SKILL.md'), '---\nname: Research\ndescription: Looks things up\n---\n\nDo research.')
     await writeFile(resolve(root, 'schedules/onboard.md'), `---\nname: Onboard\nenabled: true\nconnection: ${SOURCE_CONNECTION_ID}\nprovider: anthropic\nmodel: ${SOURCE_MODEL}\n---\n\nWalk them through it.`)
@@ -66,7 +66,7 @@ beforeAll(async () => {
     await writeFile(resolve(root, 'workspace/node_modules/left-pad/index.js'), 'module.exports = () => {}')
     await writeFile(resolve(root, 'memory/mem1.md'), '---\nid: mem1\nkind: note\ntags: []\ncreatedAt: 2026-01-01T00:00:00.000Z\n---\n\nThe client prefers short answers.')
     await writeFile(resolve(root, 'memory/archive/mem0.md'), '---\nid: mem0\nkind: note\ntags: []\ncreatedAt: 2025-01-01T00:00:00.000Z\n---\n\nRetired.')
-    await writeFile(resolve(root, 'workspace/.rerun/services.json'), JSON.stringify({ services: { fal: { status: 'active', envKeys: ['RERUN_SVC_FAL_FAL_KEY'], mcpServers: ['fal'] } } }))
+    await writeFile(resolve(root, 'workspace/.lumvika/services.json'), JSON.stringify({ services: { fal: { status: 'active', envKeys: ['LUMVIKA_SVC_FAL_FAL_KEY'], mcpServers: ['fal'] } } }))
     await writeFile(resolve(root, 'data/system.db'), 'transcripts and telemetry')
     await writeFile(resolve(root, 'data/agent.db'), 'the agent tables')
 })
@@ -91,7 +91,7 @@ describe('duplicateAgent', () => {
     it('keeps the env values, with the 0600 a fresh agent gets', async () => {
         const result = await duplicateAgent(SOURCE_ID, { name: 'source_env' })
 
-        expect(await readFile(resolve(agentDir(result.id), '.env'), 'utf8')).toContain(`RERUN_SVC_FAL_FAL_KEY=${SOURCE_KEY_VALUE}`)
+        expect(await readFile(resolve(agentDir(result.id), '.env'), 'utf8')).toContain(`LUMVIKA_SVC_FAL_FAL_KEY=${SOURCE_KEY_VALUE}`)
         expect((await stat(resolve(agentDir(result.id), '.env'))).mode & 0o777).toBe(0o600)
     })
 
@@ -101,7 +101,7 @@ describe('duplicateAgent', () => {
         const result = await duplicateAgent(SOURCE_ID, { name: 'source_mcp' })
 
         expect(JSON.parse(await readFile(resolve(agentDir(result.id), 'mcp/fal.json'), 'utf8'))).toEqual({ accessToken: 'secret-token' })
-        expect(JSON.parse(await readFile(resolve(agentDir(result.id), 'workspace/.rerun/services.json'), 'utf8')).services.fal.status).toBe('active')
+        expect(JSON.parse(await readFile(resolve(agentDir(result.id), 'workspace/.lumvika/services.json'), 'utf8')).services.fal.status).toBe('active')
     })
 
     // The three fields the import clears on purpose, and that a copy staying here must not lose:
@@ -123,8 +123,8 @@ describe('duplicateAgent', () => {
         const result = await duplicateAgent(SOURCE_ID, { name: 'source_rebind' })
         const copied = agentConfigSchema.parse(JSON.parse(await readFile(resolve(agentDir(result.id), 'config.json'), 'utf8')))
 
-        expect(copied.mcpServers[0].headers['x-rerun-agent']).toBe(result.id)
-        expect(copied.mcpServers[0].env.FAL_KEY).toBe('${RERUN_SVC_FAL_FAL_KEY}')
+        expect(copied.mcpServers[0].headers['x-lumvika-agent']).toBe(result.id)
+        expect(copied.mcpServers[0].env.FAL_KEY).toBe('${LUMVIKA_SVC_FAL_FAL_KEY}')
     })
 
     // The token is the capability and the lookup key at once, so two triggers may never share one.

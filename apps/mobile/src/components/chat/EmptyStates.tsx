@@ -1,4 +1,4 @@
-import { teamEmptyStateOf, type TeamEmptyStateAction, type TeamEmptyStateCopy, type TeamEmptyStateModel, type TeamEmptyStateRow, type TeamPulse } from '@rerun/contracts'
+import { teamEmptyStateOf, type TeamEmptyStateAction, type TeamEmptyStateCopy, type TeamEmptyStateModel, type TeamEmptyStateRow, type TeamPulse } from '@lumvika/contracts'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { useMemo } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
@@ -7,7 +7,7 @@ import { useTranslations } from 'use-intl'
 import { useAuth } from '@/auth/AuthProvider'
 import { AgentBuddy } from '@/components/buddy/AgentBuddy'
 import type { BuddyMood } from '@/components/buddy/look'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { AppText } from '@/components/ui/AppText'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useWorkspaceAgents } from '@/data/useWorkspaceAgents'
@@ -85,14 +85,14 @@ function RowLeading({ row }: { row: TeamEmptyStateRow }) {
     )
 }
 
-// The Foreman's empty conversation (ForemanTeamEmptyState on the web): a greeting, the team at a
+// The Steward's empty conversation (StewardTeamEmptyState on the web): a greeting, the team at a
 // glance, and three things to ask, each sent or written into the composer.
-export function ForemanEmptyStateView({ model, onSend, onPrefill }: { model: TeamEmptyStateModel; onSend: (text: string) => void; onPrefill: (text: string) => void }) {
+export function StewardEmptyStateView({ model, onSend, onPrefill }: { model: TeamEmptyStateModel; onSend: (text: string) => void; onPrefill: (text: string) => void }) {
     const theme = useTheme()
     const run = (action: TeamEmptyStateAction) => (action.type === 'send' ? onSend : onPrefill)(action.text)
     return (
         <View style={{ alignItems: 'center', gap: spacing.lg }}>
-            <ForemanOrb size={84} />
+            <StewardOrb size={84} />
             <View style={{ alignItems: 'center', gap: 2, paddingHorizontal: spacing.md }}>
                 <AppText variant="headline" style={{ textAlign: 'center' }}>
                     {model.title}
@@ -129,7 +129,7 @@ export function ForemanEmptyStateView({ model, onSend, onPrefill }: { model: Tea
 }
 
 // Drawn after the view: the orb, a title line and three rows.
-function ForemanEmptyStateSkeleton() {
+function StewardEmptyStateSkeleton() {
     const t = useTranslations('mobileChat.empty')
     return (
         <View accessible accessibilityLabel={t('loading')} style={{ alignItems: 'center', gap: spacing.lg }}>
@@ -166,11 +166,11 @@ function useTeamEmptyStateCopy(): TeamEmptyStateCopy {
 
 // Null agents until the workspace is read: an empty list before that would greet someone who has a
 // team with the "no coworkers yet" screen.
-export function ForemanEmptyState({ onSend, onPrefill }: { onSend: (text: string) => void; onPrefill: (text: string) => void }) {
+export function StewardEmptyState({ onSend, onPrefill }: { onSend: (text: string) => void; onPrefill: (text: string) => void }) {
     const { me } = useAuth()
     const agents = useWorkspaceAgents()
     const copy = useTeamEmptyStateCopy()
-    if (!agents) return <ForemanEmptyStateSkeleton />
+    if (!agents) return <StewardEmptyStateSkeleton />
     const firstName = me?.user.name?.trim().split(/\s+/)[0] ?? ''
-    return <ForemanEmptyStateView model={teamEmptyStateOf({ agents, nextRoutine: null, firstName, copy })} onSend={onSend} onPrefill={onPrefill} />
+    return <StewardEmptyStateView model={teamEmptyStateOf({ agents, nextRoutine: null, firstName, copy })} onSend={onSend} onPrefill={onPrefill} />
 }

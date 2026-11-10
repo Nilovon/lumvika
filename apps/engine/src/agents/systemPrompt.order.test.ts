@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-prompt-order-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-prompt-order-'))
+process.env.LUMVIKA_API_KEY = ''
 
 vi.mock('../tools/mcp-pool.js', async importOriginal => ({ ...(await importOriginal<typeof import('../tools/mcp-pool.js')>()), pooledMcpTools: async () => ({}) }))
 vi.mock('../desktop/session.js', async importOriginal => ({
@@ -15,18 +15,18 @@ vi.mock('../desktop/session.js', async importOriginal => ({
 
 const { describe, expect, it } = await import('vitest')
 const { asSchema } = await import('ai')
-const { agentConfigSchema } = await import('@rerun/contracts')
+const { agentConfigSchema } = await import('@lumvika/contracts')
 const { buildSystemPrompt, systemPromptText } = await import('./systemPrompt.js')
 const { buildTools } = await import('../tools/registry.js')
 const { HITL_TOOL_NAMES, HITL_TOOL_SET } = await import('../tools/builtin/hitl.js')
 const { cardCallTiming, turnOrder } = await import('./turn-order.js')
 
 // Every runtime reads the same rules, so the one place that orders a turn is the only text allowed
-// to say whether the message or a call comes first. A Rerun alias reaches here already resolved to
+// to say whether the message or a call comes first. A Lumvika alias reaches here already resolved to
 // the model the hub serves it with.
 const RUNTIMES = [
-    ['rerun', 'anthropic/claude-haiku-5.5'],
-    ['rerun', 'openai/gpt-6-sol'],
+    ['lumvika', 'anthropic/claude-haiku-5.5'],
+    ['lumvika', 'openai/gpt-6-sol'],
     ['anthropic', 'claude-sonnet-5'],
     ['openai', 'gpt-6-sol'],
     ['openrouter', 'anthropic/claude-sonnet-5'],
@@ -104,33 +104,33 @@ describe('the sections a prompt points at', () => {
     })
 
     it('says the schemas come further down, where they are', async () => {
-        const prompt = await promptFor('rerun', 'full')
+        const prompt = await promptFor('lumvika', 'full')
         expect(prompt).toContain('The database schemas further down')
         expect(prompt.indexOf('<chat_cards>')).toBeLessThan(prompt.indexOf('<database>'))
     })
 
     it('points at the skill proposal only where the skills section holds it', async () => {
-        expect(await promptFor('rerun', 'full')).toContain('described in your skills section')
-        expect(await promptFor('rerun', 'minimal')).not.toContain('skill proposal')
+        expect(await promptFor('lumvika', 'full')).toContain('described in your skills section')
+        expect(await promptFor('lumvika', 'minimal')).not.toContain('skill proposal')
     })
 })
 
 describe('a sub-coworker', () => {
     it('gets no turn order, since nobody reads its messages', async () => {
-        const delegate = agentFor('rerun', CONFIGS.full)
+        const delegate = agentFor('lumvika', CONFIGS.full)
         delegate.config.ephemeral = true
-        expect(systemPromptText(await buildSystemPrompt(delegate, { source: 'chat' }, 'rerun'))).not.toContain('<turn_order>')
+        expect(systemPromptText(await buildSystemPrompt(delegate, { source: 'chat' }, 'lumvika'))).not.toContain('<turn_order>')
     })
 })
 
 describe('the cards that close a turn', () => {
     it('are all named in turn_order when the agent has them all', async () => {
-        const note = sectionOf(await promptFor('rerun', 'full'), 'turn_order') ?? ''
+        const note = sectionOf(await promptFor('lumvika', 'full'), 'turn_order') ?? ''
         for (const name of HITL_TOOL_NAMES) expect(note, name).toContain(name)
     })
 
     it('are only the ones the agent can call', async () => {
-        const note = sectionOf(await promptFor('rerun', 'minimal'), 'turn_order') ?? ''
+        const note = sectionOf(await promptFor('lumvika', 'minimal'), 'turn_order') ?? ''
         expect(note).toContain('ask_user')
         expect(note).not.toContain('request_approval')
         expect(note).not.toContain('suggest_replies')
@@ -139,7 +139,7 @@ describe('the cards that close a turn', () => {
 
 describe('a rule with one home', () => {
     it.each(['Group every open question', 'paste secrets', 'Keep each app reason to one short line', 'comes after you showed it, never instead'])('"%s" is stated once at most', async rule => {
-        const prompt = await promptFor('rerun', 'full')
+        const prompt = await promptFor('lumvika', 'full')
         expect(prompt.split(rule).length - 1).toBeLessThanOrEqual(1)
     })
 })

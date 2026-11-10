@@ -1,4 +1,4 @@
-import { isTemplateCategory, type TemplateCategory } from '@rerun/contracts'
+import { isTemplateCategory, type TemplateCategory } from '@lumvika/contracts'
 
 // The connectors we put under "For you" per industry, most recognisable first. Hand written rather
 // than derived from `services.category`: that taxonomy is capability shaped, not business shaped,

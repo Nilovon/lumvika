@@ -7,7 +7,7 @@ import { serviceIconProps } from '@/lib/services/icons'
 import { cn } from '@/lib/utils'
 
 // The apps of something, as their own logos, from catalog slugs alone. Everywhere the app already
-// holds resolved connectors it draws them this way (TemplateDetailAgentCard); the foreman only ever
+// holds resolved connectors it draws them this way (TemplateDetailAgentCard); the steward only ever
 // has the slugs its model wrote, so the resolution happens here.
 
 const MAX_SHOWN = 6

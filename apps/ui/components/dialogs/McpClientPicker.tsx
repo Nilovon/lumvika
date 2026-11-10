@@ -11,7 +11,7 @@ const CLIENT_PROVIDERS: Record<McpClientId, string | null> = {
     'claude-code': 'claude',
     chatgpt: 'openai',
     cursor: 'cursor',
-    rerun: 'rerun',
+    lumvika: 'lumvika',
     other: null,
 }
 

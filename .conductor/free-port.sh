@@ -5,14 +5,14 @@
 # behind by an earlier run, by "everything", or by `pnpm verify:ui` holds the port and the action dies
 # on EADDRINUSE. The VM serves this single workspace, so whatever listens there is ours to stop.
 #
-# `engine` stands for the RERUN_PORT of apps/engine/.env, which differs from one checkout to another.
+# `engine` stands for the LUMVIKA_PORT of apps/engine/.env, which differs from one checkout to another.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
 engine_port() {
   local port
-  port=$(sed -n 's/^RERUN_PORT=//p' apps/engine/.env 2>/dev/null | tail -1 | tr -d '"'\'' \r')
+  port=$(sed -n 's/^LUMVIKA_PORT=//p' apps/engine/.env 2>/dev/null | tail -1 | tr -d '"'\'' \r')
   echo "${port:-3000}"
 }
 

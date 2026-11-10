@@ -36,10 +36,10 @@ There is no read-only key, no per-coworker key and no per-tool permission. If yo
 
 <AccordionGroup>
   <Accordion title="Accept a secret">
-    `attach_connector` declares a connector and stops there. API keys, OAuth sign-ins and passwords are entered by the account owner in the app, and they are stored on your machine, never in the Rerun database. `plan_template_capture` returns credential variable **names** only, never values.
+    `attach_connector` declares a connector and stops there. API keys, OAuth sign-ins and passwords are entered by the account owner in the app, and they are stored on your machine, never in the Lumvika database. `plan_template_capture` returns credential variable **names** only, never values.
   </Accordion>
   <Accordion title="Publish a template">
-    `submit_template` moves a draft to review. Publishing is the Rerun team's decision. Payout onboarding needs a browser.
+    `submit_template` moves a draft to review. Publishing is the Lumvika team's decision. Payout onboarding needs a browser.
   </Accordion>
   <Accordion title="Manage the account">
     No billing, no plan change, no subscription, no member or invitation management, no workspace creation, no Box creation. Create a Box in the app first.
@@ -70,4 +70,4 @@ There is no read-only key, no per-coworker key and no per-tool permission. If yo
 
 ## Availability
 
-The MCP endpoint and the webhook front door run on the Rerun app. The coworkers themselves run on your workspace machine. A machine that is shut down or restarting makes coworker-facing tools fail with a reachability error, while catalog tools like `list_connectors` keep working.
+The MCP endpoint and the webhook front door run on the Lumvika app. The coworkers themselves run on your workspace machine. A machine that is shut down or restarting makes coworker-facing tools fail with a reachability error, while catalog tools like `list_connectors` keep working.

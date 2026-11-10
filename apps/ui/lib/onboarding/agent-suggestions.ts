@@ -1,6 +1,6 @@
 import { isTemplateCategory } from '@/lib/onboarding/industries'
-import type { TemplateCategory } from '@rerun/contracts'
-import type { AgentSuggestion } from '@rerun/ui/new-agent'
+import type { TemplateCategory } from '@lumvika/contracts'
+import type { AgentSuggestion } from '@lumvika/ui/new-agent'
 
 export type { AgentSuggestion }
 

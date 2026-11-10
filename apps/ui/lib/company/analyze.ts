@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@lumvika/contracts'
 import { generateText } from 'ai'
 import { z } from 'zod'
 
@@ -13,7 +13,7 @@ import { INDUSTRY_GUIDE } from './industry'
 // openai-compatible provider on OpenRouter, where response_format json_schema is not supported
 // (same constraint as lib/services/rerank.ts).
 
-const ANALYSIS_MODEL = process.env.RERUN_COMPANY_MODEL ?? 'google/gemini-2.5-flash-lite'
+const ANALYSIS_MODEL = process.env.LUMVIKA_COMPANY_MODEL ?? 'google/gemini-2.5-flash-lite'
 
 // The site we read, plus what the model made of it. Lives here rather than beside the server action
 // so a client component can name it without importing a 'use server' module for a type.

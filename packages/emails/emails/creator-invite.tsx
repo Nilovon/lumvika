@@ -90,11 +90,11 @@ export default function CreatorInvite({
 
 CreatorInvite.PreviewProps = {
   firstName: "Alex",
-  joinUrl: "https://app.rerun.build/creator/join/q3qmbe89",
-  appUrl: "https://app.rerun.build",
+  joinUrl: "https://app.lumvika.com/creator/join/q3qmbe89",
+  appUrl: "https://app.lumvika.com",
   context: "outreach",
-  cardImageUrl: "https://app.rerun.build/experts/alex-mercier/card.png",
-  unsubscribeUrl: "https://rerun.build/community/experts/unsubscribe/q3qmbe89",
+  cardImageUrl: "https://app.lumvika.com/experts/alex-mercier/card.png",
+  unsubscribeUrl: "https://lumvika.com/community/experts/unsubscribe/q3qmbe89",
 } satisfies CreatorInviteProps;
 
 const cardWrap: React.CSSProperties = {

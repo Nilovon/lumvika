@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 const MAX_OPEN_CHATS = 10
 
-const storageKey = (agentId: string) => `rerun.open-chats.${agentId.replace(/[^\w.-]/g, '_')}`
+const storageKey = (agentId: string) => `lumvika.open-chats.${agentId.replace(/[^\w.-]/g, '_')}`
 
 function parseStored(raw: string | null): string[] {
     try {

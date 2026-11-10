@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { connectionSummarySchema } from '@rerun/contracts'
-import { ENGLISH_MESSAGES } from '@rerun/i18n/messages/en'
+import { connectionSummarySchema } from '@lumvika/contracts'
+import { ENGLISH_MESSAGES } from '@lumvika/i18n/messages/en'
 import { createTranslator } from 'use-intl'
 import { isModelEnabled, offeredModels } from '@/lib/engine/ai-sources'
 import { isHttpUrl, presetsFor, probeProblemMessage } from './custom-endpoint'
@@ -10,7 +10,7 @@ const t = createTranslator({ locale: 'en', messages: ENGLISH_MESSAGES, namespace
 const result = (problem: Parameters<typeof probeProblemMessage>[1]['problem'], detail: string | null = null) => ({ baseUrl: 'http://localhost:11434/v1', models: [], problem, detail })
 
 describe('presetsFor', () => {
-    it('keeps the servers that listen on the owner machine off Rerun Cloud', () => {
+    it('keeps the servers that listen on the owner machine off Lumvika Cloud', () => {
         expect(presetsFor(true).map(preset => preset.id)).toEqual(['groq', 'together', 'mistral', 'deepseek'])
         expect(presetsFor(false).map(preset => preset.id)).toEqual(['ollama', 'lmstudio', 'vllm', 'litellm', 'groq', 'together', 'mistral', 'deepseek'])
     })

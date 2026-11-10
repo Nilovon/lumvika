@@ -23,7 +23,7 @@ describe('extractText', () => {
     it('leaves out the context the engine appended to a user turn', () => {
         const content = [
             { type: 'text', text: 'is the invoice paid?' },
-            { type: 'text', text: '<relevant_memories>\n- (fact) Works for Acme\n</relevant_memories>', providerOptions: { rerun: { context: true } } },
+            { type: 'text', text: '<relevant_memories>\n- (fact) Works for Acme\n</relevant_memories>', providerOptions: { lumvika: { context: true } } },
         ]
 
         expect(extractText(content)).toBe('is the invoice paid?')

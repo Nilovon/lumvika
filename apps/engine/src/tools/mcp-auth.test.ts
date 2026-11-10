@@ -3,9 +3,9 @@ import { chmod, mkdir, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-auth-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-auth-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const auth = await import('./mcp-auth.js')

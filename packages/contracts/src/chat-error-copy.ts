@@ -1,7 +1,7 @@
 import { OPENCODE_CREDITS_USED_UP, OPENCODE_GO_LIMIT, classifyChatError, stripErrorPrefix, type ChatErrorKind } from './chat-error.js'
 import { modelLabel } from './models.js'
 
-// The Rerun proxy returns 402 { error: 'rerun_budget_exhausted' } when a workspace
+// The Lumvika proxy returns 402 { error: 'lumvika_budget_exhausted' } when a workspace
 // has spent its monthly demo budget; the engine surfaces that marker in its run
 // error. Runs after `unwrapChatError`, never before.
 export function isBudgetExhausted(message: string): boolean {

@@ -1,4 +1,4 @@
--- A published entry is either one file, or a whole folder served as a site from <slug>.rerun.site.
+-- A published entry is either one file, or a whole folder served as a site from <slug>.lumvika.site.
 -- For a site, storage_key is the versioned folder prefix and files lists every path under it,
 -- relative to that prefix: the route serving the site answers 404 from it without asking Storage.
 alter table public.published_files

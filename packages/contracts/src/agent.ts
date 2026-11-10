@@ -67,39 +67,39 @@ export type SelfImprovement = z.infer<typeof selfImprovementSchema>
 export type SelfImprovementKey = keyof SelfImprovement
 export const SELF_IMPROVEMENT_KEYS = Object.keys(selfImprovementSchema.shape) as SelfImprovementKey[]
 
-export const providerSchema = z.enum(['rerun', 'anthropic', 'claude', 'codex', 'openai', 'google', 'openrouter', 'opencode', 'custom'])
+export const providerSchema = z.enum(['lumvika', 'anthropic', 'claude', 'codex', 'openai', 'google', 'openrouter', 'opencode', 'custom'])
 export type Provider = z.infer<typeof providerSchema>
 
-// The names the boxes know the Rerun models by. Aliases, not OpenRouter ids: the hub proxy resolves
-// each to whatever model that tier runs today (`RERUN_UPSTREAM_MODELS` in apps/ui), so changing a
+// The names the boxes know the Lumvika models by. Aliases, not OpenRouter ids: the hub proxy resolves
+// each to whatever model that tier runs today (`LUMVIKA_UPSTREAM_MODELS` in apps/ui), so changing a
 // model is a hub deploy and never a fleet update.
 //
-// Balanced keeps the id it had when it was the only one and was called Rerun Max: it is written in
+// Balanced keeps the id it had when it was the only one and was called Lumvika Max: it is written in
 // agent pins, schedules and triggers on every box, and an engine that has not self-updated refuses
-// a Rerun connection without it.
-export const RERUN_MODELS = { fast: 'rerun-fast', balanced: 'rerun-max', smart: 'rerun-smart' } as const
-export type RerunTier = keyof typeof RERUN_MODELS
+// a Lumvika connection without it.
+export const LUMVIKA_MODELS = { fast: 'lumvika-fast', balanced: 'lumvika-max', smart: 'lumvika-smart' } as const
+export type LumvikaTier = keyof typeof LUMVIKA_MODELS
 
-export const RERUN_TIERS = Object.keys(RERUN_MODELS) as RerunTier[]
+export const LUMVIKA_TIERS = Object.keys(LUMVIKA_MODELS) as LumvikaTier[]
 
-export const RERUN_MODEL = RERUN_MODELS.balanced
+export const LUMVIKA_MODEL = LUMVIKA_MODELS.balanced
 
 // Anything that is not a tier id reads as Balanced, which is what a box provisioned before the
 // aliases still asks for under an OpenRouter id.
-export function rerunTierOf(model: unknown): RerunTier {
-    return RERUN_TIERS.find(tier => RERUN_MODELS[tier] === model) ?? 'balanced'
+export function lumvikaTierOf(model: unknown): LumvikaTier {
+    return LUMVIKA_TIERS.find(tier => LUMVIKA_MODELS[tier] === model) ?? 'balanced'
 }
 
 // What the hub answers a box on GET /api/llm/models: by alias, the model that serves it for this
 // workspace today. Some models need a turn ordered their own way, and only the hub knows which runs.
-export const rerunUpstreamModelsSchema = z.object({ models: z.record(z.string(), z.string()) })
-export type RerunUpstreamModels = z.infer<typeof rerunUpstreamModelsSchema>
+export const lumvikaUpstreamModelsSchema = z.object({ models: z.record(z.string(), z.string()) })
+export type LumvikaUpstreamModels = z.infer<typeof lumvikaUpstreamModelsSchema>
 
 // What a provider runs when it is picked as a fallback rather than chosen. Mid-tier on purpose: a
 // substitution nobody asked for should not silently bill the most expensive model of the family.
 // Every id here needs a MODEL_CONTEXT_WINDOW entry, otherwise compaction loses its threshold.
 export const DEFAULT_PROVIDER_MODEL: Record<Provider, string> = {
-    rerun: RERUN_MODEL,
+    lumvika: LUMVIKA_MODEL,
     anthropic: 'claude-sonnet-4-6',
     claude: 'claude-opus-5-5',
     codex: 'gpt-6-sol',
@@ -140,9 +140,9 @@ export function isSetupAnswered(setup: { required: boolean | null; prompt: strin
 
 export const agentConfigSchema = z.object({
     name: z.string(),
-    // `foreman` is the one built-in agent each engine writes for itself at boot. Never settable
+    // `steward` is the one built-in agent each engine writes for itself at boot. Never settable
     // through the API: `updateAgentSchema` leaves it out.
-    kind: z.enum(['user', 'foreman']).default('user'),
+    kind: z.enum(['user', 'steward']).default('user'),
     ephemeral: z.boolean().default(false),
     // An agent switched off by its host (a plan that no longer covers it) keeps everything it has
     // and simply stops running: no chat, no schedule, no call from a peer. Defaults to true so a

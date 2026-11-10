@@ -11,8 +11,8 @@ All of them are **`true` by default** (`packages/contracts/src/agent.ts`, `tools
 | `web` | `web_search`, `web_fetch`, `download` | never for a lead magnet |
 | `browser` | real Chromium, screenshots, `request_takeover` | almost never |
 | `computer` | a screen of its own (browser, files, terminal) that the user watches; 200 actions per run | the deliverable lands on no site without an official connector (see grid below) |
-| `paidData` | `paid_data`, `paid_data_catalog`: paid live data on the Rerun credit | the job does not need public data in volume (see grid) |
-| `hub` | `rerun_hub_service_search/details/install`, `publish_file` (public URL of a deliverable) | almost never: it is also used to publish a file |
+| `paidData` | `paid_data`, `paid_data_catalog`: paid live data on the Lumvika credit | the job does not need public data in volume (see grid) |
+| `hub` | `lumvika_hub_service_search/details/install`, `publish_file` (public URL of a deliverable) | almost never: it is also used to publish a file |
 | `suggestService` | an app's connection card, pauses the run | never: without it, the install cannot get any app connected, even a declared one |
 | `db` / `sharedDb` | SQLite private to the agent / shared by the whole workspace, across all Boxes | never: that is where the lists live (leads, ads, posts) |
 | `cards` | `card_table`, `card_file`: table or file shown in the chat | never |
@@ -22,7 +22,7 @@ All of them are **`true` by default** (`packages/contracts/src/agent.ts`, `tools
 
 `selfImprovement` (`enabled`, `allowSoulEdit`, `allowToolInstall`, `autoMemory`) stays at its default: it is what lets the agent adapt to its owner.
 
-**Image generation comes only with a ChatGPT connection**: a coworker on `codex` has the image tool built into Codex, a coworker on Claude, Rerun or an API key has none. A visual agent on another provider produces HTML/CSS rendered as PNG through the browser or a script (`shell`), or goes through an app from the catalog (Canva, an image generator). I check it with `search_connectors` before promising a visual.
+**Image generation comes only with a ChatGPT connection**: a coworker on `codex` has the image tool built into Codex, a coworker on Claude, Lumvika or an API key has none. A visual agent on another provider produces HTML/CSS rendered as PNG through the browser or a script (`shell`), or goes through an app from the catalog (Canva, an image generator). I check it with `search_connectors` before promising a visual.
 
 ## Grid: computer use
 
@@ -47,7 +47,7 @@ Known catalog traps, to anticipate in the skill when the job depends on them:
 - `tiktok.search.videos` returns **only videos**, never a photo slideshow. For TikTok carousels, the method goes through accounts (`tiktok.search.users` then `tiktok.user.videos`), where a slideshow is a post with `duration_s: 0`.
 - `google.keywords.volume` takes up to 100 keywords but **a single country per call** (13.5 credits per call): a multi-country job starts with the 2 or 3 biggest markets.
 
-What the engine already handles: in a routine the agent spends the credit without asking, in chat it asks for approval beyond 200 credits per task, and either way it says what it cost; when the credit runs out, the call is refused, the agent finishes with its free tools and the app shows the top-up card; it never reruns the same request. So I write it nowhere. I name a group in the SOUL or the skill **only** if it changes the method ("pull the account's last 30 posts before writing"), never to restate how it works.
+What the engine already handles: in a routine the agent spends the credit without asking, in chat it asks for approval beyond 200 credits per task, and either way it says what it cost; when the credit runs out, the call is refused, the agent finishes with its free tools and the app shows the top-up card; it never lumvikas the same request. So I write it nowhere. I name a group in the SOUL or the skill **only** if it changes the method ("pull the account's last 30 posts before writing"), never to restate how it works.
 
 ## Grid: service catalog
 

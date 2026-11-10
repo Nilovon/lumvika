@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { boxDefaultModelSchema, type BoxDefaultModel } from '@rerun/contracts'
+import { boxDefaultModelSchema, type BoxDefaultModel } from '@lumvika/contracts'
 import { boxDefaultPath, connectionsDir } from '../config/paths.js'
 import { clearAgentCache } from '../agents/registry.js'
 
@@ -16,7 +16,7 @@ export async function readBoxDefault(): Promise<BoxDefaultModel | null> {
         cached = boxDefaultModelSchema.parse(JSON.parse(await readFile(path, 'utf8')))
     } catch {
         // A file we cannot read is not a reason to take every default agent down: the resolution
-        // ladder falls through to Rerun exactly as it does on a box that never set one.
+        // ladder falls through to Lumvika exactly as it does on a box that never set one.
         cached = null
     }
     return cached

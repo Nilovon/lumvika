@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { connectorSkillReadOnlyError } from '@rerun/contracts'
+import { connectorSkillReadOnlyError } from '@lumvika/contracts'
 import { modelFor } from '../agents/providers.js'
 import { isUsable, resolveRunModel } from '../agents/availability.js'
 import { ensureCliAuth } from '../connections/cli-auth.js'
@@ -58,7 +58,7 @@ async function draft(agent: LoadedAgent, row: SkillProposalRow, abortSignal: Abo
 
 // The accept click comes with no model of its own, so the job writes on the pair the proposing
 // conversation ran on: the agent's own pair may be one the user is not paying through, like a
-// Rerun budget already spent while they chat on their Claude subscription. A connection removed or
+// Lumvika budget already spent while they chat on their Claude subscription. A connection removed or
 // signed out since then falls back to the agent's pair rather than sending its model elsewhere.
 async function agentForProposal(agent: LoadedAgent, row: SkillProposalRow): Promise<LoadedAgent> {
     if (!row.provider || !row.model) return agent

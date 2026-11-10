@@ -41,7 +41,7 @@ export const useSubscriptionOfferStore = create<SubscriptionOfferState>()(
             },
         }),
         {
-            name: 'rerun:subscription-offer',
+            name: 'lumvika:subscription-offer',
             partialize: state => ({ offered: state.offered }),
         }
     )

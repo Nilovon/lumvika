@@ -1,4 +1,4 @@
-import { paidDataSourcesByTurn, type PaidTurnSources } from '@rerun/contracts'
+import { paidDataSourcesByTurn, type PaidTurnSources } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -38,7 +38,7 @@ function useStamp(): MessageStamp {
 
 const LAB_AGENT = 'scout'
 
-// A coworker's turn draws its buddy beside the steps; the Foreman's has no agent, so no buddy.
+// A coworker's turn draws its buddy beside the steps; the Steward's has no agent, so no buddy.
 function Turn({ message, running = false, agentId = LAB_AGENT, paidSources }: { message: UIMessage; running?: boolean; agentId?: string | null; paidSources?: PaidTurnSources }) {
     const stamp = useStamp()
     return <MessageView message={message} isLastAssistant={running} running={running} agentId={agentId} fileOwner={null} coworkerName="Scout" hiddenCallId={null} stamp={stamp} paidSources={paidSources} />
@@ -80,7 +80,7 @@ export default function LabSteps() {
                         <Group title="Running">
                             <LiveScenario />
                         </Group>
-                        <Group title="Running, Foreman">
+                        <Group title="Running, Steward">
                             <LiveScenario agentId={null} />
                         </Group>
                     </>

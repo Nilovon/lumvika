@@ -1,4 +1,4 @@
-import type { PaidSource, PaidSourceLine, PaidTurnSources } from '@rerun/contracts'
+import type { PaidSource, PaidSourceLine, PaidTurnSources } from '@lumvika/contracts'
 import { Image } from 'expo-image'
 import { SymbolView } from 'expo-symbols'
 import { Fragment, useState } from 'react'

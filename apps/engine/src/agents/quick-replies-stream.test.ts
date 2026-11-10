@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ModelMessage } from 'ai'
-import { agentConfigSchema, quickRepliesOf, quickReplyDraft, quickReplyPromisesValue } from '@rerun/contracts'
+import { agentConfigSchema, quickRepliesOf, quickReplyDraft, quickReplyPromisesValue } from '@lumvika/contracts'
 import { QuickRepliesSplitter, createQuickRepliesCapture, offersQuickReplies, parseQuickRepliesBlock, quickRepliesCall, withoutQuickRepliesCalls } from './quick-replies-stream.js'
 
 const BLOCK = '<quick_replies>\nFind 100 more\nExport them as CSV\n</quick_replies>'
@@ -158,10 +158,10 @@ describe('quickRepliesCall', () => {
 describe('offersQuickReplies', () => {
     const config = (over: Record<string, unknown>) => agentConfigSchema.parse({ name: 'a', ...over })
 
-    it('holds for a regular coworker and not for a sub-coworker, the foreman or a switched-off one', () => {
+    it('holds for a regular coworker and not for a sub-coworker, the steward or a switched-off one', () => {
         expect(offersQuickReplies(config({}))).toBe(true)
         expect(offersQuickReplies(config({ ephemeral: true }))).toBe(false)
-        expect(offersQuickReplies(config({ kind: 'foreman' }))).toBe(false)
+        expect(offersQuickReplies(config({ kind: 'steward' }))).toBe(false)
         expect(offersQuickReplies(config({ tools: { quickReplies: false } }))).toBe(false)
     })
 })
@@ -170,7 +170,7 @@ describe('withoutQuickRepliesCalls', () => {
     const call = (toolName: string) => ({ type: 'tool-call', toolCallId: 'c', toolName, input: {} })
 
     it('drops the old call, bare or bridged, and keeps the rest', () => {
-        const message = { role: 'assistant', content: [{ type: 'text', text: 'Done.' }, call('suggest_replies'), call('mcp__rerun__suggest_replies'), call('fs_read')] } as unknown as ModelMessage
+        const message = { role: 'assistant', content: [{ type: 'text', text: 'Done.' }, call('suggest_replies'), call('mcp__lumvika__suggest_replies'), call('fs_read')] } as unknown as ModelMessage
         expect(withoutQuickRepliesCalls(message)).toEqual({ role: 'assistant', content: [{ type: 'text', text: 'Done.' }, call('fs_read')] })
     })
 

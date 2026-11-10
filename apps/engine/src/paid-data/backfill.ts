@@ -1,14 +1,14 @@
 import { readFile } from 'node:fs/promises'
 import { basename, resolve, sep } from 'node:path'
 import type { Client, Row } from '@libsql/client'
-import { capabilityOfCall, isPaidDataTool, PAID_DATA_TOOL, parseHubOutput, stripBridgePrefix } from '@rerun/contracts'
+import { capabilityOfCall, isPaidDataTool, PAID_DATA_TOOL, parseHubOutput, stripBridgePrefix } from '@lumvika/contracts'
 import { workspaceDir } from '../config/paths.js'
 import { logger } from '../lib/logger.js'
 import { paidCallVerdict } from './sources.js'
 import { writePaidSources } from './store.js'
 
 const PAGE = 200
-const SAVED_ANSWERS_DIR = '.rerun/paid-data/'
+const SAVED_ANSWERS_DIR = '.lumvika/paid-data/'
 const BACKFILL_DONE_KEY = 'paid_backfill'
 
 type RecordedPaidOutput = { status?: unknown; servedBy?: unknown; saved?: unknown; result?: unknown }

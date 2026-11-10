@@ -3,8 +3,8 @@ import type { Database } from '@/app/api/database.types'
 import { phoneOwnerId } from '@/app/api/_services/phone-ownership.service'
 import { placeholderEmailFor } from '@/lib/auth/placeholder-email'
 import { countryOfE164 } from '@/lib/phone/normalize'
-import type { PhoneDeliveryStatus } from '@rerun/analytics'
-import { captureServer, deterministicUuid } from '@rerun/analytics/server'
+import type { PhoneDeliveryStatus } from '@lumvika/analytics'
+import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Bird's verify.* events (https://bird.com/docs/guides/verify/events), the ones that say whether a

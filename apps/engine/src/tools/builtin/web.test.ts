@@ -4,8 +4,8 @@ import { resolve } from 'node:path'
 import { vi } from 'vitest'
 import type { z } from 'zod'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-web-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-web-'))
+process.env.LUMVIKA_API_KEY = ''
 
 // Hosts in these tests are made up: they resolve to a public address, except the ones named private.
 vi.mock('node:dns/promises', () => ({
@@ -74,7 +74,7 @@ describe('web_fetch', () => {
         globalThis.fetch = fetchMock as unknown as typeof fetch
         expect(await fetchPage(ctxWith(), 'https://example.com/go')).toBe('Fetch refused: 169.254.169.254 is not a public host (https://example.com/go), only http and https URLs on public hosts are accepted.')
         expect(fetchMock).toHaveBeenCalledOnce()
-        expect(fetchMock.mock.calls[0]![1]).toMatchObject({ redirect: 'manual', headers: { 'User-Agent': 'rerun-engine/1.0' } })
+        expect(fetchMock.mock.calls[0]![1]).toMatchObject({ redirect: 'manual', headers: { 'User-Agent': 'lumvika-engine/1.0' } })
     })
 
     it('follows a redirect between public hosts and reports where it landed', async () => {
@@ -106,7 +106,7 @@ describe('web_fetch', () => {
         globalThis.fetch = vi.fn(async () => {
             throw new Error('getaddrinfo ENOTFOUND nowhere.test')
         }) as unknown as typeof fetch
-        expect(await fetchPage(ctxWith(), 'https://nowhere.test/')).toBe("Fetch failed: getaddrinfo ENOTFOUND nowhere.test (https://nowhere.test/). This is Rerun's reader failing, not proof that the site is down.\n\n[attempt 1/3 on nowhere.test failed in this run]")
+        expect(await fetchPage(ctxWith(), 'https://nowhere.test/')).toBe("Fetch failed: getaddrinfo ENOTFOUND nowhere.test (https://nowhere.test/). This is Lumvika's reader failing, not proof that the site is down.\n\n[attempt 1/3 on nowhere.test failed in this run]")
     })
 
     it('gives up on a fetch that never answers', async () => {
@@ -114,9 +114,9 @@ describe('web_fetch', () => {
         expect(await fetchPage(ctxWith(), 'https://slow.test/page', 50)).toContain('Fetch failed: timed out after 0 s (https://slow.test/page)')
     })
 
-    it('says that a refusal went to Rerun, not to Google', async () => {
+    it('says that a refusal went to Lumvika, not to Google', async () => {
         globalThis.fetch = vi.fn(async () => new Response('denied', { status: 403 })) as unknown as typeof fetch
-        expect(await fetchPage(ctxWith(), 'https://repeg.test/')).toMatch(/^\[403\] https:\/\/repeg\.test\/ \(sent to Rerun's reader: not proof that Google or visitors get the same\)\n\ndenied/)
+        expect(await fetchPage(ctxWith(), 'https://repeg.test/')).toMatch(/^\[403\] https:\/\/repeg\.test\/ \(sent to Lumvika's reader: not proof that Google or visitors get the same\)\n\ndenied/)
     })
 
     it('does not count a missing page against the host', async () => {

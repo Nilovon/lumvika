@@ -11,7 +11,7 @@ import { environment } from '@/config/environment'
 
 import { widgetOf, type OnboardingWidget } from './parts'
 
-export const KICKOFF = '[[foreman:start]]'
+export const KICKOFF = '[[steward:start]]'
 
 // A card just answered sends the conversation back on its own, as on the web. A build ends on an answered
 // call too, and sent back it would land on a hub that is done with the onboarding.
@@ -22,7 +22,7 @@ export function resumesAfterAnswer({ messages }: { messages: UIMessage[] }): boo
 
 function onboardingTransport(callerRef: RefObject<ChatCaller | null>, sessionRef: RefObject<string>) {
     return new DefaultChatTransport<UIMessage>({
-        api: `${environment.apiUrl}/api/chat/foreman`,
+        api: `${environment.apiUrl}/api/chat/steward`,
         headers: () => hubHeaders(clientHeader, { accessToken: callerRef.current?.accessToken, workspaceId: callerRef.current?.workspaceId }),
         fetch: expoFetch as unknown as typeof globalThis.fetch,
         prepareSendMessagesRequest: ({ messages }) => ({ body: { sessionId: sessionRef.current, messages, client: 'ios' } }),

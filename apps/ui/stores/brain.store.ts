@@ -5,7 +5,7 @@ import { countBrainProposalsAction } from '@/app/api/_actions/brain.actions'
 // Proposals tab. Refreshed on demand rather than pushed: the engine has no channel to the browser.
 type BrainState = {
     openProposals: number
-    // Bumped when the brain changed from outside the Brain dialog (the foreman, from its chat), so
+    // Bumped when the brain changed from outside the Brain dialog (the steward, from its chat), so
     // an open dialog reloads what it shows.
     version: number
     refreshProposalCount: () => Promise<void>

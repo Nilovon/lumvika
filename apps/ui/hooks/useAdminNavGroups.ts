@@ -6,7 +6,7 @@ import { useCallback, useSyncExternalStore } from 'react'
 // deviations from each group's `defaultOpen`, so a group added later keeps its
 // intended default instead of inheriting a stale entry.
 
-const STORAGE_KEY = 'rerun-admin-nav-groups'
+const STORAGE_KEY = 'lumvika-admin-nav-groups'
 
 type GroupState = Record<string, boolean>
 

@@ -28,7 +28,7 @@ const CONTEXT: ComposioOAuthContext = {
 const MANIFEST = serviceManifestSchema.parse({
     slug: 'gmail',
     name: 'Gmail',
-    authMethods: [{ id: 'composio', kind: 'composio', composio: { toolkit: 'gmail', authConfigId: 'ac_gmail' }, mcpServers: [{ name: 'gmail', transport: 'http', url: 'https://rerun.test/api/mcp/composio/gmail' }] }],
+    authMethods: [{ id: 'composio', kind: 'composio', composio: { toolkit: 'gmail', authConfigId: 'ac_gmail' }, mcpServers: [{ name: 'gmail', transport: 'http', url: 'https://lumvika.test/api/mcp/composio/gmail' }] }],
 })
 
 const ACTIVE: ComposioConnectedAccount = { id: 'ca_1', userId: 'local_agent_agent-1', authConfigId: 'ac_gmail', status: 'ACTIVE', toolkit: 'gmail' }
@@ -36,7 +36,7 @@ const ACTIVE: ComposioConnectedAccount = { id: 'ca_1', userId: 'local_agent_agen
 let jar: Record<string, string> = {}
 
 async function callback(params: Record<string, string>) {
-    const pending = GET(new Request(`https://rerun.test/api/oauth/composio/callback?${new URLSearchParams(params)}`))
+    const pending = GET(new Request(`https://lumvika.test/api/oauth/composio/callback?${new URLSearchParams(params)}`))
     await vi.runAllTimersAsync()
     return pending
 }
@@ -213,7 +213,7 @@ describe('GET /api/oauth/composio/callback', () => {
 
         expect(res.status).toBe(302)
         const location = new URL(res.headers.get('location') ?? '')
-        expect(location.protocol).toBe('rerun:')
+        expect(location.protocol).toBe('lumvika:')
         expect(location.searchParams.get('message')).toBe('Invalid sign-in grant')
         expect(getConnectedAccount).not.toHaveBeenCalled()
         expect(markComposioAuthorized).not.toHaveBeenCalled()

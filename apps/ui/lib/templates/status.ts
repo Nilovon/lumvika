@@ -1,5 +1,5 @@
-import { TEMPLATE_STATUSES, type TemplateStatus } from '@rerun/contracts'
-import type { BadgeTone } from '@rerun/ui/primitives'
+import { TEMPLATE_STATUSES, type TemplateStatus } from '@lumvika/contracts'
+import type { BadgeTone } from '@lumvika/ui/primitives'
 import { titleCase } from './labels'
 
 const STATUS_TONES: Record<string, BadgeTone> = {

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { vi } from 'vitest'
 
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_API_KEY = ''
 
 // Hosts in these tests are made up: they resolve to a public address, except the ones named private.
 vi.mock('node:dns/promises', () => ({

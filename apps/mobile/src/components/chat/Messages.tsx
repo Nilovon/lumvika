@@ -1,4 +1,4 @@
-import type { MessageFeedbackRating } from '@rerun/contracts'
+import type { MessageFeedbackRating } from '@lumvika/contracts'
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
@@ -198,7 +198,7 @@ export function EmptyConversation({ coworker }: { coworker: Coworker }) {
             <CoworkerAvatar coworker={coworker} size={96} />
             <View style={{ alignItems: 'center', gap: 2 }}>
                 <AppText variant="title" numberOfLines={1}>
-                    {coworker.kind === 'foreman' ? t('messages.askRerun') : coworker.name}
+                    {coworker.kind === 'steward' ? t('messages.askLumvika') : coworker.name}
                 </AppText>
                 <AppText variant="callout" tone="muted" numberOfLines={2} style={{ textAlign: 'center' }}>
                     {coworker.role}

@@ -4,7 +4,7 @@ import { codexMcpCompatibilityMiddleware, normalizeCodexGeneratePart, normalizeC
 const envelope = (overrides: Record<string, unknown> = {}) => ({
     type: 'mcpToolCall',
     id: 'call-1',
-    server: 'rerun',
+    server: 'lumvika',
     tool: 'ask_user',
     status: 'completed',
     arguments: { questions: [{ question: 'Ready?' }] },
@@ -20,7 +20,7 @@ describe('Codex MCP stream compatibility', () => {
             delta: JSON.stringify({ questions: [{ question: 'Ready?' }] }),
         })
         expect(
-            normalizeCodexStreamPart({ type: 'tool-call', toolCallId: 'call-1', toolName: 'mcp__rerun__ask_user', input: raw, providerExecuted: true } as any),
+            normalizeCodexStreamPart({ type: 'tool-call', toolCallId: 'call-1', toolName: 'mcp__lumvika__ask_user', input: raw, providerExecuted: true } as any),
         ).toMatchObject({
             toolName: 'ask_user',
             input: JSON.stringify({ questions: [{ question: 'Ready?' }] }),
@@ -30,12 +30,12 @@ describe('Codex MCP stream compatibility', () => {
 
     it('prefers structured content and otherwise parses a single JSON text result', () => {
         const structured = envelope({ result: { structuredContent: { results: [{ slug: 'notion' }] }, content: [] } })
-        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__rerun__rerun_hub_service_search', result: structured } as any)).toMatchObject({
-            toolName: 'rerun_hub_service_search',
+        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__lumvika__lumvika_hub_service_search', result: structured } as any)).toMatchObject({
+            toolName: 'lumvika_hub_service_search',
             result: { results: [{ slug: 'notion' }] },
         })
 
-        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__rerun__ask_user', result: envelope(), isError: true } as any)).toMatchObject({
+        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__lumvika__ask_user', result: envelope(), isError: true } as any)).toMatchObject({
             toolName: 'ask_user',
             result: { status: 'delivered' },
             isError: true,
@@ -43,7 +43,7 @@ describe('Codex MCP stream compatibility', () => {
     })
 
     it('preserves preliminary results, metadata, external MCP names, and unknown payloads', () => {
-        const preliminary = { type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__rerun__shell_exec', result: { type: 'output-delta', delta: 'x' }, preliminary: true, providerMetadata: { codex: { item: 1 } } }
+        const preliminary = { type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__lumvika__shell_exec', result: { type: 'output-delta', delta: 'x' }, preliminary: true, providerMetadata: { codex: { item: 1 } } }
         expect(normalizeCodexStreamPart(preliminary as any)).toEqual({ ...preliminary, toolName: 'shell_exec' })
 
         const external = { type: 'tool-call', toolCallId: 'call-2', toolName: 'mcp__google-drive__gdrive_search', input: JSON.stringify(envelope({ server: 'google-drive' })) }
@@ -60,16 +60,16 @@ describe('Codex MCP stream compatibility', () => {
 
     it('preserves non-JSON and multi-part MCP results instead of dropping content', () => {
         const text = envelope({ result: { content: [{ type: 'text', text: 'plain result' }], structuredContent: null } })
-        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__rerun__notify_user', result: text } as any)).toMatchObject({ result: 'plain result' })
+        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__lumvika__notify_user', result: text } as any)).toMatchObject({ result: 'plain result' })
 
         const multi = { content: [{ type: 'text', text: 'one' }, { type: 'text', text: 'two' }], structuredContent: null }
         const wrapped = envelope({ result: multi })
-        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__rerun__notify_user', result: wrapped } as any)).toMatchObject({ result: multi })
+        expect(normalizeCodexStreamPart({ type: 'tool-result', toolCallId: 'call-1', toolName: 'mcp__lumvika__notify_user', result: wrapped } as any)).toMatchObject({ result: multi })
     })
 
     it('normalizes generated content and the middleware stream without changing unrelated parts', async () => {
         const raw = JSON.stringify(envelope())
-        expect(normalizeCodexGeneratePart({ type: 'tool-call', toolCallId: 'call-1', toolName: 'rerun__ask_user', input: raw } as any)).toMatchObject({
+        expect(normalizeCodexGeneratePart({ type: 'tool-call', toolCallId: 'call-1', toolName: 'lumvika__ask_user', input: raw } as any)).toMatchObject({
             toolName: 'ask_user',
             input: JSON.stringify({ questions: [{ question: 'Ready?' }] }),
         })
@@ -94,7 +94,7 @@ describe('Codex MCP stream compatibility', () => {
         const generated = await codexMcpCompatibilityMiddleware.wrapGenerate!({
             doGenerate: async () => ({
                 content: [
-                    { type: 'tool-call', toolCallId: 'call-1', toolName: 'mcp__rerun__ask_user', input: raw },
+                    { type: 'tool-call', toolCallId: 'call-1', toolName: 'mcp__lumvika__ask_user', input: raw },
                     { type: 'text', text: 'unchanged' },
                 ],
                 finishReason: { unified: 'stop', raw: 'stop' },

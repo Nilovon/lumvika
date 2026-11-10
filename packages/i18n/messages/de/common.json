@@ -12,5 +12,13 @@
         "title": "Etwas ist schiefgelaufen",
         "body": "Auf dieser Seite ist ein unerwarteter Fehler aufgetreten. Deine Coworker und ihre Arbeit sind sicher. Lade neu, um dort weiterzumachen, wo du aufgehört hast.",
         "reload": "Neu laden"
+    },
+    "about": {
+        "title": "Über",
+        "license": "Lumvika ist freie Software unter der GNU Affero General Public License, Version 3 (AGPL-3.0). Unter dieser Lizenz kannst du den Quellcode erhalten, ändern und weitergeben.",
+        "upstream": "Lumvika basiert auf einem Open-Source-Projekt und enthält die Arbeit von dessen Urheberinnen und Urhebern, deren Urheberrecht bestehen bleibt. Die Datei NOTICE im Quellcode nennt das Projekt und beschreibt die Änderungen.",
+        "warranty": "Für dieses Programm besteht keine Gewährleistung, soweit gesetzlich zulässig.",
+        "source": "Quellcode",
+        "licenseText": "Lizenztext"
     }
 }

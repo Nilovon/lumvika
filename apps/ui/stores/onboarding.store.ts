@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { TEMPLATE_CATEGORIES } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES } from '@lumvika/contracts'
 import { z } from 'zod'
-import type { ForemanIntake } from '@/lib/onboarding/intake'
+import type { StewardIntake } from '@/lib/onboarding/intake'
 import type { PendingAgentDraft } from './board.store'
 
 // The first-agent draft captured during onboarding, persisted (store + localStorage) so it survives
@@ -51,7 +51,7 @@ const pendingIntakeSchema = z.object({
     industryLabel: z.string().nullable(),
     position: z.string().nullable(),
     firstName: z.string().nullable(),
-}) satisfies z.ZodType<ForemanIntake>
+}) satisfies z.ZodType<StewardIntake>
 
 const pendingTemplateLinkSchema = z.string().min(1)
 const pendingShareLinkSchema = z.string().min(1)
@@ -77,9 +77,9 @@ export type OnboardingState = {
     // The welcome card answered by an anonymous visitor. Nothing is written for an anonymous row: the
     // answers wait here, through the account wall and the Google round-trip, and are saved on
     // whichever workspace the visitor ends up signed into.
-    pendingIntake: ForemanIntake | null
+    pendingIntake: StewardIntake | null
     // The line they wrote in the composer under the welcome card instead of finishing it. Parked with
-    // the answers it cut short and dropped with them: it is what the foreman opens on once the
+    // the answers it cut short and dropped with them: it is what the steward opens on once the
     // account exists.
     pendingOwnAsk: string | null
     // One-shot flag set right before an anonymous user converts (email link, existing account, or
@@ -87,7 +87,7 @@ export type OnboardingState = {
     // draft once the real session is in place.
     resumeRequested: boolean
     // Un brouillon posé par le composer de la landing (`?prompt=`) chez quelqu'un qui n'a jamais vu
-    // Rerun : c'est avec ça que le Foreman ouvre la conversation, au lieu de le créer dans son dos.
+    // Lumvika : c'est avec ça que le Steward ouvre la conversation, au lieu de le créer dans son dos.
     // Marqueur explicite plutôt que déduit du couple (brouillon parké, ligne user pas encore
     // onboardée) : un brouillon posé au drop vient du wizard, chez quelqu'un qui connaît déjà le
     // produit. Persisté comme le brouillon, donc il survit au signup et au reload.
@@ -102,7 +102,7 @@ export type OnboardingState = {
     clearPendingTemplateLink: () => void
     setPendingShareLink: (token: string) => void
     clearPendingShareLink: () => void
-    setPendingIntake: (intake: ForemanIntake, ownAsk?: string | null) => void
+    setPendingIntake: (intake: StewardIntake, ownAsk?: string | null) => void
     clearPendingIntake: () => void
     markResume: () => void
     consumeResume: () => boolean
@@ -188,7 +188,7 @@ export const useOnboardingStore = create<OnboardingState>()(
             markFirstAgentFromPrompt: () => set({ firstAgentFromPrompt: true }),
         }),
         {
-            name: 'rerun:pending-first-agent',
+            name: 'lumvika:pending-first-agent',
             partialize: state => ({
                 pendingFirstAgent: state.pendingFirstAgent,
                 pendingTemplate: state.pendingTemplate,

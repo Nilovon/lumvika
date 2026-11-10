@@ -7,14 +7,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CHAT_HEADER_HEIGHT, ChatHeader, type ChatTab } from '@/components/chat/ChatHeader'
 import { activePageIndex, conversationPages } from '@/components/chat/conversation-pages'
 import { ConversationPager } from '@/components/chat/ConversationPager'
-import { coworkers, FOREMAN_ID } from '@/mocks/data'
+import { coworkers, STEWARD_ID } from '@/mocks/data'
 import { useTheme } from '@/theme/theme'
 import { spacing } from '@/theme/tokens'
 
-import { MockPane, type LabState } from './lab-foreman'
+import { MockPane, type LabState } from './lab-steward'
 
 // Dev only: a coworker's conversations with their tabs, over mock messages, swiped through as on a coworker.
-//   /lab-chat?tabs=3&active=1&state=loading&coworker=foreman   tabs: how many are open; active: the index
+//   /lab-chat?tabs=3&active=1&state=loading&coworker=steward   tabs: how many are open; active: the index
 //   on screen; state: what every open conversation shows, loading also leaving the tabs unnamed;
 //   coworker: whose chat, Pulse when left out
 const TITLES = ['Lyon agencies', 'LinkedIn post on pricing', 'Salutation amicale et prise de nouvelles', 'Q4 prospects', 'Weekly recap', 'Support triage']
@@ -31,7 +31,7 @@ export default function ChatLab() {
     const insets = useSafeAreaInsets()
     const tabs: ChatTab[] = TITLES.slice(0, Number(params.tabs ?? 3)).map((title, i) => ({ id: `lab-${i}`, title: loading ? null : title, running: i === 0 && !loading, empty: false, loading }))
     const [activeId, setActiveId] = useState<string | null>(tabs[Math.min(Number(params.active ?? 0), tabs.length - 1)]?.id ?? null)
-    const coworker = coworkers.find(candidate => candidate.id === (params.coworker === FOREMAN_ID ? FOREMAN_ID : 'agent-pulse'))!
+    const coworker = coworkers.find(candidate => candidate.id === (params.coworker === STEWARD_ID ? STEWARD_ID : 'agent-pulse'))!
     const pages = conversationPages(
         tabs.map(tab => tab.id),
         {},

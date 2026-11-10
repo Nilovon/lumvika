@@ -1,1 +1,1 @@
-export { StepDots } from '@rerun/ui/chat'
+export { StepDots } from '@lumvika/ui/chat'

@@ -1,4 +1,4 @@
-import { CUSTOM_PRESETS, type CustomPreset, type CustomProbeResult } from '@rerun/contracts'
+import { CUSTOM_PRESETS, type CustomPreset, type CustomProbeResult } from '@lumvika/contracts'
 import type { useTranslations } from 'next-intl'
 
 type ConnectionsT = ReturnType<typeof useTranslations<'connections'>>

@@ -39,8 +39,8 @@ export function showBrowserNotification({ title, body, tag, icon = '/icon-192.pn
 
 let sound: HTMLAudioElement | null = null
 
-const SOUND_LOCK_PREFIX = 'rerun-notification-sound:'
-const SOUND_CLAIM_KEY = 'rerun:notification-sound-claim'
+const SOUND_LOCK_PREFIX = 'lumvika-notification-sound:'
+const SOUND_CLAIM_KEY = 'lumvika:notification-sound-claim'
 const CLAIM_HOLD_MS = 10_000
 const CLAIM_SETTLE_MS = 60
 

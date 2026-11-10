@@ -5,7 +5,7 @@
 @import "../../../packages/ui/src/styles.css";
 
 @source "../../../packages/ui/src";
-/* Rerun Cloud's side of @rerun/cloud/* (marketing cards…): a checkout without cloud/ has nothing there. */
+/* Lumvika Cloud's side of @lumvika/cloud/* (marketing cards…): a checkout without cloud/ has nothing there. */
 @source "../../../cloud/packages/cloud/src";
 @source "../node_modules/streamdown/dist/*.js";
 @source "../node_modules/@streamdown/code/dist/*.js";
@@ -20,7 +20,7 @@
 
 /* Core design tokens (background/foreground/card/popover/primary/secondary/muted/
    accent/destructive/border/input/ring + radius-sm..xl) : source partagée dans
-   @rerun/ui/theme.css. Ici uniquement les tokens spécifiques à apps/ui. */
+   @lumvika/ui/theme.css. Ici uniquement les tokens spécifiques à apps/ui. */
 @theme inline {
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
@@ -67,7 +67,7 @@
   50% { background-position: 100% 50%; }
 }
 
-/* One dot of a dotted path lighting up as the signal passes over it (LinkedinRerunLink). */
+/* One dot of a dotted path lighting up as the signal passes over it (LinkedinLumvikaLink). */
 @keyframes link-dot {
   0%, 22%, 100% { background-color: color-mix(in oklab, var(--muted-foreground) 25%, transparent); box-shadow: none; }
   6% { background-color: var(--foreground); box-shadow: 0 0 6px color-mix(in oklab, var(--foreground) 60%, transparent); }
@@ -121,11 +121,11 @@ html:not(.dark) .progress-fill {
   }
 }
 
-/* Core tokens (background/foreground/card/...) + --radius : @rerun/ui/theme.css.
+/* Core tokens (background/foreground/card/...) + --radius : @lumvika/ui/theme.css.
    Ici uniquement les tokens sidebar/chart propres à apps/ui. */
 :root {
-  --brand: #4d34f7;
-  /* La marque posée en texte ou en point sur le fond : #4d34f7 se perd sur le noir, le thème sombre
+  --brand: #0b6e63;
+  /* La marque posée en texte ou en point sur le fond : #0b6e63 se perd sur le noir, le thème sombre
      reprend la lavande du badge brand. */
   --brand-text: var(--brand);
   /* Gouttière autour du panneau du dashboard : plus sombre que le fond en thème sombre, plus claire
@@ -147,8 +147,8 @@ html:not(.dark) .progress-fill {
 }
 
 .dark {
-  --brand: #4d34f7;
-  --brand-text: #b7a8ff;
+  --brand: #0b6e63;
+  --brand-text: #7fdccb;
   --frame: oklch(0 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -392,7 +392,7 @@ html:not(.dark) .progress-fill {
 
 /* Wider, softer border beam for selected cards (CreateAgentDialog): the bright band
    is spread across the whole edge instead of a short arc, and dialed down so it stays
-   subtle. Override only — the shared @rerun/ui arcs preset is untouched. */
+   subtle. Override only — the shared @lumvika/ui arcs preset is untouched. */
 .beam-soft.border-beam--arcs {
   background: conic-gradient(
     from var(--border-beam-angle),

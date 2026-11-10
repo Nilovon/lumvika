@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest'
 
 import { routeBetween, routeHitsBox, routesCross, tileAxisBox } from '@/lib/board/iso-route'
 import type { AxisRoute } from '@/lib/board/iso-route'
-import { GRID_SIZE, TILE_H, TILE_W, isoPosition } from '@rerun/ui/iso-grid/iso'
+import { GRID_SIZE, TILE_H, TILE_W, isoPosition } from '@lumvika/ui/iso-grid/iso'
 
-import { FOCUS_BOX_ID, FOCUS_TILE_IDS, LAST_TOUR_PHASE, TOUR_AGENTS, TOUR_BOXES, TOUR_CAMERA_SETTLE, TOUR_CONNECTORS, TOUR_HANDOFFS, TOUR_MODEL_PHASE, TOUR_STAGE_BOUNDS, boardForPhase, frameTourPhase, frameTourStage, isTourFocusPhase, linkId } from '@rerun/ui/tour/board'
-import { TOUR_TEAMMATES } from '@rerun/ui/tour/team'
+import { FOCUS_BOX_ID, FOCUS_TILE_IDS, LAST_TOUR_PHASE, TOUR_AGENTS, TOUR_BOXES, TOUR_CAMERA_SETTLE, TOUR_CONNECTORS, TOUR_HANDOFFS, TOUR_MODEL_PHASE, TOUR_STAGE_BOUNDS, boardForPhase, frameTourPhase, frameTourStage, isTourFocusPhase, linkId } from '@lumvika/ui/tour/board'
+import { TOUR_TEAMMATES } from '@lumvika/ui/tour/team'
 
 // The guard rail of packages/ui/src/tour/tour-board.ts, kept here because vitest runs out of apps/ui
 // and because the routing predicates below live in this app.
@@ -183,7 +183,7 @@ describe('tour board geometry', () => {
 
     // Both apps play this board and each serves its own public/, so a mark is only committed once it
     // is under both. A missing one does not throw anywhere: the tile simply renders empty.
-    // The landing ships with Rerun Cloud only: its half runs where it is checked out.
+    // The landing ships with Lumvika Cloud only: its half runs where it is checked out.
     const landingPublic = path.resolve(import.meta.dirname, '../../../landing/public')
     it.each([['app', '../../public'], ...(existsSync(landingPublic) ? [['landing', '../../../landing/public']] : [])])('serves every mark and every portrait from a file committed under the %s', (_where, dir) => {
         const publicDir = path.resolve(import.meta.dirname, dir)

@@ -22,16 +22,16 @@ describe('agent models', () => {
     beforeEach(() => {
         Object.values(mocks).forEach(mock => mock.mockReset())
         mocks.resolveAgentTarget.mockResolvedValue({ conn: { host: 'box' }, engineAgentId: 'eng-1', contentLocked: false })
-        mocks.listConnections.mockResolvedValue({ connections: [connection({}), connection({ id: 'rerun', name: 'Rerun', provider: 'openrouter', models: ['rerun-fast', 'rerun-max'] }), connection({ id: 'gone', connected: false })], default: null })
+        mocks.listConnections.mockResolvedValue({ connections: [connection({}), connection({ id: 'lumvika', name: 'Lumvika', provider: 'openrouter', models: ['lumvika-fast', 'lumvika-max'] }), connection({ id: 'gone', connected: false })], default: null })
         mocks.getAgent.mockResolvedValue({ config: { connectionId: 'claude', model: 'claude-opus-5-5' }, resolvedConnectionId: 'claude', resolvedModel: 'claude-opus-5-5' })
     })
 
-    it('lists the connected connections as the web picker does, Rerun first, with the pin and what runs', async () => {
+    it('lists the connected connections as the web picker does, Lumvika first, with the pin and what runs', async () => {
         const models = await readAgentModels(ctx, 'a1')
-        expect(models.groups.map(group => group.connectionId)).toEqual(['rerun', 'claude'])
+        expect(models.groups.map(group => group.connectionId)).toEqual(['lumvika', 'claude'])
         expect(models.pinned).toEqual({ connectionId: 'claude', model: 'claude-opus-5-5' })
         expect(models.resolved).toEqual({ connectionId: 'claude', model: 'claude-opus-5-5' })
-        expect(models.boxDefault).toEqual({ connectionId: 'rerun', model: models.groups[0].defaultModel })
+        expect(models.boxDefault).toEqual({ connectionId: 'lumvika', model: models.groups[0].defaultModel })
     })
 
     it("reads a coworker's models at the use level, and sets one only at the manage level", async () => {
@@ -42,14 +42,14 @@ describe('agent models', () => {
     })
 
     it('reads a coworker that follows the box as pinned to nothing', async () => {
-        mocks.getAgent.mockResolvedValue({ config: { connectionId: 'claude', model: null }, resolvedConnectionId: 'rerun', resolvedModel: 'rerun-max' })
+        mocks.getAgent.mockResolvedValue({ config: { connectionId: 'claude', model: null }, resolvedConnectionId: 'lumvika', resolvedModel: 'lumvika-max' })
         expect((await readAgentModels(ctx, 'a1')).pinned).toBeNull()
     })
 
     it('pins a model with the provider of its connection, after the plan check', async () => {
-        await setAgentModel(ctx, 'a1', { connectionId: 'rerun', model: 'rerun-fast' })
-        expect(mocks.assertModelEntitled).toHaveBeenCalledWith('rerun-fast', 7)
-        expect(mocks.patchAgent).toHaveBeenCalledWith({ host: 'box' }, 'eng-1', { connectionId: 'rerun', provider: 'openrouter', model: 'rerun-fast' })
+        await setAgentModel(ctx, 'a1', { connectionId: 'lumvika', model: 'lumvika-fast' })
+        expect(mocks.assertModelEntitled).toHaveBeenCalledWith('lumvika-fast', 7)
+        expect(mocks.patchAgent).toHaveBeenCalledWith({ host: 'box' }, 'eng-1', { connectionId: 'lumvika', provider: 'openrouter', model: 'lumvika-fast' })
     })
 
     it('refuses a connection the machine does not hold, or holds without its credential', async () => {
@@ -63,10 +63,10 @@ describe('agent models', () => {
         expect(mocks.assertModelEntitled).not.toHaveBeenCalled()
     })
 
-    it('reads and pins the foreman, which has no agent row', async () => {
-        await readAgentModels(ctx, 'foreman')
-        expect(mocks.getAgent).toHaveBeenCalledWith({ host: 'box' }, 'foreman')
-        await setAgentModel(ctx, 'foreman', { connectionId: 'claude', model: 'claude-opus-5-5' })
-        expect(mocks.patchAgent).toHaveBeenCalledWith({ host: 'box' }, 'foreman', { connectionId: 'claude', provider: 'claude-code', model: 'claude-opus-5-5' })
+    it('reads and pins the steward, which has no agent row', async () => {
+        await readAgentModels(ctx, 'steward')
+        expect(mocks.getAgent).toHaveBeenCalledWith({ host: 'box' }, 'steward')
+        await setAgentModel(ctx, 'steward', { connectionId: 'claude', model: 'claude-opus-5-5' })
+        expect(mocks.patchAgent).toHaveBeenCalledWith({ host: 'box' }, 'steward', { connectionId: 'claude', provider: 'claude-code', model: 'claude-opus-5-5' })
     })
 })

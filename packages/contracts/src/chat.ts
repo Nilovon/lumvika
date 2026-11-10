@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { providerSchema } from './agent.js'
 import { sessionSourceSchema } from './session.js'
-import { foremanBriefSchema } from './foreman.js'
+import { stewardBriefSchema } from './steward.js'
 
 // The engine has no notion of users: the hub names who typed a message and the engine keeps it as is.
 export const messageAuthorSchema = z.object({
@@ -17,8 +17,8 @@ export const chatRequestSchema = z.object({
     provider: providerSchema.optional(),
     model: z.string().optional(),
     source: sessionSourceSchema.optional(),
-    // Read only when the target is the foreman; any other agent ignores it.
-    foreman: foremanBriefSchema.optional(),
+    // Read only when the target is the steward; any other agent ignores it.
+    steward: stewardBriefSchema.optional(),
     author: messageAuthorSchema.optional(),
     // The engine ids of the coworkers the author reaches. Sent for a member kept out of some Box: the
     // engine knows no Box, so `call_agent` would otherwise offer them every coworker on the machine.

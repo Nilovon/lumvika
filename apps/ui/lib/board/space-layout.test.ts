@@ -66,7 +66,7 @@ describe('freeRectOnSide', () => {
 })
 
 describe('findFreeRect', () => {
-    // Le Foreman crée l'organisation d'un coup : six divisions doivent se lire comme un bloc, pas
+    // Le Steward crée l'organisation d'un coup : six divisions doivent se lire comme un bloc, pas
     // comme la diagonale de cinquante rangées que donnait l'empilement.
     const fill = (count: number, start: SpaceRect[] = []) => {
         const spaces = [...start]

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { boxPlanSchema } from '@rerun/contracts'
+import { boxPlanSchema } from '@lumvika/contracts'
 import { readBoxPlan, writeBoxPlan } from '../../connections/plan.js'
 
 export const planRoutes = new Hono()

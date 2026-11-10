@@ -1,4 +1,4 @@
-import { pendingApprovals, pendingMcpSignIn, pendingQuestions, pendingSecrets, pendingServices, pendingTakeover, type HitlKind } from '@rerun/contracts'
+import { pendingApprovals, pendingMcpSignIn, pendingQuestions, pendingSecrets, pendingServices, pendingTakeover, type HitlKind } from '@lumvika/contracts'
 import type { SFSymbol } from 'expo-symbols'
 import type { useTranslations } from 'use-intl'
 

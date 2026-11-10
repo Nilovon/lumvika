@@ -1,4 +1,4 @@
-import type { VoiceMessage } from '@rerun/contracts'
+import type { VoiceMessage } from '@lumvika/contracts'
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { useState } from 'react'

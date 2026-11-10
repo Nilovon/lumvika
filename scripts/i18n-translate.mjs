@@ -88,7 +88,7 @@ function systemPrompt(locale) {
         .map(([term, byLocale]) => (byLocale[locale] ? `- "${term}" → "${byLocale[locale]}"` : null))
         .filter(Boolean)
     return [
-        `You translate the user interface strings of Rerun, a SaaS product where AI coworkers do work for a team, from English to ${language}.`,
+        `You translate the user interface strings of Lumvika, a SaaS product where AI coworkers do work for a team, from English to ${language}.`,
         `Tone: ${glossary.tone?.[locale] ?? 'the usual register of SaaS products in that language.'}`,
         `Keep these words exactly as written: ${(glossary.keep ?? []).join(', ')}.`,
         imposed.length ? `Use these translations:\n${imposed.join('\n')}` : '',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findUnknownPendingCall, hitlVersionOf, withHitlVersion } from '@rerun/contracts'
+import { findUnknownPendingCall, hitlVersionOf, withHitlVersion } from '@lumvika/contracts'
 import { findPendingAlert, findPendingHitl, HITL_CANCELLED, hitlInputIsUsable, hitlKindOf, parseHitlReply, pendingApprovals, pendingMcpSignIn, pendingQuestions, pendingSecrets, pendingServices, pendingTakeover, serializeAnswers, serializeApprovalDecisions, serializeMcpSignInResult, serializeSecretResult, serializeServiceSetupResult, serializeTakeoverResult } from './chat-hitl'
 import { parseAttachments } from './chat/attachments-marker'
 
@@ -65,7 +65,7 @@ describe('withHitlVersion', () => {
     it('stamps v2 on an ask_user call that writes an option as an object', () => {
         const input = { questions: [{ question: 'Which?', options: [{ label: 'A', description: 'first' }, 'B'] }] }
         expect(withHitlVersion('ask_user', input)).toEqual({ ...input, v: 2 })
-        expect(withHitlVersion('mcp__rerun__ask_user', input)).toEqual({ ...input, v: 2 })
+        expect(withHitlVersion('mcp__lumvika__ask_user', input)).toEqual({ ...input, v: 2 })
     })
 
     it('reads a stringified batch', () => {
@@ -221,7 +221,7 @@ describe('findPendingAlert', () => {
     })
 
     it('reads the call through the CLI bridge prefix', () => {
-        expect(findPendingAlert([{ role: 'assistant', parts: [{ type: 'tool-mcp__rerun__notify_user', toolCallId: 'call-9', input: { kind: 'info', message: 'Look at this' } }] }])).toEqual({ toolCallId: 'call-9', message: 'Look at this' })
+        expect(findPendingAlert([{ role: 'assistant', parts: [{ type: 'tool-mcp__lumvika__notify_user', toolCallId: 'call-9', input: { kind: 'info', message: 'Look at this' } }] }])).toEqual({ toolCallId: 'call-9', message: 'Look at this' })
     })
 
     it('reads a call that left the kind out, since it defaults to info', () => {
@@ -371,7 +371,7 @@ describe('parseHitlReply', () => {
 describe('browser takeover', () => {
     it('is a human-in-the-loop call under its bridged names too, usable once it names a page', () => {
         expect(hitlKindOf('request_takeover')).toBe('takeover')
-        expect(hitlKindOf('mcp__rerun__request_takeover')).toBe('takeover')
+        expect(hitlKindOf('mcp__lumvika__request_takeover')).toBe('takeover')
         expect(hitlInputIsUsable('takeover', { url: 'https://www.linkedin.com/login', reason: 'Sign in to LinkedIn' })).toBe(true)
         expect(hitlInputIsUsable('takeover', {})).toBe(false)
     })
@@ -414,7 +414,7 @@ describe('browser takeover', () => {
 
 describe('request_mcp_sign_in', () => {
     it('is a card of its own, bridged name included', () => {
-        expect(hitlKindOf('mcp__rerun__request_mcp_sign_in')).toBe('mcp')
+        expect(hitlKindOf('mcp__lumvika__request_mcp_sign_in')).toBe('mcp')
     })
 
     it('reads the server name and drops a blank reason', () => {
@@ -425,7 +425,7 @@ describe('request_mcp_sign_in', () => {
 
 describe('request_spend', () => {
     it('is no longer a card: an old call in a transcript renders as a plain step', () => {
-        expect(hitlKindOf('mcp__rerun__request_spend')).toBeNull()
+        expect(hitlKindOf('mcp__lumvika__request_spend')).toBeNull()
     })
 })
 
@@ -462,7 +462,7 @@ describe('hitlVersionOf', () => {
 
 describe('findUnknownPendingCall', () => {
     const assistant = (...parts: object[]) => ({ role: 'assistant', parts })
-    const unknown = { type: 'dynamic-tool', toolName: 'rerun__request_signature', toolCallId: 'call-9', state: 'input-available', input: { document: 'NDA', reason: 'Sign the NDA' } }
+    const unknown = { type: 'dynamic-tool', toolName: 'lumvika__request_signature', toolCallId: 'call-9', state: 'input-available', input: { document: 'NDA', reason: 'Sign the NDA' } }
 
     it('finds a call the client cannot name that the run stopped on', () => {
         expect(findUnknownPendingCall([assistant({ type: 'text', text: 'Before I go on' }, unknown)])).toEqual({ toolCallId: 'call-9', toolName: 'request_signature', input: unknown.input })

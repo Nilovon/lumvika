@@ -1,6 +1,6 @@
 import { APICallError, LoadAPIKeyError, RetryError } from 'ai'
-import { CONTEXT_WINDOW, MODEL_NOT_IN_PLAN, PROVIDER_OVERLOADED, SUBSCRIPTION_LIMIT, type Provider } from '@rerun/contracts'
-import { isRerunBudgetError, RERUN_BUDGET_ERROR_CODE } from './budget-latch.js'
+import { CONTEXT_WINDOW, MODEL_NOT_IN_PLAN, PROVIDER_OVERLOADED, SUBSCRIPTION_LIMIT, type Provider } from '@lumvika/contracts'
+import { isLumvikaBudgetError, LUMVIKA_BUDGET_ERROR_CODE } from './budget-latch.js'
 
 export const RUN_ERROR_CODES = {
     usageLimit: 'provider_usage_limit',
@@ -15,7 +15,7 @@ export const RUN_ERROR_CODES = {
     engineRestarted: 'engine_restarted',
 } as const
 
-export type RunErrorCode = (typeof RUN_ERROR_CODES)[keyof typeof RUN_ERROR_CODES] | typeof RERUN_BUDGET_ERROR_CODE
+export type RunErrorCode = (typeof RUN_ERROR_CODES)[keyof typeof RUN_ERROR_CODES] | typeof LUMVIKA_BUDGET_ERROR_CODE
 
 // The raw finish reason `openrouterStreamRetryMiddleware` puts on a step whose stream was cut and
 // could not be replayed. A finish rather than an error part: `onFinish` is the callback that keeps
@@ -172,7 +172,7 @@ function apiCallErrorCode(error: unknown): RunErrorCode | null {
 }
 
 export function classifyProviderError(provider: Provider, error: unknown): RunErrorCode | null {
-    if (provider === 'rerun' && isRerunBudgetError(error)) return RERUN_BUDGET_ERROR_CODE
+    if (provider === 'lumvika' && isLumvikaBudgetError(error)) return LUMVIKA_BUDGET_ERROR_CODE
     const text = `${errorText(error)} ${upstreamReason(error) ?? ''}`
     // Both CLIs surface a spent subscription as free text on a generic error, with no status code
     // and no error kind of their own. Claude Code names the window that ran out rather than saying

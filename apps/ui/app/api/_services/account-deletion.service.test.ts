@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
     removeAvatars: vi.fn(),
 }))
 
-vi.mock('@rerun/cloud/account', () => ({ subscriptionStillCharges: mocks.subscriptionStillCharges, stopWorkspaceCharges: mocks.stopWorkspaceCharges, uninstallWorkspaceApps: mocks.uninstallWorkspaceApps }))
+vi.mock('@lumvika/cloud/account', () => ({ subscriptionStillCharges: mocks.subscriptionStillCharges, stopWorkspaceCharges: mocks.stopWorkspaceCharges, uninstallWorkspaceApps: mocks.uninstallWorkspaceApps }))
 
 const { accountDeletionBlockers, anonymizeAccount, ACCOUNT_DELETED_REASON } = await import('./account-deletion.service')
 
@@ -172,7 +172,7 @@ describe('anonymizeAccount', () => {
         expect(mocks.removeAvatars).toHaveBeenCalledWith([`${USER}/a.webp`])
 
         const last = db.chains.at(-1)!
-        expect(last[0]).toEqual({ table: 'rpc:anonymize_auth_user', method: 'rpc', args: ['anonymize_auth_user', { p_user_id: USER, p_email: `${USER}@deleted.rerun.build` }] })
+        expect(last[0]).toEqual({ table: 'rpc:anonymize_auth_user', method: 'rpc', args: ['anonymize_auth_user', { p_user_id: USER, p_email: `${USER}@deleted.lumvika.com` }] })
     })
 
     it('stops before the auth row when billing could not be stopped', async () => {

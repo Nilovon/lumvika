@@ -9,11 +9,11 @@ export type AgentServiceStatus = 'active' | 'needs_config' | 'needs_auth' | 'err
 // Where the OAuth sign-in popup connects, carried so the UI can render Connect.
 export type OAuthTarget = { serverName: string; url: string }
 
-// A managed connection to complete: Rerun-brokered OAuth (one app) + API proxy. The UI opens
+// A managed connection to complete: Lumvika-brokered OAuth (one app) + API proxy. The UI opens
 // /api/oauth/managed/<provider>/start; `serverName` is only kept for parity/tracing.
 export type ManagedTarget = { provider: string; serverName: string; accountEmail?: string }
 
-// A Composio connection to complete: Composio brokers the OAuth and holds the token, Rerun
+// A Composio connection to complete: Composio brokers the OAuth and holds the token, Lumvika
 // proxies the tool calls. The UI opens /api/oauth/composio/start with just the agent + slug.
 export type ComposioTarget = { toolkit: string; serverName: string; accountLabel?: string }
 
@@ -50,9 +50,9 @@ export type ServiceSearchResult = {
     installed: boolean
     // The agent's registry status for this service, or null when it isn't declared at all.
     installStatus: AgentServiceStatus | null
-    // Tested & approved by the Rerun team — drives the "Verified" badge in the library.
+    // Tested & approved by the Lumvika team — drives the "Verified" badge in the library.
     verified: boolean
-    // A paid Rerun app (LinkedIn Pro): sold by the slot, shown with a Pro badge.
+    // A paid Lumvika app (LinkedIn Pro): sold by the slot, shown with a Pro badge.
     paidApp?: boolean
     // The coworker can add a second account of this app next to the first.
     multiInstance: boolean
@@ -124,7 +124,7 @@ export type PublishedAccessMode = 'public' | 'workspace' | 'password' | 'invited
 
 export type PublishResult = {
     status: 'published'
-    url: string // <slug>.rerun.site, or /p/<slug> where no publish host is configured
+    url: string // <slug>.lumvika.site, or /p/<slug> where no publish host is configured
     slug: string
     path: string
     kind: 'file' | 'site'

@@ -1,4 +1,4 @@
-import type { AgentConversationsOverview, BoardAgent } from '@rerun/contracts'
+import type { AgentConversationsOverview, BoardAgent } from '@lumvika/contracts'
 
 import { byRecency, lineOf, minutesSince, moodStatus, moveIn, sectionOf, recentCoworkers, sectionsByBox, toHomeCoworkers, withPinned } from '@/components/home/board'
 

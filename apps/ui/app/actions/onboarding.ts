@@ -1,7 +1,7 @@
 import type { WorkType } from '@/lib/onboarding/work-types'
-import type { TemplateCategory } from '@rerun/contracts'
+import type { TemplateCategory } from '@lumvika/contracts'
 
-// The shape of `workspace_onboarding.answers`, written by the foreman's save_profile and read by the
+// The shape of `workspace_onboarding.answers`, written by the steward's save_profile and read by the
 // naming service, the lifecycle emails and the template recommender.
 //
 // Every field is optional, and the ones nothing asks any more are still declared: rows written

@@ -12,7 +12,7 @@ import { ThemeScope, useColorSchemeName } from '@/theme/theme'
 import { palette, spacing, type ColorScheme } from '@/theme/tokens'
 
 // Dev only: the coworker's screen as a block of the thread, in every state, and its floating
-// thumbnail, to drag and resize. `rerun://lab-screen?scheme=dark` forces a theme.
+// thumbnail, to drag and resize. `lumvika://lab-screen?scheme=dark` forces a theme.
 
 const noop = () => {}
 

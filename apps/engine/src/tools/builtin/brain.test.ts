@@ -2,15 +2,15 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-brain-tool-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-brain-tool-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
-const { brainTools, foremanBrainTools, FOREMAN_BRAIN_AUTHOR } = await import('./brain.js')
+const { brainTools, stewardBrainTools, STEWARD_BRAIN_AUTHOR } = await import('./brain.js')
 const { sharedTools } = await import('./shared.js')
 const { writePage, readPageFile, listRevisions, revertPage } = await import('../../brain/pages.js')
 const { acceptProposal, dismissProposal, listProposals, countOpenProposals, getProposal } = await import('../../brain/proposals.js')
-const { buildBrainSection, buildForemanBrainSection, BRAIN_NOTE, FOREMAN_BRAIN_NOTE, EMPTY_FOR_AGENTS, EMPTY_WHEN_CALLED } = await import('../../brain/prompt.js')
+const { buildBrainSection, buildStewardBrainSection, BRAIN_NOTE, STEWARD_BRAIN_NOTE, EMPTY_FOR_AGENTS, EMPTY_WHEN_CALLED } = await import('../../brain/prompt.js')
 
 const ctxFor = (id: string, name: string) => ({ agent: { id, config: { name } }, sessionId: 'session-1' }) as any
 const tools = brainTools(ctxFor('agent-sales', 'Sales'))
@@ -23,7 +23,7 @@ const propose = (set: typeof tools, args: Record<string, unknown>) =>
 describe('the company brain section of the prompt', () => {
     it('says the brain is empty before anything is written', async () => {
         expect(await buildBrainSection()).toBe(`${BRAIN_NOTE}\n\n${EMPTY_FOR_AGENTS}`)
-        expect(await buildForemanBrainSection()).toBe(`${FOREMAN_BRAIN_NOTE}\n\nThe company brain is still empty.`)
+        expect(await buildStewardBrainSection()).toBe(`${STEWARD_BRAIN_NOTE}\n\nThe company brain is still empty.`)
     })
 
     it('keeps a coworker called by another one from passing the question on', async () => {
@@ -172,23 +172,23 @@ describe('shared_ tools', () => {
     })
 })
 
-describe("the foreman's brain tools", () => {
-    const foreman = foremanBrainTools()
+describe("the steward's brain tools", () => {
+    const steward = stewardBrainTools()
 
     it('are not handed to an agent, which writes only what the user told it and proposes the rest', () => {
         expect(Object.keys(tools)).toEqual(['brain_search', 'brain_read', 'brain_write', 'brain_propose'])
-        expect(Object.keys(foreman)).toEqual(['brain_search', 'brain_read', 'brain_write', 'brain_delete', 'brain_proposals', 'brain_decide'])
+        expect(Object.keys(steward)).toEqual(['brain_search', 'brain_read', 'brain_write', 'brain_delete', 'brain_proposals', 'brain_decide'])
     })
 
-    it('writes a new page at once, signed by the foreman', async () => {
-        const out = JSON.parse(await call(foreman, 'brain_write', { slug: 'refunds', title: 'Refunds', type: 'decision', content: '30 days, no questions.', sources: ['told by the user in chat'], baseHash: null }))
+    it('writes a new page at once, signed by the steward', async () => {
+        const out = JSON.parse(await call(steward, 'brain_write', { slug: 'refunds', title: 'Refunds', type: 'decision', content: '30 days, no questions.', sources: ['told by the user in chat'], baseHash: null }))
         expect(out).toMatchObject({ status: 'saved', slug: 'refunds', title: 'Refunds', mode: 'create' })
-        expect((await readPageFile('refunds'))!).toMatchObject({ content: '30 days, no questions.', updatedBy: FOREMAN_BRAIN_AUTHOR })
+        expect((await readPageFile('refunds'))!).toMatchObject({ content: '30 days, no questions.', updatedBy: STEWARD_BRAIN_AUTHOR })
     })
 
     it('edits a page only against the version it read', async () => {
         const page = (await readPageFile('refunds'))!
-        const write = (args: Record<string, unknown>) => call(foreman, 'brain_write', { slug: 'refunds', title: 'Refunds', type: 'decision', sources: [], ...args })
+        const write = (args: Record<string, unknown>) => call(steward, 'brain_write', { slug: 'refunds', title: 'Refunds', type: 'decision', sources: [], ...args })
         expect(await write({ content: '14 days.', baseHash: null })).toContain('already exists')
         expect(await write({ content: '14 days.', baseHash: 'stale' })).toContain('changed since it was read')
         expect(await write({ content: page.content, sources: page.sources, baseHash: page.hash })).toContain('identical')
@@ -200,32 +200,32 @@ describe("the foreman's brain tools", () => {
         const page = (await readPageFile('refunds'))!
         const first = JSON.parse(await propose(tools, { slug: 'refunds', title: 'Refunds', type: 'decision', content: '21 days.', baseHash: page.hash }))
         const second = JSON.parse(await propose(otherTools, { slug: 'refunds', title: 'Refunds', type: 'decision', content: '7 days.', baseHash: page.hash }))
-        const listed = await call(foreman, 'brain_proposals', {})
+        const listed = await call(steward, 'brain_proposals', {})
         expect(listed).toContain(`proposalId: ${first.proposalId}`)
         expect(listed).toContain('by Support')
 
-        expect(JSON.parse(await call(foreman, 'brain_decide', { proposalId: first.proposalId, decision: 'accept', content: '21 days, store credit after.' }))).toMatchObject({ status: 'accepted', slug: 'refunds', agentName: 'Sales' })
+        expect(JSON.parse(await call(steward, 'brain_decide', { proposalId: first.proposalId, decision: 'accept', content: '21 days, store credit after.' }))).toMatchObject({ status: 'accepted', slug: 'refunds', agentName: 'Sales' })
         expect((await readPageFile('refunds'))!).toMatchObject({ content: '21 days, store credit after.', updatedBy: 'agent:Sales' })
-        expect((await getProposal(first.proposalId))!.decidedBy).toBe(FOREMAN_BRAIN_AUTHOR)
+        expect((await getProposal(first.proposalId))!.decidedBy).toBe(STEWARD_BRAIN_AUTHOR)
 
-        expect(JSON.parse(await call(foreman, 'brain_decide', { proposalId: second.proposalId, decision: 'dismiss', content: null }))).toMatchObject({ status: 'dismissed' })
-        expect(await call(foreman, 'brain_decide', { proposalId: second.proposalId, decision: 'accept', content: null })).toContain('already dismissed')
-        expect(await call(foreman, 'brain_decide', { proposalId: 'nope', decision: 'accept', content: null })).toContain('No proposal')
+        expect(JSON.parse(await call(steward, 'brain_decide', { proposalId: second.proposalId, decision: 'dismiss', content: null }))).toMatchObject({ status: 'dismissed' })
+        expect(await call(steward, 'brain_decide', { proposalId: second.proposalId, decision: 'accept', content: null })).toContain('already dismissed')
+        expect(await call(steward, 'brain_decide', { proposalId: 'nope', decision: 'accept', content: null })).toContain('No proposal')
     })
 
-    it('tells the foreman how many changes wait, in its own note', async () => {
+    it('tells the steward how many changes wait, in its own note', async () => {
         const page = (await readPageFile('refunds'))!
         await propose(tools, { slug: 'refunds', title: 'Refunds', type: 'decision', content: '45 days.', baseHash: page.hash })
-        const section = await buildForemanBrainSection()
-        expect(section.startsWith(FOREMAN_BRAIN_NOTE)).toBe(true)
+        const section = await buildStewardBrainSection()
+        expect(section.startsWith(STEWARD_BRAIN_NOTE)).toBe(true)
         expect(section).toContain(`Changes proposed by the coworkers, waiting for review: ${await countOpenProposals()} (brain_proposals).`)
         expect(await buildBrainSection()).not.toContain('waiting for review')
     })
 
     it('deletes a page', async () => {
-        expect(JSON.parse(await call(foreman, 'brain_delete', { slug: 'refunds', confirm: true }))).toMatchObject({ status: 'deleted', slug: 'refunds', title: 'Refunds' })
+        expect(JSON.parse(await call(steward, 'brain_delete', { slug: 'refunds', confirm: true }))).toMatchObject({ status: 'deleted', slug: 'refunds', title: 'Refunds' })
         expect(await readPageFile('refunds')).toBeNull()
-        expect(await call(foreman, 'brain_delete', { slug: 'refunds', confirm: true })).toContain('No page "refunds"')
+        expect(await call(steward, 'brain_delete', { slug: 'refunds', confirm: true })).toContain('No page "refunds"')
     })
 })
 

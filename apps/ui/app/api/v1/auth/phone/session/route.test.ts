@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const completePhoneSignIn = vi.fn()
 const completeAppReviewSignIn = vi.fn()
 const countVerifyAttempt = vi.fn()
-// The App Review door is Rerun Cloud's (@rerun/cloud/app-review); what is tested is how the route treats
+// The App Review door is Lumvika Cloud's (@lumvika/cloud/app-review); what is tested is how the route treats
 // the number it names, so the door is pinned here whatever the build resolves it to.
-vi.mock('@rerun/cloud/app-review', () => ({
+vi.mock('@lumvika/cloud/app-review', () => ({
     isAppReviewNumber: (phone: string) => !!process.env.APP_REVIEW_PHONE && phone === process.env.APP_REVIEW_PHONE,
     isAppReviewSignIn: (phone: string, code: string) => !!process.env.APP_REVIEW_PHONE && phone === process.env.APP_REVIEW_PHONE && !!process.env.APP_REVIEW_CODE && code === process.env.APP_REVIEW_CODE,
 }))
@@ -24,7 +24,7 @@ const segment = { params: Promise.resolve({}) }
 const SIGNED_IN = { ok: true, created: true, session: { accessToken: 'access', refreshToken: 'refresh' } }
 
 function verify(code: string) {
-    return POST(new Request('https://app.rerun.build/api/v1/auth/phone/session', { method: 'POST', headers: { 'x-real-ip': '203.0.113.9' }, body: JSON.stringify({ phone: '0612345678', country: 'FR', channel: 'sms', code }) }), segment)
+    return POST(new Request('https://app.lumvika.com/api/v1/auth/phone/session', { method: 'POST', headers: { 'x-real-ip': '203.0.113.9' }, body: JSON.stringify({ phone: '0612345678', country: 'FR', channel: 'sms', code }) }), segment)
 }
 
 describe('POST /api/v1/auth/phone/session', () => {

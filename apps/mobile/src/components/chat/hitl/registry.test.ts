@@ -1,4 +1,4 @@
-import type { PendingHitl } from '@rerun/contracts'
+import type { PendingHitl } from '@lumvika/contracts'
 
 import { widgetFor, type HitlWidgets } from './registry'
 import { askOf, firstAsk } from './summary'

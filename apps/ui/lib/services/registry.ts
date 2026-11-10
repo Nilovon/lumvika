@@ -1,4 +1,4 @@
-import { parseServiceRegistryKey } from '@rerun/contracts'
+import { parseServiceRegistryKey } from '@lumvika/contracts'
 
 import { makeDir, readFileText, writeFileText } from '@/lib/engine/client'
 import type { EngineConnection } from '@/lib/engine/types'
@@ -11,8 +11,8 @@ import type { EngineConnection } from '@/lib/engine/types'
 // It holds only slugs + non-secret config + status — no secrets (those are in the
 // engine .env / mcp headers) and nothing proprietary from the catalog.
 
-const REGISTRY_PATH = '.rerun/services.json'
-const REGISTRY_DIR = '.rerun'
+const REGISTRY_PATH = '.lumvika/services.json'
+const REGISTRY_DIR = '.lumvika'
 
 function filesBase(engineAgentId: string): string {
     return `/agents/${engineAgentId}/files`
@@ -32,7 +32,7 @@ export type RegistryEntry = {
     // The OAuth mcp server to connect (needs_auth) — lets the UI render Connect without
     // re-reading the catalog. Non-secret: just the server name and its url.
     oauth?: { serverName: string; url: string }
-    // A managed connection to complete (needs_auth): Rerun-brokered OAuth + proxy. Carries the
+    // A managed connection to complete (needs_auth): Lumvika-brokered OAuth + proxy. Carries the
     // provider, the engine token-store key (serverName) and, once connected, the account label.
     managed?: { provider: string; serverName: string; accountEmail?: string }
     // A Composio connection to complete (needs_auth): Composio holds the third-party token, so

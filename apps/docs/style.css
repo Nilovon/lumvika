@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
 
-/* Rerun design tokens, mirrored from packages/ui/src/theme.css */
+/* Lumvika design tokens, mirrored from packages/ui/src/theme.css */
 :root {
   --rr-container-radius: 0.875rem;
   --rr-surface: #ffffff;
@@ -17,7 +17,7 @@
   background-color: #ffffff;
 }
 
-/* Rerun containers are 14px, almond ships 16px */
+/* Lumvika containers are 14px, almond ships 16px */
 .card,
 .callout,
 .code-block,

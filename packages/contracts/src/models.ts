@@ -1,4 +1,4 @@
-import { RERUN_MODEL, type Provider } from './agent.js'
+import { LUMVIKA_MODEL, type Provider } from './agent.js'
 import { OPENCODE_SNAPSHOT } from './opencode-snapshot.js'
 
 // What each model accepts when reached through its own API.
@@ -76,13 +76,13 @@ export const MODEL_CONTEXT_WINDOW: Record<string, number> = {
     'minimax/minimax-m3': 1_000_000,
     'deepseek/deepseek-v4-pro': 1_000_000,
     'deepseek/deepseek-v4-flash': 1_000_000,
-    // A Rerun tier's window has to stay at or under the window of the model the hub resolves it to
-    // (`RERUN_UPSTREAM_MODELS` in apps/ui): the hub can swap that model without the boxes knowing.
-    'rerun-fast': 922_000,
-    'rerun-max': 922_000,
-    'rerun-smart': 922_000,
+    // A Lumvika tier's window has to stay at or under the window of the model the hub resolves it to
+    // (`LUMVIKA_UPSTREAM_MODELS` in apps/ui): the hub can swap that model without the boxes knowing.
+    'lumvika-fast': 922_000,
+    'lumvika-max': 922_000,
+    'lumvika-smart': 922_000,
     'qwen/qwen3.8-flash': 1_000_000,
-    // What the boxes provisioned before the `rerun-max` alias still name. Dropping it would not
+    // What the boxes provisioned before the `lumvika-max` alias still name. Dropping it would not
     // fail loudly: an id absent from here leaves compaction without a threshold, so it never runs.
     'qwen/qwen3.7-max': 1_000_000,
     'qwen/qwen3.7-plus': 1_000_000,
@@ -102,7 +102,7 @@ export const MODEL_CONTEXT_WINDOW: Record<string, number> = {
 // does, so a session grows until the CLI stops answering with no error to show for it.
 //
 // Claude serves 200k on a subscription whatever the model's API window, and 1M only on the ids
-// that ask for it. The engine switches the CLI's own compaction off (one compaction, Rerun's), so
+// that ask for it. The engine switches the CLI's own compaction off (one compaction, Lumvika's), so
 // this budget is the only thing that keeps a session inside the window.
 const CLI_CONTEXT_WINDOW: Partial<Record<Provider, (id: string) => number>> = {
     codex: () => 272_000,
@@ -124,12 +124,12 @@ export function modelContextWindow(id: string | null | undefined, provider?: str
 // from this map, so there is one spelling of "GPT-5.6 Sol" in the repo. Ids absent from here are
 // custom models a user typed on an OpenRouter connection: they show as they were entered.
 export const MODEL_LABEL: Record<string, string> = {
-    'rerun-fast': 'Fast',
-    'rerun-max': 'Rerun',
-    'rerun-smart': 'Smart',
-    // What the boxes provisioned before the `rerun-max` alias still name: without this line their
+    'lumvika-fast': 'Fast',
+    'lumvika-max': 'Lumvika',
+    'lumvika-smart': 'Smart',
+    // What the boxes provisioned before the `lumvika-max` alias still name: without this line their
     // model picker reads the raw OpenRouter id.
-    'qwen/qwen3.7-max': 'Rerun',
+    'qwen/qwen3.7-max': 'Lumvika',
     'claude-fable-5-2': 'Fable 5.2',
     'claude-fable-5-1': 'Fable 5.1',
     'claude-fable-5': 'Fable 5',
@@ -200,9 +200,9 @@ export function modelLabel(id: string): string {
 
 // The id a model was curated under before it was renamed. A box whose connection was written by an
 // older build still carries the old spelling, which would list right next to the current one under
-// the same label: two "Rerun" rows, one of them a stranger to the catalog.
+// the same label: two "Lumvika" rows, one of them a stranger to the catalog.
 export const MODEL_ALIAS: Record<string, string> = {
-    'qwen/qwen3.7-max': RERUN_MODEL,
+    'qwen/qwen3.7-max': LUMVIKA_MODEL,
 }
 
 export function canonicalModelId(id: string): string {

@@ -1,4 +1,4 @@
-import { transcriptWords } from '@rerun/contracts'
+import { transcriptWords } from '@lumvika/contracts'
 import { useMemo } from 'react'
 import { Text } from 'react-native'
 import Animated, { FadeInDown, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated'

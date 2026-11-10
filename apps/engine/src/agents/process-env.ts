@@ -12,10 +12,10 @@ export function agentProcessEnv(agent: Pick<LoadedAgent, 'id' | 'env' | 'config'
     const cwd = workspaceDir(agent.id)
     mkdirSync(cwd, { recursive: true })
     mkdirSync(agentDataDir(agent.id), { recursive: true })
-    const env: Record<string, string> = { ...agent.env, RERUN_AGENT_DB: agentDataDbPath(agent.id), RERUN_WORKSPACE: cwd }
+    const env: Record<string, string> = { ...agent.env, LUMVIKA_AGENT_DB: agentDataDbPath(agent.id), LUMVIKA_WORKSPACE: cwd }
     if (agent.config.tools.sharedDb) {
         mkdirSync(sharedDbDir(), { recursive: true })
-        env.RERUN_SHARED_DB = sharedDbPath()
+        env.LUMVIKA_SHARED_DB = sharedDbPath()
     }
     return { cwd, env }
 }

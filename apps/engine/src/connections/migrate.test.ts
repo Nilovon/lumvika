@@ -2,11 +2,11 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cxmigrate-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cxmigrate-'))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { mkdir, readFile, rm, writeFile } = await import('node:fs/promises')
-const { RERUN_CONNECTION_ID } = await import('@rerun/contracts')
+const { LUMVIKA_CONNECTION_ID } = await import('@lumvika/contracts')
 const { agentDir, agentEnvPath, codexAuthPath, configPath, connectionConfigPath, connectionDir, connectionsDir, connectionsMigratedPath } = await import('../config/paths.js')
 const { readEnvFile, writeEnvFile } = await import('../lib/env-file.js')
 const { foldAgentKeysIntoConnections, reconcileConnections } = await import('./migrate.js')
@@ -28,7 +28,7 @@ async function readConfig(id: string): Promise<Record<string, unknown>> {
 }
 
 async function connections() {
-    return (await listConnections()).filter(c => c.id !== RERUN_CONNECTION_ID).map(toSummary)
+    return (await listConnections()).filter(c => c.id !== LUMVIKA_CONNECTION_ID).map(toSummary)
 }
 
 async function migrateConnections() {
@@ -37,7 +37,7 @@ async function migrateConnections() {
 }
 
 beforeEach(async () => {
-    for (const id of ['alpha', 'beta', 'gamma', RERUN_CONNECTION_ID]) unloadConnection(id)
+    for (const id of ['alpha', 'beta', 'gamma', LUMVIKA_CONNECTION_ID]) unloadConnection(id)
     await rm(connectionsDir(), { recursive: true, force: true })
     await rm(agentsDir(), { recursive: true, force: true })
 })
@@ -139,23 +139,23 @@ describe('migrateConnections', () => {
         expect((await readConfig('alpha')).connectionId).toBe(first[0].id)
     })
 
-    // Rerun Balanced used to be stored as the OpenRouter id it ran on. Left as it is, the
+    // Lumvika Balanced used to be stored as the OpenRouter id it ran on. Left as it is, the
     // connections tab lists it next to the current id as a second row spelled "Balanced".
-    it('renames the id Rerun Balanced was stored under, and the box default naming it', async () => {
-        await mkdir(connectionDir(RERUN_CONNECTION_ID), { recursive: true })
-        const legacy = { name: 'Rerun', provider: 'rerun', models: ['qwen/qwen3.7-max'], extraModels: [], createdAt: '2026-01-01T00:00:00.000Z' }
-        await writeFile(connectionConfigPath(RERUN_CONNECTION_ID), JSON.stringify(legacy, null, 4), 'utf8')
-        await writeBoxDefault({ connectionId: RERUN_CONNECTION_ID, model: 'qwen/qwen3.7-max' })
+    it('renames the id Lumvika Balanced was stored under, and the box default naming it', async () => {
+        await mkdir(connectionDir(LUMVIKA_CONNECTION_ID), { recursive: true })
+        const legacy = { name: 'Lumvika', provider: 'lumvika', models: ['qwen/qwen3.7-max'], extraModels: [], createdAt: '2026-01-01T00:00:00.000Z' }
+        await writeFile(connectionConfigPath(LUMVIKA_CONNECTION_ID), JSON.stringify(legacy, null, 4), 'utf8')
+        await writeBoxDefault({ connectionId: LUMVIKA_CONNECTION_ID, model: 'qwen/qwen3.7-max' })
 
         await migrateConnections()
 
-        expect((await loadConnectionFromDisk(RERUN_CONNECTION_ID)).config.models).toEqual(['rerun-max', 'rerun-fast', 'rerun-smart'])
-        expect(await readBoxDefault()).toEqual({ connectionId: RERUN_CONNECTION_ID, model: 'rerun-max' })
+        expect((await loadConnectionFromDisk(LUMVIKA_CONNECTION_ID)).config.models).toEqual(['lumvika-max', 'lumvika-fast', 'lumvika-smart'])
+        expect(await readBoxDefault()).toEqual({ connectionId: LUMVIKA_CONNECTION_ID, model: 'lumvika-max' })
     })
 
-    it('provisions the keyless Rerun connection', async () => {
+    it('provisions the keyless Lumvika connection', async () => {
         await migrateConnections()
-        expect((await listConnections()).some(c => c.id === RERUN_CONNECTION_ID)).toBe(true)
+        expect((await listConnections()).some(c => c.id === LUMVIKA_CONNECTION_ID)).toBe(true)
         expect(await readFile(connectionsMigratedPath(), 'utf8')).toMatch(/\d{4}-\d{2}-\d{2}T/)
     })
 })

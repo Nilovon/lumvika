@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-brain-search-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-brain-search-'))
+process.env.LUMVIKA_API_KEY = ''
 
 // A toy embedding: each axis is one meaning, so "how much do we charge" lands next to a section
 // about prices without sharing a single word with it.

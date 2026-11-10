@@ -1,6 +1,6 @@
 'use client'
 
-import { DotLoader, dotSpinnerFrames } from '@rerun/ui/primitives'
+import { DotLoader, dotSpinnerFrames } from '@lumvika/ui/primitives'
 import { cn } from '@/lib/utils'
 
 const variantStyles = {

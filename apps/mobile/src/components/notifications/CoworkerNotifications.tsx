@@ -1,4 +1,4 @@
-import { COWORKER_MODES, coworkerRuleOf, taskNotifies, type CoworkerMode, type CoworkerRule, type NotificationPrefs, type RoutineKind, type RoutineView } from '@rerun/contracts'
+import { COWORKER_MODES, coworkerRuleOf, taskNotifies, type CoworkerMode, type CoworkerRule, type NotificationPrefs, type RoutineKind, type RoutineView } from '@lumvika/contracts'
 import type { SFSymbol } from 'expo-symbols'
 import { Fragment } from 'react'
 import { Switch, View } from 'react-native'

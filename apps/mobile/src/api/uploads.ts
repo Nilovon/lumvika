@@ -1,4 +1,4 @@
-import { CHAT_ATTACHMENTS_DIR, uniqueAttachmentName } from '@rerun/contracts'
+import { CHAT_ATTACHMENTS_DIR, uniqueAttachmentName } from '@lumvika/contracts'
 
 import { ApiError, clientHeader, hubHeaders } from '@/api/client'
 import type { FileOwner } from '@/api/files'
@@ -36,7 +36,7 @@ export async function uploadVoiceRecording(caller: Caller, owner: FileOwner, uri
     const blob = await bytesOf(uri)
     const name = `${Date.now().toString(36)}-${randomToken()}-voice.m4a`
     const query = new URLSearchParams({ ...(owner.kind === 'agent' ? { agentId: owner.agentId } : { sessionId: owner.sessionId }), name, size: String(blob.size), dir: CHAT_ATTACHMENTS_DIR })
-    const route = owner.kind === 'agent' ? '/api/files/stream' : '/api/foreman/files/stream'
+    const route = owner.kind === 'agent' ? '/api/files/stream' : '/api/steward/files/stream'
     const { path } = (await postBytes(caller, `${route}?${query}`, blob)) as { path: string }
     return path
 }

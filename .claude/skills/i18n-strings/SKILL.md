@@ -1,6 +1,6 @@
 ---
 name: i18n-strings
-description: Put every user-facing string of Rerun through the language packs (next-intl, ICU, packages/i18n) and keep the French and Spanish packs in step. Use whenever you add or change visible text in apps/ui or packages/ui (a label, a button, a toast, an error, an empty state, a zod message), format a date or a number for the screen, extract an existing screen into a namespace, or add a language. Triggers: "translate", "i18n", "add a string", "language pack", « traduis », « ajoute une langue ».
+description: Put every user-facing string of Lumvika through the language packs (next-intl, ICU, packages/i18n) and keep the French and Spanish packs in step. Use whenever you add or change visible text in apps/ui or packages/ui (a label, a button, a toast, an error, an empty state, a zod message), format a date or a number for the screen, extract an existing screen into a namespace, or add a language. Triggers: "translate", "i18n", "add a string", "language pack", « traduis », « ajoute une langue ».
 ---
 
 # Strings through the language packs
@@ -48,7 +48,7 @@ t('composer.placeholder', { name })
 
 ## 4. Dates and numbers
 
-`@rerun/i18n/format` (`shortRelativeTime`, `messageDayLabel`, `shortDate`, `formatNumber`,
+`@lumvika/i18n/format` (`shortRelativeTime`, `messageDayLabel`, `shortDate`, `formatNumber`,
 `formatDate`, `formatBytes`, ...) with `useLocale()`. Its English output is the one the app always had.
 
 ## 5. Translate and check

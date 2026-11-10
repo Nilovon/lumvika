@@ -1,6 +1,6 @@
 -- L'onboarding devient un fait du workspace : il se fait une fois, à sa création, et un membre
--- invité ensuite n'y passe jamais. Jusqu'ici le stamp et le profil Foreman vivaient sur `users`,
--- alors que la phase du Foreman se calcule par workspace : un invité dans un workspace déjà lancé
+-- invité ensuite n'y passe jamais. Jusqu'ici le stamp et le profil Steward vivaient sur `users`,
+-- alors que la phase du Steward se calcule par workspace : un invité dans un workspace déjà lancé
 -- restait « pas onboardé » pour toujours, et ses liens `?template=` restaient parkés sans fin.
 --
 -- `onboarded_at` va sur `workspaces` (petit, déjà dans le realtime de la session). Le profil va
@@ -55,8 +55,8 @@ update public.workspaces w
 update public.workspaces set onboarded_at = created_at where is_sandbox and onboarded_at is null;
 
 -- Un workspace qui tourne déjà (abonné, en trial, ou qui a des agents) est `companion` pour le
--- Foreman, qui ne lancera jamais son tunnel : sans stamp, ses liens `?template=` resteraient
--- parkés pour toujours. Même règle que foremanPhase, que le code applique aussi au fil de l'eau.
+-- Steward, qui ne lancera jamais son tunnel : sans stamp, ses liens `?template=` resteraient
+-- parkés pour toujours. Même règle que stewardPhase, que le code applique aussi au fil de l'eau.
 update public.workspaces w
    set onboarded_at = w.created_at
  where w.onboarded_at is null
@@ -116,8 +116,8 @@ begin
     insert into public.workspaces (
         name, icon_url, plan, is_sandbox, max_agents, max_seats,
         model_access, custom_integrations, subscription_status, trial_ends_at,
-        first_paid_at, boxes_disabled_at, rerun_budget_micros, rerun_used_micros,
-        rerun_topup_micros, rerun_period_anchor, onboarded_at
+        first_paid_at, boxes_disabled_at, lumvika_budget_micros, lumvika_used_micros,
+        lumvika_topup_micros, lumvika_period_anchor, onboarded_at
     ) values (
         left(p_name, 60), p_icon_url, v_from.plan, false, greatest(p_max_agents, 3), greatest(v_seats, 1),
         v_from.model_access, v_from.custom_integrations, 'active', v_from.trial_ends_at,
@@ -139,7 +139,7 @@ begin
 
     update public.notifications set workspace_id = v_new where space_id = p_space_id;
     update public.published_files set workspace_id = v_new where space_id = p_space_id;
-    update public.rerun_usage_events set workspace_id = v_new where space_id = p_space_id;
+    update public.lumvika_usage_events set workspace_id = v_new where space_id = p_space_id;
     update public.agent_shares set workspace_id = v_new
      where source_agent_id in (select id from public.agents where space_id = p_space_id);
 
@@ -147,7 +147,7 @@ begin
         'agents', (select count(*) from public.agents where space_id = p_space_id),
         'notifications', (select count(*) from public.notifications where space_id = p_space_id),
         'published_files', (select count(*) from public.published_files where space_id = p_space_id),
-        'usage_events', (select count(*) from public.rerun_usage_events where space_id = p_space_id),
+        'usage_events', (select count(*) from public.lumvika_usage_events where space_id = p_space_id),
         'members', v_seats
     );
 

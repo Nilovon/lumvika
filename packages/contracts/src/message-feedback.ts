@@ -23,8 +23,8 @@ export function messageFeedbackCategoryLabel(value: string | null): string | nul
     return MESSAGE_FEEDBACK_CATEGORIES.find(c => c.value === value)?.label ?? value
 }
 
-// Whose conversation a feedback names: an agent's session, or one of the foreman's on the engine.
-export const messageFeedbackScopeSchema = z.enum(['agent', 'foreman'])
+// Whose conversation a feedback names: an agent's session, or one of the steward's on the engine.
+export const messageFeedbackScopeSchema = z.enum(['agent', 'steward'])
 export type MessageFeedbackScope = z.infer<typeof messageFeedbackScopeSchema>
 
 export const messageFeedbackRateRequestSchema = z.object({

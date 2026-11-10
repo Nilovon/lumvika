@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: { absolute: title },
         description,
         robots: { index: false, follow: false },
-        openGraph: { type: 'website', siteName: 'Rerun', title, description, url: origin, images: [{ url: image, width: 1200, height: 630 }] },
+        openGraph: { type: 'website', siteName: 'Lumvika', title, description, url: origin, images: [{ url: image, width: 1200, height: 630 }] },
         twitter: { card: 'summary_large_image', title, description, images: [image] },
     }
 }

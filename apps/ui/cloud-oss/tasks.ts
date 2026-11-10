@@ -71,12 +71,12 @@ const SCHEDULES: { pattern: string; run: () => Promise<unknown> }[] = [
     { pattern: '40 3 * * *', run: async () => (await import('@/trigger/purge-web-search-cache')).purgeWebSearchCache() },
 ]
 
-const started = globalThis as { rerunSchedulesStarted?: boolean }
+const started = globalThis as { lumvikaSchedulesStarted?: boolean }
 
 // Called by the dashboard layout; only the first call starts the crons.
 export function startBackgroundSchedules(): void {
-    if (started.rerunSchedulesStarted) return
-    started.rerunSchedulesStarted = true
+    if (started.lumvikaSchedulesStarted) return
+    started.lumvikaSchedulesStarted = true
     for (const schedule of SCHEDULES) {
         new Cron(schedule.pattern, { protect: true }, () => {
             schedule.run().catch(error => log('error', 'scheduled task failed', { error: error instanceof Error ? error.message : String(error) }))

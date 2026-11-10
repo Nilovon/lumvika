@@ -1,7 +1,7 @@
 'use client'
 
-import { formatDate } from '@rerun/i18n/format'
-import { Markdown } from '@rerun/ui/markdown'
+import { formatDate } from '@lumvika/i18n/format'
+import { Markdown } from '@lumvika/ui/markdown'
 import { useLocale, useTranslations } from 'next-intl'
 
 import type { ChangelogEntryView } from '@/app/api/_actions/changelog.actions'

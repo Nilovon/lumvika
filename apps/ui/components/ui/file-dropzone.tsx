@@ -1,1 +1,1 @@
-export { FileDropzone } from '@rerun/ui/forms'
+export { FileDropzone } from '@lumvika/ui/forms'

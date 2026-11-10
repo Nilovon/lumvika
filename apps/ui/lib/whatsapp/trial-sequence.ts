@@ -6,7 +6,7 @@ import type { Database } from '@/app/api/database.types'
 import { findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
 import { transformEngineMessages } from '@/lib/chat/engine-history'
 import { getSessionMessages } from '@/lib/engine/client'
-import { foremanUseCases, type ForemanAnswers } from '@/lib/foreman/phase'
+import { stewardUseCases, type StewardAnswers } from '@/lib/steward/phase'
 import { loadFirstName } from '@/lib/notifications/recipient'
 import type { StoredAgentIdeas } from '@/lib/agent-ideas/stored'
 import { loadTeam, type TeamMember, type TeamStatus } from '@/lib/og/team-board'
@@ -119,7 +119,7 @@ function agentPath(agentId: string | null, tab?: string): string {
 
 async function ideaContext(ctx: Context): Promise<{ company: string; context: string }> {
     const { data } = await selectMaybeSingle(ctx.supabase, 'workspace_onboarding', ['answers', 'agent_ideas'] as const, { workspace_id: ctx.workspaceId })
-    const answers = (data?.answers ?? {}) as ForemanAnswers
+    const answers = (data?.answers ?? {}) as StewardAnswers
     const ideas = (data?.agent_ideas as StoredAgentIdeas | null)?.ideas ?? []
     const company = companyNameFromAnswers(answers)
 
@@ -127,8 +127,8 @@ async function ideaContext(ctx: Context): Promise<{ company: string; context: st
         `Coworker: ${ctx.team[0]?.name ?? 'an AI coworker'}`,
         company && `Company: ${company}`,
         answers.company_description && `What the company does: ${answers.company_description}`,
-        ...foremanUseCases(answers.foreman ?? {}).map(useCase => `Asked to take off their hands: ${useCase}`),
-        ...(answers.foreman?.needs ?? []).map(need => `Need: ${need.job}, because ${need.pain}`),
+        ...stewardUseCases(answers.steward ?? {}).map(useCase => `Asked to take off their hands: ${useCase}`),
+        ...(answers.steward?.needs ?? []).map(need => `Need: ${need.job}, because ${need.pain}`),
         ...ideas.slice(0, 5).map(idea => `Idea already imagined for them: ${idea.name}, ${idea.hook}`),
         ...ctx.runs.filter(run => run.kind === 'done').slice(0, 3).map(run => `A job already done: ${run.message}`),
     ]

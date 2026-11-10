@@ -8,7 +8,7 @@ import { triggerMethodSchema } from './trigger.js'
 // never has to open the archive itself.
 
 export const agentArchiveEntrySchema = z.object({
-    // Relative to the agent directory, e.g. `workspace/.rerun/services.json`.
+    // Relative to the agent directory, e.g. `workspace/.lumvika/services.json`.
     path: z.string(),
     bytes: z.number().int().nonnegative(),
     // Labels from SECRET_PATTERNS and SENSITIVE_PATH_PATTERNS.
@@ -64,7 +64,7 @@ export const agentArchivePlanSchema = z.object({
     tools: z.array(z.string()).default([]),
     files: z.array(agentArchiveEntrySchema).default([]),
     totalBytes: z.number().int().nonnegative(),
-    // Read off `workspace/.rerun/services.json`, the agent's own connector registry.
+    // Read off `workspace/.lumvika/services.json`, the agent's own connector registry.
     connectorSlugs: z.array(z.string()).default([]),
     skills: z.array(agentArchiveSkillSchema).default([]),
     schedules: z.array(agentArchiveScheduleSchema).default([]),

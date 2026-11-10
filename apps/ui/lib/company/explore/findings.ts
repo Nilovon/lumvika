@@ -63,7 +63,7 @@ export const DISCOVERY_SOURCE_LABELS: Record<DiscoverySource, string> = {
     linkedinCompany: 'LinkedIn',
     googleBusiness: 'Google',
     catalog: 'Your website',
-    synthesis: 'Rerun',
+    synthesis: 'Lumvika',
 }
 
 export type DiscoveryEntry =

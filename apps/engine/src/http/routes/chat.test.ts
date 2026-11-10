@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-chat-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-chat-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({
     calls: [] as { agent: { id: string; brief?: unknown }; sessionId: string; message: string; override: unknown; runId: string; trigger?: { userLanguage?: string; callableAgentIds?: string[] } }[],
@@ -72,7 +72,7 @@ async function seed(agentId: string, config: Record<string, unknown>) {
 beforeAll(async () => {
     await seed(id, { name: 'chat' })
     await seed('sleepy', { name: 'sleepy', enabled: false })
-    await seed('boss', { name: 'boss', kind: 'foreman' })
+    await seed('boss', { name: 'boss', kind: 'steward' })
     await seed('installer', { name: 'installer', setup: { required: true } })
     await writeFile(installPath('installer'), 'Connect Gmail.\n', 'utf8')
 })
@@ -134,12 +134,12 @@ describe('POST /agents/:id/chat', () => {
         expect(state.calls[0].override).toEqual({ connectionId: 'cnx', provider: 'anthropic', model: 'claude-sonnet-4-6' })
     })
 
-    it('hands the brief to a foreman agent only', async () => {
+    it('hands the brief to a steward agent only', async () => {
         const brief = { instructions: 'Interview the user.', tools: [] }
-        await (await chat('boss', { message: 'hi', foreman: brief })).text()
+        await (await chat('boss', { message: 'hi', steward: brief })).text()
         expect(state.calls[0].agent.brief).toEqual(brief)
 
-        await (await chat(id, { message: 'hi', foreman: brief })).text()
+        await (await chat(id, { message: 'hi', steward: brief })).text()
         expect(state.calls[1].agent.brief).toBeUndefined()
     })
 

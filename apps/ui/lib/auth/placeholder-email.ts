@@ -3,7 +3,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js/min'
 // An account born from a phone number has no address to write to, and Supabase can only open a
 // session for a user that has one. It is given this one, on a subdomain that has no mail server
 // and never will: every reader of an account's email goes through `realEmail` or `accountLabel`.
-const PLACEHOLDER_DOMAIN = 'phone.rerun.build'
+const PLACEHOLDER_DOMAIN = 'phone.lumvika.com'
 const PLACEHOLDER_PATTERN = new RegExp(`^(\\d+)@${PLACEHOLDER_DOMAIN.replaceAll('.', '\\.')}$`)
 
 // `phone` is E.164: its digits make the address unique to the number.
@@ -13,7 +13,7 @@ export const isPlaceholderEmail = (email: string | null | undefined) => !!email 
 
 // A deleted account keeps its row, filed under an address on another dead subdomain: the one it
 // had is free again for a new signup.
-const DELETED_ACCOUNT_DOMAIN = 'deleted.rerun.build'
+const DELETED_ACCOUNT_DOMAIN = 'deleted.lumvika.com'
 
 export const deletedAccountEmailFor = (userId: string) => `${userId}@${DELETED_ACCOUNT_DOMAIN}`
 

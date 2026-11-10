@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-browser-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-browser-'))
+process.env.LUMVIKA_API_KEY = ''
 
 type RouteHandler = (route: { request: () => { url: () => string; resourceType: () => string }; abort: (code?: string) => Promise<void>; continue: () => Promise<void> }) => Promise<void>
 
@@ -410,8 +410,8 @@ describe('browser_navigate', () => {
 
         const out = (await (browserTools(ctxWith()).browser_navigate as any).execute({ url: 'https://render.example/pricing', timeoutMs: 30_000 }, { toolCallId: 'c', messages: [] })) as string
 
-        expect(out.split('\n').slice(0, 2)).toEqual(['[200] https://render.example/pricing', 'Saved whole: .rerun/pages/render.example/pricing.browser.html (the rendered HTML: read or grep it for anything this text leaves out)'])
-        expect(readFileSync(resolve(workspaceDir(agentId), '.rerun/pages/render.example/pricing.browser.html'), 'utf8')).toBe('<html><body><nav><a href="/compare">Compare</a></nav>Pricing</body></html>')
+        expect(out.split('\n').slice(0, 2)).toEqual(['[200] https://render.example/pricing', 'Saved whole: .lumvika/pages/render.example/pricing.browser.html (the rendered HTML: read or grep it for anything this text leaves out)'])
+        expect(readFileSync(resolve(workspaceDir(agentId), '.lumvika/pages/render.example/pricing.browser.html'), 'utf8')).toBe('<html><body><nav><a href="/compare">Compare</a></nav>Pricing</body></html>')
     })
 
     it('saves no page behind a bot wall', async () => {

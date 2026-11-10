@@ -1,4 +1,4 @@
-import { PAID_DATA_DEFAULT_PRICE_MULTIPLIER } from '@rerun/contracts'
+import { PAID_DATA_DEFAULT_PRICE_MULTIPLIER } from '@lumvika/contracts'
 
 // What a workspace pays for a paid data call, as a multiple of what Treg charged us. An env var so
 // the margin moves without a deploy.

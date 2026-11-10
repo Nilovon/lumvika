@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cx-loader-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cx-loader-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { mkdir, rm, writeFile } = await import('node:fs/promises')
@@ -44,8 +44,8 @@ describe('isConnected', () => {
         expect(isConnected(loaded('anthropic', { ANTHROPIC_API_KEY: '' }))).toBe(false)
     })
 
-    it('never counts a rerun-provider connection under another id, which has no key to hold', () => {
-        expect(isConnected(loaded('rerun', { RERUN_API_KEY: 'k' }, 'other'))).toBe(false)
+    it('never counts a lumvika-provider connection under another id, which has no key to hold', () => {
+        expect(isConnected(loaded('lumvika', { LUMVIKA_API_KEY: 'k' }, 'other'))).toBe(false)
     })
 })
 

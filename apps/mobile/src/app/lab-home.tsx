@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { lineOf, moodStatus, type HomeCoworker } from '@/components/home/board'
 import { CoworkerRow, HOME_GUTTER } from '@/components/home/CoworkerRow'
-import { ForemanRow } from '@/components/home/ForemanRow'
+import { StewardRow } from '@/components/home/StewardRow'
 import { HomeBottomBar } from '@/components/home/HomeBottomBar'
 import { HomeHeader } from '@/components/home/HomeHeader'
 import { PinnedAvatar, PinnedGrid, usePinnedCell } from '@/components/home/PinnedGrid'
@@ -17,7 +17,7 @@ import { GLASS_BUTTON_SIZE } from '@/components/ui/GlassButton'
 import { ThemeScope, useColorSchemeName, useTheme } from '@/theme/theme'
 import { spacing, type ColorScheme } from '@/theme/tokens'
 
-// Dev only: the Home on mock coworkers, to judge the pinned grid, the Foreman's row and the bottom bar.
+// Dev only: the Home on mock coworkers, to judge the pinned grid, the Steward's row and the bottom bar.
 //   /lab-home?pins=3&scheme=dark   pins: 0 to 9
 
 const noop = () => {}
@@ -54,7 +54,7 @@ export function MockHome({ pinCount }: { pinCount: number }) {
         <View style={{ flex: 1, backgroundColor: theme.background }}>
             <ScrollView scrollEnabled={!reordering} contentContainerStyle={{ paddingTop: headerHeight + spacing.xl, paddingBottom: insets.bottom + 120, paddingLeft: pane.left, paddingRight: pane.right }} contentInsetAdjustmentBehavior="never">
                 <View style={{ marginBottom: spacing.lg }}>
-                    <ForemanRow last={{ title: 'Overnight catch-up', running: false }} onPress={() => router.push({ pathname: '/lab-chat', params: { coworker: 'foreman', tabs: '1', state: 'conversation' } })} />
+                    <StewardRow last={{ title: 'Overnight catch-up', running: false }} onPress={() => router.push({ pathname: '/lab-chat', params: { coworker: 'steward', tabs: '1', state: 'conversation' } })} />
                 </View>
                 {pinned.length > 0 && (
                     <View style={{ marginBottom: spacing.sm }}>

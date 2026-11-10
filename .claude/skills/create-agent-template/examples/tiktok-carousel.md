@@ -94,4 +94,4 @@ Expected: 6 to 9 rendered slides, caption, hashtags, with no prior question and 
 - `tagline`: `Turn any idea, link or product into ready-to-post TikTok carousels, designed in your brand and posted when you say go.`
 - `category`: `creators` · `tags`: `tiktok`, `carousel`, `instagram`, `content`, `social media`
 - `setupMinutes`: install 1 + setup 2 = 3 → **3**
-- `metaDescription` (≈ 140 characters): `Create TikTok carousels from any idea, link or product: hook, slides, caption and hashtags in your brand, ready to post in minutes with Rerun.`
+- `metaDescription` (≈ 140 characters): `Create TikTok carousels from any idea, link or product: hook, slides, caption and hashtags in your brand, ready to post in minutes with Lumvika.`

@@ -6,7 +6,7 @@ import { useBoxViewer, useManageableSpaceIds } from '@/hooks/useBoxAccess'
 import { useIsTemplateAuthor } from '@/hooks/useIsTemplateAuthor'
 import { useModKeyLabel } from '@/hooks/useModKeyLabel'
 import { useWorkspaceAccess } from '@/hooks/useWorkspaceAccess'
-import { isWorkspaceApiEntitled } from '@rerun/cloud/billing'
+import { isWorkspaceApiEntitled } from '@lumvika/cloud/billing'
 import { ATTENTION_STATUSES } from '@/lib/board/attention'
 import type { AgentStatus, IsoAgent } from '@/lib/board/types'
 import { buildControlCommands, type ControlCommand, type ControlCommandId } from '@/lib/control-center/commands'
@@ -20,12 +20,12 @@ import { useBuilderDialogsStore } from '@/stores/builder-dialogs.store'
 import { selectHasEntries, useChangelogStore } from '@/stores/changelog.store'
 import { useControlCenterStore } from '@/stores/control-center.store'
 import { useDesktopStore } from '@/stores/desktop.store'
-import { selectForemanOpen, selectForemanVisible, useForemanStore } from '@/stores/foreman.store'
+import { selectStewardOpen, selectStewardVisible, useStewardStore } from '@/stores/steward.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useShortcutsStore } from '@/stores/shortcuts.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
 import { useIsWorkspaceAdmin, useSession } from '@/supabase/session/SessionProvider'
-import type { BadgeTone } from '@rerun/ui/primitives'
+import type { BadgeTone } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { useEffect, useState, type ComponentType } from 'react'
@@ -99,8 +99,8 @@ export function ControlCenter() {
     const { needsMachineReason } = useWorkspaceAccess()
     const desktopEnabled = useComputerEnabled()
     const isTemplateAuthor = useIsTemplateAuthor()
-    const assistantReady = useForemanStore(s => selectForemanVisible(s) && s.funnel === 'companion')
-    const assistantOpen = useForemanStore(selectForemanOpen)
+    const assistantReady = useStewardStore(s => selectStewardVisible(s) && s.funnel === 'companion')
+    const assistantOpen = useStewardStore(selectStewardOpen)
     const hasChangelog = useChangelogStore(selectHasEntries)
     const { resolvedTheme, setTheme } = useTheme()
     const mod = useModKeyLabel()
@@ -145,10 +145,10 @@ export function ControlCenter() {
                 if (!center.open && (useBoardStore.getState().selectedAgentId || document.querySelector('[data-brain-workspace]'))) return
                 event.preventDefault()
                 event.stopPropagation()
-                const foreman = useForemanStore.getState()
-                if (foreman.pillAvailable || (selectForemanOpen(foreman) && foreman.funnel === 'companion')) {
+                const steward = useStewardStore.getState()
+                if (steward.pillAvailable || (selectStewardOpen(steward) && steward.funnel === 'companion')) {
                     if (center.open) center.setOpen(false)
-                    foreman.requestComposerFocus()
+                    steward.requestComposerFocus()
                     return
                 }
                 center.setOpen(!center.open)
@@ -222,7 +222,7 @@ export function ControlCenter() {
         new_agent: () => useBuilderDialogsStore.getState().openNewAgent(),
         browse_templates: () => useBuilderDialogsStore.getState().openLibrary(),
         new_box: () => useBuilderDialogsStore.getState().setNewBoxOpen(true),
-        ask_assistant: () => (text ? useForemanStore.getState().askForeman(query.trim()) : useForemanStore.getState().toggle()),
+        ask_assistant: () => (text ? useStewardStore.getState().askSteward(query.trim()) : useStewardStore.getState().toggle()),
         contact_support: () => openCrisp(session?.user?.email),
         recenter_board: () => useBoardStore.getState().recenterBoard(),
         toggle_theme: () => setTheme(darkTheme ? 'light' : 'dark'),
@@ -287,7 +287,7 @@ export function ControlCenter() {
         })
 
         const askAssistant: ControlSection[] = assistantReady
-            ? [{ id: 'assistant', heading: t('headings.assistant'), rows: [{ id: 'ask-assistant', label: t('askRerun'), detail: t('quotedQuery', { query: query.trim() }), leading: { kind: 'assistant' }, onSelect: run(commandActions.ask_assistant) }] }]
+            ? [{ id: 'assistant', heading: t('headings.assistant'), rows: [{ id: 'ask-assistant', label: t('askLumvika'), detail: t('quotedQuery', { query: query.trim() }), leading: { kind: 'assistant' }, onSelect: run(commandActions.ask_assistant) }] }]
             : []
 
         return [

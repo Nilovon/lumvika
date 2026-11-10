@@ -1,4 +1,4 @@
-import { needsHuman, type Conversation, type SessionStatus } from '@rerun/contracts'
+import { needsHuman, type Conversation, type SessionStatus } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { useId } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'

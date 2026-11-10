@@ -12,12 +12,12 @@ import { PanelRow } from '@/components/ui/panel-row'
 import { SkeletonList } from '@/components/ui/skeleton'
 import { APP_URL } from '@/lib/app-url'
 import { Loader2Icon, ServerIcon } from '@/lib/icons'
-import { Badge, ScrollFade } from '@rerun/ui/primitives'
+import { Badge, ScrollFade } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
-const ENGINE_IMAGE = 'ghcr.io/rerun-build/rerun-engine:latest'
+const ENGINE_IMAGE = 'ghcr.io/schnebel-technologie/lumvika-engine:latest'
 const POLL_MS = 3000
 
 function SectionTitle({ children }: { children: string }) {
@@ -26,11 +26,11 @@ function SectionTitle({ children }: { children: string }) {
 
 function pairCommand(token: string, address: string): string {
     const lines = [
-        'docker run -d --name rerun-engine --restart unless-stopped \\',
-        '  -p 3000:3000 -v rerun-engine:/data --shm-size 2g \\',
-        `  -e RERUN_HUB_URL=${APP_URL} \\`,
-        `  -e RERUN_PAIR_TOKEN=${token} \\`,
-        ...(address.trim() ? [`  -e RERUN_PUBLIC_URL=${address.trim()} \\`] : []),
+        'docker run -d --name lumvika-engine --restart unless-stopped \\',
+        '  -p 3000:3000 -v lumvika-engine:/data --shm-size 2g \\',
+        `  -e LUMVIKA_HUB_URL=${APP_URL} \\`,
+        `  -e LUMVIKA_PAIR_TOKEN=${token} \\`,
+        ...(address.trim() ? [`  -e LUMVIKA_PUBLIC_URL=${address.trim()} \\`] : []),
         `  ${ENGINE_IMAGE}`,
     ]
     return lines.join('\n')

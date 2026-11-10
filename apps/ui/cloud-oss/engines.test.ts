@@ -19,8 +19,8 @@ beforeEach(() => {
         return calls.some(call => call.method === 'insert') ? insert : { data: claimed }
     })
     vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
-    vi.stubEnv('RERUN_ENGINE_URL', 'http://engine:3000')
-    vi.stubEnv('RERUN_ENGINE_API_KEY', 'compose-key')
+    vi.stubEnv('LUMVIKA_ENGINE_URL', 'http://engine:3000')
+    vi.stubEnv('LUMVIKA_ENGINE_API_KEY', 'compose-key')
 })
 
 afterEach(() => vi.unstubAllEnvs())
@@ -43,19 +43,19 @@ describe('claimPoolEngine', () => {
     })
 
     it('has nothing to give without a compose engine', async () => {
-        vi.stubEnv('RERUN_ENGINE_URL', '')
+        vi.stubEnv('LUMVIKA_ENGINE_URL', '')
         await expect(claimPoolEngine(4)).resolves.toMatchObject({ ok: false, raced: false })
     })
 })
 
 describe('desktopRelayBase', () => {
     it('sends the browser to the address it can reach the compose engine at', async () => {
-        vi.stubEnv('RERUN_ENGINE_BROWSER_URL', 'https://engine.acme.com/')
+        vi.stubEnv('LUMVIKA_ENGINE_BROWSER_URL', 'https://engine.acme.com/')
         await expect(desktopRelayBase('http://engine:3000', null, null)).resolves.toBe('wss://engine.acme.com')
     })
 
     it('leaves any other engine to be reached on its own address', async () => {
-        vi.stubEnv('RERUN_ENGINE_BROWSER_URL', 'http://localhost:3001')
+        vi.stubEnv('LUMVIKA_ENGINE_BROWSER_URL', 'http://localhost:3001')
         await expect(desktopRelayBase('http://10.0.0.5:3000', null, null)).resolves.toBeNull()
     })
 })

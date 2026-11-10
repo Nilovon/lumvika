@@ -1,4 +1,4 @@
-import { hitlVersionOf, type HitlKind, type PendingHitl } from '@rerun/contracts'
+import { hitlVersionOf, type HitlKind, type PendingHitl } from '@lumvika/contracts'
 import type { ReactNode } from 'react'
 
 export type HitlWidgetProps = {

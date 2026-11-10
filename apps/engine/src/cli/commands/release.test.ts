@@ -5,7 +5,7 @@ import { tmpdir, userInfo } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-release-data-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-release-data-'))
 
 const rootCalls = vi.hoisted(() => [] as Array<{ line: string; input?: string }>)
 
@@ -45,7 +45,7 @@ const ARTIFACT = { url: 'https://releases.example/engine.tar.gz', sha256: SHA, c
 const scratch: string[] = []
 
 function root(): string {
-    const dir = mkdtempSync(resolve(tmpdir(), 'rerun-release-'))
+    const dir = mkdtempSync(resolve(tmpdir(), 'lumvika-release-'))
     scratch.push(dir)
     return dir
 }
@@ -275,67 +275,67 @@ describe('trimRootFilesystem', () => {
 
 describe('defaultLayoutOptions', () => {
     it('names the account it runs as, unless the installer says which account the service runs under', () => {
-        vi.stubEnv('RERUN_SERVICE_USER', undefined)
-        vi.stubEnv('RERUN_SERVICE', undefined)
-        expect(defaultLayoutOptions()).toMatchObject({ service: 'rerun', user: userInfo().username, node: process.execPath, config: resolve(process.env.RERUN_DATA_DIR!, 'config.env') })
-        vi.stubEnv('RERUN_SERVICE_USER', 'rerun')
-        vi.stubEnv('RERUN_SERVICE', 'rerun-staging')
-        expect(defaultLayoutOptions()).toMatchObject({ service: 'rerun-staging', user: 'rerun' })
+        vi.stubEnv('LUMVIKA_SERVICE_USER', undefined)
+        vi.stubEnv('LUMVIKA_SERVICE', undefined)
+        expect(defaultLayoutOptions()).toMatchObject({ service: 'lumvika', user: userInfo().username, node: process.execPath, config: resolve(process.env.LUMVIKA_DATA_DIR!, 'config.env') })
+        vi.stubEnv('LUMVIKA_SERVICE_USER', 'lumvika')
+        vi.stubEnv('LUMVIKA_SERVICE', 'lumvika-staging')
+        expect(defaultLayoutOptions()).toMatchObject({ service: 'lumvika-staging', user: 'lumvika' })
         vi.unstubAllEnvs()
     })
 })
 
 describe('layoutFiles and installLayout', () => {
-    const options = { service: 'rerun', user: 'rerun', config: '/home/rerun/rerun/config.env', node: '/usr/bin/node' }
+    const options = { service: 'lumvika', user: 'lumvika', config: '/home/lumvika/lumvika/config.env', node: '/usr/bin/node' }
 
     it('points the launcher and the unit at current, and arms a one-shot rollback', () => {
-        const files = layoutFiles('/opt/rerun', options)
-        expect(files.map(file => file.path)).toEqual(['/usr/local/bin/rerun', '/usr/local/bin/rerun-rollback', '/etc/systemd/system/rerun.service', '/etc/systemd/system/rerun-rollback.service'])
+        const files = layoutFiles('/opt/lumvika', options)
+        expect(files.map(file => file.path)).toEqual(['/usr/local/bin/lumvika', '/usr/local/bin/lumvika-rollback', '/etc/systemd/system/lumvika.service', '/etc/systemd/system/lumvika-rollback.service'])
         const [launcher, rollback, unit, rollbackUnit] = files
-        expect(launcher.content).toBe('#!/bin/sh\nexec "/usr/bin/node" "/opt/rerun/current/dist/cli/bin.js" "$@"\n')
+        expect(launcher.content).toBe('#!/bin/sh\nexec "/usr/bin/node" "/opt/lumvika/current/dist/cli/bin.js" "$@"\n')
         expect(launcher.mode).toBe('755')
-        expect(unit.content).toContain('WorkingDirectory=/opt/rerun/current\n')
-        expect(unit.content).toContain('ExecStart=/usr/bin/node /opt/rerun/current/dist/cli/bin.js run\n')
-        expect(unit.content).toContain('EnvironmentFile=-/home/rerun/rerun/config.env\n')
-        expect(unit.content).toContain('User=rerun\n')
-        expect(unit.content).toContain('OnFailure=rerun-rollback.service\n')
+        expect(unit.content).toContain('WorkingDirectory=/opt/lumvika/current\n')
+        expect(unit.content).toContain('ExecStart=/usr/bin/node /opt/lumvika/current/dist/cli/bin.js run\n')
+        expect(unit.content).toContain('EnvironmentFile=-/home/lumvika/lumvika/config.env\n')
+        expect(unit.content).toContain('User=lumvika\n')
+        expect(unit.content).toContain('OnFailure=lumvika-rollback.service\n')
         expect(unit.content).toContain('StartLimitBurst=5\n')
-        expect(rollback.content).toContain('ROOT="/opt/rerun"')
+        expect(rollback.content).toContain('ROOT="/opt/lumvika"')
         expect(rollback.content).toContain('rm -f "$ROOT/previous"')
         expect(rollback.content).toContain('systemctl start "$SERVICE"')
-        expect(rollbackUnit.content).toContain('ExecStart=/usr/local/bin/rerun-rollback\n')
+        expect(rollbackUnit.content).toContain('ExecStart=/usr/local/bin/lumvika-rollback\n')
     })
 
     it('names the service everywhere when it is not the default', () => {
-        const files = layoutFiles('/srv/rerun', { ...options, service: 'rerun-staging' })
-        expect(files.map(file => file.path)).toEqual(['/usr/local/bin/rerun', '/usr/local/bin/rerun-rollback', '/etc/systemd/system/rerun-staging.service', '/etc/systemd/system/rerun-staging-rollback.service'])
-        expect(files[2].content).toContain('OnFailure=rerun-staging-rollback.service')
-        expect(files[1].content).toContain('SERVICE="rerun-staging"')
+        const files = layoutFiles('/srv/lumvika', { ...options, service: 'lumvika-staging' })
+        expect(files.map(file => file.path)).toEqual(['/usr/local/bin/lumvika', '/usr/local/bin/lumvika-rollback', '/etc/systemd/system/lumvika-staging.service', '/etc/systemd/system/lumvika-staging-rollback.service'])
+        expect(files[2].content).toContain('OnFailure=lumvika-staging-rollback.service')
+        expect(files[1].content).toContain('SERVICE="lumvika-staging"')
     })
 
     it('writes every file through root and reloads systemd', () => {
-        expect(installLayout('/opt/rerun', options)).toEqual(['/usr/local/bin/rerun', '/usr/local/bin/rerun-rollback', '/etc/systemd/system/rerun.service', '/etc/systemd/system/rerun-rollback.service'])
+        expect(installLayout('/opt/lumvika', options)).toEqual(['/usr/local/bin/lumvika', '/usr/local/bin/lumvika-rollback', '/etc/systemd/system/lumvika.service', '/etc/systemd/system/lumvika-rollback.service'])
         expect(rootCalls.map(call => call.line)).toEqual([
-            'sh -c cat > "$1" && chmod "$2" "$1" sh /usr/local/bin/rerun 755',
-            'sh -c cat > "$1" && chmod "$2" "$1" sh /usr/local/bin/rerun-rollback 755',
-            'sh -c cat > "$1" && chmod "$2" "$1" sh /etc/systemd/system/rerun.service 644',
-            'sh -c cat > "$1" && chmod "$2" "$1" sh /etc/systemd/system/rerun-rollback.service 644',
+            'sh -c cat > "$1" && chmod "$2" "$1" sh /usr/local/bin/lumvika 755',
+            'sh -c cat > "$1" && chmod "$2" "$1" sh /usr/local/bin/lumvika-rollback 755',
+            'sh -c cat > "$1" && chmod "$2" "$1" sh /etc/systemd/system/lumvika.service 644',
+            'sh -c cat > "$1" && chmod "$2" "$1" sh /etc/systemd/system/lumvika-rollback.service 644',
             'systemctl daemon-reload',
         ])
-        expect(rootCalls[2].input).toContain('ExecStart=/usr/bin/node /opt/rerun/current/dist/cli/bin.js run')
+        expect(rootCalls[2].input).toContain('ExecStart=/usr/bin/node /opt/lumvika/current/dist/cli/bin.js run')
     })
 
     it('touches nothing when every file already has its content', () => {
-        const files = layoutFiles('/opt/rerun', options)
+        const files = layoutFiles('/opt/lumvika', options)
         const existing = (path: string): string | null => files.find(file => file.path === path)?.content ?? null
-        expect(installLayout('/opt/rerun', options, existing)).toEqual([])
+        expect(installLayout('/opt/lumvika', options, existing)).toEqual([])
         expect(rootCalls).toEqual([])
     })
 
     it('rewrites only the file that drifted', () => {
-        const files = layoutFiles('/opt/rerun', options)
-        const existing = (path: string): string | null => (path === '/usr/local/bin/rerun' ? '#!/bin/sh\nexec node /opt/rerun/apps/engine/dist/cli/bin.js "$@"\n' : files.find(file => file.path === path)?.content ?? null)
-        expect(installLayout('/opt/rerun', options, existing)).toEqual(['/usr/local/bin/rerun'])
-        expect(rootCalls.map(call => call.line)).toEqual(['sh -c cat > "$1" && chmod "$2" "$1" sh /usr/local/bin/rerun 755', 'systemctl daemon-reload'])
+        const files = layoutFiles('/opt/lumvika', options)
+        const existing = (path: string): string | null => (path === '/usr/local/bin/lumvika' ? '#!/bin/sh\nexec node /opt/lumvika/apps/engine/dist/cli/bin.js "$@"\n' : files.find(file => file.path === path)?.content ?? null)
+        expect(installLayout('/opt/lumvika', options, existing)).toEqual(['/usr/local/bin/lumvika'])
+        expect(rootCalls.map(call => call.line)).toEqual(['sh -c cat > "$1" && chmod "$2" "$1" sh /usr/local/bin/lumvika 755', 'systemctl daemon-reload'])
     })
 })

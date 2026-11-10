@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const root = mkdtempSync(resolve(tmpdir(), 'rerun-paths-'))
-process.env.RERUN_DATA_DIR = root
+const root = mkdtempSync(resolve(tmpdir(), 'lumvika-paths-'))
+process.env.LUMVIKA_DATA_DIR = root
 
 const { describe, expect, it } = await import('vitest')
 const paths = await import('./paths.js')

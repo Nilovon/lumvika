@@ -12,21 +12,21 @@
         "coworker.tools.gmail.typed2": "Typed letter by letter in a fixed-width window: 33 characters at most.",
         "coworker.always.place": "Where the Coworker's machine runs: a box id, then a city and its country.",
         "hero.screen": "A demo of the product playing inside a screen on the home page: Coworkers on a board, their chat threads, an inbox, the workspace assistant. Names of companies and people are fictional and stay as they are.",
-        "hero.screen.foreman": "{writer}, {social}, {research}, {invoices} are Coworker job titles (hero.tiles.*.job) used as names: \"the Content Marketer\"."
+        "hero.screen.steward": "{writer}, {social}, {research}, {invoices} are Coworker job titles (hero.tiles.*.job) used as names: \"the Content Marketer\"."
     },
     "hero": {
         "title": {
             "lead": "Hire <keep>AI <chip>Coworkers</chip></keep>",
             "tail": "They work like you."
         },
-        "subtitle": "Chatbots tell you what to do. AI Coworkers get the job done. Plug the LLM you already pay for into Rerun and give them work.",
+        "subtitle": "Chatbots tell you what to do. AI Coworkers get the job done. Plug the LLM you already pay for into Lumvika and give them work.",
         "cta": "Start a 5-day trial for {price}",
-        "productHuntAlt": "Support Rerun on Product Hunt",
-        "trust": "{count, number}+ users trust Rerun for their business",
+        "productHuntAlt": "Support Lumvika on Product Hunt",
+        "trust": "{count, number}+ users trust Lumvika for their business",
         "pillLeads": {
             "jobs": "Hire a",
             "tasks": "Hire a Coworker to",
-            "sectors": "Rerun for"
+            "sectors": "Lumvika for"
         },
         "tiles": {
             "tour-research": {
@@ -81,7 +81,7 @@
         "screen": {
             "hint": {
                 "tap": "Tap a coworker to see it work",
-                "click": "Click a coworker to see it work, or ask Rerun"
+                "click": "Click a coworker to see it work, or ask Lumvika"
             },
             "inboxSettings": "Preferences: Available in your own workspace",
             "useCases": {
@@ -364,7 +364,7 @@
                 "close": "Close coworker",
                 "newConversation": "New conversation"
             },
-            "foreman": {
+            "steward": {
                 "newTask": "New task",
                 "unknown": "Unknown coworker",
                 "running": {

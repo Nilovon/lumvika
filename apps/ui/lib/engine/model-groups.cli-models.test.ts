@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CliModels } from '@rerun/contracts'
+import type { CliModels } from '@lumvika/contracts'
 import { cliUnavailableReason } from './ai-sources'
 import { refusedModelReason, toGroup } from './model-groups'
 import type { BoxConnection } from './types'

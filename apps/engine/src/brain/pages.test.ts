@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-brain-pages-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-brain-pages-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const embed = vi.hoisted(() => ({ calls: [] as string[], fail: false, gate: null as Promise<void> | null }))
 vi.mock('../memory/embed.js', () => ({

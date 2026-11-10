@@ -31,8 +31,8 @@ import type { UploadEntry } from '@/lib/files/upload'
 import { BrainIcon, DatabaseIcon, RefreshCwIcon, TableIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useBrainStore } from '@/stores/brain.store'
-import type { BrainPageSummary, BrainProposal } from '@rerun/contracts'
-import { useIsMobile } from '@rerun/ui/primitives/use-is-mobile'
+import type { BrainPageSummary, BrainProposal } from '@lumvika/contracts'
+import { useIsMobile } from '@lumvika/ui/primitives/use-is-mobile'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -185,7 +185,7 @@ export function BrainWorkspace({ request, publishedEnabled, onRequestConsumed, o
         consumeRequest(request)
     }, [request, consumeRequest])
 
-    // The Rerun agent wrote the brain from its chat while this was open. The open page only reloads
+    // The Lumvika agent wrote the brain from its chat while this was open. The open page only reloads
     // if it is the one that changed, so a page nobody touched keeps its caret.
     const brainVersion = useBrainStore(s => s.version)
     const seenBrainVersion = useRef(brainVersion)

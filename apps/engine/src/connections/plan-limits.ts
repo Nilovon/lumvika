@@ -1,4 +1,4 @@
-import { opencodeUsageSchema, type PlanLimitWindow, type PlanLimits } from '@rerun/contracts'
+import { opencodeUsageSchema, type PlanLimitWindow, type PlanLimits } from '@lumvika/contracts'
 
 // Kept in memory on purpose: a reading is only as good as its age, and the next run or the next
 // read refills it. Nothing here is worth a file a restored data-dir would have to carry.

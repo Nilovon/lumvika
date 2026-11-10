@@ -23,8 +23,8 @@ export function KeyLogos({ className = 'size-3.5' }: { className?: string }) {
     )
 }
 
-export function RerunGlyph({ className }: { className?: string }) {
-    return <ProviderIcon provider="rerun" className={className} />
+export function LumvikaGlyph({ className }: { className?: string }) {
+    return <ProviderIcon provider="lumvika" className={className} />
 }
 
 // Icon takes a glyph component, and the provider marks are drawn by one dispatcher keyed by id.

@@ -1,4 +1,4 @@
-import type { ForemanStateResponse } from '@rerun/contracts'
+import type { StewardStateResponse } from '@lumvika/contracts'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useTranslations } from 'use-intl'
@@ -24,7 +24,7 @@ export type LeadStarted = { agentId: string; conversationId: string }
 // The onboarding of a new workspace, the web's walked in the app: the welcome card, then the hub's
 // conversation from the starter team to the built team. Nothing is sold here: the confirmed plan starts
 // the workspace without a card, and the build follows on its own.
-export function Onboarding({ state, onLeadStarted }: { state: ForemanStateResponse; onLeadStarted: (lead: LeadStarted) => void }) {
+export function Onboarding({ state, onLeadStarted }: { state: StewardStateResponse; onLeadStarted: (lead: LeadStarted) => void }) {
     const { session, me } = useAuth()
     const caller = useMemo(() => (session && me ? { accessToken: session.access_token, workspaceId: me.workspace.id } : null), [session, me])
     const [welcomed, setWelcomed] = useState(state.phase !== 'discover')
@@ -35,7 +35,7 @@ export function Onboarding({ state, onLeadStarted }: { state: ForemanStateRespon
 
     const phase = state.phase
     useEffect(() => {
-        if (phase === 'discover') track('onboarding_started', { mode: 'foreman', arrival: 'none' })
+        if (phase === 'discover') track('onboarding_started', { mode: 'steward', arrival: 'none' })
         track('onboarding_step_viewed', { step: phase })
     }, [phase])
 

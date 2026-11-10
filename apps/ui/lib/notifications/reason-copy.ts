@@ -1,4 +1,4 @@
-import type { EmailTranslator } from '@rerun/emails/i18n'
+import type { EmailTranslator } from '@lumvika/emails/i18n'
 import type { NotificationReason } from './routing'
 
 // The `notifications.inbox.reasons` catalog.

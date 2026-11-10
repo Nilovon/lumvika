@@ -1,4 +1,4 @@
-import { FOREMAN_AGENT_ID, type BoxAccessLevel } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, type BoxAccessLevel } from '@lumvika/contracts'
 import { useEffect, useMemo, useState } from 'react'
 
 import { fetchAgentView } from '@/api/chat'
@@ -13,7 +13,7 @@ export function useCoworkerAccess(agentId: string): CoworkerAccess {
     const { session, me } = useAuth()
     const accessToken = session?.access_token
     const workspaceId = me?.workspace.id
-    const foreman = agentId === FOREMAN_AGENT_ID
+    const steward = agentId === STEWARD_AGENT_ID
     const kept = useMemo(
         () => (workspaceId ? knownCoworkerAccess(agentId, { agents: cachedBoard(workspaceId).read()?.agents, views: [readCoworkerScreen(workspaceId, agentId).view, readCoworkerDetails(workspaceId, agentId).view] }) : UNKNOWN_ACCESS),
         [workspaceId, agentId]
@@ -22,7 +22,7 @@ export function useCoworkerAccess(agentId: string): CoworkerAccess {
     const [fetched, setFetched] = useState<{ askedFor: string; access: BoxAccessLevel | undefined } | null>(null)
 
     useEffect(() => {
-        if (!accessToken || !workspaceId || foreman) return
+        if (!accessToken || !workspaceId || steward) return
         let cancelled = false
         loadCoworkerDetail(workspaceId, agentId, 'view', () => fetchAgentView({ accessToken, workspaceId }, agentId))
             .then(view => {
@@ -32,7 +32,7 @@ export function useCoworkerAccess(agentId: string): CoworkerAccess {
         return () => {
             cancelled = true
         }
-    }, [accessToken, workspaceId, agentId, foreman])
+    }, [accessToken, workspaceId, agentId, steward])
 
     if (fetched?.askedFor === askedFor) return { access: fetched.access, known: true }
     return kept

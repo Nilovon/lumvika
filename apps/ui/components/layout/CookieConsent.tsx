@@ -1,9 +1,9 @@
 'use client'
 
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { isAnalyticsSurface, startAppAnalytics, stopAppAnalytics } from '@/lib/analytics'
 import { landingUrl } from '@/lib/site'
-import { CookieBanner } from '@rerun/ui/consent'
+import { CookieBanner } from '@lumvika/ui/consent'
 import { useEffect, useState } from 'react'
 
 // La surface se décide dans un effet : `isAnalyticsSurface` lit l'hôte courant, qui n'existe pas au
@@ -14,7 +14,7 @@ export function CookieConsent() {
     useEffect(() => setSurface(isAnalyticsSurface()), [])
 
     // Without PostHog there is no analytics cookie to ask about.
-    if (!surface || (!RERUN_CLOUD && !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN)) return null
+    if (!surface || (!LUMVIKA_CLOUD && !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN)) return null
 
     return (
         <CookieBanner

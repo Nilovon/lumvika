@@ -1,11 +1,11 @@
-import { FOREMAN_AGENT_ID } from '@rerun/contracts'
+import { STEWARD_AGENT_ID } from '@lumvika/contracts'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { resolveWorkspaceMemberEmail, resolveWorkspaceOwner } from '@/app/api/_services/workspace-owner.service'
 import { ensureSessionRow } from '@/app/api/_services/chat.service'
-import { sendIncidentResolvedEmail, sendNotificationEmail } from '@rerun/cloud/email'
+import { sendIncidentResolvedEmail, sendNotificationEmail } from '@lumvika/cloud/email'
 import { loadPresence } from '@/app/api/_services/presence.service'
-import { captureServer } from '@rerun/analytics/server'
+import { captureServer } from '@lumvika/analytics/server'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { generateRunTitle } from '@/lib/ai/generate-run-title'
 import { fakeSupabase, writeMethodOf, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
@@ -13,13 +13,13 @@ import { POST } from './route'
 
 vi.mock('@trigger.dev/sdk/v3', async () => (await import('@/test/trigger-sdk')).triggerSdkMock())
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@rerun/analytics/server', () => ({ captureServer: vi.fn(), deterministicUuid: vi.fn((seed: string) => seed) }))
+vi.mock('@lumvika/analytics/server', () => ({ captureServer: vi.fn(), deterministicUuid: vi.fn((seed: string) => seed) }))
 vi.mock('@/app/api/_services/workspace-owner.service', () => ({ resolveWorkspaceOwner: vi.fn().mockResolvedValue(null), resolveWorkspaceMemberEmail: vi.fn().mockResolvedValue(null) }))
-vi.mock('@rerun/cloud/billing.server', () => ({ extendTrial: vi.fn(), subscriptionHasCard: vi.fn() }))
+vi.mock('@lumvika/cloud/billing.server', () => ({ extendTrial: vi.fn(), subscriptionHasCard: vi.fn() }))
 vi.mock('@/app/api/_services/chat.service', () => ({ ensureSessionRow: vi.fn() }))
 vi.mock('@/app/api/_services/presence.service', () => ({ loadPresence: vi.fn().mockResolvedValue([]) }))
-vi.mock('@rerun/cloud/email', () => ({ sendNotificationEmail: vi.fn(), sendIncidentResolvedEmail: vi.fn(), BANNER_WARM_INLINE_MS: 0, emailBoardBanner: vi.fn().mockResolvedValue(undefined), buildUnsubscribeUrl: (userId: string) => `https://app.rerun.build/unsubscribe?u=${userId}`, pushNotification: vi.fn() }))
-vi.mock('@rerun/cloud/engines', () => ({ claimPoolEngine: vi.fn() }))
+vi.mock('@lumvika/cloud/email', () => ({ sendNotificationEmail: vi.fn(), sendIncidentResolvedEmail: vi.fn(), BANNER_WARM_INLINE_MS: 0, emailBoardBanner: vi.fn().mockResolvedValue(undefined), buildUnsubscribeUrl: (userId: string) => `https://app.lumvika.com/unsubscribe?u=${userId}`, pushNotification: vi.fn() }))
+vi.mock('@lumvika/cloud/engines', () => ({ claimPoolEngine: vi.fn() }))
 const afterTasks = vi.hoisted(() => [] as Promise<unknown>[])
 vi.mock('next/server', async importOriginal => ({ ...(await importOriginal<typeof import('next/server')>()), after: (task: () => Promise<unknown>) => void afterTasks.push(task()) }))
 vi.mock('@/lib/ai/generate-run-title', () => ({ generateRunTitle: vi.fn() }))
@@ -92,7 +92,7 @@ function resolve(table: string, calls: readonly SupabaseCall[]) {
 function request(body: unknown, authorization: string | null = `Bearer ${BOX_KEY}`) {
     const headers: Record<string, string> = { 'content-type': 'application/json' }
     if (authorization) headers.authorization = authorization
-    return new Request('https://rerun.test/api/webhooks/engine', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
+    return new Request('https://lumvika.test/api/webhooks/engine', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
 }
 
 function notification(overrides: Record<string, unknown> = {}) {
@@ -112,7 +112,7 @@ describe('POST /api/webhooks/engine', () => {
         resolvedUsers = []
         emailFlags.paused = false
         db = fakeSupabase(resolve)
-        Object.assign(db.client, { auth: { admin: { getUserById: async (id: string) => ({ data: { user: { email: `${id}@rerun.test` } } }) } } })
+        Object.assign(db.client, { auth: { admin: { getUserById: async (id: string) => ({ data: { user: { email: `${id}@lumvika.test` } } }) } } })
         vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
         vi.mocked(sendNotificationEmail).mockResolvedValue({ ok: true, id: 'email-1' })
     })
@@ -220,22 +220,22 @@ describe('POST /api/webhooks/engine', () => {
         // A workspace of several members used to credit every run to its owner.
         it('credits a finished chat run to the member who sent the message', async () => {
             sandbox = false
-            vi.mocked(resolveWorkspaceMemberEmail).mockResolvedValueOnce('member@rerun.test')
+            vi.mocked(resolveWorkspaceMemberEmail).mockResolvedValueOnce('member@lumvika.test')
 
             await POST(request(notification({ event: 'agent.message.completed', kind: 'done', metadata: { authorId: 'user-2' } })))
 
             expect(resolveWorkspaceMemberEmail).toHaveBeenCalledWith(WORKSPACE_ID, 'user-2')
-            expect(captureServer).toHaveBeenCalledWith('member@rerun.test', 'agent_run_completed', expect.any(Object), expect.any(Object))
+            expect(captureServer).toHaveBeenCalledWith('member@lumvika.test', 'agent_run_completed', expect.any(Object), expect.any(Object))
         })
 
         it('falls back to the owner when the engine names no author', async () => {
             sandbox = false
-            vi.mocked(resolveWorkspaceOwner).mockResolvedValueOnce({ userId: 'user-1', email: 'owner@rerun.test' })
+            vi.mocked(resolveWorkspaceOwner).mockResolvedValueOnce({ userId: 'user-1', email: 'owner@lumvika.test' })
 
             await POST(request(notification({ event: 'agent.message.completed', kind: 'done', metadata: {} })))
 
             expect(resolveWorkspaceMemberEmail).not.toHaveBeenCalled()
-            expect(captureServer).toHaveBeenCalledWith('owner@rerun.test', 'agent_run_completed', expect.any(Object), expect.any(Object))
+            expect(captureServer).toHaveBeenCalledWith('owner@lumvika.test', 'agent_run_completed', expect.any(Object), expect.any(Object))
         })
 
         it('routes a question to the member waiting on it, not to the whole workspace', async () => {
@@ -250,7 +250,7 @@ describe('POST /api/webhooks/engine', () => {
         it('hands a scheduled task nobody follows to the owner, who keeps it', async () => {
             sandbox = false
             session = { id: 'session-1', source: 'schedule' }
-            vi.mocked(resolveWorkspaceOwner).mockResolvedValue({ userId: 'user-1', email: 'owner@rerun.test' })
+            vi.mocked(resolveWorkspaceOwner).mockResolvedValue({ userId: 'user-1', email: 'owner@lumvika.test' })
 
             await POST(request(notification({ event: 'agent.schedule.completed', kind: 'error', source: 'schedule', metadata: { scheduleSlug: 'weekly' } })))
 
@@ -268,7 +268,7 @@ describe('POST /api/webhooks/engine', () => {
             await POST(request(notification({ kind: 'question' })))
 
             expect(sendNotificationEmail).toHaveBeenCalledTimes(1)
-            expect(sendNotificationEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-2@rerun.test', kind: 'question', reason: 'You started this run.' }))
+            expect(sendNotificationEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-2@lumvika.test', kind: 'question', reason: 'You started this run.' }))
             expect(db.chainsOn('rpc:open_notification_incident')[0][0].args[1]).toEqual({ p_user_id: 'user-2', p_source_key: 'engine-own:session:engine-session' })
         })
 
@@ -368,7 +368,7 @@ describe('POST /api/webhooks/engine', () => {
 
             expect(db.chainsOn('rpc:resolve_notification_incidents').map(chain => chain[0].args[1])).toEqual([{ p_source_key: 'engine-own:schedule:weekly' }, { p_source_key: 'engine-own:session:engine-session' }])
             expect(sendIncidentResolvedEmail).toHaveBeenCalledTimes(1)
-            expect(sendIncidentResolvedEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-1@rerun.test', sourceLabel: 'Schedule "weekly"' }))
+            expect(sendIncidentResolvedEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-1@lumvika.test', sourceLabel: 'Schedule "weekly"' }))
         })
 
         it('tells nobody who has left the workspace that it works again', async () => {
@@ -379,7 +379,7 @@ describe('POST /api/webhooks/engine', () => {
             await POST(request(notification({ event: 'agent.schedule.completed', kind: 'done', source: 'schedule', metadata: { scheduleSlug: 'weekly' } })))
 
             expect(sendIncidentResolvedEmail).toHaveBeenCalledTimes(1)
-            expect(sendIncidentResolvedEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-1@rerun.test' }))
+            expect(sendIncidentResolvedEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-1@lumvika.test' }))
         })
 
         it('tells nobody who unsubscribed that it works again', async () => {
@@ -393,8 +393,8 @@ describe('POST /api/webhooks/engine', () => {
             expect(sendIncidentResolvedEmail).not.toHaveBeenCalled()
         })
 
-        it('treats a foreman event as a no-op', async () => {
-            const response = await POST(request(notification({ agentId: FOREMAN_AGENT_ID, event: 'agent.message.completed', kind: 'done' })))
+        it('treats a steward event as a no-op', async () => {
+            const response = await POST(request(notification({ agentId: STEWARD_AGENT_ID, event: 'agent.message.completed', kind: 'done' })))
 
             expect(response.status).toBe(202)
             expect(db.chainsOn('agents')).toHaveLength(0)

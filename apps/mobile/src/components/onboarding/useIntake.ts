@@ -1,4 +1,4 @@
-import { EMPTY_DRAFT, industryHint, intakeSteps, looksLikeSite, stepAnswered, toIntake, type ForemanIntakeRequest, type IntakeDraft, type TemplateCategory } from '@rerun/contracts'
+import { EMPTY_DRAFT, industryHint, intakeSteps, looksLikeSite, stepAnswered, toIntake, type StewardIntakeRequest, type IntakeDraft, type TemplateCategory } from '@lumvika/contracts'
 import { useRef, useState } from 'react'
 
 const INDUSTRY_WAIT_MS = 2500
@@ -7,7 +7,7 @@ type IntakeOptions = {
     knownFirstName: string | null
     // The fast guess at an industry from a site, made while the next questions are being answered.
     decideIndustry: (input: string) => Promise<TemplateCategory | null>
-    submit: (intake: ForemanIntakeRequest) => Promise<void>
+    submit: (intake: StewardIntakeRequest) => Promise<void>
     initial?: Partial<IntakeDraft>
     initialIndex?: number
 }

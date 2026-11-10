@@ -4,7 +4,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import { CLI_PROVIDERS, type LoadedAgent, type McpServer } from '../agents/types.js'
 import { workspaceDir } from '../config/paths.js'
 import { withAuth } from './mcp-auth.js'
@@ -24,7 +24,7 @@ export type McpCall = (name: string, args: Record<string, unknown>) => Promise<M
 export type McpTransport = 'stdio' | 'sse' | 'http'
 export type McpProbe = { ok: boolean; transport: McpTransport; toolNames: string[]; error?: string }
 
-// The name the model of a run sees for a server's tool: the CLIs namespace it themselves, Rerun's own
+// The name the model of a run sees for a server's tool: the CLIs namespace it themselves, Lumvika's own
 // loop registers it through `mcpToolSet`.
 export function mcpToolNameFor(provider: Provider | undefined, serverName: string, toolName: string): string {
     return provider && CLI_PROVIDERS.has(provider) ? `mcp__${serverName}__${toolName}` : `${serverName}_${toolName}`
@@ -54,7 +54,7 @@ function buildTransport(server: McpServer, spawn: McpSpawn): Transport | null {
 export async function openMcpClient(server: McpServer, spawn: McpSpawn): Promise<{ client: Client; tools: McpTool[] }> {
     const transport = buildTransport(server, spawn)
     if (!transport) throw new Error(`server "${server.name}" needs a command (stdio) or a url (sse/http)`)
-    const client = new Client({ name: 'rerun-engine', version: '1.0.0' })
+    const client = new Client({ name: 'lumvika-engine', version: '1.0.0' })
     try {
         await client.connect(transport)
         return { client, tools: (await client.listTools()).tools }
@@ -91,10 +91,10 @@ export function mcpToolSet(serverName: string, tools: McpTool[], call: McpCall):
 // The only way to turn a stored server into a dialable one, and the order is forced: the OAuth
 // bearer first, then the agent's ${VAR}s — the url has to be resolved before it can be recognised
 // as ours — then the hub identity headers last, so they are literal and final. An `npx` launch is
-// swapped for the package installed once, when it is. `${RERUN_WORKSPACE}` names the agent's own
+// swapped for the package installed once, when it is. `${LUMVIKA_WORKSPACE}` names the agent's own
 // workspace, for a server that needs an absolute folder (the mail server's attachment root).
 export async function prepareMcpServer(agentId: string, server: McpServer, env: Record<string, string>): Promise<McpServer> {
-    const resolvable = { ...env, RERUN_WORKSPACE: workspaceDir(agentId) }
+    const resolvable = { ...env, LUMVIKA_WORKSPACE: workspaceDir(agentId) }
     return withInstalledPackage(withHubHeaders(resolveServerSecrets(await withAuth(agentId, server), resolvable), agentId))
 }
 

@@ -20,7 +20,7 @@ function sentHeaders(call = 0) {
 beforeEach(() => {
     nativeFetch.mockClear()
     vi.stubGlobal('sessionStorage', memoryStorage())
-    vi.stubGlobal('window', { location: { href: 'https://app.rerun.test/?agent=a1', origin: 'https://app.rerun.test' }, fetch: nativeFetch })
+    vi.stubGlobal('window', { location: { href: 'https://app.lumvika.test/?agent=a1', origin: 'https://app.lumvika.test' }, fetch: nativeFetch })
     installWorkspaceHeader()
 })
 
@@ -39,9 +39,9 @@ describe('tab workspace pin', () => {
 
     it('reads the workspace a page load names in its URL, and nothing otherwise', () => {
         expect(readUrlWorkspace()).toBeNull()
-        window.location.href = 'https://app.rerun.test/?workspace=7'
+        window.location.href = 'https://app.lumvika.test/?workspace=7'
         expect(readUrlWorkspace()).toBe(7)
-        window.location.href = 'https://app.rerun.test/?workspace=7x'
+        window.location.href = 'https://app.lumvika.test/?workspace=7x'
         expect(readUrlWorkspace()).toBeNull()
     })
 

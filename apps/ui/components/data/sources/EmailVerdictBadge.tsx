@@ -1,7 +1,7 @@
 'use client'
 
-import type { EmailVerdictStatus } from '@rerun/contracts'
-import { Badge, type BadgeTone } from '@rerun/ui/primitives'
+import type { EmailVerdictStatus } from '@lumvika/contracts'
+import { Badge, type BadgeTone } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 
 export const EMAIL_VERDICT_TONES: Record<EmailVerdictStatus, BadgeTone> = {

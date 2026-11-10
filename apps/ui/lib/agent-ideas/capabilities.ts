@@ -1,6 +1,6 @@
 // What an agent can and cannot do today, in the words the design model and the judge read. An idea
 // built on the second list fails at its first run, which costs more trust than not proposing it.
-export const AGENT_CAPABILITIES = `What a Rerun coworker can do:
+export const AGENT_CAPABILITIES = `What a Lumvika coworker can do:
 - Work inside the apps it is connected to, through their connectors: read and write records, send messages, create documents.
 - Run on a schedule (every morning, every Monday), or when something arrives: an email, a form, a webhook from another app.
 - Read a public web page it is given the address of, and read files it is handed.

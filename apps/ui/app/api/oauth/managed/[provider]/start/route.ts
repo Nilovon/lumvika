@@ -6,7 +6,7 @@ import { readRegistry, resolveRegistryEntry } from '@/lib/services/registry'
 import { describeSignInError } from '@/lib/net/network-error'
 import { NextResponse } from 'next/server'
 
-// Begin the managed OAuth flow: build the authorize URL for Rerun's own client and stash the
+// Begin the managed OAuth flow: build the authorize URL for Lumvika's own client and stash the
 // one-request PKCE context in an httpOnly cookie keyed by state, so /callback can finish it.
 export async function POST(req: Request, { params }: { params: Promise<{ provider: string }> }) {
     try {

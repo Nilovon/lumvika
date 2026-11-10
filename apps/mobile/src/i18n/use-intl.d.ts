@@ -1,4 +1,4 @@
-import type { Locale } from '@rerun/i18n'
+import type { Locale } from '@lumvika/i18n'
 
 import type { MobileMessages } from '@/i18n/messages'
 

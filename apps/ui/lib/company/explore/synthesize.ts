@@ -5,7 +5,7 @@ import { openrouter } from '@/lib/ai/openrouter'
 import { extractPhotoUrl } from '@/lib/experts/linkedin-scrape'
 import { CollectorSkipped, type Collector, type CollectorData, type ExploreInput } from './types'
 
-const SYNTHESIS_MODEL = process.env.RERUN_COMPANY_BRIEF_MODEL ?? 'anthropic/claude-sonnet-5.5'
+const SYNTHESIS_MODEL = process.env.LUMVIKA_COMPANY_BRIEF_MODEL ?? 'anthropic/claude-sonnet-5.5'
 
 const PAGE_CHARS = 5_000
 const BLOCK_CHARS = 12_000

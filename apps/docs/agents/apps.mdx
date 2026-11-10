@@ -13,7 +13,7 @@ Apps are installed **per coworker**, not per Box and not per workspace. Two cowo
 
 <Tabs>
   <Tab title="From the coworker panel">
-    Open the **Apps** tab, search the library, and click the app. Rerun tells you what it needs before you commit.
+    Open the **Apps** tab, search the library, and click the app. Lumvika tells you what it needs before you commit.
   </Tab>
   <Tab title="Ask the coworker">
     Name the service in the chat. The coworker searches the library itself and raises a setup card for you to finish. It never asks you to paste a key into the conversation.
@@ -29,8 +29,8 @@ A service can offer several ways to connect, and you pick one at install time.
 
 | Method | What you do |
 | --- | --- |
-| **Managed** | Click sign in. Rerun brokers the OAuth and proxies the calls. Nothing to configure |
-| **OAuth** | Sign in to the service in a browser window. Rerun stores the token on your machine |
+| **Managed** | Click sign in. Lumvika brokers the OAuth and proxies the calls. Nothing to configure |
+| **OAuth** | Sign in to the service in a browser window. Lumvika stores the token on your machine |
 | **API key** | Paste a key into a masked form. It goes straight to your machine |
 | **Command** | The app runs a local MCP command on your machine |
 | **None** | Nothing to connect. It works right away |
@@ -55,7 +55,7 @@ A coworker with an app in `needs_auth` or `needs_config` will tell you so rather
 
 ## Where credentials live
 
-Credentials go to your machine and stay there. Rerun's database keeps only a reference to the variable name, never the value.
+Credentials go to your machine and stay there. Lumvika's database keeps only a reference to the variable name, never the value.
 
 That holds everywhere:
 
@@ -71,8 +71,8 @@ That holds everywhere:
 
 Two ways forward.
 
-**Ask for it.** The **Apps** tab has a request form. Requests go to the Rerun team and the library grows from them.
+**Ask for it.** The **Apps** tab has a request form. Requests go to the Lumvika team and the library grows from them.
 
-**Add the MCP server yourself.** Switch on expert mode, open the **MCP** tab, and register any Model Context Protocol server: HTTP, SSE or a local command, with its own headers, OAuth or environment variables. Anything with an MCP server works with Rerun today, app or not.
+**Add the MCP server yourself.** Switch on expert mode, open the **MCP** tab, and register any Model Context Protocol server: HTTP, SSE or a local command, with its own headers, OAuth or environment variables. Anything with an MCP server works with Lumvika today, app or not.
 
 Reference a stored secret in an MCP config with `${VARIABLE_NAME}`. It resolves on your machine at run time.

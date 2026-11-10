@@ -10,7 +10,7 @@ where subscription_status in ('active', 'past_due')
 
 -- Everyone is sold the $29 price now. A workspace that has not subscribed yet is quoted and checked
 -- out at its arm, so the ones drawn at $49 move to $29. A live subscription (a trial included) keeps
--- its arm here: the trial receipt and the foreman quote the column, and Stripe still bills its $49
+-- its arm here: the trial receipt and the steward quote the column, and Stripe still bills its $49
 -- price until the migration script moves the subscription and the column together.
 update public.workspaces
 set price_arm = '29'

@@ -7,7 +7,7 @@ import { detectLayout } from './layout.js'
 const roots: string[] = []
 
 function scratch(): string {
-    const dir = realpathSync(mkdtempSync(resolve(tmpdir(), 'rerun-layout-')))
+    const dir = realpathSync(mkdtempSync(resolve(tmpdir(), 'lumvika-layout-')))
     roots.push(dir)
     return dir
 }

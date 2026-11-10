@@ -4,7 +4,7 @@ import type { Database } from '@/app/api/database.types'
 import type { SessionStatus } from '@/lib/board/types'
 import { getRunSteps, listRuns } from '@/lib/engine/client'
 import type { EngineConnection, EngineRun, SessionSource } from '@/lib/engine/types'
-import { FOREMAN_AGENT_ID, type SessionKind, type Usage } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, type SessionKind, type Usage } from '@lumvika/contracts'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMany, selectManyWithJoins, selectMaybeSingle, selectMaybeSingleWithJoins } from '@/supabase/supabase-helpers'
 import { isTemplateContentLocked } from '@/lib/templates/content-lock'
@@ -24,7 +24,7 @@ export type AgentChatTarget = {
 // service-role client (which bypasses RLS), so we re-establish object-level authz in code: the agent
 // has to sit in the caller's workspace, and in a Box the caller reaches at the level asked (`use` to
 // talk to it and read it, `manage` to change what it is). `actor` is passed in when the caller is not
-// the browser session: a v1 route's context, an API key or a foreman turn (the workspace itself).
+// the browser session: a v1 route's context, an API key or a steward turn (the workspace itself).
 export async function resolveAgentTarget(agentId: string, actor?: Actor, access: AccessLevel = 'use'): Promise<AgentChatTarget> {
     // The agent row doesn't depend on the caller, and the caller's machine only on its workspace, so
     // all three are read at once. The machine read before the ownership check is the caller's own.
@@ -39,17 +39,17 @@ export async function getAgentChatTarget(agentId: string, access: AccessLevel = 
     return resolveAgentTarget(agentId, undefined, access)
 }
 
-// The foreman has no agent row: it lives on the workspace's engine under a fixed id, and any signed-in
+// The steward has no agent row: it lives on the workspace's engine under a fixed id, and any signed-in
 // member of the workspace may reach it. Only what reads or stops a run, picks its model or carries
 // the files of a chat message resolves through here. Talking to it stays with its own route, which
 // is where its brief is written.
 export async function resolveRunTarget(agentId: string, access: AccessLevel = 'use'): Promise<AgentChatTarget> {
-    if (agentId !== FOREMAN_AGENT_ID) return getAgentChatTarget(agentId, access)
+    if (agentId !== STEWARD_AGENT_ID) return getAgentChatTarget(agentId, access)
     const ctx = await requireWorkspaceContext()
     if (ctx.authUser.is_anonymous) throw new AuthorizationError('coworkerNotFound')
     const engine = await findWorkspaceEngine(ctx.workspace.id)
     if (!engine) throw new NoEngineError()
-    return { conn: engine.conn, engineAgentId: FOREMAN_AGENT_ID, contentLocked: false }
+    return { conn: engine.conn, engineAgentId: STEWARD_AGENT_ID, contentLocked: false }
 }
 
 async function fetchAgentRow(agentId: string) {
@@ -162,7 +162,7 @@ export async function findGeneralSession(agentId: string): Promise<GeneralSessio
     return data ? { id: data.id, engineSessionId: data.engine_session_id } : null
 }
 
-// Mirrors an engine session the hub opened outside the browser: the foreman handing an agent its
+// Mirrors an engine session the hub opened outside the browser: the steward handing an agent its
 // setup, an MCP send_message, anything that drops the stream instead of streaming it back. That row
 // is what carries the conversation into the agent's chat and what holds the `awaiting_*` state the
 // board draws, so a run started without it executes for nobody: it burns its tokens against an

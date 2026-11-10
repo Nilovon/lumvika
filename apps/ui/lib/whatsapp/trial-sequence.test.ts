@@ -16,7 +16,7 @@ vi.mock('./trial-phrases', () => ({
 }))
 vi.mock('@/lib/notifications/recipient', () => ({ loadFirstName: vi.fn(async () => 'Lucien') }))
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ findWorkspaceEngine: vi.fn(async () => null) }))
-vi.mock('@/lib/og/board-image', () => ({ boardImageUrl: vi.fn((scene: unknown) => `https://app.rerun.build/og/board?scene=${JSON.stringify(scene)}`) }))
+vi.mock('@/lib/og/board-image', () => ({ boardImageUrl: vi.fn((scene: unknown) => `https://app.lumvika.com/og/board?scene=${JSON.stringify(scene)}`) }))
 
 type Tables = Partial<Record<'workspaces' | 'workspace_members' | 'agents' | 'notifications' | 'sessions' | 'user_phones' | 'whatsapp_messages' | 'workspace_getting_started', SupabaseResult>>
 
@@ -83,7 +83,7 @@ describe('sweepTrialSequence', () => {
         expect(firstResultPhrase).toHaveBeenCalledWith('I found 12 founders hiring in Paris.')
         expect(delivered()).toMatchObject({ userId: 'owner', workspaceId: 7, language: 'en', dedupeKey: 'trial:7:day0' })
         expect(delivered().message).toMatchObject({
-            slug: 'rerun_trial_first_job_done',
+            slug: 'lumvika_trial_first_job_done',
             components: [
                 { type: 'header', parameters: [{ type: 'image', url: expect.stringContaining('"name":"Lead Scout","status":"working"') }] },
                 {
@@ -113,7 +113,7 @@ describe('sweepTrialSequence', () => {
         await sweepTrialSequence(database({ notifications: { data: [question, FIRST_JOB] }, sessions: { data: [{ engine_session_id: 'session-2' }] } }).client, DAY_ZERO_EVENING)
 
         expect(pendingActionPhrase).toHaveBeenCalledWith('Can I send these 12 messages?')
-        expect(delivered().message.slug).toBe('rerun_trial_needs_your_ok')
+        expect(delivered().message.slug).toBe('lumvika_trial_needs_your_ok')
         expect(delivered().message.components.at(-1)).toEqual({ type: 'button', parameters: [{ type: 'text', text: '?notification=notif-2&ref=whatsapp&wa=trial_needs_your_ok' }] })
     })
 

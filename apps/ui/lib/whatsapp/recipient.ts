@@ -18,7 +18,7 @@ function standsFor(flaggedAt: string | null, verifiedAt: string): boolean {
     return !!flaggedAt && new Date(flaggedAt) >= new Date(verifiedAt)
 }
 
-// The last gate before a message is built: a number Rerun may write to is one its owner proved, on
+// The last gate before a message is built: a number Lumvika may write to is one its owner proved, on
 // which they agreed to be contacted, which has since neither said stop nor turned out dead, and
 // whose country WhatsApp can reach at all for this kind of message.
 export async function loadWhatsAppRecipient(supabase: SupabaseClient<Database>, userId: string, category: WhatsAppCategory): Promise<WhatsAppRecipient> {
@@ -30,8 +30,8 @@ export async function loadWhatsAppRecipient(supabase: SupabaseClient<Database>, 
     if (standsFor(data.whatsapp_opted_out_at, data.verified_at)) return { ok: false, reason: 'opted_out' }
     if (standsFor(data.whatsapp_unreachable_at, data.verified_at)) return { ok: false, reason: 'unreachable' }
     const country = countryOfE164(data.phone)
-    if (!reachableChannels(country, 'rerun').includes('whatsapp')) return { ok: false, reason: 'unsupported_country' }
-    if (category === 'marketing' && !reachableChannels(country, 'rerun_marketing').includes('whatsapp')) return { ok: false, reason: 'marketing_paused' }
+    if (!reachableChannels(country, 'lumvika').includes('whatsapp')) return { ok: false, reason: 'unsupported_country' }
+    if (category === 'marketing' && !reachableChannels(country, 'lumvika_marketing').includes('whatsapp')) return { ok: false, reason: 'marketing_paused' }
     return { ok: true, phone: data.phone }
 }
 

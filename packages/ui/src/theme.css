@@ -1,5 +1,5 @@
-/* Thème partagé @rerun/ui : les design tokens shadcn core, source unique pour
-   apps/ui ET cloud/apps/landing. Importé une fois via @rerun/ui/styles.css.
+/* Thème partagé @lumvika/ui : les design tokens shadcn core, source unique pour
+   apps/ui ET cloud/apps/landing. Importé une fois via @lumvika/ui/styles.css.
    Chaque app garde à part ses tokens spécifiques (fonts, sidebar/chart côté ui,
    tokens côté landing). Ne pas redéfinir ici ce qui diverge entre apps. */
 
@@ -276,7 +276,7 @@
 
 /* Grille du mobilier flottant du board : hauteur d'une coque, taille d'un contrôle posé dedans,
    écart entre deux blocs voisins, distance au bord de la carte. Les blocs qui se placent les uns
-   par rapport aux autres (orbe Foreman, bannière de pause) calculent dessus. */
+   par rapport aux autres (orbe Steward, bannière de pause) calculent dessus. */
 :root {
   --chrome-size: 2.5rem;
   --chrome-control: 2rem;

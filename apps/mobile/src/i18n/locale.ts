@@ -1,5 +1,5 @@
-import type { Me } from '@rerun/contracts'
-import { resolveLocale, type Locale } from '@rerun/i18n'
+import type { Me } from '@lumvika/contracts'
+import { resolveLocale, type Locale } from '@lumvika/i18n'
 
 // `users.locale` as `/api/v1/me` returns it, once the hub sends it and the contract keeps it: until
 // then the field is absent and the phone's language decides alone. `null` means "follow the device".

@@ -3,7 +3,7 @@ import { serve } from '@hono/node-server'
 import { createServer } from '../../http/server.js'
 import { attachDesktopBridge } from '../../desktop/bridge.js'
 import { prepareDataDir } from '../../datadir/ladder.js'
-import { ensureForeman } from '../../agents/foreman.js'
+import { ensureSteward } from '../../agents/steward.js'
 import { startScheduler } from '../../runtime/scheduler.js'
 import { reconcileInterruptedRuns } from '../../runtime/reconcile.js'
 import { installBrowserInBackground, installDesktopInBackground, updateCliToolsInBackground } from './update.js'
@@ -24,13 +24,13 @@ export async function runCommand(): Promise<void> {
     await prepareDataDir()
     const lastUpdate = settleLastUpdateOnBoot()
     if (lastUpdate?.status === 'error') logger.warn({ error: lastUpdate.error, commit: lastUpdate.commit }, 'last update did not land')
-    await ensureForeman()
+    await ensureSteward()
     await reconcileInterruptedRuns()
     if (await installBrowserInBackground()) logger.info('chromium missing: installing it in the background')
     if (installDesktopInBackground()) logger.info('desktop missing: installing it in the background')
     const cliTools = updateCliToolsInBackground()
     if (cliTools === 'spawned') logger.info({ codex: CODEX_VERSION }, 'codex CLI off its pin: installing it in the background')
-    if (cliTools === 'no-root') logger.warn({ codex: CODEX_VERSION }, 'codex CLI off its pin and the service user cannot sudo: run `sudo rerun update-cli-tools`')
+    if (cliTools === 'no-root') logger.warn({ codex: CODEX_VERSION }, 'codex CLI off its pin and the service user cannot sudo: run `sudo lumvika update-cli-tools`')
     void listConnections()
         .then(connections => {
             refreshStaleCodexPlanLimits(connections)
@@ -41,12 +41,12 @@ export async function runCommand(): Promise<void> {
         .catch(err => logger.warn({ err: String(err) }, 'plan limits boot read skipped'))
     const stopScheduler = startScheduler()
     logger.info('scheduler started')
-    const { RERUN_PORT, RERUN_HOST, RERUN_API_KEY } = env()
+    const { LUMVIKA_PORT, LUMVIKA_HOST, LUMVIKA_API_KEY } = env()
     // Node closes any request that takes more than 5 minutes, which a 100 MB upload on a slow link
     // reaches. Raised rather than disabled: a zero here would drop the Slowloris guard with it.
     const serverOptions = { requestTimeout: 30 * 60 * 1000, headersTimeout: 60_000 }
-    const server = serve({ fetch: createServer().fetch, port: RERUN_PORT, hostname: RERUN_HOST, serverOptions }, info => {
-        logger.info({ port: info.port, host: RERUN_HOST, authenticated: Boolean(RERUN_API_KEY) }, 'rerun-engine listening')
+    const server = serve({ fetch: createServer().fetch, port: LUMVIKA_PORT, hostname: LUMVIKA_HOST, serverOptions }, info => {
+        logger.info({ port: info.port, host: LUMVIKA_HOST, authenticated: Boolean(LUMVIKA_API_KEY) }, 'lumvika-engine listening')
         void pairWithHub()
     })
     attachDesktopBridge(server as Server)

@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-shared-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-shared-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it } = await import('vitest')
 const { sharedTools } = await import('./shared.js')

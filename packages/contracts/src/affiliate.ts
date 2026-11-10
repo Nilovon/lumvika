@@ -15,10 +15,10 @@ export const AFFILIATE_BASE_PATH = '/r'
 
 // Where an affiliate signs up and tracks their referrals. Hosted by the vendor on our subdomain, so
 // unlike the pixel it is a plain link a visitor follows and nothing a blocklist has a reason to drop.
-export const AFFILIATE_PROGRAM_URL = 'https://rerun.affonso.io'
+export const AFFILIATE_PROGRAM_URL = 'https://lumvika.affonso.io'
 
-// Written by the pixel on the registrable domain, so the click that landed on rerun.build is still
-// readable from app.rerun.build, where the account and the subscription are actually created.
+// Written by the pixel on the registrable domain, so the click that landed on lumvika.com is still
+// readable from app.lumvika.com, where the account and the subscription are actually created.
 export const AFFILIATE_REFERRAL_COOKIE = 'affonso_referral'
 
 // The key Affonso looks for in the metadata of whatever Stripe object carries the revenue.

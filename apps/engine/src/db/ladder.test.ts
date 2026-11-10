@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-sqlite-ladder-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-sqlite-ladder-'))
 
 const { describe, expect, it } = await import('vitest')
 const { createClient } = await import('@libsql/client')
@@ -17,7 +17,7 @@ const { BRAIN_DB_MIGRATIONS } = await import('./brainDb.js')
 type Step = Parameters<typeof migrateSqlite>[1][number]
 
 function freshFile(name: string) {
-    return createClient({ url: `file:${resolve(process.env.RERUN_DATA_DIR!, `${name}.db`)}` })
+    return createClient({ url: `file:${resolve(process.env.LUMVIKA_DATA_DIR!, `${name}.db`)}` })
 }
 
 function recorder(log: number[], fail?: number): Step[] {
@@ -211,12 +211,12 @@ describe('system.db v3 to v4', () => {
     it('creates the index, then a first backfill reads the paid calls already made from their result or from the answer saved in the workspace', async () => {
         const client = freshFile('v3-system')
         await migrateSqlite(client, SYSTEM_DB_MIGRATIONS.slice(0, 3), 'v3-system.db')
-        const saved = '.rerun/paid-data/google.serp.maps-2026-10-20-treg-1.json'
+        const saved = '.lumvika/paid-data/google.serp.maps-2026-10-20-treg-1.json'
         const workspace = workspaceDir('scout')
-        await mkdir(resolve(workspace, '.rerun/paid-data'), { recursive: true })
+        await mkdir(resolve(workspace, '.lumvika/paid-data'), { recursive: true })
         await writeFile(resolve(workspace, saved), JSON.stringify({ capability: 'google.serp.maps', output: { places: [{ title: 'Boulangerie Dupont', website: 'https://boulangerie-dupont.fr' }] } }))
         await client.batch([
-            toolCall('1', 'mcp__rerun__paid_data', { capability: 'people.email.find', params: { full_name: 'Jane Doe' } }, { type: 'json', value: { status: 'found', servedBy: 'hunter', result: { output: { email: 'jane@acme.com' }, verification: { verdict: 'valid' } } } }, '2026-10-20T09:00:00.000Z'),
+            toolCall('1', 'mcp__lumvika__paid_data', { capability: 'people.email.find', params: { full_name: 'Jane Doe' } }, { type: 'json', value: { status: 'found', servedBy: 'hunter', result: { output: { email: 'jane@acme.com' }, verification: { verdict: 'valid' } } } }, '2026-10-20T09:00:00.000Z'),
             toolCall('2', 'paid_data', { capability: 'google.serp.maps', params: { q: 'boulangerie' } }, { saved, status: 'found', outline: { output: {} } }, '2026-10-20T10:00:00.000Z'),
             toolCall('3', 'paid_data', { capability: 'people.email.find', params: { full_name: 'John Roe' } }, { status: 'nothing_found', result: { output: { email: null } } }, '2026-10-20T11:00:00.000Z'),
             toolCall('4', 'shell_exec', { command: 'echo hi@acme.com' }, { stdout: 'hi@acme.com' }, '2026-10-20T12:00:00.000Z'),

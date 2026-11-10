@@ -1,5 +1,5 @@
-import { DEFAULT_LOCALE } from '@rerun/i18n'
-import { formatDate, formatNumber } from '@rerun/i18n/format'
+import { DEFAULT_LOCALE } from '@lumvika/i18n'
+import { formatDate, formatNumber } from '@lumvika/i18n/format'
 
 import { humanizeTableName } from '@/lib/data/table-name'
 import type { EngineDbColumn } from '@/lib/engine/types'

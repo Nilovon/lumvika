@@ -10,7 +10,7 @@ set -euo pipefail
 
 worktree="${PASEO_WORKTREE_PATH:-$(git rev-parse --show-toplevel)}"
 port_file="$worktree/.context/port"
-claims_dir="$HOME/.paseo/rerun-workspace-ports"
+claims_dir="$HOME/.paseo/lumvika-workspace-ports"
 
 if [ ! -s "$port_file" ]; then
   mkdir -p "$claims_dir" "$(dirname "$port_file")"

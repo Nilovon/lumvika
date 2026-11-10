@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cli-restore-finalize-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cli-restore-finalize-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({ prepared: 0 }))
 
@@ -42,7 +42,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('rerun restore-finalize', () => {
+describe('lumvika restore-finalize', () => {
     it('migrates the data-dir before touching any schedule', async () => {
         await restoreFinalizeCommand()
         expect(state.prepared).toBe(1)

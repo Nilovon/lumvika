@@ -12,9 +12,9 @@ export const DESKTOP_KEYS = {
     enter: { keysym: 0xff0d, code: 'Enter', labelKey: 'return' },
 } as const
 
-export const typeScript = (text: string) => `window.rerunDesktop && window.rerunDesktop.type(${JSON.stringify(text)}); true;`
+export const typeScript = (text: string) => `window.lumvikaDesktop && window.lumvikaDesktop.type(${JSON.stringify(text)}); true;`
 
-export const keyScript = (keysym: number, code: string) => `window.rerunDesktop && window.rerunDesktop.key(${keysym}, ${JSON.stringify(code)}); true;`
+export const keyScript = (keysym: number, code: string) => `window.lumvikaDesktop && window.lumvikaDesktop.key(${keysym}, ${JSON.stringify(code)}); true;`
 
 // Asks the viewer page for small JPEG copies of the screen, `width` pixels wide, or stops them.
-export const mirrorScript = (width: number | null) => `window.rerunDesktop && window.rerunDesktop.mirror && window.rerunDesktop.mirror(${width !== null}, ${width ?? 0}); true;`
+export const mirrorScript = (width: number | null) => `window.lumvikaDesktop && window.lumvikaDesktop.mirror && window.lumvikaDesktop.mirror(${width !== null}, ${width ?? 0}); true;`

@@ -13,7 +13,7 @@ import { generateText } from 'ai'
 // openai-compatible provider on OpenRouter. Throws on generation failure so the caller can
 // fall back to the raw vector ranking rather than silently returning nothing.
 
-const RERANK_MODEL = process.env.RERUN_RERANK_MODEL ?? 'google/gemini-2.5-flash-lite'
+const RERANK_MODEL = process.env.LUMVIKA_RERANK_MODEL ?? 'google/gemini-2.5-flash-lite'
 
 function rerankModel() {
     const apiKey = process.env.OPENROUTER_API_KEY

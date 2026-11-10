@@ -1,7 +1,7 @@
 'use client'
 
-import { TextGenerateEffect } from '@rerun/ui'
-import { StepperBar, StepTransition, type StepperGroup, type StepperSplit } from '@rerun/ui/steps'
+import { TextGenerateEffect } from '@lumvika/ui'
+import { StepperBar, StepTransition, type StepperGroup, type StepperSplit } from '@lumvika/ui/steps'
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 

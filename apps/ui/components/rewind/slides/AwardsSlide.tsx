@@ -1,8 +1,8 @@
 'use client'
 
-import type { RewindAwardId } from '@rerun/contracts'
-import type { BorderBeamProps } from '@rerun/ui'
-import { Card } from '@rerun/ui/primitives'
+import type { RewindAwardId } from '@lumvika/contracts'
+import type { BorderBeamProps } from '@lumvika/ui'
+import { Card } from '@lumvika/ui/primitives'
 import { motion } from 'motion/react'
 import { useLocale, useTranslations } from 'next-intl'
 
@@ -15,7 +15,7 @@ import { RewindHeadline, RewindSlideFrame } from '../RewindSlideFrame'
 import type { RewindSlideProps } from './types'
 
 const AWARDS: Record<RewindAwardId, { icon: LucideIcon; tone: NonNullable<BorderBeamProps['tone']>; color: string }> = {
-    'night-owl': { icon: MoonStar, tone: 'brand', color: '#b7a8ff' },
+    'night-owl': { icon: MoonStar, tone: 'brand', color: '#7fdccb' },
     marathon: { icon: TimerIcon, tone: 'orange', color: '#ff8a1f' },
     flawless: { icon: ShieldCheck, tone: 'green', color: '#a3ff3f' },
     toolsmith: { icon: WrenchIcon, tone: 'cyan', color: '#38d4ff' },

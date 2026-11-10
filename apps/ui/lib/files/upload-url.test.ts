@@ -14,9 +14,9 @@ describe('uploadUrl', () => {
         expect(query(uploadUrl({ kind: 'shared' }, '', 'f', 1))).toEqual({ name: 'f', size: '1', scope: 'shared' })
     })
 
-    it('sends a foreman upload to the hub bucket instead', () => {
-        const url = uploadUrl({ kind: 'foreman', sessionId: 's1' }, 'in', 'f', 1)
-        expect(url.startsWith('/api/foreman/files/stream?')).toBe(true)
+    it('sends a steward upload to the hub bucket instead', () => {
+        const url = uploadUrl({ kind: 'steward', sessionId: 's1' }, 'in', 'f', 1)
+        expect(url.startsWith('/api/steward/files/stream?')).toBe(true)
         expect(query(url)).toEqual({ name: 'f', size: '1', dir: 'in', sessionId: 's1' })
     })
 })

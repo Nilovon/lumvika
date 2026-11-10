@@ -1,4 +1,4 @@
-import { agentConversationsOverviewSchema, agentViewSchema, aiConnectionsViewSchema, boardAgentSchema, boxSchema, coworkerFilesSchema, foremanSurfaceSchema, inboxSchema, installedServiceSchema, memberProfileSchema, meSchema, notificationPrefsSchema, routineViewSchema, workspaceSummarySchema, type AgentModels, type AgentView, type AiConnectionsView, type Box, type Conversation, type CoworkerFiles, type ForemanSurface, type Inbox, type InstalledServiceView, type Me, type MemberProfile, type NotificationPrefs, type RoutineView, type WorkspaceSummary } from '@rerun/contracts'
+import { agentConversationsOverviewSchema, agentViewSchema, aiConnectionsViewSchema, boardAgentSchema, boxSchema, coworkerFilesSchema, stewardSurfaceSchema, inboxSchema, installedServiceSchema, memberProfileSchema, meSchema, notificationPrefsSchema, routineViewSchema, workspaceSummarySchema, type AgentModels, type AgentView, type AiConnectionsView, type Box, type Conversation, type CoworkerFiles, type StewardSurface, type Inbox, type InstalledServiceView, type Me, type MemberProfile, type NotificationPrefs, type RoutineView, type WorkspaceSummary } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 import { Directory, File, Paths } from 'expo-file-system'
 
@@ -138,15 +138,15 @@ export const cachedNotificationPrefs = (userId: string): CacheEntry<Notification
 
 export const cachedAiConnections = (workspaceId: number): CacheEntry<AiConnectionsView> => entry(`ai-${workspaceId}`, value => aiConnectionsViewSchema.parse(value))
 
-export type ForemanRead = { surface: ForemanSurface; last: { sessionId: string; title: string | null } | null }
+export type StewardRead = { surface: StewardSurface; last: { sessionId: string; title: string | null } | null }
 
-export const cachedForeman = (workspaceId: number): CacheEntry<ForemanRead> =>
-    entry(`foreman-${workspaceId}`, value => {
+export const cachedSteward = (workspaceId: number): CacheEntry<StewardRead> =>
+    entry(`steward-${workspaceId}`, value => {
         const { surface, last } = fieldsOf(value)
-        if (last === null) return { surface: foremanSurfaceSchema.parse(surface), last: null }
+        if (last === null) return { surface: stewardSurfaceSchema.parse(surface), last: null }
         const { sessionId, title } = fieldsOf(last)
         if (typeof sessionId !== 'string' || (title !== null && typeof title !== 'string')) throw new Error('not a conversation')
-        return { surface: foremanSurfaceSchema.parse(surface), last: { sessionId, title } }
+        return { surface: stewardSurfaceSchema.parse(surface), last: { sessionId, title } }
     })
 
 export type CoworkerDetailsRead = Partial<{ view: AgentView; boxes: Box[]; files: CoworkerFiles; apps: InstalledServiceView[]; routines: RoutineView[] }>

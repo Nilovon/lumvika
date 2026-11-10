@@ -5,7 +5,7 @@ import { BRAVE_MAX_COUNT, searchBrave } from '@/lib/search/brave'
 import { readCachedSearch, searchCacheKey, storeSearch } from '@/lib/search/cache'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 
-// The one door a coworker's web_search goes through. The engine calls it with its RERUN_API_KEY,
+// The one door a coworker's web_search goes through. The engine calls it with its LUMVIKA_API_KEY,
 // which names one workspace, so the search provider key never leaves the app.
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +40,7 @@ export async function POST(req: Request): Promise<Response> {
     if (!engine) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { query, maxResults } = parsed.data
-    const engineAgentId = req.headers.get('x-rerun-agent')
+    const engineAgentId = req.headers.get('x-lumvika-agent')
     const startedAt = Date.now()
     const key = searchCacheKey(query)
 

@@ -13,7 +13,7 @@ const { serviceCommand } = await import('./service.js')
 
 beforeEach(() => {
     calls.length = 0
-    vi.stubEnv('RERUN_SERVICE', undefined)
+    vi.stubEnv('LUMVIKA_SERVICE', undefined)
     vi.spyOn(process, 'getuid').mockReturnValue(1000)
 })
 
@@ -25,25 +25,25 @@ afterEach(() => {
 describe('serviceCommand', () => {
     it('drives systemctl through sudo when not root', () => {
         serviceCommand('restart', [])
-        expect(calls).toEqual([['sudo', ['systemctl', 'restart', 'rerun'], { stdio: 'inherit' }]])
+        expect(calls).toEqual([['sudo', ['systemctl', 'restart', 'lumvika'], { stdio: 'inherit' }]])
     })
 
     it('drives systemctl directly as root', () => {
         vi.spyOn(process, 'getuid').mockReturnValue(0)
         serviceCommand('status', [])
-        expect(calls).toEqual([['systemctl', ['status', 'rerun'], { stdio: 'inherit' }]])
+        expect(calls).toEqual([['systemctl', ['status', 'lumvika'], { stdio: 'inherit' }]])
     })
 
     it('tails the logs, following them unless told not to', () => {
         serviceCommand('logs', [])
         serviceCommand('logs', ['--no-follow'])
-        expect(calls.map(([file, args]) => [file, ...args].join(' '))).toEqual(['sudo journalctl -u rerun -n 200 -f', 'sudo journalctl -u rerun -n 200'])
+        expect(calls.map(([file, args]) => [file, ...args].join(' '))).toEqual(['sudo journalctl -u lumvika -n 200 -f', 'sudo journalctl -u lumvika -n 200'])
     })
 
-    it('targets the service named by RERUN_SERVICE', () => {
-        vi.stubEnv('RERUN_SERVICE', 'rerun-staging')
+    it('targets the service named by LUMVIKA_SERVICE', () => {
+        vi.stubEnv('LUMVIKA_SERVICE', 'lumvika-staging')
         serviceCommand('stop', [])
         serviceCommand('logs', ['--no-follow'])
-        expect(calls.map(([file, args]) => [file, ...args].join(' '))).toEqual(['sudo systemctl stop rerun-staging', 'sudo journalctl -u rerun-staging -n 200'])
+        expect(calls.map(([file, args]) => [file, ...args].join(' '))).toEqual(['sudo systemctl stop lumvika-staging', 'sudo journalctl -u lumvika-staging -n 200'])
     })
 })

@@ -3,7 +3,7 @@
 import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { requestCompanyBrainSeed } from '@/lib/brain/request-seed'
 import { companySiteUrl } from '@/lib/company/firecrawl'
-import { readAnswers, writeAnswers } from '@/lib/foreman/profile'
+import { readAnswers, writeAnswers } from '@/lib/steward/profile'
 import { failure, type ActionFailure } from '@/lib/i18n/action-error'
 
 export type SeedCompanyBrainResult = { ok: true } | ActionFailure

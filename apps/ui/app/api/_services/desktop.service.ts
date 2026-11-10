@@ -1,7 +1,7 @@
-import { DESKTOP_WS_PATH, type DesktopViewMode } from '@rerun/contracts'
+import { DESKTOP_WS_PATH, type DesktopViewMode } from '@lumvika/contracts'
 
 import { NoEngineError } from '@/app/api/_services/workspace-engine.service'
-import { DESKTOP_DIRECT, desktopRelayBase } from '@rerun/cloud/engines'
+import { DESKTOP_DIRECT, desktopRelayBase } from '@lumvika/cloud/engines'
 import { buildBaseUrl } from '@/lib/engine/base-url'
 import { supportsDesktop } from '@/lib/engine/client'
 import { mintDesktopTicket } from '@/lib/engine/desktop-ticket'
@@ -24,7 +24,7 @@ export class DesktopUnavailableError extends AppError {
 export type WorkspaceDesktop = { conn: EngineConnection; socketBase: string }
 
 // Where a browser reaches the screens of the workspace's machine: an engine on this very machine
-// (local development) directly, a box on one of Rerun Cloud's hosts through that host's relay, and a
+// (local development) directly, a box on one of Lumvika Cloud's hosts through that host's relay, and a
 // self-hosted engine on its own address.
 async function socketBaseOf(conn: EngineConnection, hostId: string | null, boxIndex: number | null): Promise<string> {
     const engine = new URL(conn.baseUrl)

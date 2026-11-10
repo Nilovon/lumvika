@@ -3,10 +3,10 @@ title: "Apps"
 description: "Search the app library and declare integrations on a coworker."
 ---
 
-An app is a ready-made integration from the Rerun library: Stripe, Gmail, Notion, Slack and hundreds more. Declaring one on a coworker gives it that service tools. See [Apps](/agents/apps) for the concept.
+An app is a ready-made integration from the Lumvika library: Stripe, Gmail, Notion, Slack and hundreds more. Declaring one on a coworker gives it that service tools. See [Apps](/agents/apps) for the concept.
 
 <Warning>
-  No credential ever goes through the API. `attach_connector` takes no secret, by design. Never ask anyone for an API key, a password or a token: the account owner finishes the connection in the Rerun app.
+  No credential ever goes through the API. `attach_connector` takes no secret, by design. Never ask anyone for an API key, a password or a token: the account owner finishes the connection in the Lumvika app.
 </Warning>
 
 ## search_connectors
@@ -73,7 +73,7 @@ Declares an app on a coworker.
   Add another account of an app that supports several. Ignored for an app limited to one account.
 </ParamField>
 
-When the app needs no credential and no sign-in, it is installed right away. Otherwise it is recorded as pending, and the account owner finishes the connection from the Rerun app, in the coworker panel under **Apps**.
+When the app needs no credential and no sign-in, it is installed right away. Otherwise it is recorded as pending, and the account owner finishes the connection from the Lumvika app, in the coworker panel under **Apps**.
 
 The response carries the resulting `status`, the `key` of the account it declared, the available `authMethods` when one is still pending, and a `message` describing what is left to do.
 

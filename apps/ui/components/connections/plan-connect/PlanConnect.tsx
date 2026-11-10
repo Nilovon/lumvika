@@ -1,6 +1,6 @@
 'use client'
 
-import type { AiConnectionSurface } from '@rerun/analytics'
+import type { AiConnectionSurface } from '@lumvika/analytics'
 
 import type { SubscriptionProvider } from '@/components/agent/ModelPickerProviders'
 import { useClaudeOAuth } from '@/components/connections/use-claude-oauth'
@@ -8,7 +8,7 @@ import { useCodexDeviceAuth } from '@/components/connections/use-codex-device-au
 
 import { ChatGptPlanSteps } from './ChatGptPlanSteps'
 import { ClaudePlanSteps } from './ClaudePlanSteps'
-import type { TrackStep } from './ForemanTrack'
+import type { TrackStep } from './StewardTrack'
 
 type PlanConnectProps = {
     provider: SubscriptionProvider

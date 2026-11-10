@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
 
 import { AI_PROVIDERS_ADMIN_ONLY } from '@/auth/access'
-import { AI_CONNECTIONS_FULL, AI_CONNECTIONS_RERUN_ONLY } from '@/mocks/aiConnections'
+import { AI_CONNECTIONS_FULL, AI_CONNECTIONS_LUMVIKA_ONLY } from '@/mocks/aiConnections'
 
 import { ConnectionDetail } from './ConnectionDetail'
 import { ProvidersList } from './ProvidersList'
@@ -29,7 +29,7 @@ describe('AI providers for a member', () => {
 
     it('greys the providers an empty group offers to add', async () => {
         const handlers = listHandlers()
-        await render(<ProvidersList view={AI_CONNECTIONS_RERUN_ONLY} readOnlyReason={AI_PROVIDERS_ADMIN_ONLY} {...handlers} />)
+        await render(<ProvidersList view={AI_CONNECTIONS_LUMVIKA_ONLY} readOnlyReason={AI_PROVIDERS_ADMIN_ONLY} {...handlers} />)
         await fireEvent.press(screen.getByTestId('add-claude'))
         expect(handlers.onAdd).not.toHaveBeenCalled()
     })

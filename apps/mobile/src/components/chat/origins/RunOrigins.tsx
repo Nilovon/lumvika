@@ -1,5 +1,5 @@
-import type { ScheduledRun, TriggerPayload } from '@rerun/contracts'
-import { fullDateTime } from '@rerun/i18n/format'
+import type { ScheduledRun, TriggerPayload } from '@lumvika/contracts'
+import { fullDateTime } from '@lumvika/i18n/format'
 import * as Clipboard from 'expo-clipboard'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { useState, type ReactNode } from 'react'

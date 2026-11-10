@@ -98,4 +98,4 @@ At capture: the `leads` table created by the test is in `data/agent.db` → **ex
 - `tagline`: `Get a fresh list of decision-makers who fit your offer every week, each with the reason they fit and a way to reach them.`
 - `category`: `sales` · `tags`: `leads`, `prospecting`, `b2b`, `sales`, `lead generation`
 - `setupMinutes`: install 1 + setup 2 + 1 schedule = 4 → **5**
-- `metaDescription` (≈ 145 characters): `Find qualified B2B leads every week: decision-makers that fit your offer, why they fit and how to reach them, kept fresh and deduplicated by Rerun.`
+- `metaDescription` (≈ 145 characters): `Find qualified B2B leads every week: decision-makers that fit your offer, why they fit and how to reach them, kept fresh and deduplicated by Lumvika.`

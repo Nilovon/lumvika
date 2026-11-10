@@ -47,7 +47,7 @@ export default function BudgetExhausted({
 
 BudgetExhausted.PreviewProps = {
   workspaceName: "Acme",
-  appUrl: "https://app.rerun.build",
+  appUrl: "https://app.lumvika.com",
 } satisfies BudgetExhaustedProps;
 
 const hint: React.CSSProperties = {

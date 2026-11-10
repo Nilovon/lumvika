@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { APICallError } from 'ai'
-import { armBudgetLatch, clearBudgetLatch, isBudgetLatched, isRerunBudgetError } from './budget-latch.js'
+import { armBudgetLatch, clearBudgetLatch, isBudgetLatched, isLumvikaBudgetError } from './budget-latch.js'
 
 const budgetError = (statusCode: number, responseBody: string) =>
     new APICallError({ message: 'Payment Required', url: 'https://hub.test/api/llm/chat/completions', requestBodyValues: {}, statusCode, responseBody })
@@ -27,21 +27,21 @@ describe('budget latch', () => {
     })
 })
 
-describe('isRerunBudgetError', () => {
+describe('isLumvikaBudgetError', () => {
     it('matches a 402 API call error', () => {
-        expect(isRerunBudgetError(budgetError(402, '{"error":"rerun_budget_exhausted"}'))).toBe(true)
+        expect(isLumvikaBudgetError(budgetError(402, '{"error":"lumvika_budget_exhausted"}'))).toBe(true)
     })
 
     it('matches the sentinel in the response body regardless of status', () => {
-        expect(isRerunBudgetError(budgetError(400, '{"error":"rerun_budget_exhausted"}'))).toBe(true)
+        expect(isLumvikaBudgetError(budgetError(400, '{"error":"lumvika_budget_exhausted"}'))).toBe(true)
     })
 
     it('matches the sentinel in a stringified error', () => {
-        expect(isRerunBudgetError(new Error('AI_APICallError: rerun_budget_exhausted'))).toBe(true)
+        expect(isLumvikaBudgetError(new Error('AI_APICallError: lumvika_budget_exhausted'))).toBe(true)
     })
 
     it('ignores other API errors', () => {
-        expect(isRerunBudgetError(budgetError(500, '{"error":"upstream down"}'))).toBe(false)
-        expect(isRerunBudgetError(new Error('boom'))).toBe(false)
+        expect(isLumvikaBudgetError(budgetError(500, '{"error":"upstream down"}'))).toBe(false)
+        expect(isLumvikaBudgetError(new Error('boom'))).toBe(false)
     })
 })

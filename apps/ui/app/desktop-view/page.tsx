@@ -15,7 +15,7 @@ type DesktopViewBridge = DesktopViewerHandle & {
 declare global {
     interface Window {
         ReactNativeWebView?: NativeBridge
-        rerunDesktop?: DesktopViewBridge
+        lumvikaDesktop?: DesktopViewBridge
     }
 }
 
@@ -25,7 +25,7 @@ const DEFAULT_MIRROR_WIDTH = 400
 
 // A coworker's screen and nothing else, for the iOS app's web view. The socket travels in the
 // fragment, which no request carries: the page itself needs no session, the ticket in the socket URL
-// is the only key, spent within a minute. The app types through `window.rerunDesktop`, hears of a
+// is the only key, spent within a minute. The app types through `window.lumvikaDesktop`, hears of a
 // dropped connection to ask for a fresh ticket, and can ask for copies of the screen to mirror it.
 export default function DesktopView() {
     const viewer = useRef<DesktopViewerHandle>(null)
@@ -45,14 +45,14 @@ export default function DesktopView() {
     }, [])
 
     useEffect(() => {
-        window.rerunDesktop = {
+        window.lumvikaDesktop = {
             paste: text => viewer.current?.paste(text),
             key: (keysym, code) => viewer.current?.key(keysym, code),
             type: text => viewer.current?.type(text),
             mirror: (on, width) => setMirrorWidth(on ? Math.round(width || DEFAULT_MIRROR_WIDTH) : null),
         }
         return () => {
-            delete window.rerunDesktop
+            delete window.lumvikaDesktop
         }
     }, [])
 

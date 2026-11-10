@@ -66,7 +66,7 @@ export default function AgentNotification({
       <Panel tone={TONES_BY_KIND[kind]}>{message}</Panel>
       <Section style={cta}>
         <Button href={conversationUrl ?? appUrl}>
-          {conversationUrl ? t("common.openConversation") : t("common.openRerun")}
+          {conversationUrl ? t("common.openConversation") : t("common.openLumvika")}
         </Button>
       </Section>
     </Layout>
@@ -79,8 +79,8 @@ AgentNotification.PreviewProps = {
   message:
     "I found two candidate database schemas. Which one should I use for the migration?",
   reason: "You started this conversation.",
-  appUrl: "https://app.rerun.build",
-  conversationUrl: "https://app.rerun.build/?notification=preview",
+  appUrl: "https://app.lumvika.com",
+  conversationUrl: "https://app.lumvika.com/?notification=preview",
 } satisfies AgentNotificationProps;
 
 const reasonLine: React.CSSProperties = {

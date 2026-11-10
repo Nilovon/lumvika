@@ -2,7 +2,7 @@ import { resolve } from 'node:path'
 import { env } from './env.js'
 import { badRequest } from '../lib/errors.js'
 
-export const dataDir = () => env().RERUN_DATA_DIR
+export const dataDir = () => env().LUMVIKA_DATA_DIR
 
 // Ids, slugs and server names reach these helpers from tool calls and URLs, and `resolve` would
 // happily walk `../other-agent/SOUL` out of the folder they are meant to name.
@@ -13,12 +13,12 @@ export function pathSegment(value: string, what: string): string {
     return value
 }
 
-export const dbPath = () => resolve(dataDir(), 'rerun.db')
+export const dbPath = () => resolve(dataDir(), 'lumvika.db')
 
 // The last step of the data-dir migration ladder this folder has been through. Absent means v0.
 export const dataVersionPath = () => resolve(dataDir(), 'data-version.json')
 
-// What the last `rerun update` did, read back by `/health`.
+// What the last `lumvika update` did, read back by `/health`.
 export const lastUpdatePath = () => resolve(dataDir(), 'last-update.json')
 
 export const agentsDir = () => resolve(dataDir(), 'agents')

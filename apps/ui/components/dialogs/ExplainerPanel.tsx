@@ -1,6 +1,6 @@
 'use client'
 
-import { BorderBeam } from '@rerun/ui'
+import { BorderBeam } from '@lumvika/ui'
 import { CheckIcon } from '@/lib/icons'
 
 export type ExplainerPoint = {

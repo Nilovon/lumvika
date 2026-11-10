@@ -8,10 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useModKeyLabel } from '@/hooks/useModKeyLabel'
 import { ArrowLeftIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { Orb } from '@rerun/ui/foreman'
-import { AgentBuddy } from '@rerun/ui/iso-grid'
-import { Badge } from '@rerun/ui/primitives'
-import { StepTransition } from '@rerun/ui/steps'
+import { Orb } from '@lumvika/ui/steward'
+import { AgentBuddy } from '@lumvika/ui/iso-grid'
+import { Badge } from '@lumvika/ui/primitives'
+import { StepTransition } from '@lumvika/ui/steps'
 import { Command as CommandPrimitive } from 'cmdk'
 import { useTranslations } from 'next-intl'
 import { useState, type CSSProperties, type KeyboardEvent } from 'react'
@@ -50,7 +50,7 @@ const ANCHORED = 'flex translate-x-0 translate-y-0 gap-3 rounded-none bg-transpa
 // The panel hangs off the parked orb, whichever corner it sits in, and grows away from it.
 function measureOrbAnchor(): OrbAnchor | null {
     if (!window.matchMedia(ANCHOR_QUERY).matches) return null
-    const orb = document.querySelector('[data-foreman-orb]')?.getBoundingClientRect()
+    const orb = document.querySelector('[data-steward-orb]')?.getBoundingClientRect()
     if (!orb) return null
     const { clientWidth, clientHeight } = document.documentElement
     const horizontal = orb.left + orb.width / 2 > clientWidth / 2 ? 'right' : 'left'
@@ -84,10 +84,10 @@ export function ControlCenterView({ open, onOpenChange, anchorToOrb = false, ...
         </DialogHeader>
     )
 
-    // ⌘K pressed with the center open closes it and puts the caret in the Foreman's pill: the dialog
+    // ⌘K pressed with the center open closes it and puts the caret in the Steward's pill: the dialog
     // would take it back to wherever it was before the center opened.
     const keepPillFocus = (event: Event) => {
-        if (document.activeElement?.closest('[data-foreman-orb]')) event.preventDefault()
+        if (document.activeElement?.closest('[data-steward-orb]')) event.preventDefault()
     }
 
     return (
@@ -194,7 +194,7 @@ export function ControlCenterPanel({ query, onQueryChange, placeholder, pageKey,
                     <span className="flex items-center gap-1.5 max-sm:hidden">
                         <Kbd className={HINT_KEY}>{mod}</Kbd>
                         <Kbd className={HINT_KEY}>↵</Kbd>
-                        {t('askRerun')}
+                        {t('askLumvika')}
                     </span>
                 ) : (
                     <span className="flex items-center gap-1.5 max-sm:hidden">

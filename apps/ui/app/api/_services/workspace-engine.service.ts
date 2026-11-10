@@ -1,7 +1,7 @@
 import { assertEngineEntitlement } from '@/app/api/_services/capacity.service'
 import { pushBoxPlan } from '@/app/api/_services/engine-plan.service'
 import type { Database } from '@/app/api/database.types'
-import { claimPoolEngine } from '@rerun/cloud/engines'
+import { claimPoolEngine } from '@lumvika/cloud/engines'
 import { requestCompanyBrainSeed } from '@/lib/brain/request-seed'
 import { buildBaseUrl } from '@/lib/engine/base-url'
 import type { EngineConnection } from '@/lib/engine/types'
@@ -28,7 +28,7 @@ export class NoEngineError extends AppError {
 export type WorkspaceEngine = {
     instanceId: string
     conn: EngineConnection
-    // False for an engine somebody else hosts, which Rerun can reach but not power on or off.
+    // False for an engine somebody else hosts, which Lumvika can reach but not power on or off.
     managed: boolean
 }
 
@@ -114,7 +114,7 @@ export async function attachCustomEngine(workspaceId: number, params: { engineHo
 export type AuthenticatedWorkspace = { workspaceId: number; isSandbox: boolean }
 
 // The identity an engine proves when it calls back into the hub (webhooks, Hub MCP, the LLM proxy,
-// embeddings): its RERUN_API_KEY, unique across the pool. An engine nobody claimed authenticates
+// embeddings): its LUMVIKA_API_KEY, unique across the pool. An engine nobody claimed authenticates
 // as nobody.
 export async function authenticateEngineToken(token: string): Promise<AuthenticatedWorkspace | null> {
     if (!token) return null

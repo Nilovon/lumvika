@@ -1,2 +1,2 @@
-export { Input } from '@rerun/ui/forms'
-export type { InputProps } from '@rerun/ui/forms'
+export { Input } from '@lumvika/ui/forms'
+export type { InputProps } from '@lumvika/ui/forms'

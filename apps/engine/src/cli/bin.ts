@@ -11,32 +11,32 @@ import { installBrowserCommand, installDesktop, installLayoutCommand, rollbackCo
 import { serviceCommand } from './commands/service.js'
 import { restoreFinalizeCommand } from './commands/restore-finalize.js'
 
-const HELP = `rerun-engine
+const HELP = `lumvika-engine
 
 Usage:
-  rerun run                       Start the API server
-  rerun migrate                   Create or update the database
-  rerun restore-finalize          Migrate a restored data-dir, skip the runs it slept through
-  rerun agent create --name <n>   Create an agent
-  rerun agent list                List agents
-  rerun agent delete <id>         Delete an agent
-  rerun skill list <agentId>      List an agent's skills
-  rerun schedule list <agentId>   List an agent's scheduled tasks
-  rerun mcp login <id> <server>   Sign in to an OAuth MCP server
-  rerun mcp status <agentId>      Check MCP server connections
-  rerun mcp logout <id> <server>  Clear a stored MCP token
-  rerun doctor                    Check the environment
-  rerun update                    Pull, rebuild, migrate and restart the service (git checkout)
-  rerun update --artifact <url> --sha256 <hex> --commit <sha>
+  lumvika run                       Start the API server
+  lumvika migrate                   Create or update the database
+  lumvika restore-finalize          Migrate a restored data-dir, skip the runs it slept through
+  lumvika agent create --name <n>   Create an agent
+  lumvika agent list                List agents
+  lumvika agent delete <id>         Delete an agent
+  lumvika skill list <agentId>      List an agent's skills
+  lumvika schedule list <agentId>   List an agent's scheduled tasks
+  lumvika mcp login <id> <server>   Sign in to an OAuth MCP server
+  lumvika mcp status <agentId>      Check MCP server connections
+  lumvika mcp logout <id> <server>  Clear a stored MCP token
+  lumvika doctor                    Check the environment
+  lumvika update                    Pull, rebuild, migrate and restart the service (git checkout)
+  lumvika update --artifact <url> --sha256 <hex> --commit <sha>
                                   Install a prebuilt release, migrate and restart the service
-  rerun rollback                  Go back to the previous release and restart the service
-  rerun install-layout            Write the launcher and the systemd units for the release layout
-  rerun install-browser           Install Chromium for the browser tool
-  rerun install-desktop           Install the window manager and VNC server behind the Computer
-  rerun update-cli-tools          Install the Codex CLI this release pins
-  rerun start | stop | restart    Control the systemd service
-  rerun status                    Show the service status
-  rerun logs [--no-follow]        Tail the service logs
+  lumvika rollback                  Go back to the previous release and restart the service
+  lumvika install-layout            Write the launcher and the systemd units for the release layout
+  lumvika install-browser           Install Chromium for the browser tool
+  lumvika install-desktop           Install the window manager and VNC server behind the Computer
+  lumvika update-cli-tools          Install the Codex CLI this release pins
+  lumvika start | stop | restart    Control the systemd service
+  lumvika status                    Show the service status
+  lumvika logs [--no-follow]        Tail the service logs
 `
 
 async function main() {

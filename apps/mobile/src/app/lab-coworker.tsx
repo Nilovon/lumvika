@@ -1,4 +1,4 @@
-import type { CoworkerFiles as CoworkerFilesView, InstalledServiceView, RoutineView } from '@rerun/contracts'
+import type { CoworkerFiles as CoworkerFilesView, InstalledServiceView, RoutineView } from '@lumvika/contracts'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Alert } from 'react-native'
@@ -12,7 +12,7 @@ import { MOCK_APPS, MOCK_APPS_TO_CONNECT, MOCK_FILES, MOCK_ROUTINES, mockFileUrl
 import { coworkers } from '@/mocks/data'
 
 // Dev only: the coworker details and the pages they open, on mock data, in each state.
-// `rerun://lab-coworker?screen=details&state=normal`.
+// `lumvika://lab-coworker?screen=details&state=normal`.
 
 // `use`: the caller only uses the coworker's Box, so what changes the coworker is greyed.
 type LabState = 'normal' | 'loading' | 'to-connect' | 'empty' | 'off' | 'muted' | 'use'

@@ -2,9 +2,9 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-embed-off-'))
-process.env.RERUN_API_KEY = 'engine-secret'
-process.env.RERUN_HUB_BASE_URL = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-embed-off-'))
+process.env.LUMVIKA_API_KEY = 'engine-secret'
+process.env.LUMVIKA_HUB_BASE_URL = ''
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const { embedBaseUrl, embedText } = await import('./embed.js')

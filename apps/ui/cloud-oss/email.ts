@@ -25,5 +25,5 @@ export type PushContext = {
     members: RoutedMember[]
 }
 
-// The mobile app talks to Rerun Cloud only, so a self-hosted hub has no device to push to.
+// The mobile app talks to Lumvika Cloud only, so a self-hosted hub has no device to push to.
 export async function pushNotification(_supabase: SupabaseClient<Database>, _context: PushContext): Promise<void> {}

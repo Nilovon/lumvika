@@ -1,4 +1,4 @@
-import type { TakeoverResult } from '@rerun/contracts'
+import type { TakeoverResult } from '@lumvika/contracts'
 
 // The chat waits on the screen it opened: the desktop page settles the wait when the person hands
 // the browser back, with the page it was left on and whether its window is still on the screen.

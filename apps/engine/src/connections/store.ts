@@ -1,15 +1,15 @@
 import { mkdir, rm, writeFile, rename } from 'node:fs/promises'
 import {
     PROVIDER_LABELS,
-    RERUN_CONNECTION_ID,
-    RERUN_MODEL,
+    LUMVIKA_CONNECTION_ID,
+    LUMVIKA_MODEL,
     DEFAULT_CONNECTION_MODELS,
     connectionConfigSchema,
     type ConnectionConfig,
     type CreateConnectionInput,
     type UpdateConnectionInput,
     type UpdateConnectionKeysInput,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { connectionConfigPath, connectionDir, connectionEnvPath, connectionsDir } from '../config/paths.js'
 import { readEnvFile, serializeEnv, writeEnvFile } from '../lib/env-file.js'
 import { badRequest } from '../lib/errors.js'
@@ -58,10 +58,10 @@ export async function createConnection(input: CreateConnectionInput, id = newId(
 }
 
 export async function patchConnection(id: string, patch: UpdateConnectionInput): Promise<LoadedConnection> {
-    if (id === RERUN_CONNECTION_ID && patch.name !== undefined) throw badRequest('The Rerun connection cannot be renamed')
-    // Rerun Balanced is the one model a box always has, so switching every model off can never
+    if (id === LUMVIKA_CONNECTION_ID && patch.name !== undefined) throw badRequest('The Lumvika connection cannot be renamed')
+    // Lumvika Balanced is the one model a box always has, so switching every model off can never
     // leave it with nothing to run on.
-    if (id === RERUN_CONNECTION_ID && patch.models && !patch.models.includes(RERUN_MODEL)) throw badRequest('Rerun Balanced cannot be switched off')
+    if (id === LUMVIKA_CONNECTION_ID && patch.models && !patch.models.includes(LUMVIKA_MODEL)) throw badRequest('Lumvika Balanced cannot be switched off')
     return withConnectionLock(id, async () => {
         const current = await getConnection(id)
         const next = connectionConfigSchema.parse({ ...current.config, ...patch })
@@ -73,7 +73,7 @@ export async function patchConnection(id: string, patch: UpdateConnectionInput):
 }
 
 export async function updateConnectionKeys(id: string, { set, remove }: UpdateConnectionKeysInput): Promise<string[]> {
-    if (id === RERUN_CONNECTION_ID) throw badRequest('The Rerun connection is keyless')
+    if (id === LUMVIKA_CONNECTION_ID) throw badRequest('The Lumvika connection is keyless')
     return withConnectionLock(id, async () => {
         const path = connectionEnvPath(id)
         const next = await readEnvFile(path)
@@ -94,7 +94,7 @@ export async function updateConnectionKeys(id: string, { set, remove }: UpdateCo
 // Exported because a delete releases everything pointing at the connection before it removes it,
 // and detaching a fleet of agents only to refuse the delete afterwards would be worse than either.
 export function assertConnectionDeletable(id: string): void {
-    if (id === RERUN_CONNECTION_ID) throw badRequest('The Rerun connection cannot be deleted')
+    if (id === LUMVIKA_CONNECTION_ID) throw badRequest('The Lumvika connection cannot be deleted')
 }
 
 export async function deleteConnection(id: string): Promise<void> {
@@ -110,19 +110,19 @@ export async function deleteConnection(id: string): Promise<void> {
 
 // The keyless connection every box carries. Provisioned on boot rather than special-cased at read
 // time, so it lists, patches and resolves through exactly the same paths as any other.
-export async function ensureRerunConnection(): Promise<void> {
+export async function ensureLumvikaConnection(): Promise<void> {
     await mkdir(connectionsDir(), { recursive: true })
-    if (connectionExists(RERUN_CONNECTION_ID)) {
-        // Boxes provisioned when Rerun had a single model, and those where it was switched off
+    if (connectionExists(LUMVIKA_CONNECTION_ID)) {
+        // Boxes provisioned when Lumvika had a single model, and those where it was switched off
         // before it became mandatory. Balanced goes first, the tiers that came later go last, so
         // what the connection runs when no model is named does not move.
-        const { models } = (await getConnection(RERUN_CONNECTION_ID)).config
-        const missing = DEFAULT_CONNECTION_MODELS.rerun.filter(id => !models.includes(id))
+        const { models } = (await getConnection(LUMVIKA_CONNECTION_ID)).config
+        const missing = DEFAULT_CONNECTION_MODELS.lumvika.filter(id => !models.includes(id))
         if (missing.length === 0) return
-        const head = missing.filter(id => id === RERUN_MODEL)
-        const tail = missing.filter(id => id !== RERUN_MODEL)
-        await patchConnection(RERUN_CONNECTION_ID, { models: [...head, ...models, ...tail] })
+        const head = missing.filter(id => id === LUMVIKA_MODEL)
+        const tail = missing.filter(id => id !== LUMVIKA_MODEL)
+        await patchConnection(LUMVIKA_CONNECTION_ID, { models: [...head, ...models, ...tail] })
         return
     }
-    await createConnection({ name: PROVIDER_LABELS.rerun, provider: 'rerun', models: DEFAULT_CONNECTION_MODELS.rerun, extraModels: [], keys: {} }, RERUN_CONNECTION_ID)
+    await createConnection({ name: PROVIDER_LABELS.lumvika, provider: 'lumvika', models: DEFAULT_CONNECTION_MODELS.lumvika, extraModels: [], keys: {} }, LUMVIKA_CONNECTION_ID)
 }

@@ -9,10 +9,10 @@ import { cancelRun, reconnectRun } from '@/lib/engine/client'
 import { QUEUED_RETRY_DELAYS_MS, startChat } from '@/lib/chat/start-chat'
 import { stripAttachmentsRef } from '@/lib/chat/attachments-marker'
 import { installSessionTitle, parseInstallMessage } from '@/lib/chat/install-marker'
-import { preferredLanguage } from '@/lib/foreman/language'
+import { preferredLanguage } from '@/lib/steward/language'
 import { stripVoiceMarker } from '@/lib/voice/marker'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND, type MessageAuthor, type SessionKind, type SessionSource } from '@rerun/contracts'
+import { ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND, type MessageAuthor, type SessionKind, type SessionSource } from '@lumvika/contracts'
 
 type ChatRequestBody = {
     agentId?: unknown

@@ -1,11 +1,11 @@
 import { startPhoneSignIn } from '@/app/api/_services/phone-sign-in.service'
 import { phoneRefused } from '@/app/api/v1/auth/_lib/refusal'
 import { apiRoute } from '@/app/api/v1/_lib/api-route'
-import { isAppReviewNumber } from '@rerun/cloud/app-review'
+import { isAppReviewNumber } from '@lumvika/cloud/app-review'
 import { callerIp } from '@/lib/auth/caller-ip'
 import { isPhoneCountry, toE164 } from '@/lib/phone/normalize'
 import { verificationLanguage } from '@/lib/phone/verification'
-import { phoneCodeRequestSchema } from '@rerun/contracts'
+import { phoneCodeRequestSchema } from '@lumvika/contracts'
 
 export const dynamic = 'force-dynamic'
 

@@ -1,4 +1,4 @@
-import type { Box } from '@rerun/contracts'
+import type { Box } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { SymbolView } from 'expo-symbols'

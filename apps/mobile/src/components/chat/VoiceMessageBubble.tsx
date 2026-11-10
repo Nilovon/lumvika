@@ -1,4 +1,4 @@
-import { PEAK_COUNT, type VoiceMessage } from '@rerun/contracts'
+import { PEAK_COUNT, type VoiceMessage } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { ActivityIndicator, Pressable, View } from 'react-native'
 import { useTranslations } from 'use-intl'

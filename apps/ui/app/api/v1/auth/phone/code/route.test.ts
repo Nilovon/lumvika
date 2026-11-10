@@ -4,9 +4,9 @@ const startPhoneSignIn = vi.fn()
 vi.mock('@/app/api/_services/phone-sign-in.service', () => ({ startPhoneSignIn: (...args: unknown[]) => startPhoneSignIn(...args) }))
 vi.mock('@/supabase/server', () => ({ createClient: async () => ({}), getRequestAccessToken: async () => null }))
 
-// The App Review door is Rerun Cloud's (@rerun/cloud/app-review); what is tested is how the route treats
+// The App Review door is Lumvika Cloud's (@lumvika/cloud/app-review); what is tested is how the route treats
 // the number it names, so the door is pinned here whatever the build resolves it to.
-vi.mock('@rerun/cloud/app-review', () => ({
+vi.mock('@lumvika/cloud/app-review', () => ({
     isAppReviewNumber: (phone: string) => !!process.env.APP_REVIEW_PHONE && phone === process.env.APP_REVIEW_PHONE,
     isAppReviewSignIn: (phone: string, code: string) => !!process.env.APP_REVIEW_PHONE && phone === process.env.APP_REVIEW_PHONE && !!process.env.APP_REVIEW_CODE && code === process.env.APP_REVIEW_CODE,
 }))
@@ -16,7 +16,7 @@ const { POST } = await import('./route')
 const segment = { params: Promise.resolve({}) }
 
 function ask(body: object) {
-    return POST(new Request('https://app.rerun.build/api/v1/auth/phone/code', { method: 'POST', body: JSON.stringify(body), headers: { 'x-forwarded-for': '203.0.113.7', 'accept-language': 'fr-FR' } }), segment)
+    return POST(new Request('https://app.lumvika.com/api/v1/auth/phone/code', { method: 'POST', body: JSON.stringify(body), headers: { 'x-forwarded-for': '203.0.113.7', 'accept-language': 'fr-FR' } }), segment)
 }
 
 describe('POST /api/v1/auth/phone/code', () => {

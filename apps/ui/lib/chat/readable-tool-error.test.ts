@@ -1,4 +1,4 @@
-import { readableToolError } from '@rerun/contracts'
+import { readableToolError } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
 import { englishTranslator } from '@/lib/i18n/english-translator'
@@ -10,8 +10,8 @@ describe('readableToolError', () => {
         expect(readableToolError('<tool_use_error>Error: No such tool available: memory_recall</tool_use_error>', t)).toBe('Tool not found')
     })
 
-    it('reads a tool name a model got wrong in the Rerun loop as a tool not found, without the list of every tool', () => {
-        expect(readableToolError("Model tried to call unavailable tool 'mcp__rerun__schedule_list'. Available tools: fs_read, fs_write, schedule_list.", t)).toBe('Tool not found')
+    it('reads a tool name a model got wrong in the Lumvika loop as a tool not found, without the list of every tool', () => {
+        expect(readableToolError("Model tried to call unavailable tool 'mcp__lumvika__schedule_list'. Available tools: fs_read, fs_write, schedule_list.", t)).toBe('Tool not found')
     })
 
     it('drops the CLI tag around any other error and keeps its words', () => {

@@ -5,7 +5,7 @@
         "message": "Ce modèle n'a plus de place pour le moment. Réessayez dans un instant ou choisissez un autre modèle."
     },
     "titles": {
-        "budget": "Crédits Rerun épuisés",
+        "budget": "Crédits Lumvika épuisés",
         "unauthorized": "Reconnexion nécessaire",
         "overloaded": "Fournisseur surchargé",
         "context_window": "Conversation trop longue",
@@ -16,7 +16,7 @@
         "session_gone": "Conversation indisponible"
     },
     "messages": {
-        "budget": "Crédits Rerun épuisés pour cette période. Ajoutez des crédits ou attendez la remise à zéro mensuelle.",
+        "budget": "Crédits Lumvika épuisés pour cette période. Ajoutez des crédits ou attendez la remise à zéro mensuelle.",
         "unauthorized": "Cette connexion doit être reconnectée avant que le coworker puisse travailler.",
         "overloaded": "Le fournisseur est surchargé pour le moment. Réessayez dans un instant.",
         "context_window": "Cette conversation ne tient plus dans le modèle, et la renvoyer se heurtera à la même limite. Passez à un modèle avec une fenêtre de contexte plus grande, ou démarrez une nouvelle conversation.",

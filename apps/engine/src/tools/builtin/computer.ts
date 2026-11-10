@@ -4,11 +4,11 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { tool, type ToolSet } from 'ai'
-import { desktopAppSchema, type DesktopApp } from '@rerun/contracts'
+import { desktopAppSchema, type DesktopApp } from '@lumvika/contracts'
 import { z } from 'zod'
 import type { LoadedConnection } from '../../connections/types.js'
 import { CLI_PROVIDERS, type AgentConfig } from '../../agents/types.js'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import { openDesktopApp } from '../../desktop/apps.js'
 import { ControlRefusal, captureScreen, click, controlScreen, drag, movePointer, pressKeys, scroll, typeText, type ScreenControl, type Screenshot } from '../../desktop/control.js'
 import { computerAvailable, holdDesktop, humanDriving } from '../../desktop/session.js'
@@ -52,9 +52,9 @@ type Done = { status: 'done'; screen: [number, number] } & ({ screenshotId: stri
 
 const refused = (reason: string): Refused => ({ status: 'refused', reason })
 
-// Nobody watches a delegate, and the foreman has no screen to show.
+// Nobody watches a delegate, and the steward has no screen to show.
 export function offersComputer(config: AgentConfig): boolean {
-    return config.tools.computer && !config.ephemeral && config.kind !== 'foreman' && computerAvailable()
+    return config.tools.computer && !config.ephemeral && config.kind !== 'steward' && computerAvailable()
 }
 
 // Decided on the model the run uses, not on the agent's setting: driving a screen means reading its
@@ -169,14 +169,14 @@ export function computerTools(ctx: RunContext): { tools: ToolSet; release: () =>
             ctx.screenshots ??= createScreenshotStore()
             return { screenshotId: ctx.screenshots.add(screenshot) }
         }
-        const dir = resolve(tmpdir(), 'rerun-desktop', 'screens', id)
+        const dir = resolve(tmpdir(), 'lumvika-desktop', 'screens', id)
         if (!releases.includes(dropScreens)) releases.push(dropScreens)
         await mkdir(dir, { recursive: true })
         const screenshotPath = resolve(dir, `${newId()}.jpg`)
         await writeFile(screenshotPath, screenshot.image)
         return { screenshotPath, next: VIEW_IMAGE_NOTE }
     }
-    const dropScreens = () => void rm(resolve(tmpdir(), 'rerun-desktop', 'screens', id), { recursive: true, force: true }).catch(() => {})
+    const dropScreens = () => void rm(resolve(tmpdir(), 'lumvika-desktop', 'screens', id), { recursive: true, force: true }).catch(() => {})
 
     // The check and the claim run with no await between them, so two runs woken by the same release
     // cannot both take the screen.

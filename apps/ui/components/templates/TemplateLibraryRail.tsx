@@ -1,7 +1,7 @@
 'use client'
 
-import type { TemplateCategory } from '@rerun/contracts'
-import { templateCategoryLabel } from '@rerun/contracts'
+import type { TemplateCategory } from '@lumvika/contracts'
+import { templateCategoryLabel } from '@lumvika/contracts'
 import type { ComponentType, ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { ConnectorLogo } from '@/components/templates/TemplateConnectorLogos'

@@ -71,7 +71,7 @@ function resolveRow(table: string, calls: readonly SupabaseCall[]) {
 function mcpRequest(token: string | null, body: unknown) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (token !== null) headers.authorization = `Bearer ${token}`
-    return new Request('https://rerun.test/api/mcp/account', { method: 'POST', headers, body: JSON.stringify(body) })
+    return new Request('https://lumvika.test/api/mcp/account', { method: 'POST', headers, body: JSON.stringify(body) })
 }
 
 function toolCall(name: string, args: Record<string, unknown>) {

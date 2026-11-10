@@ -42,7 +42,7 @@ function setFavicon(href: string | null) {
 
 type BadgingNavigator = Navigator & { setAppBadge?: (count?: number) => Promise<void>; clearAppBadge?: () => Promise<void> }
 
-// What is waiting for you, seen from outside the tab: « (3) Rerun » in the title, a dot on the
+// What is waiting for you, seen from outside the tab: « (3) Lumvika » in the title, a dot on the
 // favicon, and the count on the icon of the installed app.
 export function useTabSignals(count: number) {
     useEffect(() => {

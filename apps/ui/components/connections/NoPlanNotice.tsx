@@ -4,8 +4,8 @@ import { useTranslations } from 'next-intl'
 import { useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { isSubscriptionEntitled, trialOffer } from '@rerun/cloud/billing'
-import { startPlan } from '@rerun/cloud/billing.client'
+import { isSubscriptionEntitled, trialOffer } from '@lumvika/cloud/billing'
+import { startPlan } from '@lumvika/cloud/billing.client'
 import { cn } from '@/lib/utils'
 import { useSession } from '@/supabase/session/SessionProvider'
 

@@ -1,4 +1,4 @@
-import { isPublicStatus, isSeoDescriptionLength, type TemplateDocument } from '@rerun/contracts'
+import { isPublicStatus, isSeoDescriptionLength, type TemplateDocument } from '@lumvika/contracts'
 import type { Database } from '@/app/api/database.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { revalidateLanding } from '@/lib/landing-revalidate'
@@ -135,7 +135,7 @@ export async function pingTemplateRevalidate(slug: string | null, previousSlug: 
     // The editorial change lands now, so unpublishing stays instant.
     await revalidateLanding(paths)
 
-    // The board capture is two round trips to Rerun Shot, which the author must not sit through, so
+    // The board capture is two round trips to Lumvika Shot, which the author must not sit through, so
     // it runs detached and revalidates a second time once the row points at the new images. Without
     // that second ping the pages would have been rebuilt mid-capture and would keep the old card.
     if (slug) void renderTemplateCard(slug).then(changed => (changed ? revalidateLanding(paths) : undefined))

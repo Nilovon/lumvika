@@ -1,8 +1,8 @@
-import { clientServerSchema, type ClientServer } from '@rerun/contracts'
+import { clientServerSchema, type ClientServer } from '@lumvika/contracts'
 import { reloadAppAsync } from 'expo'
 import * as SecureStore from 'expo-secure-store'
 
-const CUSTOM_SERVER_KEY = 'rerun.server'
+const CUSTOM_SERVER_KEY = 'lumvika.server'
 
 const customServerSchema = clientServerSchema.extend({ apiUrl: clientServerSchema.shape.supabaseUrl })
 export type CustomServer = ClientServer & { apiUrl: string }

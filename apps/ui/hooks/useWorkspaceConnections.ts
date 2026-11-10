@@ -4,8 +4,8 @@ import { createAiConnectionAction, deleteAiConnectionAction, listAiConnectionsAc
 import { invalidateLoadedAgentContexts } from '@/hooks/useAgentContext'
 import { connectionMethod, trackAiConnectionConnected, trackAiConnectionFailed } from '@/lib/engine/ai-connection-analytics'
 import type { BoxConnection, BoxDefault, CreateBoxConnectionInput, UpdateBoxConnectionInput } from '@/lib/engine/types'
-import type { AiConnectionSurface } from '@rerun/analytics'
-import { track } from '@rerun/analytics/client'
+import type { AiConnectionSurface } from '@lumvika/analytics'
+import { track } from '@lumvika/analytics/client'
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
 // The workspace's catalog of AI provider credentials. One fetch for the whole session, shared by
@@ -96,7 +96,7 @@ export function useWorkspaceConnections({ revalidate = false }: { revalidate?: b
 
     // The engine adopts the first connection plugged in as the default, and the created connection
     // it echoes back says nothing about which model it landed on: only a refetch does. The agents
-    // re-read whatever the default did: one pinned by provider alone ran on the Rerun connection
+    // re-read whatever the default did: one pinned by provider alone ran on the Lumvika connection
     // until a connection of that provider existed, and this may be it.
     const create = useCallback(
         async (params: CreateBoxConnectionInput, surface: AiConnectionSurface) => {

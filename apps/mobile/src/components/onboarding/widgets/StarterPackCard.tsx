@@ -1,4 +1,4 @@
-import { MAX_STARTER_PICKS } from '@rerun/contracts'
+import { MAX_STARTER_PICKS } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { Image } from 'expo-image'
 import { SymbolView } from 'expo-symbols'

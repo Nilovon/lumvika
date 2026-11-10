@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-export { formatElapsed } from '@rerun/contracts'
+export { formatElapsed } from '@lumvika/contracts'
 
 /**
  * Chrono live : démarre quand `active` passe à true, tick chaque seconde,

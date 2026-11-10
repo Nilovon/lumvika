@@ -1,4 +1,4 @@
-import { CLIENT_HEADER, type AgentModels, type AgentView, type AiConnectionsView, type Provider } from '@rerun/contracts'
+import { CLIENT_HEADER, type AgentModels, type AgentView, type AiConnectionsView, type Provider } from '@lumvika/contracts'
 
 // The iOS builds already in people's hands parse `providerSchema` strictly: one provider they do not
 // know anywhere in a response fails the whole parse, and with it as the machine's default that is

@@ -17,7 +17,7 @@ describe('applyCaching on OpenCode', () => {
 
     // The branches of the providers that were there before OpenCode do not move with it.
     it('leaves every other provider as it was', () => {
-        for (const provider of ['anthropic', 'openai', 'openrouter', 'rerun', 'google', 'claude', 'codex'] as const) {
+        for (const provider of ['anthropic', 'openai', 'openrouter', 'lumvika', 'google', 'claude', 'codex'] as const) {
             expect(applyCaching(provider, { ...input, model: 'go/deepseek-v4-pro' }), provider).toEqual(applyCaching(provider, input))
         }
         expect(applyCaching('openrouter', input)).toMatchSnapshot()
@@ -44,7 +44,7 @@ describe('applyCaching', () => {
         expect(out.providerOptions).toBeUndefined()
     })
 
-    it.each(['rerun', 'openrouter', 'openai'] as const)('sends %s the two blocks as two plain system messages, marked on the wire by the hub or the fetch', provider => {
+    it.each(['lumvika', 'openrouter', 'openai'] as const)('sends %s the two blocks as two plain system messages, marked on the wire by the hub or the fetch', provider => {
         const out = applyCaching(provider, input)
         expect(out.system).toEqual([
             { role: 'system', content: system.stable },
@@ -57,12 +57,12 @@ describe('applyCaching', () => {
         expect(applyCaching(provider, input).providerOptions).toEqual({ openai: { promptCacheKey: 'session-1' } })
     })
 
-    it('sends no provider options to rerun, the hub marks the prompt itself', () => {
-        expect(applyCaching('rerun', input).providerOptions).toBeUndefined()
+    it('sends no provider options to lumvika, the hub marks the prompt itself', () => {
+        expect(applyCaching('lumvika', input).providerOptions).toBeUndefined()
     })
 
     it('leaves an empty volatile block out', () => {
-        expect(applyCaching('rerun', { ...input, system: { stable: 'solo', volatile: '' } }).system).toEqual([{ role: 'system', content: 'solo' }])
+        expect(applyCaching('lumvika', { ...input, system: { stable: 'solo', volatile: '' } }).system).toEqual([{ role: 'system', content: 'solo' }])
     })
 
     it('joins the blocks for google', () => {

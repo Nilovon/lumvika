@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-auth-enabled-'))
-process.env.RERUN_API_KEY = 'k'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-auth-enabled-'))
+process.env.LUMVIKA_API_KEY = 'k'
 
 const { describe, expect, it } = await import('vitest')
 const { createServer } = await import('./server.js')

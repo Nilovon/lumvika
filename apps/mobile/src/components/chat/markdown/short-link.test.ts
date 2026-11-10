@@ -2,12 +2,12 @@ import { shortenUrl } from './short-link'
 
 describe('shortenUrl', () => {
     it('keeps the host and the last path segment, and marks the dropped query', () => {
-        expect(shortenUrl('https://github.com/rerun-build/rerun/pull/839/files?diff=split')).toBe('github.com/…/files…')
+        expect(shortenUrl('https://github.com/schnebel-technologie/lumvika/pull/839/files?diff=split')).toBe('github.com/…/files…')
     })
 
     it('drops the scheme and www of a short URL and nothing else', () => {
-        expect(shortenUrl('https://www.rerun.build')).toBe('rerun.build')
-        expect(shortenUrl('https://rerun.build/pricing')).toBe('rerun.build/pricing')
+        expect(shortenUrl('https://www.lumvika.com')).toBe('lumvika.com')
+        expect(shortenUrl('https://lumvika.com/pricing')).toBe('lumvika.com/pricing')
     })
 
     it('cuts a very long last segment in the middle, with hyphens that do not break', () => {
@@ -15,6 +15,6 @@ describe('shortenUrl', () => {
     })
 
     it('leaves anything but a web address alone', () => {
-        expect(shortenUrl('mailto:hello@rerun.build')).toBe('mailto:hello@rerun.build')
+        expect(shortenUrl('mailto:hello@lumvika.com')).toBe('mailto:hello@lumvika.com')
     })
 })

@@ -1,4 +1,4 @@
-import { parseQueued, type QueuedMessage } from '@rerun/contracts'
+import { parseQueued, type QueuedMessage } from '@lumvika/contracts'
 import { randomUUID } from 'expo-crypto'
 import { Directory, File, Paths } from 'expo-file-system'
 import { useCallback, useEffect, useState } from 'react'

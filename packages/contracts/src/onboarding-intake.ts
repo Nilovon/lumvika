@@ -1,4 +1,4 @@
-import type { ForemanIntakeRequest } from './foreman.js'
+import type { StewardIntakeRequest } from './steward.js'
 import { TEMPLATE_CATEGORIES, type TemplateCategory } from './template-display.js'
 import { TRIAL_ACTIVE_AGENTS } from './billing.js'
 
@@ -59,7 +59,7 @@ export function furthestReachable(steps: IntakeStep[], draft: IntakeDraft): numb
     return firstUnanswered === -1 ? steps.length - 1 : firstUnanswered
 }
 
-export function toIntake(draft: IntakeDraft, knownFirstName: string | null | undefined, decided: TemplateCategory | null = null): ForemanIntakeRequest {
+export function toIntake(draft: IntakeDraft, knownFirstName: string | null | undefined, decided: TemplateCategory | null = null): StewardIntakeRequest {
     const trim = (value: string) => value.trim() || null
     return {
         companyUrl: trim(draft.companyUrl),

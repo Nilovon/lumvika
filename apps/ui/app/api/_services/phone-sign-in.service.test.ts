@@ -23,7 +23,7 @@ const STAMP = new Date(NOW).toISOString()
 const minutesAgo = (minutes: number) => new Date(NOW - minutes * 60_000).toISOString()
 
 const PHONE = '+33612345678'
-const PLACEHOLDER = '33612345678@phone.rerun.build'
+const PLACEHOLDER = '33612345678@phone.lumvika.com'
 
 const CLAIM = 'rpc:claim_phone_sign_in_send'
 
@@ -184,11 +184,11 @@ describe('completePhoneSignIn', () => {
 
     it('signs into the account that holds the number, under its own address', async () => {
         stored({ owners: [{ user_id: 'user-1' }] })
-        admin.getUserById.mockResolvedValue({ data: { user: { id: 'user-1', email: 'ada@rerun.build' } } })
+        admin.getUserById.mockResolvedValue({ data: { user: { id: 'user-1', email: 'ada@lumvika.com' } } })
 
         expect(await completePhoneSignIn(session, PHONE, '123456', 'sms')).toEqual({ ok: true, created: false, session: TOKENS })
 
-        expect(admin.generateLink).toHaveBeenCalledWith({ type: 'magiclink', email: 'ada@rerun.build' })
+        expect(admin.generateLink).toHaveBeenCalledWith({ type: 'magiclink', email: 'ada@lumvika.com' })
         expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'hash', type: 'magiclink' })
         expect(admin.createUser).not.toHaveBeenCalled()
         expect(supabase.writes('user_phones')).toEqual([])
@@ -277,7 +277,7 @@ describe('completePhoneSignIn', () => {
 
     it('answers unavailable when the session cannot be opened', async () => {
         stored({ owners: [{ user_id: 'user-1' }] })
-        admin.getUserById.mockResolvedValue({ data: { user: { id: 'user-1', email: 'ada@rerun.build' } } })
+        admin.getUserById.mockResolvedValue({ data: { user: { id: 'user-1', email: 'ada@lumvika.com' } } })
         verifyOtp.mockResolvedValue({ data: { session: null }, error: { message: 'nope' } })
         vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -285,8 +285,8 @@ describe('completePhoneSignIn', () => {
     })
 })
 
-const ACCOUNT = { id: 'user-1', email: 'ada@rerun.build' }
-const PHONE_BORN = { id: 'user-1', email: '33700000000@phone.rerun.build' }
+const ACCOUNT = { id: 'user-1', email: 'ada@lumvika.com' }
+const PHONE_BORN = { id: 'user-1', email: '33700000000@phone.lumvika.com' }
 
 describe('startPhoneChange', () => {
     it('sends a code to a number nobody signs in with', async () => {

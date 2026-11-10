@@ -15,7 +15,7 @@ function context(params: Partial<{ agentId: string; slug: string; token: string 
 }
 
 function request(init: RequestInit = {}, search = '') {
-    return new Request(`https://rerun.test/api/t/agent-1/new-lead/secret-token${search}`, { method: 'POST', ...init })
+    return new Request(`https://lumvika.test/api/t/agent-1/new-lead/secret-token${search}`, { method: 'POST', ...init })
 }
 
 describe('/api/t/[agentId]/[slug]/[token]', () => {

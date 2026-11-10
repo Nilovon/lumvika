@@ -1,5 +1,5 @@
 {
-    "name": "@rerun/ui",
+    "name": "@lumvika/ui",
     "license": "AGPL-3.0-only",
     "version": "0.1.0",
     "private": true,
@@ -27,7 +27,7 @@
         "./primitives/spinner": "./src/primitives/spinner.tsx",
         "./primitives/use-is-mobile": "./src/primitives/use-is-mobile.ts",
         "./forms": "./src/forms/index.ts",
-        "./foreman": "./src/foreman/index.ts",
+        "./steward": "./src/steward/index.ts",
         "./rich-text-editor": "./src/rich-text-editor/index.ts",
         "./steps": "./src/steps/index.ts",
         "./time": "./src/time.ts",
@@ -79,8 +79,8 @@
         "typescript": "^5"
     },
     "dependencies": {
-        "@rerun/contracts": "workspace:*",
-        "@rerun/i18n": "workspace:*",
+        "@lumvika/contracts": "workspace:*",
+        "@lumvika/i18n": "workspace:*",
         "@tiptap/pm": "^3.32.2",
         "@tiptap/react": "^3.32.2",
         "@tiptap/starter-kit": "^3.32.2",

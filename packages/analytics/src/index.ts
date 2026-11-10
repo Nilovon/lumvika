@@ -5,11 +5,11 @@ export type SignupMethod = 'google' | 'apple' | 'email' | 'phone'
 export const SIGNUP_INTENT_COOKIE = 'rr_signup_intent'
 
 export function sharedCookieDomain(hostname: string): string | undefined {
-    return hostname.endsWith('rerun.build') ? '.rerun.build' : undefined
+    return hostname.endsWith('lumvika.com') ? '.lumvika.com' : undefined
 }
 // Where the account form was shown. The wall is the one every anonymous visitor meets on arrival, so
 // it dwarfs the other two: the funnel is only readable when they are counted apart.
-export type SignupSurface = 'welcome_wall' | 'foreman_intake' | 'signin_dialog' | 'auth_page' | 'ready_made_arrival'
+export type SignupSurface = 'welcome_wall' | 'steward_intake' | 'signin_dialog' | 'auth_page' | 'ready_made_arrival'
 // Before 2026-10-13 the phone form reported no step at all, so its abandons read 'email', and the
 // email code step read 'code'.
 export type SignupStep = 'phone' | 'phone_code' | 'email' | 'email_code'
@@ -109,7 +109,7 @@ export interface AnalyticsEventMap {
     // The card form opening. The lifecycle events below come from the webhook, so this is the only
     // place an abandoned checkout leaves a trace. A trial started without a card never opens it,
     // and is not counted here.
-    checkout_started: { plan: string; source: 'template_cta' | 'billing_dialog' | 'agent_share' | 'foreman' | 'pay_now' | 'ai_providers' }
+    checkout_started: { plan: string; source: 'template_cta' | 'billing_dialog' | 'agent_share' | 'steward' | 'pay_now' | 'ai_providers' }
     paywall_viewed: { trigger: string; addon_shown?: string; variant?: string }
     // `origin` is where the trial was started: the app's are all cardless, whatever the test's arm.
     trial_started: SubscriptionLifecycleProps & { trial_type: TrialType; origin?: 'web' | 'ios' }
@@ -124,7 +124,7 @@ export interface AnalyticsEventMap {
     subscription_started: SubscriptionLifecycleProps
     // `cancellation_comment` is what the customer wrote in the cancel flow, `cancellation_feedback`
     // the reason it was filed under, `cancel_reason_check` whether it read as a reason at all, and
-    // `cancel_comeback` the answer to "will you use Rerun again?".
+    // `cancel_comeback` the answer to "will you use Lumvika again?".
     subscription_cancel_requested: SubscriptionLifecycleProps & {
         cancel_at?: string
         cancellation_reason?: string
@@ -145,7 +145,7 @@ export interface AnalyticsEventMap {
     retention_offer_declined: { phase: CancelFlowPhase; reason: string; offer: string }
     invoice_paid: SubscriptionLifecycleProps & { invoice_id: string; amount_paid: number; billing_reason?: string }
 
-    // The account gate that replaces the foreman's composer once an anonymous visitor has answered
+    // The account gate that replaces the steward's composer once an anonymous visitor has answered
     // the welcome card. Shown is not clicked: the gap with `signup_started` is the whole drop between
     // a filled card and an account.
     signup_gate_viewed: { surface: SignupSurface }
@@ -213,16 +213,16 @@ export interface AnalyticsEventMap {
     // What the visitor arrived with, read from the link that brought them: a template, a shared agent,
     // a prompt typed in the landing's hero composer, or nothing. Only on the welcome card, never on a
     // return with answers already parked.
-    onboarding_started: { mode: 'foreman'; arrival: OnboardingArrival }
+    onboarding_started: { mode: 'steward'; arrival: OnboardingArrival }
     onboarding_step_viewed: { step: string }
     // `via` is only on the plan step, which closes four ways: the plan card confirmed, a template
     // picked on its own card, coworkers hired off the starter pack, or the one coworker they
     // described instead of picking.
     onboarding_step_completed: { step: string; via?: 'plan_card' | 'template' | 'starter_pack' | 'custom' }
-    // The chips under a freshly built team: 'open_chat', 'billing', or the label of a request sent to the foreman.
+    // The chips under a freshly built team: 'open_chat', 'billing', or the label of a request sent to the steward.
     onboarding_next_step_clicked: { step: string }
     // The board's getting-started checklist. `completed` is server-side, the moment the thing exists;
-    // `clicked` is the step handed to the Foreman. Kept apart from `onboarding_step_*`, the funnel's.
+    // `clicked` is the step handed to the Steward. Kept apart from `onboarding_step_*`, the funnel's.
     getting_started_step_completed: { step: string }
     getting_started_step_clicked: { step: string }
     // Days added to a running trial, and what earned them.
@@ -233,13 +233,13 @@ export interface AnalyticsEventMap {
     // One per site the card read in the background, so it is a success rate of the read, not a count
     // of people: a pause while typing reads the address as it stands.
     onboarding_company_analyzed: { ok: boolean }
-    // The interview's first question: how many jobs the foreman offered and how many they took, two
+    // The interview's first question: how many jobs the steward offered and how many they took, two
     // and one since the question became a two-button card. `custom` says they wrote their own
     // instead of taking one of the offered jobs, which that card cannot do.
     onboarding_use_cases_selected: { proposed: number; selected: number; custom: boolean }
     // Every two-button card of the interview, however it closed: `picked` a button, `neither` of them,
     // answered by typing in the composer instead, closed, or left open on a reload. `neither` over
-    // the total is how often the foreman guessed both answers wrong.
+    // the total is how often the steward guessed both answers wrong.
     onboarding_either_answered: { outcome: 'picked' | 'neither' | 'typed' | 'dismissed' | 'abandoned' }
     // Every answer to the plan card, a "Change something" included: the confirmed ones against the
     // others is how many rounds a plan takes. The starter pack answers it once, with `via` and the
@@ -248,7 +248,7 @@ export interface AnalyticsEventMap {
     // The answer to the trial card, for a workspace whose plan was not already on when the plan
     // closed. `reason` is why it did not start: a card that already spent a trial, or the form closed.
     onboarding_checkout_answered: { ok: boolean; reason?: 'trial_refused' | 'dismissed' | 'pending' }
-    // The foreman offering to hand a stuck user to the team, and whether they sent it: offered without
+    // The steward offering to hand a stuck user to the team, and whether they sent it: offered without
     // being sent is someone who kept typing instead, which says whether the offer came too early.
     onboarding_help_answered: { sent: boolean }
     // The build the app runs once the plan is confirmed. `error` is a build that threw before
@@ -264,7 +264,7 @@ export interface AnalyticsEventMap {
     // refused before a run existed ('budget_exhausted'), so the hub skips that code; the client also
     // reports a kickoff that failed ('kickoff_error', 'agent_gone').
     agent_run_failed: Partial<AgentRunProps> & { error_type: string }
-    // The install an agent built by the foreman, other than the lead, waits on in its chat.
+    // The install an agent built by the steward, other than the lead, waits on in its chat.
     agent_install_started: { agent_id: string }
     agent_install_skipped: { agent_id: string }
 
@@ -299,9 +299,9 @@ export interface AnalyticsEventMap {
     workspace_preview_hitl_answered: { agent: string; kind: 'question' | 'permission' | 'approval' }
     workspace_preview_cta_clicked: { agent: string }
     workspace_preview_inbox_opened: Record<string, never>
-    workspace_preview_foreman_opened: Record<string, never>
-    workspace_preview_foreman_asked: { prompt: string }
-    workspace_preview_foreman_tab: { tab: 'assistant' | 'routines' }
+    workspace_preview_steward_opened: Record<string, never>
+    workspace_preview_steward_asked: { prompt: string }
+    workspace_preview_steward_tab: { tab: 'assistant' | 'routines' }
 
     // La relance d'un onglet laissé en arrière-plan. `tab_nudge_shown` ne part qu'une fois le titre
     // effectivement en train d'alterner, jamais au montage : c'est le dénominateur, et l'écart avec

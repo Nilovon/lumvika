@@ -79,7 +79,7 @@ describe('brain page markdown', () => {
             unknowns: [],
             branding: { logo: null, colors: [], fonts: [] },
         } as unknown as BusinessCard
-        const pages = buildSeedPages({ card, brief: '', foreman: null })
+        const pages = buildSeedPages({ card, brief: '', steward: null })
         expect(pages.length).toBeGreaterThan(0)
         for (const page of pages) {
             const once = roundTrip(page.content)

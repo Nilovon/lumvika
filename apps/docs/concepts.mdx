@@ -1,6 +1,6 @@
 ---
 title: "Core concepts"
-description: "Every Rerun term, defined once."
+description: "Every Lumvika term, defined once."
 ---
 
 ## Workspace
@@ -15,16 +15,16 @@ A room of your workspace: on the board it is the rectangle your coworkers sit on
 
 A Box is instant and free, and you make as many as the work needs. It arranges coworkers, it does not separate them: every coworker of the workspace runs on the same machine, and the **shared folder** and the **shared database** are common to all of them, whichever Box they sit in.
 
-Because a Box holds nothing of its own, moving a coworker from one to another costs nothing: right-click it on the board and pick **Move to Box**, or ask the Rerun coworker to do it. It keeps its files, its handle, its skills and its whole history.
+Because a Box holds nothing of its own, moving a coworker from one to another costs nothing: right-click it on the board and pick **Move to Box**, or ask the Lumvika coworker to do it. It keeps its files, its handle, its skills and its whole history.
 
 <Note>
-  The Rerun API calls a Box a `space`, in tool names like `list_spaces` and `space_db_query`. Same thing.
+  The Lumvika API calls a Box a `space`, in tool names like `list_spaces` and `space_db_query`. Same thing.
 </Note>
 
 ## Coworker
 
 <Note>
-  The Rerun API calls a coworker an `agent`, in tool names like `create_agent` and `list_agents`, and in the `/agents` paths of these docs. Same thing.
+  The Lumvika API calls a coworker an `agent`, in tool names like `create_agent` and `list_agents`, and in the `/agents` paths of these docs. Same thing.
 </Note>
 
 An AI worker inside a Box. It has:
@@ -62,7 +62,7 @@ An app is installed per coworker, not per Box. See [Apps](/agents/apps).
 
 ## MCP server
 
-The open standard Rerun apps are built on. When the library does not have what you need, you can register any MCP server on a coworker yourself, with its own URL, headers or command.
+The open standard Lumvika apps are built on. When the library does not have what you need, you can register any MCP server on a coworker yourself, with its own URL, headers or command.
 
 ## Run
 

@@ -1,7 +1,7 @@
-import type { ConnectionConfig } from '@rerun/contracts'
+import type { ConnectionConfig } from '@lumvika/contracts'
 
-export { connectionConfigSchema, RERUN_CONNECTION_ID } from '@rerun/contracts'
-export type { ConnectionConfig, ConnectionSummary } from '@rerun/contracts'
+export { connectionConfigSchema, LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
+export type { ConnectionConfig, ConnectionSummary } from '@lumvika/contracts'
 
 // The credentials live in `env`, never in `config` — nothing that reaches the API carries them.
 export type LoadedConnection = {

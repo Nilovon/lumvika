@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ExternalLinkIcon, HammerIcon } from '@/lib/icons'
@@ -14,7 +14,7 @@ import { landingUrl } from '@/lib/site'
 // A self-hosted install has no marketplace and starts with no template: it creates its own.
 export function TemplateLibraryEmpty({ filtered, onScratch }: { filtered: boolean; onScratch?: () => void }) {
     const t = useTranslations('templates.library')
-    if (!RERUN_CLOUD) {
+    if (!LUMVIKA_CLOUD) {
         return (
             <EmptyState
                 icon={HammerIcon}

@@ -73,13 +73,13 @@ describe('parseMcpToolName', () => {
     })
 
     it('never reads a bridged builtin as a connector tool', () => {
-        expect(parseMcpToolName('mcp__rerun__shell_exec', [...known, 'rerun'])).toBeNull()
-        expect(parseMcpToolName('rerun__ask_user', [...known, 'rerun'])).toBeNull()
+        expect(parseMcpToolName('mcp__lumvika__shell_exec', [...known, 'lumvika'])).toBeNull()
+        expect(parseMcpToolName('lumvika__ask_user', [...known, 'lumvika'])).toBeNull()
     })
 
     it('ignores a builtin name', () => {
         expect(parseMcpToolName('shell_exec', known)).toBeNull()
-        expect(parseMcpToolName('rerun_hub_service_search', known)).toBeNull()
+        expect(parseMcpToolName('lumvika_hub_service_search', known)).toBeNull()
     })
 })
 

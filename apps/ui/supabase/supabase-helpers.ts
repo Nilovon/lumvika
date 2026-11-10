@@ -1,1 +1,1 @@
-export * from '@rerun/db/helpers'
+export * from '@lumvika/db/helpers'

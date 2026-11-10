@@ -1,7 +1,7 @@
-import { ATTENTION_STATUSES as ATTENTION_STATUS_LIST } from '@rerun/contracts'
+import { ATTENTION_STATUSES as ATTENTION_STATUS_LIST } from '@lumvika/contracts'
 import type { SessionEntry, SessionStatus } from '@/lib/board/types'
 
-export { ATTENTION_STATUS_META as STATUS_META } from '@rerun/ui/inbox'
+export { ATTENTION_STATUS_META as STATUS_META } from '@lumvika/ui/inbox'
 
 export const ATTENTION_STATUSES = new Set<SessionStatus>(ATTENTION_STATUS_LIST)
 

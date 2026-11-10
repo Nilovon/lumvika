@@ -1,1 +1,1 @@
-export * from '@rerun/db/types'
+export * from '@lumvika/db/types'

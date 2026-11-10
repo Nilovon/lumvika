@@ -4,8 +4,8 @@ import type { Database, Json } from '@/app/api/database.types'
 import { actorFromContext, assertAgentInWorkspace, assertSessionInWorkspace, isAdminActor, requireLightSessionActor } from '@/app/api/_auth/access'
 import { requireWorkspaceContext, type WorkspaceContext } from '@/app/api/_auth/ownership'
 import { readSessionMessages } from '@/app/api/_services/conversation.service'
-import { engineSessionOf, readForemanEngineMessages } from '@/lib/foreman/conversation'
-import { MESSAGE_FEEDBACK_CATEGORY_VALUES, type MessageFeedbackRating } from '@rerun/contracts'
+import { engineSessionOf, readStewardEngineMessages } from '@/lib/steward/conversation'
+import { MESSAGE_FEEDBACK_CATEGORY_VALUES, type MessageFeedbackRating } from '@lumvika/contracts'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { z } from 'zod'
@@ -18,13 +18,13 @@ export type RateMessageResult = { ok: true; id: string } | ActionFailure
 export type MessageFeedbackResult = { ok: true } | ActionFailure
 export type SessionFeedbackEntry = { id: string; messageId: string; rating: MessageFeedbackRating }
 
-// Whose conversation the id names: an agent's session, or one of the foreman's on the engine, which
+// Whose conversation the id names: an agent's session, or one of the steward's on the engine, which
 // has no sessions row and is keyed on its own column.
-export type FeedbackScope = 'agent' | 'foreman'
+export type FeedbackScope = 'agent' | 'steward'
 
 const rateSchema = z.object({
     sessionId: z.string().uuid(),
-    scope: z.enum(['agent', 'foreman']).default('agent'),
+    scope: z.enum(['agent', 'steward']).default('agent'),
     messageId: z.string().min(1).max(200),
     rating: z.enum(['up', 'down']),
     messageText: z.string().max(100_000),
@@ -46,7 +46,7 @@ export async function rateMessageAction(input: z.input<typeof rateSchema>): Prom
 
     const ctx = await requireWorkspaceContext()
     const { userId, workspace, supabase } = ctx
-    const owner = scope === 'foreman' ? await foremanFeedbackOwner(ctx, sessionId) : await agentFeedbackOwner(ctx, sessionId)
+    const owner = scope === 'steward' ? await stewardFeedbackOwner(ctx, sessionId) : await agentFeedbackOwner(ctx, sessionId)
     if (!owner) return failure('conversationNotFound')
     // A vote names a message of the conversation it is about, not any string: each one copies the
     // transcript with it.
@@ -75,7 +75,7 @@ export async function rateMessageAction(input: z.input<typeof rateSchema>): Prom
     return { ok: true, id: data.id }
 }
 
-type FeedbackOwner = { keys: Pick<MessageFeedbackInsert, 'agent_id' | 'session_id' | 'foreman_conversation_id'>; onConflict: string; transcript: unknown[] }
+type FeedbackOwner = { keys: Pick<MessageFeedbackInsert, 'agent_id' | 'session_id' | 'steward_conversation_id'>; onConflict: string; transcript: unknown[] }
 
 async function agentFeedbackOwner(ctx: WorkspaceContext, sessionId: string): Promise<FeedbackOwner> {
     const session = await assertSessionInWorkspace(sessionId, actorFromContext(ctx))
@@ -84,7 +84,7 @@ async function agentFeedbackOwner(ctx: WorkspaceContext, sessionId: string): Pro
 }
 
 // A vote on a coworker's message is reached through that coworker, like its conversation. The
-// foreman's have no coworker and stay the workspace's.
+// steward's have no coworker and stay the workspace's.
 async function reachableFeedbackWorkspaceId(id: string): Promise<number> {
     const actor = await requireLightSessionActor()
     if (isAdminActor(actor)) return actor.workspaceId
@@ -93,10 +93,10 @@ async function reachableFeedbackWorkspaceId(id: string): Promise<number> {
     return actor.workspaceId
 }
 
-async function foremanFeedbackOwner(ctx: WorkspaceContext, conversationId: string): Promise<FeedbackOwner | null> {
+async function stewardFeedbackOwner(ctx: WorkspaceContext, conversationId: string): Promise<FeedbackOwner | null> {
     if ((await engineSessionOf(ctx, conversationId))?.backend !== 'engine') return null
-    const transcript = await readForemanEngineMessages(ctx, conversationId).catch(() => [])
-    return { keys: { foreman_conversation_id: conversationId }, onConflict: 'foreman_conversation_id,message_id', transcript }
+    const transcript = await readStewardEngineMessages(ctx, conversationId).catch(() => [])
+    return { keys: { steward_conversation_id: conversationId }, onConflict: 'steward_conversation_id,message_id', transcript }
 }
 
 export async function updateMessageFeedbackAction(input: z.input<typeof detailsSchema>): Promise<MessageFeedbackResult> {
@@ -127,12 +127,12 @@ export async function clearMessageFeedbackAction(id: string): Promise<MessageFee
 
 export async function fetchSessionFeedbackAction(sessionId: string, scope: FeedbackScope = 'agent'): Promise<SessionFeedbackEntry[]> {
     try {
-        if (scope === 'foreman') {
+        if (scope === 'steward') {
             if (!(await engineSessionOf(await requireWorkspaceContext(), sessionId))) return []
         } else await assertSessionInWorkspace(sessionId)
     } catch {
         return []
     }
-    const { data } = await selectMany(createServiceRoleClient(), 'message_feedback', ['id', 'message_id', 'rating'] as const, scope === 'foreman' ? { foreman_conversation_id: sessionId } : { session_id: sessionId })
+    const { data } = await selectMany(createServiceRoleClient(), 'message_feedback', ['id', 'message_id', 'rating'] as const, scope === 'steward' ? { steward_conversation_id: sessionId } : { session_id: sessionId })
     return (data ?? []).map(row => ({ id: row.id, messageId: row.message_id, rating: row.rating as MessageFeedbackRating }))
 }

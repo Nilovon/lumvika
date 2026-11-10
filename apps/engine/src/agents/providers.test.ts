@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { tool, dynamicTool, jsonSchema, type ToolSet } from 'ai'
 import { z } from 'zod'
-import type { McpServer } from '@rerun/contracts'
+import type { McpServer } from '@lumvika/contracts'
 import { CLAUDE_HARNESS_ENV, CODEX_DISABLED_FEATURES, CODEX_HARNESS_OVERRIDES, CODEX_SKILL_OVERRIDES, claudeAuthEnv, claudeBridgeHandler, claudeMcpConfig, codexMcpConfig } from './providers.js'
 import { askUserTool, canonicalBridgeName, canonicalHitlName, isHitlToolName, requestApprovalTool } from '../tools/builtin/hitl.js'
 
@@ -32,15 +32,15 @@ describe('claudeMcpConfig', () => {
         expect(mcpServers.stream).toEqual({ type: 'sse', url: 'https://mcp.example.com/sse', headers: {} })
     })
 
-    it('bridges Zod builtin tools via the rerun in-process server, drops jsonSchema tools', () => {
+    it('bridges Zod builtin tools via the lumvika in-process server, drops jsonSchema tools', () => {
         const tools: ToolSet = {
             fs_read: tool({ description: 'read', inputSchema: z.object({ path: z.string() }), execute: async () => 'ok' }),
             mcpish: dynamicTool({ description: 'json schema tool', inputSchema: jsonSchema({ type: 'object', properties: { a: { type: 'string' } } }), execute: async () => 'ok' }),
         }
         const { mcpServers, allowedTools } = claudeMcpConfig(tools, [])
-        expect(mcpServers.rerun).toBeDefined()
-        expect(allowedTools).toContain('mcp__rerun__fs_read')
-        expect(allowedTools).not.toContain('mcp__rerun__mcpish')
+        expect(mcpServers.lumvika).toBeDefined()
+        expect(allowedTools).toContain('mcp__lumvika__fs_read')
+        expect(allowedTools).not.toContain('mcp__lumvika__mcpish')
     })
 
     // The engine holds the connection: the CLI gets an in-process relay under the same name, so the
@@ -53,9 +53,9 @@ describe('claudeMcpConfig', () => {
         expect(allowedTools).toEqual(['mcp__discord', 'mcp__gh'])
     })
 
-    it('ignores servers with neither command nor url, and the reserved "rerun" name', () => {
+    it('ignores servers with neither command nor url, and the reserved "lumvika" name', () => {
         const broken = server({ name: 'broken' })
-        const reserved = server({ name: 'rerun', command: 'x' })
+        const reserved = server({ name: 'lumvika', command: 'x' })
         const { mcpServers, allowedTools } = claudeMcpConfig(undefined, [broken, reserved])
         expect(mcpServers).toEqual({})
         expect(allowedTools).toEqual([])
@@ -70,8 +70,8 @@ describe('claudeMcpConfig', () => {
     it('bridges ask_user without throwing (schema stays a plain ZodObject)', () => {
         expect(() => claudeMcpConfig(askUserTool(HITL_CTX), [])).not.toThrow()
         const { mcpServers, allowedTools } = claudeMcpConfig(askUserTool(HITL_CTX), [])
-        expect(mcpServers.rerun).toBeDefined()
-        expect(allowedTools).toContain('mcp__rerun__ask_user')
+        expect(mcpServers.lumvika).toBeDefined()
+        expect(allowedTools).toContain('mcp__lumvika__ask_user')
     })
 })
 
@@ -151,7 +151,7 @@ describe('CODEX_DISABLED_FEATURES', () => {
 })
 
 describe('CODEX_SKILL_OVERRIDES', () => {
-    it('closes the native skill store, which takes skill writes outside the Rerun one', () => {
+    it('closes the native skill store, which takes skill writes outside the Lumvika one', () => {
         expect(CODEX_SKILL_OVERRIDES['skills.bundled.enabled']).toBe(false)
         expect(CODEX_SKILL_OVERRIDES['skills.include_instructions']).toBe(false)
     })
@@ -177,18 +177,18 @@ describe('codexMcpConfig', () => {
         expect(codexMcpConfig(undefined, [sse])).toEqual({})
     })
 
-    it('bridges Zod builtin tools via the rerun sdk server, drops jsonSchema tools', () => {
+    it('bridges Zod builtin tools via the lumvika sdk server, drops jsonSchema tools', () => {
         const tools: ToolSet = {
             fs_read: tool({ description: 'read', inputSchema: z.object({ path: z.string() }), execute: async () => 'ok' }),
             mcpish: dynamicTool({ description: 'json schema tool', inputSchema: jsonSchema({ type: 'object', properties: { a: { type: 'string' } } }), execute: async () => 'ok' }),
         }
-        const bridged = codexMcpConfig(tools, []).rerun as { tools: Array<{ name: string }> }
+        const bridged = codexMcpConfig(tools, []).lumvika as { tools: Array<{ name: string }> }
         expect(bridged.tools.map(t => t.name)).toEqual(['fs_read'])
     })
 
-    it('ignores servers with neither command nor url, and the reserved "rerun" name', () => {
+    it('ignores servers with neither command nor url, and the reserved "lumvika" name', () => {
         const broken = server({ name: 'broken' })
-        const reserved = server({ name: 'rerun', command: 'x' })
+        const reserved = server({ name: 'lumvika', command: 'x' })
         expect(codexMcpConfig(undefined, [broken, reserved])).toEqual({})
     })
 
@@ -198,12 +198,12 @@ describe('codexMcpConfig', () => {
 
     it('bridges ask_user without throwing (schema stays a plain ZodObject)', () => {
         expect(() => codexMcpConfig(askUserTool(HITL_CTX), [])).not.toThrow()
-        const bridged = codexMcpConfig(askUserTool(HITL_CTX), []).rerun as { tools: Array<{ name: string }> }
+        const bridged = codexMcpConfig(askUserTool(HITL_CTX), []).lumvika as { tools: Array<{ name: string }> }
         expect(bridged.tools.map(t => t.name)).toEqual(['ask_user'])
     })
 })
 
-// The bridge is a real MCP server over loopback HTTP, so the only honest check that Rerun's tools
+// The bridge is a real MCP server over loopback HTTP, so the only honest check that Lumvika's tools
 // survive the AI SDK -> Codex conversion is to speak MCP to it. Guards the schema conversion of
 // ask_user in particular: its `z.preprocess` wrapper is the fragile part.
 describe('codex bridge server', () => {
@@ -222,7 +222,7 @@ describe('codex bridge server', () => {
     }
 
     beforeAll(async () => {
-        sdk = codexMcpConfig({ ...askUserTool(HITL_CTX), ...requestApprovalTool({} as any) }, []).rerun as unknown as Sdk
+        sdk = codexMcpConfig({ ...askUserTool(HITL_CTX), ...requestApprovalTool({} as any) }, []).lumvika as unknown as Sdk
         endpoint = await sdk._start()
         await rpc('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'test', version: '0' } })
     })
@@ -281,7 +281,7 @@ describe('codex bridge server', () => {
 
 // Claude Code always prefixes `mcp__`; Codex only does when `prefix_mcp_tool_names` is on.
 describe('canonicalHitlName', () => {
-    it.each(['mcp__rerun__ask_user', 'rerun__ask_user', 'ask_user'])('strips the bridge namespace from %s', name => {
+    it.each(['mcp__lumvika__ask_user', 'lumvika__ask_user', 'ask_user'])('strips the bridge namespace from %s', name => {
         expect(canonicalHitlName(name)).toBe('ask_user')
         expect(isHitlToolName(name)).toBe(true)
     })
@@ -291,8 +291,8 @@ describe('canonicalHitlName', () => {
         expect(isHitlToolName('mcp__files__read')).toBe(false)
     })
 
-    it('canonicalizes every Rerun bridge tool without touching external MCP tools', () => {
-        expect(canonicalBridgeName('mcp__rerun__rerun_hub_service_search')).toBe('rerun_hub_service_search')
+    it('canonicalizes every Lumvika bridge tool without touching external MCP tools', () => {
+        expect(canonicalBridgeName('mcp__lumvika__lumvika_hub_service_search')).toBe('lumvika_hub_service_search')
         expect(canonicalBridgeName('mcp__google-drive__gdrive_search')).toBe('mcp__google-drive__gdrive_search')
     })
 })

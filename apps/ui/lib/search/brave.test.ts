@@ -25,7 +25,7 @@ describe('searchBrave', () => {
         delete process.env.BRAVE_SEARCH_API_KEY
         const fetchMock = mockFetch(() => Response.json({}))
 
-        await expect(searchBrave('rerun', 5)).resolves.toBeNull()
+        await expect(searchBrave('lumvika', 5)).resolves.toBeNull()
         expect(fetchMock).not.toHaveBeenCalled()
     })
 
@@ -63,7 +63,7 @@ describe('searchBrave', () => {
     it('reports the status Brave refused with', async () => {
         mockFetch(() => new Response('rate limited', { status: 429 }))
 
-        await expect(searchBrave('rerun', 5)).resolves.toEqual({ status: 429, ok: false, results: [] })
+        await expect(searchBrave('lumvika', 5)).resolves.toEqual({ status: 429, ok: false, results: [] })
     })
 
     it('reports no status when Brave cannot be reached', async () => {
@@ -71,6 +71,6 @@ describe('searchBrave', () => {
             throw new Error('ECONNRESET')
         })
 
-        await expect(searchBrave('rerun', 5)).resolves.toEqual({ status: null, ok: false, results: [] })
+        await expect(searchBrave('lumvika', 5)).resolves.toEqual({ status: null, ok: false, results: [] })
     })
 })

@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-store-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-store-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { vectors, embedFailures } = vi.hoisted(() => ({
     vectors: new Map<string, number[]>(),
@@ -37,7 +37,7 @@ function axis(i: number, sign = 1): number[] {
 
 const agentNamed = (id: string) => ({ id }) as LoadedAgent
 
-const memoryFilePath = (agentId: string, id: string) => resolve(process.env.RERUN_DATA_DIR!, 'agents', agentId, 'memory', `${id}.md`)
+const memoryFilePath = (agentId: string, id: string) => resolve(process.env.LUMVIKA_DATA_DIR!, 'agents', agentId, 'memory', `${id}.md`)
 
 describe('writeMemory', () => {
     it('indexes the memory for full-text recall when there is no embedding', async () => {

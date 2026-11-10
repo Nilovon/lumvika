@@ -6,7 +6,7 @@ import { latestVersion, migrateSqlite, type SqliteMigration } from './ladder.js'
 import { VIEWS_TABLE, viewNamesByTable } from './tableViews.js'
 
 const STORE_KEY = 'shared'
-const META_TABLE = '_rerun_shared_tables'
+const META_TABLE = '_lumvika_shared_tables'
 
 export const SHARED_HIDDEN_TABLES = [META_TABLE, VIEWS_TABLE]
 

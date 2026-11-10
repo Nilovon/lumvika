@@ -89,7 +89,7 @@ export function classifyChatError(message: string): ChatErrorKind {
     // built the request wrong, so another model fails the same way while a fresh run starts clean.
     // Checked first, since the refusal quotes message indexes ("messages.402") a looser test catches.
     if (THINKING_REPLAY_REJECTED.test(m)) return 'thinking_replay'
-    if (m.includes('rerun_budget_exhausted') || m.includes('payment required') || m.includes('402')) return 'budget'
+    if (m.includes('lumvika_budget_exhausted') || m.includes('payment required') || m.includes('402')) return 'budget'
     if (m.includes('run_in_flight')) return 'run_in_flight'
     if (m.includes(SESSION_NOT_FOUND) || m.includes(ENGINE_SESSION_NOT_FOUND)) return 'session_gone'
     if (SUBSCRIPTION_LIMIT.test(m)) return 'usage_limit'

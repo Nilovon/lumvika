@@ -2,8 +2,8 @@ import { mkdtempSync, readdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-files-stream-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-files-stream-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { createServer } = await import('../server.js')
@@ -11,7 +11,7 @@ const { agentConfigSchema } = await import('../../agents/types.js')
 const { writeAgentConfig } = await import('../../agents/config-write.js')
 const { mkdir } = await import('node:fs/promises')
 const { agentDir, workspaceDir } = await import('../../config/paths.js')
-const { MAX_UPLOAD_FILE_BYTES } = await import('@rerun/contracts')
+const { MAX_UPLOAD_FILE_BYTES } = await import('@lumvika/contracts')
 
 const id = 'streamagent'
 const app = createServer()
@@ -65,7 +65,7 @@ describe('streaming a file into a workspace', () => {
     it('caps a body that outgrows the limit and leaves no partial file', async () => {
         const cap = 64
         const oversized = new Uint8Array(cap + 1)
-        const root = resolve(process.env.RERUN_DATA_DIR!, 'shared')
+        const root = resolve(process.env.LUMVIKA_DATA_DIR!, 'shared')
         await mkdir(root, { recursive: true })
 
         const store = await import('../../files/store.js')

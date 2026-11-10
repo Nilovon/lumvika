@@ -1,4 +1,4 @@
-import { resolveShareInclude, type AgentShareInclude } from '@rerun/contracts'
+import { resolveShareInclude, type AgentShareInclude } from '@lumvika/contracts'
 import { assertAgentInWorkspace, keepVisible, type Actor } from '@/app/api/_auth/access'
 import { workspaceFounderUserId } from '@/app/api/_auth/ownership'
 import { assertCanManageShare, shareManageableAgentIds } from '@/lib/agents/share-access'
@@ -16,7 +16,7 @@ import { dispatchTemplateTool } from './mcp-templates.service'
 // page anyone installs from — so it has to be reached first, and it resolves nothing before its
 // switch either.
 //
-// Every handler runs as the caller: the workspace for an API key, the member a foreman turn speaks
+// Every handler runs as the caller: the workspace for an API key, the member a steward turn speaks
 // for. A link exports a coworker's whole setup, so each one takes `manage` on its Box, the rule the
 // share dialog holds to. The functions in lib/agents re-check the workspace against the row they load.
 
@@ -24,7 +24,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function requireId(args: Record<string, unknown>, field: string): string {
     const value = requireString(args[field], field)
-    if (!UUID.test(value)) throw new Error(`${field} must be the uuid of a ${field === 'shareId' ? 'share link, from list_agent_shares' : 'Rerun coworker, from list_agents'}.`)
+    if (!UUID.test(value)) throw new Error(`${field} must be the uuid of a ${field === 'shareId' ? 'share link, from list_agent_shares' : 'Lumvika coworker, from list_agents'}.`)
     return value
 }
 

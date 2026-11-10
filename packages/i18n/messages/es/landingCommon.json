@@ -1,6 +1,6 @@
 {
     "site": {
-        "title": "Rerun: empleados de IA que funcionan con tu plan de ChatGPT o Claude",
+        "title": "Lumvika: empleados de IA que funcionan con tu plan de ChatGPT o Claude",
         "description": "Contrata empleados de IA para ventas, soporte, marketing y administración. Funcionan con tu plan de ChatGPT o Claude, créditos incluidos o tu clave de API. Prueba gratis de {trialDays} días."
     },
     "nav": {
@@ -175,12 +175,12 @@
     },
     "github": {
         "star": "Star",
-        "ariaStar": "Dale una estrella a Rerun en GitHub",
-        "ariaCount": "Rerun en GitHub, {count} estrellas"
+        "ariaStar": "Dale una estrella a Lumvika en GitHub",
+        "ariaCount": "Lumvika en GitHub, {count} estrellas"
     },
     "heroCta": "Empieza gratis",
     "finalCta": {
-        "proof": "{count}+ empresas funcionan con Rerun",
+        "proof": "{count}+ empresas funcionan con Lumvika",
         "titleLead": "Coworkers con tu plan de <switch></switch>",
         "titleTail": "<mark>que ya pagas.</mark>",
         "steps": {
@@ -191,14 +191,14 @@
         "step": "{rank}. {label}"
     },
     "openSource": {
-        "announce": "Rerun ya es open source<wide> bajo AGPL-3.0</wide>",
+        "announce": "Lumvika ya es open source<wide> bajo AGPL-3.0</wide>",
         "cta": "Danos una estrella en GitHub"
     },
     "footer": {
         "ctaTitle": "Tu primer coworker está<br></br>a tres minutos",
         "ctaButton": "Empieza gratis",
         "tagline": "Pon tu trabajo en manos de coworkers. Créalos, míralos trabajar y no pierdas nada de vista.",
-        "productHuntAlt": "Rerun: coworkers de IA open source que de verdad hacen el trabajo | Product Hunt",
+        "productHuntAlt": "Lumvika: coworkers de IA open source que de verdad hacen el trabajo | Product Hunt",
         "columns": {
             "features": "Funciones",
             "industries": "Sectores",
@@ -224,7 +224,7 @@
             "affiliate": "Programa de afiliados",
             "partnerBadge": "Insignia de partner"
         },
-        "compareLink": "Rerun vs {name}",
+        "compareLink": "Lumvika vs {name}",
         "guides": {
             "aiEmployees": "Empleados de IA",
             "smallBusiness": "Agentes de IA para pequeñas empresas",
@@ -243,7 +243,7 @@
             "cookies": "Política de cookies",
             "dpa": "DPA"
         },
-        "copyright": "© {year} Rerun por {legalName}. Todos los derechos reservados.",
+        "copyright": "© {year} Lumvika por {legalName}. Todos los derechos reservados.",
         "language": "Idioma",
         "categories": {
             "agencies": "Agencias",
@@ -275,7 +275,7 @@
         "dismiss": "Cerrar"
     },
     "notFound": {
-        "homeAria": "Inicio de Rerun",
+        "homeAria": "Inicio de Lumvika",
         "title": "Esta página se salió del guion.",
         "body": "La página que buscas no existe o se ha movido. Te llevamos de vuelta.",
         "back": "Volver al inicio"
@@ -304,7 +304,7 @@
             }
         },
         "compare": {
-            "vs": "Rerun vs",
+            "vs": "Lumvika vs",
             "cta": "Ver la comparación"
         }
     },

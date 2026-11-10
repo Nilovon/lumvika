@@ -65,12 +65,12 @@ describe('desktop viewer', () => {
     })
 
     it('types any text safely into the page', () => {
-        expect(typeScript('it\'s "quoted"\n')).toBe('window.rerunDesktop && window.rerunDesktop.type("it\'s \\"quoted\\"\\n"); true;')
-        expect(keyScript(0xff0d, 'Enter')).toBe('window.rerunDesktop && window.rerunDesktop.key(65293, "Enter"); true;')
+        expect(typeScript('it\'s "quoted"\n')).toBe('window.lumvikaDesktop && window.lumvikaDesktop.type("it\'s \\"quoted\\"\\n"); true;')
+        expect(keyScript(0xff0d, 'Enter')).toBe('window.lumvikaDesktop && window.lumvikaDesktop.key(65293, "Enter"); true;')
     })
 
     it('asks an older viewer page for nothing it does not have', () => {
-        expect(mirrorScript(480)).toBe('window.rerunDesktop && window.rerunDesktop.mirror && window.rerunDesktop.mirror(true, 480); true;')
-        expect(mirrorScript(null)).toBe('window.rerunDesktop && window.rerunDesktop.mirror && window.rerunDesktop.mirror(false, 0); true;')
+        expect(mirrorScript(480)).toBe('window.lumvikaDesktop && window.lumvikaDesktop.mirror && window.lumvikaDesktop.mirror(true, 480); true;')
+        expect(mirrorScript(null)).toBe('window.lumvikaDesktop && window.lumvikaDesktop.mirror && window.lumvikaDesktop.mirror(false, 0); true;')
     })
 })

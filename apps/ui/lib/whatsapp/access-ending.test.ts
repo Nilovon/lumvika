@@ -5,7 +5,7 @@ import { deliverWhatsApp } from './send'
 
 vi.mock('./send', () => ({ deliverWhatsApp: vi.fn() }))
 vi.mock('@/lib/notifications/recipient', () => ({ loadFirstName: vi.fn(async () => 'Lucien') }))
-vi.mock('@/lib/og/board-image', () => ({ boardImageUrl: vi.fn((scene: unknown) => `https://app.rerun.build/og/board?scene=${JSON.stringify(scene)}`) }))
+vi.mock('@/lib/og/board-image', () => ({ boardImageUrl: vi.fn((scene: unknown) => `https://app.lumvika.com/og/board?scene=${JSON.stringify(scene)}`) }))
 
 type Tables = { workspaces?: SupabaseResult; workspace_members?: SupabaseResult; agents?: SupabaseResult; notifications?: SupabaseResult }
 
@@ -48,7 +48,7 @@ describe('sweepAccessEnding', () => {
         expect(report).toEqual({ considered: 1, sent: [7], skipped: [] })
         expect(delivered()).toMatchObject({ userId: 'owner', workspaceId: 7, language: 'en', dedupeKey: `access_ends:7:${ENDS_AT}` })
         expect(delivered().message).toMatchObject({
-            slug: 'rerun_access_ends_coworker',
+            slug: 'lumvika_access_ends_coworker',
             components: [
                 { type: 'header', parameters: [{ type: 'image', url: expect.stringContaining('"name":"Lead Scout","status":"working"') }] },
                 {
@@ -67,7 +67,7 @@ describe('sweepAccessEnding', () => {
         await sweepAccessEnding(database({ notifications: { count: 1 } }).client, NOW)
 
         const { message } = delivered()
-        expect(message.slug).toBe('rerun_access_ends_help')
+        expect(message.slug).toBe('lumvika_access_ends_help')
         const [header] = message.components
         expect(header.parameters[0]).toMatchObject({ type: 'image', url: expect.stringContaining('"name":"Lead Scout","status":"offline"') })
     })

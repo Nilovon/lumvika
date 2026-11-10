@@ -90,7 +90,7 @@ beforeEach(() => {
     state.portTaken = false
     state.vncLingerMs = 0
     vi.stubEnv('PATH', '/usr/bin')
-    vi.stubEnv('RERUN_DESKTOP', 'on')
+    vi.stubEnv('LUMVIKA_DESKTOP', 'on')
     vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
     vi.useFakeTimers()
 })
@@ -113,15 +113,15 @@ describe('desktop session', () => {
     })
 
     it('starts the screen processes without the engine configuration', async () => {
-        vi.stubEnv('RERUN_API_KEY', 'engine-key')
-        vi.stubEnv('RERUN_DATA_DIR', '/data')
-        vi.stubEnv('HOME', '/home/rerun')
+        vi.stubEnv('LUMVIKA_API_KEY', 'engine-key')
+        vi.stubEnv('LUMVIKA_DATA_DIR', '/data')
+        vi.stubEnv('HOME', '/home/lumvika')
         const session = await freshModule()
         await session.ensureDesktop('a1')
         for (const spawned of state.spawns) {
-            expect(spawned.env).toMatchObject({ DISPLAY: ':42', HOME: '/home/rerun', PATH: '/usr/bin' })
-            expect(spawned.env).not.toHaveProperty('RERUN_API_KEY')
-            expect(spawned.env).not.toHaveProperty('RERUN_DATA_DIR')
+            expect(spawned.env).toMatchObject({ DISPLAY: ':42', HOME: '/home/lumvika', PATH: '/usr/bin' })
+            expect(spawned.env).not.toHaveProperty('LUMVIKA_API_KEY')
+            expect(spawned.env).not.toHaveProperty('LUMVIKA_DATA_DIR')
         }
     })
 
@@ -147,7 +147,7 @@ describe('desktop session', () => {
     })
 
     it('reports no desktop on a box where it is switched off, even with the packages installed', async () => {
-        vi.stubEnv('RERUN_DESKTOP', 'off')
+        vi.stubEnv('LUMVIKA_DESKTOP', 'off')
         state.capture = true
         const session = await freshModule()
         expect(session.desktopAvailable()).toBe(false)
@@ -256,25 +256,25 @@ describe('desktop session', () => {
 
     it('paints the wallpaper, themes the windows and runs a dock and a top bar where their packages are installed', async () => {
         state.panels = true
-        vi.stubEnv('RERUN_PORT', '3100')
-        vi.stubEnv('RERUN_API_KEY', 'engine-key')
+        vi.stubEnv('LUMVIKA_PORT', '3100')
+        vi.stubEnv('LUMVIKA_API_KEY', 'engine-key')
         const session = await freshModule()
         await session.ensureDesktop('a1', { timeZone: 'Europe/Paris' })
         expect(state.spawns.map(s => s.command)).toEqual(['hsetroot', 'openbox', 'x11vnc', 'tint2', 'tint2'])
         expect(state.spawns[0]!.args).toEqual(['-cover', expect.stringMatching(/assets\/desktop\/wallpaper\.png$/)])
         expect(state.spawns[1]!.env.XDG_DATA_DIRS).toMatch(/assets\/desktop:\/usr\/local\/share:\/usr\/share$/)
         expect(state.spawns[2]!.env.XDG_DATA_DIRS).toBeUndefined()
-        expect(state.spawns.slice(0, 3).map(s => s.env.RERUN_API_KEY)).toEqual([undefined, undefined, undefined])
+        expect(state.spawns.slice(0, 3).map(s => s.env.LUMVIKA_API_KEY)).toEqual([undefined, undefined, undefined])
         expect(state.spawns.slice(3).map(s => s.args[1])).toEqual([expect.stringMatching(/dock\.tint2rc$/), expect.stringMatching(/bar\.tint2rc$/)])
         expect(state.spawns[3]!.env).toMatchObject({
             DISPLAY: ':42',
-            RERUN_API_KEY: 'engine-key',
-            RERUN_DESKTOP_AGENT: 'a1',
-            RERUN_DESKTOP_AGENT_NAME: 'Maya',
-            RERUN_DESKTOP_ENGINE: 'http://127.0.0.1:3100',
+            LUMVIKA_API_KEY: 'engine-key',
+            LUMVIKA_DESKTOP_AGENT: 'a1',
+            LUMVIKA_DESKTOP_AGENT_NAME: 'Maya',
+            LUMVIKA_DESKTOP_ENGINE: 'http://127.0.0.1:3100',
             TZ: 'Europe/Paris',
         })
-        expect(state.spawns[4]!.env.RERUN_API_KEY).toBe('engine-key')
+        expect(state.spawns[4]!.env.LUMVIKA_API_KEY).toBe('engine-key')
         expect(session.runningDesktops()).toEqual([{ agentId: 'a1', viewers: 0, dock: true }])
     })
 

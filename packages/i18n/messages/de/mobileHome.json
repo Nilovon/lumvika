@@ -31,7 +31,7 @@
         "asleep": "Schläft",
         "asleepAbout": "Schläft · {about}"
     },
-    "foreman": {
+    "steward": {
         "askAnything": "Frag mich alles"
     },
     "header": {
@@ -42,7 +42,7 @@
         "contactSupport": "Support kontaktieren",
         "signOut": "Abmelden",
         "subscriptionTitle": "Kündige zuerst das Abo",
-        "subscriptionMessage": "{workspaces} verlängert sich noch. Kündige es unter Abrechnung auf rerun.build und lösche dann dein Konto.",
+        "subscriptionMessage": "{workspaces} verlängert sich noch. Kündige es unter Abrechnung auf lumvika.com und lösche dann dein Konto.",
         "deleteTitle": "Konto löschen?",
         "deleteMessage": "Du verlässt die Workspaces, die du mit anderen teilst. Ein Workspace, in dem nur du bist, endet endgültig, mit seinen Coworkern und Dateien. Das kann nicht rückgängig gemacht werden.",
         "delete": "Löschen",
@@ -52,7 +52,7 @@
         "deleteFailedTitle": "Konto konnte nicht gelöscht werden",
         "deleteFailedMessage": "Versuch es gleich noch mal.",
         "leaveServerTitle": "{host} verlassen?",
-        "leaveServerMessage": "Du wirst abgemeldet, und Rerun öffnet sich wieder mit Rerun Cloud.",
+        "leaveServerMessage": "Du wirst abgemeldet, und Lumvika öffnet sich wieder mit Lumvika Cloud.",
         "leaveServer": "Verlassen"
     },
     "workspace": {
@@ -66,7 +66,7 @@
         "title": "Suche",
         "back": "Zurück",
         "placeholder": "Coworker und Unterhaltungen suchen",
-        "askRerun": "Rerun fragen",
+        "askLumvika": "Lumvika fragen",
         "quotedAsk": "„{query}“",
         "coworkers": "Coworker",
         "conversations": "Unterhaltungen",

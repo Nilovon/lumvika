@@ -48,7 +48,7 @@ async function browserInstalled(): Promise<boolean> {
 
 // A checkout drives patchright through pnpm; a prebuilt package has it in its own node_modules.
 function patchrightCommand(layout: Layout, args: string[]): { command: string; args: string[]; cwd: string } {
-    if (layout.kind === 'monorepo') return { command: 'pnpm', args: ['--filter', 'rerun-engine', 'exec', 'patchright', ...args], cwd: layout.root }
+    if (layout.kind === 'monorepo') return { command: 'pnpm', args: ['--filter', 'lumvika-engine', 'exec', 'patchright', ...args], cwd: layout.root }
     return { command: process.execPath, args: [resolve(layout.packageDir, 'node_modules', 'patchright', 'cli.js'), ...args], cwd: layout.packageDir }
 }
 
@@ -202,7 +202,7 @@ function returnMemoryToHost(): void {
     }
 }
 
-const serviceName = (): string => process.env.RERUN_SERVICE ?? 'rerun'
+const serviceName = (): string => process.env.LUMVIKA_SERVICE ?? 'lumvika'
 
 function restartService(): void {
     if (!hasCommand('systemctl')) {
@@ -237,8 +237,8 @@ export async function updateCommand(args: string[]): Promise<void> {
 async function updateFromGit(layout: Layout, noRestart: boolean): Promise<void> {
     const root = layout.root
     run('git', ['pull', '--ff-only'], { cwd: root })
-    run('pnpm', ['--filter', 'rerun-engine...', 'install', '--prod=false', '--frozen-lockfile'], { cwd: root })
-    run('pnpm', ['--filter', 'rerun-engine...', 'build'], { cwd: root })
+    run('pnpm', ['--filter', 'lumvika-engine...', 'install', '--prod=false', '--frozen-lockfile'], { cwd: root })
+    run('pnpm', ['--filter', 'lumvika-engine...', 'build'], { cwd: root })
 
     // Through the freshly built CLI: this process still runs the code it started with, and the new
     // build may expect another browser than the one it knows how to install.

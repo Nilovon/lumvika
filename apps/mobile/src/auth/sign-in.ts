@@ -1,4 +1,4 @@
-import { appSessionSchema, emailCodePreparedSchema, meSchema, phoneCodeSentSchema, signInRefusalSchema, type Me, type PhoneChannel, type PhoneCodeRequest } from '@rerun/contracts'
+import { appSessionSchema, emailCodePreparedSchema, meSchema, phoneCodeSentSchema, signInRefusalSchema, type Me, type PhoneChannel, type PhoneCodeRequest } from '@lumvika/contracts'
 
 import { api, ApiError } from '@/api/client'
 import { supabase } from '@/auth/supabase'
@@ -21,7 +21,7 @@ export class SignInError extends Error {
     }
 }
 
-const OFFLINE = new SignInError('We could not reach Rerun. Check your connection and try again.', 'network')
+const OFFLINE = new SignInError('We could not reach Lumvika. Check your connection and try again.', 'network')
 
 async function hubCall<T>(method: CodeMethod, schema: { parse: (value: unknown) => T }, path: string, body: unknown): Promise<T> {
     try {

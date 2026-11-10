@@ -17,7 +17,7 @@ import {
     paidDataOverview,
     parsePaidDataParams,
     type PaidDataCatalogLookup,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { env } from '../../config/env.js'
 import { deadlineSignal } from '../../lib/abort.js'
 import { recordPaidSources } from '../../db/repos/paid-sources.js'
@@ -37,7 +37,7 @@ const PAID_DATA_READ_TOOL = 'paid_data_read'
 // Both descriptions stay short on purpose: the Claude Code bridge truncates a tool description past
 // 2,048 characters and OpenAI's chat API refuses one past 1,024, so the catalog is read through its
 // own tool rather than listed here.
-const PAID_DATA_DESCRIPTION = `Buy live data on the workspace's Rerun credit. Groups: people (prospects, work emails, phones, enrichment), companies (search, enrich, lookalikes, jobs, news), search (Google organic, Maps, local pack, News, Perplexity), seo (search volumes, keyword ideas, trends, backlinks, authority), linkedin (profiles, company pages, posts, comments, reactions), tiktok (profiles, videos, searches, comments), instagram (profiles, posts, reels, hashtags, comments), x (profiles, posts, searches, replies), youtube (channels, videos, searches, comments), facebook (pages, posts, comments), reddit (subreddit feeds, posts with comments). Pass a capability id and its params. Before the first call of a group in a task, read that group in ${PAID_DATA_CATALOG_TOOL}, free: it lists each capability id, its inputs and what it returns. A call that finds nothing is often billed too: never repeat the same lookup.`
+const PAID_DATA_DESCRIPTION = `Buy live data on the workspace's Lumvika credit. Groups: people (prospects, work emails, phones, enrichment), companies (search, enrich, lookalikes, jobs, news), search (Google organic, Maps, local pack, News, Perplexity), seo (search volumes, keyword ideas, trends, backlinks, authority), linkedin (profiles, company pages, posts, comments, reactions), tiktok (profiles, videos, searches, comments), instagram (profiles, posts, reels, hashtags, comments), x (profiles, posts, searches, replies), youtube (channels, videos, searches, comments), facebook (pages, posts, comments), reddit (subreddit feeds, posts with comments). Pass a capability id and its params. Before the first call of a group in a task, read that group in ${PAID_DATA_CATALOG_TOOL}, free: it lists each capability id, its inputs and what it returns. A call that finds nothing is often billed too: never repeat the same lookup.`
 
 const PAID_DATA_CATALOG_DESCRIPTION = `Read the ${PAID_DATA_TOOL} catalog. Free, nothing is billed. Call it with a group before the first ${PAID_DATA_TOOL} call of that group in a task, to plan the calls: one line per capability with its id, its inputs and what it returns. Call it with a capability id for its full input schema. With neither, it lists every group with its capability ids. Read it as soon as a task involves people, contacts, companies, social or SEO data, to plan the batch before you search the web.`
 
@@ -51,12 +51,12 @@ async function readCatalog({ group, capability }: PaidDataCatalogLookup): Promis
 type HubAnswer = { status: number; body: Record<string, unknown> | null }
 
 async function postHub(agentId: string, path: string, payload: unknown, timeout: AbortSignal, headers: Record<string, string> = {}): Promise<HubAnswer> {
-    const { RERUN_HUB_BASE_URL: hub, RERUN_API_KEY: token } = env()
-    if (!hub || !token) throw new Error('paid data is unavailable: the engine is not linked to a Rerun hub')
+    const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: token } = env()
+    if (!hub || !token) throw new Error('paid data is unavailable: the engine is not linked to a Lumvika hub')
 
     const res = await fetch(`${hub.replace(/\/$/, '')}${path}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-rerun-agent': agentId, ...headers },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-lumvika-agent': agentId, ...headers },
         body: JSON.stringify(payload),
         signal: timeout,
     })
@@ -111,7 +111,7 @@ const PAID_DATA_BREAKER_KEY = 'paid_data'
 const SOURCE_CLOSED_MESSAGE = `Not run, nothing was billed: paid data is closed for this run, the source was down ${HOST_FAILURE_THRESHOLD} times in a row. Do not call paid_data again in this run. Deliver what you already have and say in one line which figures are missing.`
 
 const OUT_OF_CREDIT_MESSAGE =
-    'Not run, nothing was billed: the workspace has no Rerun credit left. The app already shows the user how to add credit, so do not explain it: say in one line what you could not get, finish the task with your free tools, and do not call paid_data again in this run.'
+    'Not run, nothing was billed: the workspace has no Lumvika credit left. The app already shows the user how to add credit, so do not explain it: say in one line what you could not get, finish the task with your free tools, and do not call paid_data again in this run.'
 
 // Best effort: the call is answered and billed whether or not its values could be indexed.
 async function indexPaidCall(agentId: string, capability: string, params: unknown, callId: string, servedBy: string | undefined, result: unknown, full: FullPaidAnswer | null | undefined): Promise<void> {
@@ -144,7 +144,7 @@ async function runPaid(ctx: RunContext, breaker: HostBreaker, capability: string
 
     if (status === 402) return { ...notRun(OUT_OF_CREDIT_MESSAGE), reason: PAID_DATA_OUT_OF_CREDIT }
     if (sourceDown) return notRun(consecutiveDown >= HOST_FAILURE_THRESHOLD ? SOURCE_CLOSED_MESSAGE : SOURCE_DOWN_MESSAGE)
-    if (status !== 200 || !body) return { status: 'failed', billedMicros, message: `Failed: ${String(body?.error ?? `the Rerun hub answered ${status}`)}. ${cost}` }
+    if (status !== 200 || !body) return { status: 'failed', billedMicros, message: `Failed: ${String(body?.error ?? `the Lumvika hub answered ${status}`)}. ${cost}` }
 
     if (body.outcome === 'pending') return { status: 'pending', billedMicros, message: `The provider is still working on this request. ${cost} Do not call it again with the same input: it would be billed twice.` }
     const servedBy = typeof body.servedBy === 'string' ? body.servedBy : undefined

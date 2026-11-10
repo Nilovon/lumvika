@@ -1,4 +1,4 @@
-import type { HitlKind } from '@rerun/contracts'
+import type { HitlKind } from '@lumvika/contracts'
 import { GlassView } from 'expo-glass-effect'
 import { SymbolView } from 'expo-symbols'
 import { Pressable, View } from 'react-native'

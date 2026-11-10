@@ -1,6 +1,6 @@
 import { normalizeDomain } from '@/lib/services/brand-icon'
 
-const FIRECRAWL_BASE_URL = process.env.RERUN_FIRECRAWL_BASE_URL ?? 'https://api.firecrawl.dev'
+const FIRECRAWL_BASE_URL = process.env.LUMVIKA_FIRECRAWL_BASE_URL ?? 'https://api.firecrawl.dev'
 const SCRAPE_TIMEOUT_MS = 20_000
 // A landing page's main content is well under this; the cap is there so a documentation-heavy
 // home page cannot push a 200k prompt into the analysis model.

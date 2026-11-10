@@ -11,11 +11,11 @@
         },
         "language": {
             "label": "Langue",
-            "description": "La langue que Rerun utilise avec vous."
+            "description": "La langue que Lumvika utilise avec vous."
         },
         "delete": {
             "label": "Supprimer le compte",
-            "description": "Fermer définitivement votre compte Rerun."
+            "description": "Fermer définitivement votre compte Lumvika."
         }
     },
     "language": {
@@ -46,7 +46,7 @@
         "phone": {
             "title": "Téléphone",
             "empty": "Non connecté. Ajoutez un numéro pour vous connecter avec un code par WhatsApp ou SMS.",
-            "otherAccount": "Ce numéro se connecte à un autre compte Rerun. Changez-le pour vous connecter ici par téléphone."
+            "otherAccount": "Ce numéro se connecte à un autre compte Lumvika. Changez-le pour vous connecter ici par téléphone."
         },
         "change": "Modifier",
         "add": "Ajouter",
@@ -58,7 +58,7 @@
         "disconnectTitle": "Déconnecter {provider} ?",
         "disconnectDescription": "Vous ne pourrez plus vous connecter à ce compte avec {provider}. Vos autres moyens de connexion continuent de fonctionner.",
         "linkError": {
-            "identityTaken": "Ce compte {provider} sert déjà à se connecter à un autre compte Rerun.",
+            "identityTaken": "Ce compte {provider} sert déjà à se connecter à un autre compte Lumvika.",
             "denied": "{provider} n'a pas été connecté.",
             "failed": "Impossible de connecter {provider}. Réessayez."
         }

@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-system-prompt-computer-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-system-prompt-computer-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const box = vi.hoisted(() => ({ desktop: true, capture: true }))
 
@@ -15,7 +15,7 @@ vi.mock('../desktop/session.js', async importOriginal => ({
 }))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
-const { agentConfigSchema } = await import('@rerun/contracts')
+const { agentConfigSchema } = await import('@lumvika/contracts')
 const { buildSystemPrompt: buildSystemPromptBlocks, systemPromptText } = await import('./systemPrompt.js')
 
 // The tests read the prompt as the model does, both blocks joined.
@@ -24,10 +24,10 @@ const buildSystemPrompt = async (...args: Parameters<typeof buildSystemPromptBlo
 function agentWith(tools: Record<string, boolean>) {
     return {
         id: 'prompt-computer-agent',
-        config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'rerun', tools: { memory: false, db: false, schedule: false, ...tools } }),
+        config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'lumvika', tools: { memory: false, db: false, schedule: false, ...tools } }),
         soul: 'You are a test agent.',
         env: {},
-        resolved: { connection: null, provider: 'rerun', model: 'rerun-max' },
+        resolved: { connection: null, provider: 'lumvika', model: 'lumvika-max' },
     } as any
 }
 

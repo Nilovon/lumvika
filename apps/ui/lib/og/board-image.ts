@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-import type { AgentStatus, BoardAgent } from '@rerun/ui/iso-grid'
+import type { AgentStatus, BoardAgent } from '@lumvika/ui/iso-grid'
 import { z } from 'zod'
 
 import { CARD_HEIGHT, CARD_THEME, CARD_THEMES, CARD_WIDTH } from './size'
@@ -8,7 +8,7 @@ import { CARD_HEIGHT, CARD_THEME, CARD_THEMES, CARD_WIDTH } from './size'
 // No 'server-only': the URL of a board image is also built from the Trigger.dev lifecycle tasks,
 // which are bundled outside the Next.js RSC pipeline.
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.rerun.build'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.lumvika.com'
 
 const AGENT_STATUSES = ['idle', 'working', 'waiting_human', 'error', 'offline'] as const satisfies readonly AgentStatus[]
 

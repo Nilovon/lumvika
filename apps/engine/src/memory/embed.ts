@@ -5,13 +5,13 @@ const TIMEOUT_MS = 5000
 
 export function embedBaseUrl(): string | null {
     const e = env()
-    if (e.RERUN_HUB_BASE_URL) return e.RERUN_HUB_BASE_URL.replace(/\/$/, '')
+    if (e.LUMVIKA_HUB_BASE_URL) return e.LUMVIKA_HUB_BASE_URL.replace(/\/$/, '')
     return null
 }
 
 function embedTarget(): { url: string; key: string } | null {
     const base = embedBaseUrl()
-    const key = env().RERUN_API_KEY
+    const key = env().LUMVIKA_API_KEY
     if (!base || !key) return null
     return { url: `${base}/api/embed`, key }
 }
@@ -19,7 +19,7 @@ function embedTarget(): { url: string; key: string } | null {
 export async function embedText(text: string): Promise<number[] | null> {
     const target = embedTarget()
     if (!target) {
-        logger.warn({ hubBaseUrl: embedBaseUrl(), hasKey: Boolean(env().RERUN_API_KEY) }, 'embedding skipped: hub base url or api key missing')
+        logger.warn({ hubBaseUrl: embedBaseUrl(), hasKey: Boolean(env().LUMVIKA_API_KEY) }, 'embedding skipped: hub base url or api key missing')
         return null
     }
 

@@ -18,7 +18,7 @@ describe('decideIndustry', () => {
 
     it('takes a confident choice', async () => {
         vi.stubGlobal('fetch', respond(answer('saas', 0.97)))
-        expect(await decideIndustry('https://rerun.build')).toEqual({ industry: 'saas', confidence: 0.97 })
+        expect(await decideIndustry('https://lumvika.com')).toEqual({ industry: 'saas', confidence: 0.97 })
     })
 
     it('falls back on other when the model is unsure, keeping what it was sure of', async () => {
@@ -48,7 +48,7 @@ describe('decideIndustry', () => {
         expect(await decideIndustry('   ')).toBeNull()
 
         vi.stubEnv('OPENROUTER_API_KEY', '')
-        expect(await decideIndustry('https://rerun.build')).toBeNull()
+        expect(await decideIndustry('https://lumvika.com')).toBeNull()
         expect(fetcher).not.toHaveBeenCalled()
     })
 })

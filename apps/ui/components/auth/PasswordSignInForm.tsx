@@ -45,7 +45,7 @@ export function PasswordSignInForm({ onSignedIn }: { onSignedIn: () => void }) {
                     render={({ field }) => (
                         <FormItem>
                             <FormControl>
-                                <Input type="email" label={t('email')} placeholder="you@rerun.build" autoComplete="email" {...field} />
+                                <Input type="email" label={t('email')} placeholder="you@lumvika.com" autoComplete="email" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

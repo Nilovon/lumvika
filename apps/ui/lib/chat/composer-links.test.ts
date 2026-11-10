@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { collapseLinks, expandLinks, remarkMentions, remarkShortLinks, shortenUrl, tokenizeComposer, tokenRanges, trimUrl, urlBeforeCaret, type ComposerLinks, type ComposerMention } from './composer-links'
 
-const PR = 'https://github.com/rerun-build/rerun/pull/839/files?diff=split'
+const PR = 'https://github.com/schnebel-technologie/lumvika/pull/839/files?diff=split'
 const chip = (label: string) => `  ${label} `
 
 describe('shortenUrl', () => {
@@ -10,8 +10,8 @@ describe('shortenUrl', () => {
     })
 
     it('drops the scheme and www of a short URL and nothing else', () => {
-        expect(shortenUrl('https://www.rerun.build')).toBe('rerun.build')
-        expect(shortenUrl('https://rerun.build/pricing')).toBe('rerun.build/pricing')
+        expect(shortenUrl('https://www.lumvika.com')).toBe('lumvika.com')
+        expect(shortenUrl('https://lumvika.com/pricing')).toBe('lumvika.com/pricing')
     })
 
     it('cuts a very long last segment in the middle, with hyphens that do not break', () => {
@@ -33,15 +33,15 @@ describe('trimUrl', () => {
 describe('collapseLinks / expandLinks', () => {
     it('round-trips a message, punctuation left outside the chip', () => {
         const links: ComposerLinks = new Map()
-        const text = `Look at ${PR}. Also https://rerun.build and (${PR}).`
+        const text = `Look at ${PR}. Also https://lumvika.com and (${PR}).`
         const collapsed = collapseLinks(text, links)
-        expect(collapsed).toBe(`Look at ${chip('github.com/…/files…')}. Also ${chip('rerun.build')} and (${chip('github.com/…/files…')}).`)
+        expect(collapsed).toBe(`Look at ${chip('github.com/…/files…')}. Also ${chip('lumvika.com')} and (${chip('github.com/…/files…')}).`)
         expect(expandLinks(collapsed, links)).toBe(text)
     })
 
     it('gives two URLs sharing a label distinct labels', () => {
         const links: ComposerLinks = new Map()
-        const other = 'https://github.com/rerun-build/other-repo/pull/12/files?diff=unified'
+        const other = 'https://github.com/schnebel-technologie/other-repo/pull/12/files?diff=unified'
         const collapsed = collapseLinks(`${PR} ${other}`, links)
         expect(collapsed).toBe(`${chip('github.com/…/files…')} ${chip('github.com/…/files…~2')}`)
         expect(expandLinks(collapsed, links)).toBe(`${PR} ${other}`)
@@ -49,8 +49,8 @@ describe('collapseLinks / expandLinks', () => {
 
     it('leaves text the user wrote alone, even when it reads like a label', () => {
         const links: ComposerLinks = new Map()
-        collapseLinks('https://rerun.build', links)
-        expect(expandLinks('I work on rerun.build', links)).toBe('I work on rerun.build')
+        collapseLinks('https://lumvika.com', links)
+        expect(expandLinks('I work on lumvika.com', links)).toBe('I work on lumvika.com')
     })
 })
 

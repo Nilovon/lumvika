@@ -7,14 +7,14 @@ import { AccountDialog } from '@/components/dialogs/AccountDialog'
 import { AiProvidersDialog } from '@/components/dialogs/AiProvidersDialog'
 import { ApiKeysDialog } from '@/components/dialogs/ApiKeysDialog'
 import { ServersDialog } from '@/components/dialogs/ServersDialog'
-import { ADMIN_URL } from '@rerun/cloud/admin'
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
-import { SERVERS_ENABLED } from '@rerun/cloud/servers'
+import { ADMIN_URL } from '@lumvika/cloud/admin'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
+import { SERVERS_ENABLED } from '@lumvika/cloud/servers'
 import { CreateWorkspaceDialog } from '@/components/dialogs/CreateWorkspaceDialog'
-import { CreditMeter, UpgradePill } from '@rerun/cloud/billing.client'
+import { CreditMeter, UpgradePill } from '@lumvika/cloud/billing.client'
 import { ExpertProfileDialog } from '@/components/dialogs/ExpertProfileDialog'
 import { KnowledgeBaseDialog } from '@/components/dialogs/KnowledgeBaseDialog'
-import { PaidAppDialogs, usePaidAppsStore, AppsMenuSection } from '@rerun/cloud/apps.client'
+import { PaidAppDialogs, usePaidAppsStore, AppsMenuSection } from '@lumvika/cloud/apps.client'
 import { useEnabledPaidApps } from '@/components/layout/FeatureFlagsProvider'
 import { WorkspaceMembersDialog } from '@/components/dialogs/WorkspaceMembersDialog'
 import { WorkspaceSettingsDialog } from '@/components/dialogs/WorkspaceSettingsDialog'
@@ -24,20 +24,20 @@ import { LanguageMenuRow } from '@/components/layout/LanguageMenuRow'
 import { HelpButton } from '@/components/layout/HelpButton'
 import { WeeklyRewindMenuItem, WhatsNewMenuItem } from '@/components/layout/ToolbarActions'
 import { WorkspacePowerDialog, WorkspacePowerMenuItems, type PowerAction } from '@/components/layout/WorkspacePowerControl'
-import { WorkspaceLogoImage, WorkspacePill } from '@rerun/ui/chrome'
-import { Badge } from '@rerun/ui/primitives'
+import { WorkspaceLogoImage, WorkspacePill } from '@lumvika/ui/chrome'
+import { Badge } from '@lumvika/ui/primitives'
 import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { activeAgentLimitFor, BILLING_ENABLED, isLifetimePlan, isWorkspaceApiEntitled } from '@rerun/cloud/billing'
+import { activeAgentLimitFor, BILLING_ENABLED, isLifetimePlan, isWorkspaceApiEntitled } from '@lumvika/cloud/billing'
 import { useBrainProposalCount } from '@/hooks/useBrainProposalCount'
 import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { useIsTemplateAuthor } from '@/hooks/useIsTemplateAuthor'
-import { useRerunCredit } from '@/hooks/useRerunCredit'
+import { useLumvikaCredit } from '@/hooks/useLumvikaCredit'
 import { useAccountStore } from '@/stores/account.store'
 import { useBillingStore } from '@/stores/billing.store'
 import { useCreatorStore } from '@/stores/creator.store'
 import { useBrainStore } from '@/stores/brain.store'
-import { useForemanStore } from '@/stores/foreman.store'
+import { useStewardStore } from '@/stores/steward.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
 import { useIsWorkspaceAdmin, useSession } from '@/supabase/session/SessionProvider'
@@ -94,7 +94,7 @@ export function WorkspaceSwitcher() {
     // page and has to reopen this panel on its payouts pane.
     const openCreator = useCreatorStore(s => s.openCreator)
     const setCreateTemplateOpen = useCreatorStore(s => s.setCreateOpen)
-    // Held in a store rather than here: the foreman opens these three panels too, from a chat that
+    // Held in a store rather than here: the steward opens these three panels too, from a chat that
     // does not own this menu.
     const panel = useWorkspaceSettingsStore(s => s.panel)
     const openWorkspacePanel = useWorkspaceSettingsStore(s => s.openWorkspacePanel)
@@ -115,8 +115,8 @@ export function WorkspaceSwitcher() {
     const [powerAction, setPowerAction] = useState<PowerAction | null>(null)
     const refreshBrainProposals = useBrainStore(s => s.refreshProposalCount)
     const brainProposals = useBrainProposalCount(Boolean(workspace) && !isAnonymous)
-    const guided = useForemanStore(state => state.funnel === 'guided')
-    const credit = useRerunCredit()
+    const guided = useStewardStore(state => state.funnel === 'guided')
+    const credit = useLumvikaCredit()
 
     // An app joins the Apps section of the menu with its first account: counted on mount and again
     // each time a dialog connects or removes one.
@@ -331,8 +331,8 @@ export function WorkspaceSwitcher() {
         </DropdownMenuSub>
     )
 
-    // The admin panel and the machine controls belong to Rerun Cloud; a self-hosted install has neither.
-    const adminMenu = RERUN_CLOUD && isAdmin && (
+    // The admin panel and the machine controls belong to Lumvika Cloud; a self-hosted install has neither.
+    const adminMenu = LUMVIKA_CLOUD && isAdmin && (
         <DropdownMenuSub>
             <DropdownMenuSubTrigger className="gap-2 text-muted-foreground">
                 <ShieldCheckIcon className="size-4" />

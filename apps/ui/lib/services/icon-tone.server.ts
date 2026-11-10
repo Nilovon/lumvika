@@ -1,4 +1,4 @@
-import type { BrandIconTone } from '@rerun/ui/brand-icon'
+import type { BrandIconTone } from '@lumvika/ui/brand-icon'
 
 import { classifyRgbaPixels } from './icon-tone'
 

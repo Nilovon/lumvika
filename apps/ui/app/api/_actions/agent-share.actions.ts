@@ -1,6 +1,6 @@
 'use server'
 
-import { agentShareIncludeSchema, type AgentSharePreview } from '@rerun/contracts'
+import { agentShareIncludeSchema, type AgentSharePreview } from '@lumvika/contracts'
 import { z } from 'zod'
 import { getAdminEmail } from '@/lib/auth/admin'
 import { actorFromContext, assertAgentInWorkspace, assertSpaceAccess, keepVisible } from '@/app/api/_auth/access'

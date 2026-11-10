@@ -1,18 +1,18 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import type { LoadedAgent } from './types.js'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-availability-gaps-'))
-process.env.RERUN_HUB_BASE_URL = 'https://hub.example.com'
-process.env.RERUN_API_KEY = 'hub-key'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-availability-gaps-'))
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example.com'
+process.env.LUMVIKA_API_KEY = 'hub-key'
 
 const { afterEach, beforeEach, describe, expect, it, vi } = await import('vitest')
 const { rm } = await import('node:fs/promises')
-const { DEFAULT_CONNECTION_MODELS, RERUN_CONNECTION_ID, RERUN_MODEL, agentConfigSchema } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID, LUMVIKA_MODEL, agentConfigSchema } = await import('@lumvika/contracts')
 const { connectionsDir } = await import('../config/paths.js')
-const { createConnection, ensureRerunConnection } = await import('../connections/store.js')
+const { createConnection, ensureLumvikaConnection } = await import('../connections/store.js')
 const { clearAgentCache } = await import('./registry.js')
 const { clearBoxDefault } = await import('../connections/default.js')
 const { logger } = await import('../lib/logger.js')
@@ -77,26 +77,26 @@ describe('automationModel', () => {
 
     // A silent swap changes both the bill and the quality of the answer, so it has to be visible.
     it('warns with what was asked and what runs instead when it falls back', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const claude = await connect('claude', {})
         const agent = await makeAgent(claude.id, 'claude', 'opus')
 
         const using = await automationModel(agent, { slug: 'weekly', connectionId: claude.id, model: 'sonnet' }, 'schedule')
 
-        expect(using).toEqual({ connectionId: RERUN_CONNECTION_ID, provider: 'rerun', model: RERUN_MODEL })
+        expect(using).toEqual({ connectionId: LUMVIKA_CONNECTION_ID, provider: 'lumvika', model: LUMVIKA_MODEL })
         expect(warn).toHaveBeenCalledWith(
-            { agent: 'a1', source: 'schedule', slug: 'weekly', requested: `${claude.id}:sonnet`, using: `${RERUN_CONNECTION_ID}:${RERUN_MODEL}` },
+            { agent: 'a1', source: 'schedule', slug: 'weekly', requested: `${claude.id}:sonnet`, using: `${LUMVIKA_CONNECTION_ID}:${LUMVIKA_MODEL}` },
             'connection unavailable, falling back',
         )
     })
 
     it('names a missing connection "none" in the warning', async () => {
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
-        const agent: LoadedAgent = { ...(await makeAgent(null, null, null)), resolved: { connection: null, provider: 'rerun', model: RERUN_MODEL } }
+        const agent: LoadedAgent = { ...(await makeAgent(null, null, null)), resolved: { connection: null, provider: 'lumvika', model: LUMVIKA_MODEL } }
 
         const using = await automationModel(agent, { slug: 'hook', connectionId: null, model: null }, 'trigger')
 
         expect(using.connectionId).toBe(anthropic.id)
-        expect(warn).toHaveBeenCalledWith(expect.objectContaining({ source: 'trigger', requested: `none:${RERUN_MODEL}`, using: `${anthropic.id}:${using.model}` }), 'connection unavailable, falling back')
+        expect(warn).toHaveBeenCalledWith(expect.objectContaining({ source: 'trigger', requested: `none:${LUMVIKA_MODEL}`, using: `${anthropic.id}:${using.model}` }), 'connection unavailable, falling back')
     })
 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { BillingDialog } from '@rerun/cloud/billing.client'
+import { BillingDialog } from '@lumvika/cloud/billing.client'
 import { NotificationPermissionDialog } from '@/components/dialogs/NotificationPermissionDialog'
 import { NotificationsDialog } from '@/components/dialogs/NotificationsDialog'
 import { ShortcutsDialog } from '@/components/dialogs/ShortcutsDialog'
@@ -9,12 +9,12 @@ import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdow
 import { useInstallPrompt } from '@/components/pwa/useInstallPrompt'
 import { useRewindEnabled } from '@/components/layout/FeatureFlagsProvider'
 import { selectHasEntries, selectUnreadCount, useChangelogStore } from '@/stores/changelog.store'
-import { useForemanStore } from '@/stores/foreman.store'
-import { selectHasUnseenLatest, useRewindStore } from '@rerun/cloud/rewind.client'
+import { useStewardStore } from '@/stores/steward.store'
+import { selectHasUnseenLatest, useRewindStore } from '@lumvika/cloud/rewind.client'
 import { useShortcutsStore } from '@/stores/shortcuts.store'
-import { Badge } from '@rerun/ui/primitives'
-import { BookOpenIcon, DownloadIcon, HandshakeIcon, KeyboardIcon, ListTodoIcon, MegaphoneIcon, RewindIcon, UsersIcon } from '@/lib/icons'
-import { docsUrl, landingUrl } from '@/lib/site'
+import { Badge } from '@lumvika/ui/primitives'
+import { BookOpenIcon, CodeIcon, DownloadIcon, HandshakeIcon, InfoIcon, KeyboardIcon, ListTodoIcon, MegaphoneIcon, RewindIcon } from '@/lib/icons'
+import { docsUrl, landingUrl, SOURCE_REPO_URL } from '@/lib/site'
 import { useTranslations } from 'next-intl'
 
 export function WeeklyRewindMenuItem() {
@@ -60,7 +60,7 @@ export function HelpMenuItems({ onOpenGettingStarted }: { onOpenGettingStarted: 
     const t = useTranslations('layout.menu')
     const openShortcuts = useShortcutsStore(s => s.openShortcuts)
     const { canInstall, promptInstall } = useInstallPrompt()
-    const gettingStartedAvailable = useForemanStore(s => s.gettingStartedAvailable)
+    const gettingStartedAvailable = useStewardStore(s => s.gettingStartedAvailable)
 
     return (
         <>
@@ -68,7 +68,7 @@ export function HelpMenuItems({ onOpenGettingStarted }: { onOpenGettingStarted: 
                 <DropdownMenuItem
                     onSelect={() => {
                         onOpenGettingStarted()
-                        useForemanStore.getState().openGettingStarted()
+                        useStewardStore.getState().openGettingStarted()
                     }}
                     className="gap-2 text-muted-foreground"
                 >
@@ -82,12 +82,6 @@ export function HelpMenuItems({ onOpenGettingStarted }: { onOpenGettingStarted: 
                     {t('docs')}
                 </a>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="gap-2 text-muted-foreground">
-                <a href="https://discord.gg/cJUUgdTg5p" target="_blank" rel="noopener noreferrer">
-                    <UsersIcon className="size-4" />
-                    {t('community')}
-                </a>
-            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => openShortcuts()} className="gap-2 text-muted-foreground">
                 <KeyboardIcon className="size-4" />
                 {t('shortcuts')}
@@ -98,6 +92,18 @@ export function HelpMenuItems({ onOpenGettingStarted }: { onOpenGettingStarted: 
                     {t('installApp')}
                 </DropdownMenuItem>
             )}
+            <DropdownMenuItem asChild className="gap-2 text-muted-foreground">
+                <a href="/about">
+                    <InfoIcon className="size-4" />
+                    {t('about')}
+                </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="gap-2 text-muted-foreground">
+                <a href={SOURCE_REPO_URL} target="_blank" rel="noopener noreferrer">
+                    <CodeIcon className="size-4" />
+                    {t('source')}
+                </a>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="gap-2 text-muted-foreground">
                 <a href={landingUrl('/community/experts')} target="_blank" rel="noopener noreferrer">

@@ -1,13 +1,13 @@
-// Whether the visitor has a real session on app.rerun.build, told to the landing and to nobody
+// Whether the visitor has a real session on app.lumvika.com, told to the landing and to nobody
 // else. The Supabase auth cookie is host-only on the app and must stay that way: widening its
-// domain would hand the refresh token to every sibling subdomain, docs.rerun.build included, which
+// domain would hand the refresh token to every sibling subdomain, docs.lumvika.com included, which
 // is hosted by a third party. So the app writes this flag beside it on the parent domain, with
 // nothing in it but the fact that someone is signed in.
 //
 // It carries no secret and is deliberately readable by JavaScript: the landing is prerendered, so
 // its header CTA can only be swapped by a script running before the first paint.
 
-export const SESSION_HINT_COOKIE = 'rerun-session'
+export const SESSION_HINT_COOKIE = 'lumvika-session'
 
 export const SESSION_HINT_VALUE = '1'
 
@@ -34,7 +34,7 @@ export function readSessionHint(): boolean {
 // path, which is why this cannot be a plain delete.
 export function clearSessionHintCookie() {
     const parts = [`${SESSION_HINT_COOKIE}=`, 'path=/', 'max-age=0', 'SameSite=Lax']
-    if (location.hostname.endsWith('rerun.build')) parts.push('domain=.rerun.build')
+    if (location.hostname.endsWith('lumvika.com')) parts.push('domain=.lumvika.com')
     if (location.protocol === 'https:') parts.push('Secure')
     document.cookie = parts.join('; ')
 }

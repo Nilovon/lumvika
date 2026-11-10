@@ -1,5 +1,5 @@
 import { fal } from '@fal-ai/client'
-import { withBrandIconTone, type BrandIconTone } from '@rerun/ui/brand-icon'
+import { withBrandIconTone, type BrandIconTone } from '@lumvika/ui/brand-icon'
 import type { Database } from '@/app/api/database.types'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMany } from '@/supabase/supabase-helpers'
@@ -17,13 +17,13 @@ import { analyzeBrandIconTone } from './icon-tone.server'
 //      to a solid square (the mark is lost), which is exactly why Simple Icons goes first.
 //
 // In all cases we store the colour asset (SVG or transparent PNG). Its URL carries `tone=dark`
-// only when the measured contrast against Rerun's dark surface is below 3:1. <Icon> otherwise
+// only when the measured contrast against Lumvika's dark surface is below 3:1. <Icon> otherwise
 // renders the original colours and uses a white silhouette only for that dark-on-dark case.
 
 const ICON_BUCKET = 'service-icons'
-const SIMPLEICONS_BASE_URL = process.env.RERUN_SIMPLEICONS_BASE_URL ?? 'https://cdn.simpleicons.org'
-const LOGODEV_BASE_URL = process.env.RERUN_LOGODEV_BASE_URL ?? 'https://img.logo.dev'
-const FAL_BG_REMOVAL_MODEL = process.env.RERUN_FAL_BG_MODEL ?? 'pixelcut/background-removal'
+const SIMPLEICONS_BASE_URL = process.env.LUMVIKA_SIMPLEICONS_BASE_URL ?? 'https://cdn.simpleicons.org'
+const LOGODEV_BASE_URL = process.env.LUMVIKA_LOGODEV_BASE_URL ?? 'https://img.logo.dev'
+const FAL_BG_REMOVAL_MODEL = process.env.LUMVIKA_FAL_BG_MODEL ?? 'pixelcut/background-removal'
 
 // Accepts a full URL ("https://stripe.com/pricing"), a bare host ("www.stripe.com") or a
 // domain ("stripe.com") and returns the registrable host ("stripe.com").

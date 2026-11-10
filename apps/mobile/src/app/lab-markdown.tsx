@@ -1,4 +1,4 @@
-import { authorTurnsOf, FORMER_MEMBER, type AuthorProfile } from '@rerun/contracts'
+import { authorTurnsOf, FORMER_MEMBER, type AuthorProfile } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
@@ -20,7 +20,7 @@ const text = (id: string, role: 'user' | 'assistant', body: string): UIMessage =
 
 const PROSE = `## Weekly report
 
-The **pipeline** grew by *12 leads* this week, ~~9~~ 11 of them from LinkedIn. The full list is in [leads.csv](/data/agents/agent-scout/workspace/reports/leads.csv), and the method is on [our blog](https://rerun.build/blog).
+The **pipeline** grew by *12 leads* this week, ~~9~~ 11 of them from LinkedIn. The full list is in [leads.csv](/data/agents/agent-scout/workspace/reports/leads.csv), and the method is on [our blog](https://lumvika.com/blog).
 
 Three things stand out:
 
@@ -145,8 +145,8 @@ const CARDS: UIMessage[] = [
             tool('t1', 'delegate_tasks', 'input-available', { tasks: [] }),
             delegation('running'),
             { type: 'text', text: 'While they work, I am adding the apps.' },
-            tool('t2', 'rerun_hub_service_install', 'output-available', { slug: 'gmail' }, { status: 'installed', key: 'gmail', slug: 'gmail', name: 'Gmail', toolNames: ['gmail'], message: '' }),
-            tool('t3', 'rerun_hub_service_install', 'output-available', { slug: 'notion' }, { status: 'needs_auth', key: 'notion', slug: 'notion', name: 'Notion', message: '' }),
+            tool('t2', 'lumvika_hub_service_install', 'output-available', { slug: 'gmail' }, { status: 'installed', key: 'gmail', slug: 'gmail', name: 'Gmail', toolNames: ['gmail'], message: '' }),
+            tool('t3', 'lumvika_hub_service_install', 'output-available', { slug: 'notion' }, { status: 'needs_auth', key: 'notion', slug: 'notion', name: 'Notion', message: '' }),
             tool('t4', 'mcp_register', 'output-available', { name: 'pipedrive', url: 'https://mcp.pipedrive.com' }, 'Could not reach pipedrive via http: 401 Unauthorized. Nothing was saved.'),
         ],
     } as UIMessage,
@@ -199,7 +199,7 @@ function ViewerLab() {
     return (
         <View style={{ gap: spacing.md }}>
             <UserBubble text="Here are the screenshots" media={PHOTOS.map(photo => ({ ...photo, image: true }))} />
-            <Pressable onPress={() => openViewer(DOCUMENTS, 0)} accessibilityRole="button" style={{ padding: spacing.md, borderRadius: 12, backgroundColor: '#4d34f7' }}>
+            <Pressable onPress={() => openViewer(DOCUMENTS, 0)} accessibilityRole="button" style={{ padding: spacing.md, borderRadius: 12, backgroundColor: '#0b6e63' }}>
                 <Text style={{ color: '#ffffff' }}>Open a PDF, then a photo</Text>
             </Pressable>
         </View>

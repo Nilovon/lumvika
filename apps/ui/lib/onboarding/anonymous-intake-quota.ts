@@ -1,5 +1,5 @@
 // How much of the welcome card one workspace may spend. Each call is a model decision or a Firecrawl
-// read, paid by Rerun: the card gets what a person answering it needs and a script replaying it gets
+// read, paid by Lumvika: the card gets what a person answering it needs and a script replaying it gets
 // nothing more, whether the visitor has an account yet or not.
 //
 // Held in memory, per process: a deploy or a second replica only hands a workspace a larger

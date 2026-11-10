@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-prepare-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-prepare-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const steps = vi.hoisted(() => [] as string[])
 const resolvedWith = vi.hoisted(() => [] as Record<string, string>[])
@@ -25,7 +25,7 @@ vi.mock('./mcp-resolve.js', () => ({
 vi.mock('./mcp-hub-headers.js', () => ({
     withHubHeaders: (server: { url?: string; headers: Record<string, string> }, agentId: string) => {
         steps.push(`hub:${server.url}:${agentId}`)
-        return { ...server, headers: { ...server.headers, 'x-rerun-agent': agentId } }
+        return { ...server, headers: { ...server.headers, 'x-lumvika-agent': agentId } }
     },
 }))
 
@@ -36,12 +36,12 @@ const { workspaceDir } = await import('../config/paths.js')
 describe('prepareMcpServer', () => {
     it('adds the OAuth bearer, then resolves the variables, then stamps the hub headers', async () => {
         const prepared = await prepareMcpServer('agent-1', { name: 'x', url: 'https://${HOST}/api/mcp/x', args: [], env: {}, headers: {} }, { HOST: 'hub.example' })
-        expect(steps).toEqual(['auth:agent-1:https://${HOST}/api/mcp/x', 'secrets:Bearer oauth:HOST,RERUN_WORKSPACE', 'hub:https://hub.example/api/mcp/x:agent-1'])
-        expect(prepared).toMatchObject({ url: 'https://hub.example/api/mcp/x', headers: { Authorization: 'Bearer oauth', 'x-rerun-agent': 'agent-1' } })
+        expect(steps).toEqual(['auth:agent-1:https://${HOST}/api/mcp/x', 'secrets:Bearer oauth:HOST,LUMVIKA_WORKSPACE', 'hub:https://hub.example/api/mcp/x:agent-1'])
+        expect(prepared).toMatchObject({ url: 'https://hub.example/api/mcp/x', headers: { Authorization: 'Bearer oauth', 'x-lumvika-agent': 'agent-1' } })
     })
 
-    it("resolves ${RERUN_WORKSPACE} to the agent's own workspace, whatever its env says", async () => {
-        await prepareMcpServer('agent-2', { name: 'mail', command: 'npx', args: [], env: { MAIL_ALLOWED_ROOTS: '${RERUN_WORKSPACE}' }, headers: {} }, { RERUN_WORKSPACE: '/' })
-        expect(resolvedWith.at(-1)?.RERUN_WORKSPACE).toBe(workspaceDir('agent-2'))
+    it("resolves ${LUMVIKA_WORKSPACE} to the agent's own workspace, whatever its env says", async () => {
+        await prepareMcpServer('agent-2', { name: 'mail', command: 'npx', args: [], env: { MAIL_ALLOWED_ROOTS: '${LUMVIKA_WORKSPACE}' }, headers: {} }, { LUMVIKA_WORKSPACE: '/' })
+        expect(resolvedWith.at(-1)?.LUMVIKA_WORKSPACE).toBe(workspaceDir('agent-2'))
     })
 })

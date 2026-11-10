@@ -8,8 +8,8 @@ import { authenticateApiKey, bindImportKey, type AuthenticatedApiKey } from '@/l
 import { assertImportCall, importToolDefs, isImportKey } from '@/lib/mcp/import-scope'
 import { responseTooLarge, tooLargeMessage } from '@/lib/mcp/truncate'
 
-// The "Rerun" MCP server: it lets an external AI agent (Claude Code and friends) shape a
-// Rerun account — agents, their prompt, their skills, their scheduled tasks, their
+// The "Lumvika" MCP server: it lets an external AI agent (Claude Code and friends) shape a
+// Lumvika account — agents, their prompt, their skills, their scheduled tasks, their
 // connectors. A tiny stateless JSON-RPC 2.0 handler rather than the MCP SDK, which
 // sidesteps session management, SSE keep-alives and cold starts. Callers authenticate with an account API key.
 
@@ -74,7 +74,7 @@ export async function handleAccountMcp(req: Request, token: string, { importOnly
         return rpcResult(id, {
             protocolVersion,
             capabilities: { tools: {} },
-            serverInfo: { name: 'rerun', version: '1.0.0' },
+            serverInfo: { name: 'lumvika', version: '1.0.0' },
         })
     }
 

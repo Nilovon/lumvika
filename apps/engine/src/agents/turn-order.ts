@@ -1,4 +1,4 @@
-import { opencodeUpstreamId, type Provider } from '@rerun/contracts'
+import { opencodeUpstreamId, type Provider } from '@lumvika/contracts'
 
 export type TurnOrder = 'message-first' | 'call-first'
 
@@ -14,7 +14,7 @@ const ENDS_ON_ITS_MESSAGE = /^(openai\/)?(gpt-|o\d)/i
 const NOTES_BEFORE_A_CALL_ARE_FOLDED = /^(anthropic\/)?claude-/i
 const CLAUDE_PROVIDERS: ReadonlySet<Provider> = new Set(['claude', 'anthropic'])
 
-// `model` is the one that answers: behind a Rerun alias, the model the hub serves it with. An OpenCode
+// `model` is the one that answers: behind a Lumvika alias, the model the hub serves it with. An OpenCode
 // id is read without its plan (`go/gpt-6-luna`).
 export function turnOrder(provider: Provider, model: string): TurnOrder {
     const id = provider === 'opencode' ? opencodeUpstreamId(model) : model

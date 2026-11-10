@@ -2,8 +2,8 @@ import 'server-only'
 import type { WorkspaceContext } from '@/app/api/_auth/ownership'
 import { assertModelEntitled } from '@/app/api/_services/engine-plan.service'
 import { ensureWorkspaceEngine, findWorkspaceEngine, getWorkspaceConnection } from '@/app/api/_services/workspace-engine.service'
-import { isPremiumModelEntitled } from '@rerun/cloud/billing'
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { isPremiumModelEntitled } from '@lumvika/cloud/billing'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import {
     KEY_PROVIDERS,
     keyProviders,
@@ -21,14 +21,14 @@ import {
     offeredModels,
     planWindowName,
     planWindowReset,
-    rerunCreditOf,
+    lumvikaCreditOf,
     modelDescription,
     sourceKind,
     sourceSummary,
     suggestName,
     type GuidedProvider,
     type KeyProvider,
-    type RerunCredit,
+    type LumvikaCredit,
     type SourceCopy,
 } from '@/lib/engine/ai-sources'
 import { type ClaudeOAuthStart, buildClaudeAuthorize, exchangeClaudeCode } from '@/lib/engine/claude-oauth'
@@ -53,7 +53,7 @@ import { OPENCODE_ENABLED } from '@/lib/features'
 import { AppError, type ErrorCode, type ErrorParams } from '@/lib/i18n/action-error'
 import { recipientLocale } from '@/lib/i18n/recipient-locale'
 import { translatorFor } from '@/lib/i18n/server-translator'
-import { CONNECTION_TOKEN_KEY, DEFAULT_CONNECTION_MODELS, RERUN_CONNECTION_ID, canonicalModelId, canonicalModelIds, claudeTokenIssue, type AddableProvider, type AiConnectionView, type AiConnectionsView, type CustomProbeInput, type CustomProbeResult } from '@rerun/contracts'
+import { CONNECTION_TOKEN_KEY, DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID, canonicalModelId, canonicalModelIds, claudeTokenIssue, type AddableProvider, type AiConnectionView, type AiConnectionsView, type CustomProbeInput, type CustomProbeResult } from '@lumvika/contracts'
 
 // The AI providers of a workspace, for both the web dialog's server actions and the app's /api/v1
 // routes. They live at the root of the engine's data dir, never under a Box: the workspace is the
@@ -77,7 +77,7 @@ async function connectionForCreate(workspaceId: number): Promise<EngineConnectio
     return getWorkspaceConnection(workspaceId)
 }
 
-// A box curated before Rerun Balanced became an alias still stores the OpenRouter id it used to be, and
+// A box curated before Lumvika Balanced became an alias still stores the OpenRouter id it used to be, and
 // lists it next to its current name as a second row under the same label. The engine renames it on
 // its next boot; doing it here too is what spares a fleet update, and the engine's own patch moves
 // the box default off the old spelling at the same time.
@@ -117,11 +117,11 @@ function assertValidClaudeToken(keys: Record<string, string> | undefined): void 
     if (issue) throw new ConnectionInputError(issue)
 }
 
-// The machine sends the user's key to this address: on Rerun Cloud a private one would turn the Box
+// The machine sends the user's key to this address: on Lumvika Cloud a private one would turn the Box
 // into a probe of the host's own network. A self-hosted install runs on its owner's network, and the
 // model it most often points at (Ollama, LM Studio) listens on that very machine.
 async function assertPublicBaseUrl(baseUrl: string | undefined): Promise<void> {
-    if (!baseUrl || !RERUN_CLOUD) return
+    if (!baseUrl || !LUMVIKA_CLOUD) return
     try {
         await assertPublicUrl(baseUrl)
     } catch {
@@ -263,7 +263,7 @@ async function takenNames(workspaceId: number): Promise<string[]> {
     return (await engineListConnections(engine.conn)).connections.map(connection => connection.name)
 }
 
-function connectionView(source: BoxConnection, list: BoxConnectionsList, credit: RerunCredit, premiumAllowed: boolean, t: SourceCopy, locale: string): AiConnectionView {
+function connectionView(source: BoxConnection, list: BoxConnectionsList, credit: LumvikaCredit, premiumAllowed: boolean, t: SourceCopy, locale: string): AiConnectionView {
     const status = !source.connected || source.credentialRejected ? 'reconnect' : isCreditExhausted(source, credit) ? 'credit_used_up' : 'connected'
     return {
         id: source.id,
@@ -292,14 +292,14 @@ function connectionView(source: BoxConnection, list: BoxConnectionsList, credit:
 export async function readAiConnectionsView(ctx: WorkspaceContext): Promise<AiConnectionsView> {
     const engine = await findWorkspaceEngine(ctx.workspace.id)
     const list = engine ? await renameAliasedModels(engine.conn, await engineListConnections(engine.conn)) : { connections: [], default: null }
-    const credit = rerunCreditOf(ctx.workspace)
+    const credit = lumvikaCreditOf(ctx.workspace)
     const premiumAllowed = isPremiumModelEntitled(ctx.workspace)
     const pick = effectiveDefault(list.default)
     const taken = list.connections.map(connection => connection.name)
     const locale = await recipientLocale(ctx.supabase, ctx.userId, ctx.workspace.id)
     const t = await translatorFor(locale, 'connections')
     return {
-        connections: pinFirst(list.connections, connection => connection.id === RERUN_CONNECTION_ID).map(source => connectionView(source, list, credit, premiumAllowed, t, locale)),
+        connections: pinFirst(list.connections, connection => connection.id === LUMVIKA_CONNECTION_ID).map(source => connectionView(source, list, credit, premiumAllowed, t, locale)),
         default: { ...pick, label: modelName(pick.connectionId, pick.model) },
         credit: { percent: credit.percent, usedUp: isCreditUsedUp(credit), backOn: creditResetPhrase(credit, t, locale) },
         addable: [...planProviders(await isOpencodeOffered(engine?.conn)), ...keyProviders(await isCustomOffered(engine?.conn))].map(provider => ({

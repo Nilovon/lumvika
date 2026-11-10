@@ -13,7 +13,7 @@ type AttachmentTileProps = {
     path: string
     /** Shown instead of the file name, e.g. once the composer's uniqueness prefix is stripped. */
     label?: string
-    /** Where the bytes come from when they are not a Box's: the foreman's bucket, the design lab. */
+    /** Where the bytes come from when they are not a Box's: the steward's bucket, the design lab. */
     rawUrlFor?: RawUrlFor
     onOpen: () => void
     /** A lone image keeps its own proportions instead of being cropped into the square grid. */

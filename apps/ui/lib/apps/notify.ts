@@ -1,8 +1,8 @@
 // No 'server-only': the archive, restore and trial sweeps that call this run as Trigger.dev tasks.
 import * as React from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { AgentNotification, renderEmail } from '@rerun/emails'
-import { emailTranslator } from '@rerun/emails/i18n'
+import { AgentNotification, renderEmail } from '@lumvika/emails'
+import { emailTranslator } from '@lumvika/emails/i18n'
 import type { Database } from '@/app/api/database.types'
 import { APP_URL, REPLY_TO, TRANSACTIONAL_FROM, getResendClient, redirectDelivery } from '@/lib/email/client'
 import { sendThrottled } from '@/lib/email/throttle'

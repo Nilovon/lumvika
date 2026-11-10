@@ -22,13 +22,13 @@ vi.mock('@/components/auth/OAuthSignInButton', () => ({ OAuthSignInButton: () =>
 vi.mock('@/components/auth/useSignupFunnel', () => ({
     useSignupFunnel: () => ({ setStep: vi.fn(), markConverted: vi.fn(), dismiss: vi.fn() }),
 }))
-vi.mock('@rerun/cloud/phone', () => ({ PHONE_ENABLED: false }))
-vi.mock('@rerun/cloud/phone.client', () => ({ PhoneSignIn: () => null }))
+vi.mock('@lumvika/cloud/phone', () => ({ PHONE_ENABLED: false }))
+vi.mock('@lumvika/cloud/phone.client', () => ({ PhoneSignIn: () => null }))
 vi.mock('@/lib/auth/oauth-providers', () => ({ ENABLED_OAUTH_PROVIDERS: [], isOAuthProvider: () => false }))
 vi.mock('@/stores/onboarding.store', () => ({ useOnboardingStore: (select: (s: { markResume: () => void }) => unknown) => select({ markResume: () => {} }) }))
 vi.mock('@/supabase/client', () => ({ createClient: () => ({ auth: {} }) }))
 vi.mock('@/supabase/session/SessionProvider', () => ({ useOptionalSession: () => null }))
-vi.mock('@rerun/analytics/client', () => ({ setSharedCookie: vi.fn(), track: vi.fn() }))
+vi.mock('@lumvika/analytics/client', () => ({ setSharedCookie: vi.fn(), track: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 
 const SITE_KEY = '1x00000000000000000000AA'
@@ -69,7 +69,7 @@ afterEach(async () => {
     vi.resetModules()
 })
 
-// Mounted closed, like SignInPill or ForemanHeader mount AuthDialog: the hook runs first, the form
+// Mounted closed, like SignInPill or StewardHeader mount AuthDialog: the hook runs first, the form
 // shows up later.
 async function mountDialogLike(): Promise<(open: boolean) => Promise<void>> {
     const { useAnonymousSignUp } = await import('./useAnonymousSignUp')

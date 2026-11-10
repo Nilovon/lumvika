@@ -4,12 +4,12 @@ import { getTool, toolDefs } from '@/lib/managed/types'
 
 // A managed provider's MCP server, hosted by the UI — the "interface" an agent's tool points
 // at instead of the third party. A tiny stateless JSON-RPC 2.0 handler for the four
-// methods the engine's MCP http client uses. Rerun runs the provider's
+// methods the engine's MCP http client uses. Lumvika runs the provider's
 // API calls server-side.
 //
-// Auth model: the engine authenticates via `x-rerun-key` (its RERUN_API_KEY → workspace). The
+// Auth model: the engine authenticates via `x-lumvika-key` (its LUMVIKA_API_KEY → workspace). The
 // third-party access token rides in `Authorization: Bearer`, injected by the engine's withAuth
-// from its own token store — Rerun uses it for this one call and never persists it.
+// from its own token store — Lumvika uses it for this one call and never persists it.
 export const dynamic = 'force-dynamic'
 
 const SUPPORTED_PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05', '2024-10-07']
@@ -28,7 +28,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ provide
     const provider = getManagedProvider(providerId)
     if (!provider) return new Response('Unknown provider', { status: 404 })
 
-    const engineKey = req.headers.get('x-rerun-key') ?? ''
+    const engineKey = req.headers.get('x-lumvika-key') ?? ''
     const engine = await authenticateEngineToken(engineKey)
     if (!engine) {
         console.warn('[managed] rejected request with invalid/absent engine key')
@@ -54,7 +54,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ provide
         return rpcResult(id, {
             protocolVersion,
             capabilities: { tools: {} },
-            serverInfo: { name: `rerun-managed-${provider.id}`, version: '1.0.0' },
+            serverInfo: { name: `lumvika-managed-${provider.id}`, version: '1.0.0' },
         })
     }
 

@@ -10,7 +10,7 @@ export const SIDE_PANEL_GAP = 8
 
 // Une seule largeur pour tous les panneaux latéraux ; la clé garde son ancien nom pour
 // ne pas réinitialiser celle que les utilisateurs ont déjà réglée sur le panneau agent.
-export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'rerun-agent-panel-width'
+export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'lumvika-agent-panel-width'
 
 export function getSidePanelMaxWidth(viewportWidth: number): number {
     if (!Number.isFinite(viewportWidth) || viewportWidth <= 0) return SIDE_PANEL_DEFAULT_WIDTH
@@ -47,7 +47,7 @@ export function saveSidePanelWidth(width: number, viewportWidth: number): number
     return clamped
 }
 
-export const SIDE_PANEL_SHEET_DETENT_STORAGE_KEY = 'rerun:agent-sheet-detent'
+export const SIDE_PANEL_SHEET_DETENT_STORAGE_KEY = 'lumvika:agent-sheet-detent'
 
 /** Sous `md` le panneau est une sheet : son contenu n'a pas de hauteur propre, elle s'ouvre au grand cran. */
 export function loadSidePanelSheetDetent(): SheetDetent {

@@ -1,5 +1,5 @@
 // Minimal Composio API client (v3.1). Composio brokers the third-party OAuth and holds the
-// tokens; Rerun executes tools scoped by user_id. The org-wide COMPOSIO_API_KEY can act for
+// tokens; Lumvika executes tools scoped by user_id. The org-wide COMPOSIO_API_KEY can act for
 // ANY user_id, so this module is server-only and the key never reaches an engine or a manifest.
 //
 // user_id convention: `<namespace>_agent_<agents.id>` (the Supabase UUID — stable across box

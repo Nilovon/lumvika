@@ -1,13 +1,13 @@
 import { cliUnavailableReason, inPlanOrder, inTierOrder, isHiddenModel, isModelLocked, livePlanWindows, modelDescription, type SourceCopy } from '@/lib/engine/ai-sources'
 import { modelLabel, modelPower } from '@/lib/engine/models'
 import type { BoxConnection, EngineProvider } from '@/lib/engine/types'
-import { RERUN_CONNECTION_ID, type PlanLimitWindow } from '@rerun/contracts'
+import { LUMVIKA_CONNECTION_ID, type PlanLimitWindow } from '@lumvika/contracts'
 
 export type ConnectionGroup = {
     connectionId: string
     label: string
     provider: EngineProvider
-    // `description` is set on the Rerun tiers and the OpenCode models (Go or Console), which read as
+    // `description` is set on the Lumvika tiers and the OpenCode models (Go or Console), which read as
     // two-line rows. One group per connection even for OpenCode's two catalogs: the iOS app keys the
     // running model on the connection. `locked` is a model
     // listed but not included in the plan: picking it opens the plan instead. `unavailable` is why the
@@ -20,7 +20,7 @@ export type ConnectionGroup = {
     planWindows: PlanLimitWindow[]
 }
 
-// Rerun heads every picker: the keyless connection is the one that runs without the user bringing
+// Lumvika heads every picker: the keyless connection is the one that runs without the user bringing
 // a key, and its rank must not depend on the order the engine happened to read its connections
 // directory in. Moving one entry rather than sorting keeps the rest as the box set it.
 export function pinFirst<T>(items: T[], match: (item: T) => boolean): T[] {
@@ -63,13 +63,13 @@ export function refusedModelReason(group: Pick<ConnectionGroup, 'models'> | unde
     return group.models.find(m => m.id === model)?.unavailable
 }
 
-// The groups every picker offers, Rerun first: shared by the web hook and the app's /api/v1 route.
+// The groups every picker offers, Lumvika first: shared by the web hook and the app's /api/v1 route.
 export function connectionGroups(connections: BoxConnection[], premiumAllowed: boolean, t: SourceCopy): ConnectionGroup[] {
     return pinFirst(
         connections
             .filter(connection => connection.connected)
             .map(connection => toGroup(connection, premiumAllowed, t))
             .filter(group => group.models.length > 0),
-        group => group.connectionId === RERUN_CONNECTION_ID
+        group => group.connectionId === LUMVIKA_CONNECTION_ID
     )
 }

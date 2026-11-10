@@ -6,5 +6,5 @@
 
 <!-- Commands you ran, screens you checked (mobile and desktop for UI). -->
 
-- [ ] `pnpm -r --if-present ts-check`, `pnpm --filter rerun lint` and the tests pass
+- [ ] `pnpm -r --if-present ts-check`, `pnpm --filter lumvika lint` and the tests pass
 - [ ] A change to the database comes as a new migration in `supabase/migrations/`

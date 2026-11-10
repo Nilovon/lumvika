@@ -90,7 +90,7 @@ describe('providerKeyProblem', () => {
 
     it('asks nothing for a plan, the keyless connection, a router of the user own or no key', async () => {
         expect(await providerKeyProblem('claude', { CLAUDE_CODE_OAUTH_TOKEN: 'sk-ant-oat01-x' })).toBeNull()
-        expect(await providerKeyProblem('rerun', {})).toBeNull()
+        expect(await providerKeyProblem('lumvika', {})).toBeNull()
         expect(await providerKeyProblem('openrouter', { OPENROUTER_API_KEY: 'k' }, 'https://router.example.com/api')).toBeNull()
         expect(await providerKeyProblem('anthropic', {})).toBeNull()
         expect(await providerKeyProblem('anthropic', undefined)).toBeNull()

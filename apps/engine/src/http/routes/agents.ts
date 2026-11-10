@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { rm, writeFile, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { Readable } from 'node:stream'
-import { createAgentSchema, duplicateAgentSchema, mcpTokenSchema, updateAgentKeysSchema, updateAgentMcpServersSchema } from '@rerun/contracts'
+import { createAgentSchema, duplicateAgentSchema, mcpTokenSchema, updateAgentKeysSchema, updateAgentMcpServersSchema } from '@lumvika/contracts'
 import { clearToken, saveToken } from '../../tools/mcp-auth.js'
 import { probeMcpStatuses } from '../../tools/mcp-status.js'
 import { agentMcpSpawn } from '../../tools/mcp-pool.js'
@@ -198,7 +198,7 @@ agentRoutes.get('/:id/keys', async c => {
     if (!agentExists(id)) return c.json({ error: 'agent not found' }, 404)
     const env = await readAgentEnv(id)
     const engineKeys = Object.keys(process.env)
-        .filter(key => key.startsWith('RERUN_') && process.env[key])
+        .filter(key => key.startsWith('LUMVIKA_') && process.env[key])
         .sort()
     return c.json({ keys: Object.keys(env).sort(), engineKeys })
 })

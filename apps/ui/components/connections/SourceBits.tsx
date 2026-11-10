@@ -3,19 +3,19 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
-import { connectMethod, providerPitch, sourceKind, isCreditExhausted, isRerunPaused, planLimitTone, type AddableProvider, type RerunCredit } from '@/lib/engine/ai-sources'
+import { connectMethod, providerPitch, sourceKind, isCreditExhausted, isLumvikaPaused, planLimitTone, type AddableProvider, type LumvikaCredit } from '@/lib/engine/ai-sources'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import type { BoxConnection } from '@/lib/engine/types'
 import { ChevronLeftIcon, PencilIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { RERUN_CONNECTION_ID, addableProviderSchema } from '@rerun/contracts'
-import { Badge } from '@rerun/ui/primitives'
+import { LUMVIKA_CONNECTION_ID, addableProviderSchema } from '@lumvika/contracts'
+import { Badge } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
-export function SourceStatus({ source, credit }: { source: BoxConnection; credit: RerunCredit }) {
+export function SourceStatus({ source, credit }: { source: BoxConnection; credit: LumvikaCredit }) {
     const t = useTranslations('connections.status')
-    if (isRerunPaused(source, credit)) {
+    if (isLumvikaPaused(source, credit)) {
         return (
             <Badge size="xs" tone="orange" className="shrink-0">
                 {t('paused')}
@@ -104,20 +104,20 @@ function BackButton({ onBack }: { onBack: () => void }) {
 function SourceSubtitle({ source }: { source: BoxConnection }) {
     const t = useTranslations('connections.subtitle')
     const tConnections = useTranslations('connections')
-    if (source.id === RERUN_CONNECTION_ID) return t('included')
+    if (source.id === LUMVIKA_CONNECTION_ID) return t('included')
     const provider = addableProviderSchema.safeParse(source.provider)
     if (!provider.success) return source.provider
     const pitch = providerPitch(provider.data, tConnections)
     return sourceKind(source.provider) === 'plan' || source.provider === 'custom' ? pitch.title : t('apiKey', { provider: pitch.title })
 }
 
-export function DetailHeader({ source, credit, onBack, onRename }: { source: BoxConnection; credit: RerunCredit; onBack: () => void; onRename?: (name: string) => void }) {
+export function DetailHeader({ source, credit, onBack, onRename }: { source: BoxConnection; credit: LumvikaCredit; onBack: () => void; onRename?: (name: string) => void }) {
     return (
         <div className="flex items-center gap-3 border-b px-3 py-2.5">
             <BackButton onBack={onBack} />
             <SourceAvatar provider={source.provider} size="sm" />
             <div className="flex min-w-0 flex-1 flex-col">
-                {source.id === RERUN_CONNECTION_ID || !onRename ? <span className="truncate text-sm font-medium">{source.name}</span> : <EditableName name={source.name} onRename={onRename} />}
+                {source.id === LUMVIKA_CONNECTION_ID || !onRename ? <span className="truncate text-sm font-medium">{source.name}</span> : <EditableName name={source.name} onRename={onRename} />}
                 <span className="truncate text-[11px] text-muted-foreground"><SourceSubtitle source={source} /></span>
             </div>
             <SourceStatus source={source} credit={credit} />

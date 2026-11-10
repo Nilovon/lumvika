@@ -1,10 +1,10 @@
 // Le contrat du test A/B de la landing, partagé par les deux apps. Le cookie est posé sur
-// `.rerun.build` par le proxy de la landing, donc `app.rerun.build` sait relire le bras d'un
+// `.lumvika.com` par le proxy de la landing, donc `app.lumvika.com` sait relire le bras d'un
 // visiteur sans dépendre de la propagation des super-properties PostHog : leur persistance est
 // `localStorage+cookie`, et le localStorage ne traverse pas les sous-domaines.
 //
 // Rien ici n'importe posthog-js : le proxy edge de la landing lit ce fichier.
-export const EXPERIMENT_COOKIE = 'rerun-ab'
+export const EXPERIMENT_COOKIE = 'lumvika-ab'
 
 export const EXPERIMENT_COOKIE_MAX_AGE = 90 * 24 * 60 * 60
 
@@ -19,7 +19,7 @@ export const EXPERIMENT_COOKIE_MAX_AGE = 90 * 24 * 60 * 60
 // enrôlés quand ces tests tournaient encore est simplement ignorée.
 //
 // `price1` est le prix du plan de base, en dollars par mois. Ses valeurs sont les `PRICE_ARMS` de
-// `@rerun/contracts`, recopiées ici parce que ce fichier n'importe rien. Les robots et les visiteurs
+// `@lumvika/contracts`, recopiées ici parce que ce fichier n'importe rien. Les robots et les visiteurs
 // non enrôlés voient `DEFAULT_PRICE_ARM`, pas la première valeur.
 export const EXPERIMENT_VALUES = {
     price1: ['49', '29'],
@@ -141,13 +141,13 @@ export function writeExperimentVariants(variants: ExperimentVariants) {
         `max-age=${EXPERIMENT_COOKIE_MAX_AGE}`,
         'SameSite=Lax',
     ]
-    if (location.hostname.endsWith('rerun.build')) parts.push('domain=.rerun.build')
+    if (location.hostname.endsWith('lumvika.com')) parts.push('domain=.lumvika.com')
     if (location.protocol === 'https:') parts.push('Secure')
     document.cookie = parts.join('; ')
 }
 
 export function clearExperimentCookie() {
     const parts = [`${EXPERIMENT_COOKIE}=`, 'path=/', 'max-age=0']
-    if (location.hostname.endsWith('rerun.build')) parts.push('domain=.rerun.build')
+    if (location.hostname.endsWith('lumvika.com')) parts.push('domain=.lumvika.com')
     document.cookie = parts.join('; ')
 }

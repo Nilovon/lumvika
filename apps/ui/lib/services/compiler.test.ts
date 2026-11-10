@@ -49,7 +49,7 @@ const manifest = serviceManifestSchema.parse({
     ],
 })
 
-const BASIC_VAR = 'RERUN_SVC_ATLASSIAN_ATLASSIAN_EMAIL_ATLASSIAN_API_TOKEN_BASIC'
+const BASIC_VAR = 'LUMVIKA_SVC_ATLASSIAN_ATLASSIAN_EMAIL_ATLASSIAN_API_TOKEN_BASIC'
 
 describe('compileService with a basic: placeholder', () => {
     beforeEach(() => vi.clearAllMocks())
@@ -79,7 +79,7 @@ describe('compileService with a basic: placeholder', () => {
 })
 
 const INSTANCE = { key: 'atlassian@k3x9ab', instanceId: 'k3x9ab' }
-const INSTANCE_BASIC_VAR = 'RERUN_SVC_ATLASSIAN_K3X9AB_ATLASSIAN_EMAIL_ATLASSIAN_API_TOKEN_BASIC'
+const INSTANCE_BASIC_VAR = 'LUMVIKA_SVC_ATLASSIAN_K3X9AB_ATLASSIAN_EMAIL_ATLASSIAN_API_TOKEN_BASIC'
 
 describe('compileService for an extra account', () => {
     beforeEach(() => vi.clearAllMocks())
@@ -144,14 +144,14 @@ describe('compileService for an extra account', () => {
                     kind: 'composio',
                     recommended: true,
                     composio: { toolkit: 'gmail', authConfigId: 'ac', allowedTools: [] },
-                    mcpServers: [{ name: 'gmail', transport: 'http', url: '${RERUN_HUB_BASE_URL}/api/mcp/composio/gmail', headers: { 'x-rerun-agent': '${agent.id}' } }],
+                    mcpServers: [{ name: 'gmail', transport: 'http', url: '${LUMVIKA_HUB_BASE_URL}/api/mcp/composio/gmail', headers: { 'x-lumvika-agent': '${agent.id}' } }],
                 },
             ],
         })
         const result = await compileService('agent', gmail, {}, undefined, undefined, { key: 'gmail@k3x9ab', instanceId: 'k3x9ab' })
 
         const [server] = vi.mocked(patchMcpServers).mock.calls[0][2].upsert!
-        expect(server.headers).toEqual({ 'x-rerun-agent': 'engine-agent', 'x-rerun-instance': 'k3x9ab' })
+        expect(server.headers).toEqual({ 'x-lumvika-agent': 'engine-agent', 'x-lumvika-instance': 'k3x9ab' })
         expect(result.composio).toEqual({ toolkit: 'gmail', serverName: 'gmail-k3x9ab' })
     })
 })

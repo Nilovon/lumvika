@@ -1,4 +1,4 @@
-import type { TriggerFireInput } from '@rerun/contracts'
+import type { TriggerFireInput } from '@lumvika/contracts'
 import type { Trigger } from './loader.js'
 
 // The payload is persisted with the run transcript and sent to the model on every step, so a

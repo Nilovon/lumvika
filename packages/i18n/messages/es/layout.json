@@ -13,10 +13,11 @@
         "whatsNew": "Novedades",
         "gettingStarted": "Primeros pasos",
         "docs": "Documentación",
-        "community": "Comunidad",
         "shortcuts": "Atajos",
         "installApp": "Instalar app",
-        "hireExpert": "Contratar a un experto"
+        "hireExpert": "Contratar a un experto",
+        "about": "Acerca de",
+        "source": "Código fuente"
     },
     "power": {
         "menuItem": "Reiniciar máquina",
@@ -122,18 +123,18 @@
         "reload": "Recargar",
         "available": {
             "title": "Nueva versión disponible",
-            "description": "Recarga para tener la última versión de Rerun."
+            "description": "Recarga para tener la última versión de Lumvika."
         },
         "required": {
-            "title": "Rerun se actualizó",
+            "title": "Lumvika se actualizó",
             "description": "Hay una nueva versión disponible. Recarga para continuar."
         }
     },
     "controlCenter": {
         "title": "Centro de control",
-        "description": "Ve a un agente, un ajuste o una conversación, o pregúntale a Rerun.",
+        "description": "Ve a un agente, un ajuste o una conversación, o pregúntale a Lumvika.",
         "back": "Atrás",
-        "askRerun": "Preguntar a Rerun",
+        "askLumvika": "Preguntar a Lumvika",
         "quotedQuery": "“{query}”",
         "unnamedBox": "Box sin nombre",
         "pro": "Pro",
@@ -166,7 +167,7 @@
             "notificationsDetail": "Cuándo te contacta este agente"
         },
         "placeholder": {
-            "rootAssistant": "Busca o pregúntale a Rerun…",
+            "rootAssistant": "Busca o pregúntale a Lumvika…",
             "root": "Busca agentes, ajustes, conversaciones…",
             "agent": "Buscar en {name}…",
             "agentUnknown": "Buscar en este agente…",
@@ -207,6 +208,6 @@
     "boxNameSuggestions": "O elige un nombre",
     "dashboard": {
         "metaTitle": "Panel",
-        "metaDescription": "Tus Boxes y coworkers en Rerun."
+        "metaDescription": "Tus Boxes y coworkers en Lumvika."
     }
 }

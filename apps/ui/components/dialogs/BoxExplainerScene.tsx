@@ -1,7 +1,7 @@
 'use client'
 
 import { useBoxExplainerWalk } from '@/components/dialogs/useBoxExplainerWalk'
-import { TourScene } from '@rerun/ui/tour'
+import { TourScene } from '@lumvika/ui/tour'
 
 // The onboarding tour's plateau, played on its own in the right-hand column of the Box dialogs, and
 // stopped at the agents (cf. useBoxExplainerWalk). Nobody reads a definition of a Box; this is the

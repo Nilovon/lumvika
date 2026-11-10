@@ -28,7 +28,7 @@ describe('readTableSourcesAction', () => {
     })
 
     it('answers null for an engine that predates the route', async () => {
-        vi.mocked(engine.readTableSources).mockRejectedValue(new Error('rerun-engine POST /shared/data/sources failed: 404 Not Found'))
+        vi.mocked(engine.readTableSources).mockRejectedValue(new Error('lumvika-engine POST /shared/data/sources failed: 404 Not Found'))
         await expect(readTableSourcesAction({ kind: 'shared' }, rows)).resolves.toBeNull()
     })
 

@@ -1,7 +1,7 @@
 'use client'
 
-import { formatNumber } from '@rerun/i18n/format'
-import { BorderBeam } from '@rerun/ui'
+import { formatNumber } from '@lumvika/i18n/format'
+import { BorderBeam } from '@lumvika/ui'
 import { animate, motion } from 'motion/react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
@@ -47,7 +47,7 @@ const SOURCE_LABEL: Record<DiscoverySource, { brand: string } | { key: Described
     linkedinPerson: { brand: 'LinkedIn' },
     linkedinCompany: { brand: 'LinkedIn' },
     googleBusiness: { brand: 'Google' },
-    synthesis: { brand: 'Rerun' },
+    synthesis: { brand: 'Lumvika' },
 }
 
 export function useDiscoverySourceLabel() {

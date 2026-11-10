@@ -9,14 +9,14 @@ push_url="$2"
 fetch_url=$(git remote get-url "$remote_name" 2>/dev/null || true)
 
 points_to_public_repo() {
-    printf '%s\n' "$1" | grep -Eiq 'github\.com[:/]rerun-build/rerun(\.git)?/?$'
+    printf '%s\n' "$1" | grep -Eiq 'github\.com[:/]schnebel-technologie/lumvika(\.git)?/?$'
 }
 
 if ! points_to_public_repo "$push_url" && ! points_to_public_repo "$fetch_url"; then
     exit 0
 fi
 
-advisory=$(git config --get rerun.securityAdvisory 2>/dev/null || true)
+advisory=$(git config --get lumvika.securityAdvisory 2>/dev/null || true)
 if [ -n "$advisory" ]; then
     echo "Push refused: this workspace holds the fix of $advisory, it never pushes to the public repository." >&2
     echo "Push to the advisory's private fork instead: git push" >&2
@@ -65,7 +65,7 @@ if [ -z "$findings" ]; then
 fi
 
 {
-    echo "Push refused: it goes to the public repository rerun-build/rerun and mentions a vulnerability:"
+    echo "Push refused: it goes to the public repository schnebel-technologie/lumvika and mentions a vulnerability:"
     printf '%s' "$findings" | sed 's/^/    /'
     echo
     echo "Everything pushed there is public at once, branches included. A vulnerability fix goes to the"

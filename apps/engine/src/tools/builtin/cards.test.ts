@@ -2,15 +2,15 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-cards-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-cards-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { cardTools } = await import('./cards.js')
 const { getAgentDb } = await import('../../db/agentDb.js')
 const { getSharedDb, recordTableOwnership } = await import('../../db/sharedDb.js')
 const { sharedDir, workspaceDir } = await import('../../config/paths.js')
-const { tableCardSchema, fileCardSchema, CARD_MAX_CELL_CHARS, CARD_MAX_COLUMNS, CARD_MAX_MEDIA_CHARS } = await import('@rerun/contracts')
+const { tableCardSchema, fileCardSchema, CARD_MAX_CELL_CHARS, CARD_MAX_COLUMNS, CARD_MAX_MEDIA_CHARS } = await import('@lumvika/contracts')
 
 const AGENT = 'agent-cards'
 const tools = cardTools({ agent: { id: AGENT } } as any)
@@ -97,7 +97,7 @@ describe('card_table', () => {
     })
 
     it('hides the shared bookkeeping table', async () => {
-        expect(await run('card_table', { scope: 'shared', table: '_rerun_shared_tables', view: 'All' })).toContain('Could not show that table')
+        expect(await run('card_table', { scope: 'shared', table: '_lumvika_shared_tables', view: 'All' })).toContain('Could not show that table')
     })
 
     it('reports an unknown table instead of throwing', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { McpServer } from '@rerun/contracts'
+import type { McpServer } from '@lumvika/contracts'
 import { resolveServerSecrets } from './mcp-resolve.js'
 
 function server(partial: Partial<McpServer> & { name: string }): McpServer {
@@ -25,29 +25,29 @@ describe('resolveServerSecrets', () => {
     })
 
     it('falls back to the engine env for the hub base URL only', () => {
-        process.env.RERUN_HUB_BASE_URL = 'https://hub.example'
-        const resolved = resolveServerSecrets(server({ name: 'x', url: '${RERUN_HUB_BASE_URL}/api/mcp/composio/gmail' }), {})
+        process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example'
+        const resolved = resolveServerSecrets(server({ name: 'x', url: '${LUMVIKA_HUB_BASE_URL}/api/mcp/composio/gmail' }), {})
         expect(resolved.url).toBe('https://hub.example/api/mcp/composio/gmail')
-        delete process.env.RERUN_HUB_BASE_URL
+        delete process.env.LUMVIKA_HUB_BASE_URL
     })
 
     it('never hands the engine key, nor any other engine variable, to a server config', () => {
-        process.env.RERUN_API_KEY = 'engine-secret'
-        process.env.RERUN_TEST_FALLBACK = 'from-process'
+        process.env.LUMVIKA_API_KEY = 'engine-secret'
+        process.env.LUMVIKA_TEST_FALLBACK = 'from-process'
         const resolved = resolveServerSecrets(
-            server({ name: 'x', url: 'https://collector.example/mcp?k=${RERUN_API_KEY}', headers: { Authorization: 'Bearer ${RERUN_API_KEY}' }, env: { K: '${RERUN_TEST_FALLBACK}' } }),
+            server({ name: 'x', url: 'https://collector.example/mcp?k=${LUMVIKA_API_KEY}', headers: { Authorization: 'Bearer ${LUMVIKA_API_KEY}' }, env: { K: '${LUMVIKA_TEST_FALLBACK}' } }),
             {},
         )
         expect(resolved.url).toBe('https://collector.example/mcp?k=')
         expect(resolved.headers.Authorization).toBe('Bearer ')
         expect(resolved.env.K).toBe('')
-        delete process.env.RERUN_API_KEY
-        delete process.env.RERUN_TEST_FALLBACK
+        delete process.env.LUMVIKA_API_KEY
+        delete process.env.LUMVIKA_TEST_FALLBACK
     })
 
     it('still resolves the engine key when the agent env names it itself', () => {
-        const resolved = resolveServerSecrets(server({ name: 'x', headers: { 'x-rerun-key': '${RERUN_API_KEY}' } }), { RERUN_API_KEY: 'from-agent' })
-        expect(resolved.headers['x-rerun-key']).toBe('from-agent')
+        const resolved = resolveServerSecrets(server({ name: 'x', headers: { 'x-lumvika-key': '${LUMVIKA_API_KEY}' } }), { LUMVIKA_API_KEY: 'from-agent' })
+        expect(resolved.headers['x-lumvika-key']).toBe('from-agent')
     })
 
     it('resolves an unknown placeholder to an empty string', () => {

@@ -11,7 +11,7 @@ import { CheckIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, TriangleAlertI
 import { cn } from '@/lib/utils'
 
 import { CHATGPT_SECURITY_URL, STUCK_AFTER_MS } from './chatgpt-setup'
-import { ForemanTrack, type TrackStep } from './ForemanTrack'
+import { StewardTrack, type TrackStep } from './StewardTrack'
 import { StepError } from './step-bits'
 
 // OpenAI only takes the device code once the account allows it, a switch in ChatGPT's own settings
@@ -29,7 +29,7 @@ export function ChatGptPlanSteps({ auth, lastStep }: { auth: CodexDeviceAuth; la
     const last = lastStep(linked)
 
     return (
-        <ForemanTrack
+        <StewardTrack
             at={linked ? 2 : onCode ? 1 : 0}
             done={linked ? 3 : onCode ? 1 : 0}
             orb={phase === 'starting' || phase === 'waiting' ? 'thinking' : linked ? 'speaking' : 'listening'}

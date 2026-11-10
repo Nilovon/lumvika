@@ -1,6 +1,6 @@
 'use client'
 
-import { StepTransition } from '@rerun/ui/steps'
+import { StepTransition } from '@lumvika/ui/steps'
 import { useState, type ReactNode } from 'react'
 
 // Drilling into a detail inside a side panel: the step slides in the direction of travel.

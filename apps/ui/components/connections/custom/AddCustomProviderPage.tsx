@@ -9,10 +9,10 @@ import { MODELS_ON_AT_CONNECT, isHttpUrl, presetsFor, probeProblemMessage } from
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PanelScroller } from '@/components/ui/panel-list'
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { suggestName, uniqueName } from '@/lib/engine/ai-sources'
 import type { BoxConnection, CreateBoxConnectionInput } from '@/lib/engine/types'
-import { CONNECTION_TOKEN_KEY, type CustomPreset } from '@rerun/contracts'
+import { CONNECTION_TOKEN_KEY, type CustomPreset } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 
@@ -36,9 +36,9 @@ export function AddCustomProviderPage({ onBack, probe = probeCustomEndpointActio
     const t = useTranslations('connections')
     const tCommon = useTranslations('common')
     const errorText = useErrorText()
-    const presets = presetsFor(RERUN_CLOUD)
+    const presets = presetsFor(LUMVIKA_CLOUD)
     const id = useId()
-    const [preset, setPreset] = useState<CustomPreset | null>(() => (RERUN_CLOUD ? null : (presets[0] ?? null)))
+    const [preset, setPreset] = useState<CustomPreset | null>(() => (LUMVIKA_CLOUD ? null : (presets[0] ?? null)))
     const [name, setName] = useState(() => (preset ? uniqueName(preset.label, takenNames) : suggestName('custom', takenNames)))
     const [baseUrl, setBaseUrl] = useState<string>(preset?.baseUrl ?? '')
     const [apiKey, setApiKey] = useState('')
@@ -70,7 +70,7 @@ export function AddCustomProviderPage({ onBack, probe = probeCustomEndpointActio
                 setNeedsPlan(probed.reason === 'no_plan')
                 return setError(errorText(probed))
             }
-            const problem = probeProblemMessage(t, probed.result, model, RERUN_CLOUD)
+            const problem = probeProblemMessage(t, probed.result, model, LUMVIKA_CLOUD)
             if (probed.result.problem === 'not_listed') setAsksModel(true)
             if (problem) return setError(problem)
 

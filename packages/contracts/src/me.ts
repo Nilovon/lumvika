@@ -38,7 +38,7 @@ export const deviceTokenSchema = z.object({
 })
 export type DeviceTokenInput = z.infer<typeof deviceTokenSchema>
 
-// An id the app puts in a route or a hub path: a conversation, a coworker, `new`, `last`, the Foreman.
+// An id the app puts in a route or a hub path: a conversation, a coworker, `new`, `last`, the Steward.
 // Anything else in a deep link or a push is dropped, it would land in another path of the hub.
 export const ROUTE_ID_PATTERN = /^[\w-]+$/
 

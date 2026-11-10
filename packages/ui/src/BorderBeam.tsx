@@ -29,7 +29,7 @@ export interface BorderBeamProps {
 /**
  * Animated (or static) gradient border, rendered as an absolutely-positioned
  * overlay masked down to a `width`px ring. Drop it inside any `position: relative`
- * element. Pure CSS (the keyframe + presets live in `@rerun/ui/styles.css`), so it
+ * element. Pure CSS (the keyframe + presets live in `@lumvika/ui/styles.css`), so it
  * works in Server Components.
  *
  * Centralizes the conic-gradient border effect used across the landing page

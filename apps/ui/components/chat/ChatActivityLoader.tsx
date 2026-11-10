@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
-import { TextShimmer } from '@rerun/ui'
+import { TextShimmer } from '@lumvika/ui'
 
 import { Message, MessageContent } from '@/components/ai-elements/message'
 import { DotSpinner } from '@/components/ui/dot-spinner'
@@ -13,7 +13,7 @@ import { LOADING_ACTIVITIES, liveActivityLabel } from '@/lib/agent-chat-loader'
 type ChatActivityLoaderProps = {
     agentId?: string
     message?: Parameters<typeof liveActivityLabel>[0]
-    /** Ce qui tourne à gauche du label. Le Foreman y met sa bête, un agent garde les points. */
+    /** Ce qui tourne à gauche du label. Le Steward y met sa bête, un agent garde les points. */
     indicator?: ReactNode
 }
 

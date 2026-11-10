@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { tool, type ToolSet } from 'ai'
-import { connectorSkillReadOnlyError, skillProposalInputSchema, type SkillProposalInput } from '@rerun/contracts'
+import { connectorSkillReadOnlyError, skillProposalInputSchema, type SkillProposalInput } from '@lumvika/contracts'
 import { skillExists } from '../../skills/loader.js'
 import { connectorSkillOwners } from '../../services/registry.js'
 import {

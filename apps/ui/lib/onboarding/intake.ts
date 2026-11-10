@@ -1,22 +1,22 @@
-import type { TemplateCategory } from '@rerun/contracts'
+import type { TemplateCategory } from '@lumvika/contracts'
 
-import type { ShownPlan } from '@/components/foreman/widgets/plan-card'
+import type { ShownPlan } from '@/components/steward/widgets/plan-card'
 import { DEFAULT_BOX_NAMES, divisionExamples } from '@/lib/onboarding/box-name-suggestions'
 
-export { DEFAULT_ROLES, INDUSTRY_ROLES, INTAKE_INDUSTRIES, looksLikeSite, rolesForIndustry } from '@rerun/contracts'
+export { DEFAULT_ROLES, INDUSTRY_ROLES, INTAKE_INDUSTRIES, looksLikeSite, rolesForIndustry } from '@lumvika/contracts'
 
 // What the welcome card asks, and what it draws on the board while it asks it. Pure, so the lab can
 // replay every industry without a network and the server can read the same lists back.
 
 /** What the card hands over once its four steps are done. */
-export type ForemanIntake = {
+export type StewardIntake = {
     companyUrl: string | null
     /** Picked by hand from the list. The only one of the three that is not a guess. */
     industry: TemplateCategory | null
     /**
      * What the fast decision made of their address while they were still answering, and therefore
      * what the board drew. Carried so a site the full read could not reach (no key, a crawler
-     * blocked) still lands an industry rather than none: without it the foreman would be told the
+     * blocked) still lands an industry rather than none: without it the steward would be told the
      * company has no line of business while five of its divisions are on screen beside it.
      */
     decidedIndustry: TemplateCategory | null
@@ -36,7 +36,7 @@ export function intakeBoxes(industry: string | null | undefined): string[] {
 }
 
 /**
- * The same shape the foreman's own plan card hands the board, with no agent in any of it: the Boxes
+ * The same shape the steward's own plan card hands the board, with no agent in any of it: the Boxes
  * trace themselves, and nothing pretends anyone has been hired yet. The title is dead weight here,
  * since the board no longer draws one, but it is what `ShownPlan` is, so it carries the company name.
  */

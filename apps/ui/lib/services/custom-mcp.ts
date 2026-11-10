@@ -4,8 +4,8 @@ import { siteDomain } from '@/lib/onboarding/site-favicon'
 import { connectorMcpServerNames, type ServiceRegistry } from '@/lib/services/registry'
 import type { CustomMcpServer, McpTransportKind } from '@/lib/services/types'
 
-// The engine's own server for the Rerun bridge, never something the user registered.
-const BRIDGE_SERVER_NAME = 'rerun'
+// The engine's own server for the Lumvika bridge, never something the user registered.
+const BRIDGE_SERVER_NAME = 'lumvika'
 
 // Second-level suffixes under which a brand sits one label deeper (acme.co.uk, not co.uk).
 const TWO_LABEL_SUFFIXES = new Set(['co.uk', 'org.uk', 'ac.uk', 'com.au', 'net.au', 'co.nz', 'co.jp', 'co.kr', 'co.in', 'com.br', 'com.mx', 'com.tr', 'co.za', 'com.sg', 'com.cn'])
@@ -27,7 +27,7 @@ const SHARED_HOST_DOMAINS = new Set([
     'trycloudflare.com',
     'deno.dev',
     'replit.app',
-    'rerun.build',
+    'lumvika.com',
 ])
 
 // Mirror of the engine's resolveTransport, so the panel names the transport the engine will dial.

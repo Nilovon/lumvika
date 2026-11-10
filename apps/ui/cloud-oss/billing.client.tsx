@@ -1,9 +1,9 @@
 'use client'
 
-import { DEFAULT_PRICE_ARM, type PriceArm } from '@rerun/contracts'
+import { DEFAULT_PRICE_ARM, type PriceArm } from '@lumvika/contracts'
 
 import type { SubscriptionProvider } from '@/components/agent/ModelPickerProviders'
-import type { TrialStep } from '@/lib/foreman/next-steps'
+import type { TrialStep } from '@/lib/steward/next-steps'
 
 // Nothing is sold in this build, so every surface that would sell or meter the plan renders
 // nothing. Their callers only reach them on states a self-hosted workspace never takes.
@@ -48,7 +48,7 @@ export function BudgetExhaustedNotice(_props: {
     return null
 }
 
-export function ForemanTrialGate(_props: { step: TrialStep }) {
+export function StewardTrialGate(_props: { step: TrialStep }) {
     return null
 }
 

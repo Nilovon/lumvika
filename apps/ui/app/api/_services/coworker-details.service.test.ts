@@ -134,7 +134,7 @@ describe('coworker details', () => {
             '.': [
                 { name: 'reports', type: 'dir', size: 0 },
                 { name: 'node_modules', type: 'dir', size: 0 },
-                { name: '.rerun', type: 'dir', size: 0 },
+                { name: '.lumvika', type: 'dir', size: 0 },
                 { name: '.env', type: 'file', size: 10 },
                 { name: 'leads.csv', type: 'file', size: 2048, modifiedAt: '2026-10-20T10:00:00.000Z' },
             ],

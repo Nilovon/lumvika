@@ -1,9 +1,9 @@
-import { needsHuman, type SessionStatus } from '@rerun/contracts'
+import { needsHuman, type SessionStatus } from '@lumvika/contracts'
 import type { SFSymbol } from 'expo-symbols'
 
 export type ConversationState = 'needs-you' | 'running' | 'new' | 'earlier'
 
-// `status` and `unseen` are absent for a hub older than them, and for the Foreman's tabs: such a
+// `status` and `unseen` are absent for a hub older than them, and for the Steward's tabs: such a
 // conversation falls into Earlier.
 type Stateful = { status?: SessionStatus; unseen?: boolean }
 

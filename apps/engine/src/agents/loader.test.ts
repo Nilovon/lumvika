@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-agent-loader-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-agent-loader-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { mkdir, writeFile } = await import('node:fs/promises')
@@ -23,7 +23,7 @@ describe('agent loader', () => {
     })
 
     it('loads config, soul, install and env from the folder', async () => {
-        await agentOnDisk('full', { name: 'Full', description: 'Does it all', model: 'rerun-max' })
+        await agentOnDisk('full', { name: 'Full', description: 'Does it all', model: 'lumvika-max' })
         await writeFile(soulPath('full'), 'You are Full.')
         await writeFile(installPath('full'), 'Connect things.\n')
         await writeFile(agentEnvPath('full'), 'FAL_KEY=fal\n')
@@ -31,7 +31,7 @@ describe('agent loader', () => {
         const agent = await loadAgentFromDisk('full')
         expect(agent).toMatchObject({ id: 'full', soul: 'You are Full.', install: 'Connect things.\n', env: { FAL_KEY: 'fal' } })
         expect(agent.config).toMatchObject({ name: 'Full', description: 'Does it all', kind: 'user', enabled: true })
-        expect(agent.resolved).toEqual({ connection: null, provider: 'rerun', model: 'rerun-max' })
+        expect(agent.resolved).toEqual({ connection: null, provider: 'lumvika', model: 'lumvika-max' })
     })
 
     it('reads a missing soul, install and env as empty', async () => {

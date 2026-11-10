@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ForemanIntake } from '@/lib/onboarding/intake'
+import type { StewardIntake } from '@/lib/onboarding/intake'
 
-const STORAGE_KEY = 'rerun:pending-first-agent'
+const STORAGE_KEY = 'lumvika:pending-first-agent'
 
 function memoryStorage(initial: Record<string, string> = {}) {
     const values = new Map(Object.entries(initial))
@@ -32,7 +32,7 @@ const FRESH = { pendingFirstAgent: NOW, pendingTemplate: NOW, pendingTemplateLin
 
 const DRAFT = { name: 'Scout', serviceSlugs: ['hubspot'], kickoff: 'Find leads', offset: { col: 1, row: 2 } }
 const TEMPLATE = { slug: 'crm-kit', title: 'CRM kit', agentCount: 3 }
-const INTAKE: ForemanIntake = { companyUrl: 'https://acme.com', industry: 'saas', decidedIndustry: null, industryLabel: null, position: 'CEO', firstName: 'Jane' }
+const INTAKE: StewardIntake = { companyUrl: 'https://acme.com', industry: 'saas', decidedIndustry: null, industryLabel: null, position: 'CEO', firstName: 'Jane' }
 
 describe('onboarding store rehydration', () => {
     beforeEach(() => {

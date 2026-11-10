@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, matchLocale, type Locale } from '@rerun/i18n'
+import { DEFAULT_LOCALE, matchLocale, type Locale } from '@lumvika/i18n'
 
 // Hermes ships Intl.Collator, DateTimeFormat and NumberFormat, not PluralRules, and every `{count,
 // plural, ...}` message needs it. The packs' languages have cardinal rules that fit in a few lines

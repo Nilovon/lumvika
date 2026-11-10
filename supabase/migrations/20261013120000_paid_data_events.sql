@@ -1,5 +1,5 @@
 -- One row per paid data call a coworker makes through the app (leads, Google SERP, Google Maps),
--- served by Treg and billed on the workspace's Rerun credit. The record of what Treg charged us
+-- served by Treg and billed on the workspace's Lumvika credit. The record of what Treg charged us
 -- and what we billed for it. Only the service role reads or writes it.
 
 create table public.paid_data_events (

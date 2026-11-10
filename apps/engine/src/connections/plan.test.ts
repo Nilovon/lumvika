@@ -1,14 +1,14 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import type { LoadedAgent } from '../agents/types.js'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-plan-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-plan-'))
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const { readFile, rm, writeFile } = await import('node:fs/promises')
-const { DEFAULT_CONNECTION_MODELS, agentConfigSchema } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS, agentConfigSchema } = await import('@lumvika/contracts')
 const { boxPlanPath, connectionsDir } = await import('../config/paths.js')
 const { createConnection } = await import('./store.js')
 const { allowedModel, readBoxPlan, writeBoxPlan } = await import('./plan.js')

@@ -67,7 +67,7 @@ describe('pageFacts', () => {
     })
 
     it('names a page read after JavaScript as such', () => {
-        expect(pageFacts('<title>App</title>', { url: 'https://app.test/', source: 'rendered' })).toMatch(/^Page facts \(HTML after JavaScript, read through Rerun\):/)
+        expect(pageFacts('<title>App</title>', { url: 'https://app.test/', source: 'rendered' })).toMatch(/^Page facts \(HTML after JavaScript, read through Lumvika\):/)
     })
 
     it('lists the internal links of a page whose menu is not in a nav, header or footer', () => {

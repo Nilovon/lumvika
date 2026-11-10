@@ -137,21 +137,21 @@ describe('discoverAuthServer', () => {
 
 describe('callbackUrl', () => {
     it('uses the forwarded host and protocol', () => {
-        const req = new Request('http://internal:8080/x', { headers: { 'x-forwarded-host': 'app.rerun.build', 'x-forwarded-proto': 'https' } })
-        expect(callbackUrl(req)).toBe('https://app.rerun.build/api/mcp/oauth/callback')
+        const req = new Request('http://internal:8080/x', { headers: { 'x-forwarded-host': 'app.lumvika.com', 'x-forwarded-proto': 'https' } })
+        expect(callbackUrl(req)).toBe('https://app.lumvika.com/api/mcp/oauth/callback')
     })
 
     it('defaults to http on localhost and https elsewhere', () => {
         expect(callbackUrl(new Request('http://x/', { headers: { host: 'localhost:3000' } }))).toBe('http://localhost:3000/api/mcp/oauth/callback')
-        expect(callbackUrl(new Request('http://x/', { headers: { host: 'staging.rerun.build' } }))).toBe('https://staging.rerun.build/api/mcp/oauth/callback')
+        expect(callbackUrl(new Request('http://x/', { headers: { host: 'staging.lumvika.com' } }))).toBe('https://staging.lumvika.com/api/mcp/oauth/callback')
     })
 })
 
 describe('clientMetadataDocument', () => {
     it('names its own URL as the client id and the callback as the only redirect', () => {
-        const doc = clientMetadataDocument(new Request('http://x/', { headers: { host: 'app.rerun.build' } }))
-        expect(doc.client_id).toBe('https://app.rerun.build/api/mcp/oauth/client-metadata')
-        expect(doc.redirect_uris).toEqual(['https://app.rerun.build/api/mcp/oauth/callback'])
+        const doc = clientMetadataDocument(new Request('http://x/', { headers: { host: 'app.lumvika.com' } }))
+        expect(doc.client_id).toBe('https://app.lumvika.com/api/mcp/oauth/client-metadata')
+        expect(doc.redirect_uris).toEqual(['https://app.lumvika.com/api/mcp/oauth/callback'])
         expect(doc.token_endpoint_auth_method).toBe('none')
     })
 })
@@ -163,7 +163,7 @@ const CTX: OAuthContext = {
     mcpUrl: 'https://mcp.linear.app/mcp',
     tokenEndpoint: 'https://linear.app/token',
     clientId: 'client-1',
-    redirectUri: 'https://app.rerun.build/api/mcp/oauth/callback',
+    redirectUri: 'https://app.lumvika.com/api/mcp/oauth/callback',
 }
 
 describe('createPkce', () => {
@@ -209,40 +209,40 @@ describe('registerClient', () => {
 describe('resolveClient', () => {
     const GITHUB_MCP = 'https://api.githubcopilot.com/mcp/'
     const NO_REGISTRATION = { authorizationEndpoint: 'https://github.com/login/oauth/authorize', tokenEndpoint: 'https://github.com/login/oauth/access_token' }
-    const request = new Request('https://app.rerun.build/api/mcp/oauth/discover', { headers: { host: 'app.rerun.build' } })
+    const request = new Request('https://app.lumvika.com/api/mcp/oauth/discover', { headers: { host: 'app.lumvika.com' } })
 
     afterEach(() => {
         vi.unstubAllEnvs()
     })
 
     it('hands out the pre-registered GitHub app by id only, keeping its secret on the hub', async () => {
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_ID', 'gh-id')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_ID', 'gh-id')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
         await expect(resolveClient(NO_REGISTRATION, GITHUB_MCP, request)).resolves.toEqual({ clientId: 'gh-id' })
     })
 
     it('never lends the GitHub app to another MCP server, even one naming GitHub as issuer', async () => {
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_ID', 'gh-id')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_ID', 'gh-id')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
         await expect(resolveClient(NO_REGISTRATION, 'https://mcp.evil.example/mcp', request)).resolves.toBeNull()
     })
 
     it('finds no client for GitHub when the app is not configured on this server', async () => {
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_ID', '')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_ID', '')
         await expect(resolveClient(NO_REGISTRATION, GITHUB_MCP, request)).resolves.toBeNull()
     })
 
     it('falls back to a Client ID Metadata Document when DCR is refused', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 400 })))
         const metadata = { ...NO_REGISTRATION, registrationEndpoint: 'https://auth/register', clientIdMetadataDocumentSupported: true }
-        await expect(resolveClient(metadata, 'https://mcp.example/mcp', request)).resolves.toEqual({ clientId: 'https://app.rerun.build/api/mcp/oauth/client-metadata' })
+        await expect(resolveClient(metadata, 'https://mcp.example/mcp', request)).resolves.toEqual({ clientId: 'https://app.lumvika.com/api/mcp/oauth/client-metadata' })
     })
 
     it('sends HeyGen its Client ID Metadata Document without registering, since its DCR hands out a shared client', async () => {
         const fetchMock = vi.fn().mockResolvedValue(Response.json({ client_id: 'heygen-shared', client_name: 'HeyGen MCP Default' }, { status: 201 }))
         vi.stubGlobal('fetch', fetchMock)
         const metadata = { ...NO_REGISTRATION, registrationEndpoint: 'https://api2.heygen.com/v1/oauth/register', clientIdMetadataDocumentSupported: true }
-        await expect(resolveClient(metadata, 'https://mcp.heygen.com/mcp/v1/', request)).resolves.toEqual({ clientId: 'https://app.rerun.build/api/mcp/oauth/client-metadata' })
+        await expect(resolveClient(metadata, 'https://mcp.heygen.com/mcp/v1/', request)).resolves.toEqual({ clientId: 'https://app.lumvika.com/api/mcp/oauth/client-metadata' })
         expect(fetchMock).not.toHaveBeenCalled()
     })
 
@@ -266,8 +266,8 @@ describe('exchangeCode', () => {
     })
 
     it('adds the pre-registered secret server-side, only for the client it belongs to', async () => {
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_ID', 'gh-id')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_ID', 'gh-id')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
         const fetchMock = vi.fn(async () => Response.json({ access_token: 'at' }))
         vi.stubGlobal('fetch', fetchMock)
         const github = { ...CTX, mcpUrl: 'https://api.githubcopilot.com/mcp/', clientId: 'gh-id' }
@@ -279,8 +279,8 @@ describe('exchangeCode', () => {
     })
 
     it('sends the pre-registered Asana secret at the exchange', async () => {
-        vi.stubEnv('RERUN_ASANA_MCP_CLIENT_ID', 'asana-id')
-        vi.stubEnv('RERUN_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
+        vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_ID', 'asana-id')
+        vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
         const fetchMock = vi.fn(async () => Response.json({ access_token: 'at' }))
         vi.stubGlobal('fetch', fetchMock)
         await exchangeCode({ ...CTX, mcpUrl: 'https://mcp.asana.com/v2/mcp', clientId: 'asana-id' }, 'code')
@@ -305,10 +305,10 @@ describe('engineClientSecret', () => {
     const GITHUB = { ...CTX, mcpUrl: 'https://api.githubcopilot.com/mcp/', clientId: 'gh-id' }
 
     beforeEach(() => {
-        vi.stubEnv('RERUN_ASANA_MCP_CLIENT_ID', 'asana-id')
-        vi.stubEnv('RERUN_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_ID', 'gh-id')
-        vi.stubEnv('RERUN_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
+        vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_ID', 'asana-id')
+        vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_ID', 'gh-id')
+        vi.stubEnv('LUMVIKA_GITHUB_MCP_CLIENT_SECRET', 'gh-secret')
     })
 
     afterEach(() => {

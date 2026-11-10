@@ -49,9 +49,9 @@ export default function TeamInvite({
 TeamInvite.PreviewProps = {
   workspaceName: "Acme",
   agentName: "Atlas",
-  inviteUrl: "https://app.rerun.build/?members=1",
-  appUrl: "https://app.rerun.build",
-  unsubscribeUrl: "https://app.rerun.build/unsubscribe",
+  inviteUrl: "https://app.lumvika.com/?members=1",
+  appUrl: "https://app.lumvika.com",
+  unsubscribeUrl: "https://app.lumvika.com/unsubscribe",
 } satisfies TeamInviteProps;
 
 const cta: React.CSSProperties = {

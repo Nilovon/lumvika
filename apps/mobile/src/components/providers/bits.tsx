@@ -1,4 +1,4 @@
-import type { AiConnectionView, ConnectionUsage, Provider } from '@rerun/contracts'
+import type { AiConnectionView, ConnectionUsage, Provider } from '@lumvika/contracts'
 import * as WebBrowser from 'expo-web-browser'
 import { SymbolView } from 'expo-symbols'
 import type { ReactNode } from 'react'
@@ -123,7 +123,7 @@ export function UsageBar({ percent }: { percent: number }) {
 
 export type TrackStep = { title: string; body?: ReactNode }
 
-// The web's ForemanTrack without the orb: numbered steps, the ones behind ticked off.
+// The web's StewardTrack without the orb: numbered steps, the ones behind ticked off.
 export function StepTrack({ steps, at, done }: { steps: TrackStep[]; at: number; done: number }) {
     const theme = useTheme()
     return (

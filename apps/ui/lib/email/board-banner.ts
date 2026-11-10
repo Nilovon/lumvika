@@ -1,7 +1,7 @@
 // No 'server-only', see lib/email/client.ts: the lifecycle sweeper builds its banners from a
 // Trigger.dev task.
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { SCENE_HEIGHT, SCENE_WIDTH } from '@rerun/emails'
+import { SCENE_HEIGHT, SCENE_WIDTH } from '@lumvika/emails'
 import type { Database } from '@/app/api/database.types'
 import { boardImageUrl } from '@/lib/og/board-image'
 import { loadTeam, teamBoardScene, type TeamMember, type TeamStatus } from '@/lib/og/team-board'
@@ -9,7 +9,7 @@ import { warmImage } from '@/lib/og/warm'
 
 // A sweep can afford to wait for a cold capture. A request someone is waiting on (an engine
 // webhook, an invitation, a Stripe event) cannot, and sends the usual banner instead: the next
-// email with the same board finds it in rerun-shot's cache.
+// email with the same board finds it in lumvika-shot's cache.
 export const BANNER_WARM_BACKGROUND_MS = 25_000
 export const BANNER_WARM_INLINE_MS = 6_000
 

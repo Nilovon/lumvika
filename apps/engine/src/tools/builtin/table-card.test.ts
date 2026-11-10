@@ -2,11 +2,11 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-table-card-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-table-card-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeAll, describe, expect, it } = await import('vitest')
-const { CARD_MAX_GROUPS, CARD_MAX_ROWS } = await import('@rerun/contracts')
+const { CARD_MAX_GROUPS, CARD_MAX_ROWS } = await import('@lumvika/contracts')
 const { getAgentDb } = await import('../../db/agentDb.js')
 const { workspaceDir } = await import('../../config/paths.js')
 const { buildTableCard } = await import('./table-card.js')

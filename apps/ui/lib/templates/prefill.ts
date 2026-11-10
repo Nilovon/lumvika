@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateFaqItem } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateFaqItem } from '@lumvika/contracts'
 import { generateObject } from 'ai'
 import { z } from 'zod'
 import { openrouter } from '@/lib/ai/openrouter'
@@ -23,7 +23,7 @@ const contentSchema = z.object({
     tagline: z
         .string()
         .describe(
-            `One sentence, ${TAGLINE_LIMIT} characters maximum, describing what the coworker actually does and what it produces. No trailing period is required. Never mention Rerun by name.`,
+            `One sentence, ${TAGLINE_LIMIT} characters maximum, describing what the coworker actually does and what it produces. No trailing period is required. Never mention Lumvika by name.`,
         ),
     longDescription: z
         .string()

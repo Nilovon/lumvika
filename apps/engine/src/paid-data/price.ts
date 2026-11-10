@@ -1,4 +1,4 @@
-import type { PaidDataPriceMultiplier } from '@rerun/contracts'
+import type { PaidDataPriceMultiplier } from '@lumvika/contracts'
 import { env } from '../config/env.js'
 import { logger } from '../lib/logger.js'
 
@@ -11,13 +11,13 @@ type HubPaidData = { enabled: boolean; multiplier: PaidDataPriceMultiplier }
 let cached: { answer: HubPaidData; at: number } | null = null
 let inFlight: Promise<HubPaidData> | null = null
 
-const linkedToHub = (): boolean => Boolean(env().RERUN_HUB_BASE_URL && env().RERUN_API_KEY)
+const linkedToHub = (): boolean => Boolean(env().LUMVIKA_HUB_BASE_URL && env().LUMVIKA_API_KEY)
 
 // What the hub says of its paid data: whether it sells any (a self-hosted hub does not), and the
 // multiple of the provider's price it bills. A hub that does not answer, or one older than the
 // question, keeps the tools on and gives no price, rather than a price the workspace is not billed.
 async function askHub(): Promise<HubPaidData> {
-    const { RERUN_HUB_BASE_URL: hub, RERUN_API_KEY: token } = env()
+    const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: token } = env()
     if (!hub || !token) return { enabled: false, multiplier: null }
     try {
         const res = await fetch(`${hub.replace(/\/$/, '')}/api/paid-data`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(TIMEOUT_MS) })

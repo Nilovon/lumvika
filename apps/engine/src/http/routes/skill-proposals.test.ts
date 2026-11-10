@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-proposal-routes-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-proposal-routes-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const applied: string[] = []
 vi.mock('../../skills/apply-proposal.js', () => ({

@@ -354,7 +354,7 @@ export function ExpertProfileWizard({ expert, bannerOptions, uploadAvatar, uploa
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input label={t('experts.wizard.website')} optional placeholder="https://rerun.build" {...field} />
+                                                    <Input label={t('experts.wizard.website')} optional placeholder="https://lumvika.com" {...field} />
                                                 </FormControl>
                                             </FormItem>
                                         )}

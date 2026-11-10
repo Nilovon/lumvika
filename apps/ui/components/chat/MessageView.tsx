@@ -51,7 +51,7 @@ import { parseTriggerPayload } from '@/lib/triggers/trigger-payload'
 import { parseScheduledRun } from '@/lib/schedules/scheduled-run'
 import { parseVoiceMessage } from '@/lib/voice/marker'
 import { cn } from '@/lib/utils'
-import { QUICK_REPLIES_TOOL, fileCardSchema, quickRepliesOf, quickReplyDraft, skillProposalIdOf, tableCardSchema, toolActivityOf, type MessageFeedbackRating, type PaidTurnSources } from '@rerun/contracts'
+import { QUICK_REPLIES_TOOL, fileCardSchema, quickRepliesOf, quickReplyDraft, skillProposalIdOf, tableCardSchema, toolActivityOf, type MessageFeedbackRating, type PaidTurnSources } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 import { BrainIcon, FoldVerticalIcon, RefreshCcwIcon, ThumbsDownIcon, ThumbsUpIcon } from '@/lib/icons'
 import { useTranslations } from 'next-intl'
@@ -139,7 +139,7 @@ export type MessageViewProps = {
     readFile?: ReadChatFile
     sharedFiles?: FileAccess
     // A caller's own rendering for a tool step, tried before everything below. `undefined` falls
-    // through to the normal collapsed step, `null` hides it, a node replaces it. The foreman's
+    // through to the normal collapsed step, `null` hides it, a node replaces it. The steward's
     // widgets come in through here, so this file keeps knowing nothing about them.
     renderToolPart?: (part: ToolPartLike) => ReactNode | null | undefined
     // The agent's guided install is still open, so its divider reads as started, not complete.
@@ -226,7 +226,7 @@ function MessageViewInner({ message, isActive = false, isLastAssistant = false, 
             }
             if (part.type.startsWith('tool-') || part.type === 'dynamic-tool') {
                 const toolPart = part as { toolCallId: string; state: string; toolName?: string; input?: unknown; inputText?: string; output?: unknown; errorText?: string; type: string; approval?: { id: string } }
-                // Claude reaches the builtins through the bridged `rerun` MCP server, which namespaces them.
+                // Claude reaches the builtins through the bridged `lumvika` MCP server, which namespaces them.
                 const toolName = stripBridgePrefix(toolPart.toolName ?? toolPart.type.replace(/^tool-/, ''))
                 const key = toolPart.toolCallId
                 const custom = renderToolPart?.({ toolName, toolCallId: key, state: toolPart.state, input: toolPart.input, output: toolPart.output, errorText: toolPart.errorText })
@@ -255,7 +255,7 @@ function MessageViewInner({ message, isActive = false, isLastAssistant = false, 
                 // Only an actual install gets rich UI. Browsing the catalog (search,
                 // list installed) stays a collapsed tool step: the agent often looks
                 // things up mid-task and a full service card is noise there.
-                if (toolName === 'rerun_hub_service_install' && toolPart.state === 'output-available') {
+                if (toolName === 'lumvika_hub_service_install' && toolPart.state === 'output-available') {
                     const out = parseHubOutput<InstallResult>(toolPart.output)
                     if (out?.status === 'installed') {
                         return { kind: 'standalone', key, node: <ServiceInstalledBlock agentId={agentId} name={out.name} toolNames={out.toolNames} /> }
@@ -263,7 +263,7 @@ function MessageViewInner({ message, isActive = false, isLastAssistant = false, 
                     if (out?.status === 'needs_auth') return { kind: 'standalone', key, node: <NeedsAuthCard agentId={agentId} slug={out.slug} name={out.name} /> }
                 }
                 // What a coworker published, and who can open it, where it said so.
-                if (publishedAccess && toolName === 'rerun_hub_publish_file' && toolPart.state === 'output-available') {
+                if (publishedAccess && toolName === 'lumvika_hub_publish_file' && toolPart.state === 'output-available') {
                     const out = parseHubOutput<PublishResult>(toolPart.output)
                     if (out?.status === 'published' && out.slug) return { kind: 'standalone', key, node: <PublishedChatCard agentId={agentId} result={out} /> }
                 }

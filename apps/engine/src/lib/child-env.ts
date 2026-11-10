@@ -1,6 +1,6 @@
 // What a process started for an agent may see of the engine's own environment: the user, the
 // paths, the locale, the display and the network settings. Never the engine's configuration
-// (RERUN_API_KEY, RERUN_PAIR_TOKEN, RERUN_HUB_BASE_URL, RERUN_DATA_DIR…), which a command the
+// (LUMVIKA_API_KEY, LUMVIKA_PAIR_TOKEN, LUMVIKA_HUB_BASE_URL, LUMVIKA_DATA_DIR…), which a command the
 // agent runs, an MCP server fetched from npm or its install scripts have no business reading.
 export const INHERITED_ENV_VARS = ['HOME', 'LOGNAME', 'USER', 'SHELL', 'TERM', 'PATH', 'TMPDIR', 'TZ', 'LANG', 'LANGUAGE', 'LC_ALL', 'DISPLAY', 'XAUTHORITY', 'DBUS_SESSION_BUS_ADDRESS', 'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_EXTRA_CA_CERTS', 'COREPACK_ENABLE_DOWNLOAD_PROMPT'] as const
 

@@ -6,7 +6,7 @@ const MESSAGE = "Il me manque le screen de trafic. L'article sera en anglais am√
 // The end of the Article Creator message of 20 October: the call typed as text, answers invented.
 const FAKE_RESULT = `<function_results>
 <result>
-<name>mcp__rerun__ask_user</name>
+<name>mcp__lumvika__ask_user</name>
 <output>User answered:
 Question: Quel est le nom exact du coworker ?
 Answer: Skool Growth Partner
@@ -39,7 +39,7 @@ describe('FakeToolCallSplitter', () => {
     })
 
     it('cuts a fake call the same way', () => {
-        const { text } = split(['Je te pose les questions.\n', '<function_calls>\n<invoke name="mcp__rerun__ask_user">\n</invoke>\n</function_calls>'])
+        const { text } = split(['Je te pose les questions.\n', '<function_calls>\n<invoke name="mcp__lumvika__ask_user">\n</invoke>\n</function_calls>'])
         expect(text.join('')).toBe('Je te pose les questions.')
     })
 
@@ -94,7 +94,7 @@ describe('createFakeToolCallGuard', () => {
     }
 
     it('cuts the text of a stream and lets a real tool call through', async () => {
-        const toolCall = { type: 'tool-call', toolCallId: 'c1', toolName: 'mcp__rerun__ask_user', input: '{}' }
+        const toolCall = { type: 'tool-call', toolCallId: 'c1', toolName: 'mcp__lumvika__ask_user', input: '{}' }
         const seen = await run([
             { type: 'text-start', id: 't' },
             { type: 'text-delta', id: 't', delta: `${MESSAGE}\n\n` },

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { agentFileRawUrl, foremanFileRawUrl, rawUrlResolver, sharedFileRawUrl } from './raw-url'
+import { agentFileRawUrl, stewardFileRawUrl, rawUrlResolver, sharedFileRawUrl } from './raw-url'
 
 describe('raw urls', () => {
     it('encodes the path so a query character stays in the path', () => {
         expect(agentFileRawUrl('a 1', 'dir/x&y=z.txt')).toBe('/api/files/raw?agentId=a%201&path=dir%2Fx%26y%3Dz.txt')
         expect(sharedFileRawUrl('a#b')).toBe('/api/files/raw?scope=shared&path=a%23b')
-        expect(foremanFileRawUrl('s1', 'f.png')).toBe('/api/foreman/files/raw?sessionId=s1&path=f.png')
+        expect(stewardFileRawUrl('s1', 'f.png')).toBe('/api/steward/files/raw?sessionId=s1&path=f.png')
     })
 })
 

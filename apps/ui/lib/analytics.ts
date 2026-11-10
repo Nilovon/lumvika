@@ -1,4 +1,4 @@
-import { startAnalytics, startSessionReplay, stopAnalytics } from '@rerun/analytics/client'
+import { startAnalytics, startSessionReplay, stopAnalytics } from '@lumvika/analytics/client'
 
 // Les routes `/render/` et `/og/` sont capturées par un navigateur headless : ni bannière dans les
 // screenshots, ni faux pageviews. `/desktop-view` est l'écran d'un coworker dans l'app iOS, qui a

@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
 
 type FakeTransport = { kind: 'stdio' | 'sse' | 'http'; target: string; options: unknown }
 type Behaviour = { connectError?: string; connectCode?: number; closeError?: string; hang?: boolean; tools?: Array<{ name: string; description?: string; inputSchema?: unknown }> }
@@ -186,10 +186,10 @@ describe('pooledMcpTools', () => {
         const stdio = byTarget.node.options as { command: string; args: string[]; env: Record<string, string>; cwd: string }
         expect(stdio.args).toEqual(['srv.js'])
         expect(stdio.cwd).toBe(workspaceDir('mcp-agent'))
-        expect(stdio.env).toMatchObject({ TOKEN: 't', AGENT_KEY: 'a', PATH: process.env.PATH, HOME: process.env.HOME, RERUN_WORKSPACE: workspaceDir('mcp-agent') })
+        expect(stdio.env).toMatchObject({ TOKEN: 't', AGENT_KEY: 'a', PATH: process.env.PATH, HOME: process.env.HOME, LUMVIKA_WORKSPACE: workspaceDir('mcp-agent') })
         expect(stdio.env.MCP_TEST_INHERITED).toBeUndefined()
-        expect(stdio.env).not.toHaveProperty('RERUN_API_KEY')
-        expect(stdio.env).not.toHaveProperty('RERUN_DATA_DIR')
+        expect(stdio.env).not.toHaveProperty('LUMVIKA_API_KEY')
+        expect(stdio.env).not.toHaveProperty('LUMVIKA_DATA_DIR')
         expect(byTarget['https://s.example/sse']).toMatchObject({ kind: 'sse', options: undefined })
         expect(byTarget['https://p.example/mcp']).toMatchObject({ kind: 'http', options: undefined })
         expect(byTarget['https://f.example/events']).toMatchObject({ kind: 'sse', options: { requestInit: { headers: { 'x-k': 'v' } } } })

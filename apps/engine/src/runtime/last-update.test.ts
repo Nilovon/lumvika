@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-last-update-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-last-update-'))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { readLastUpdate, settleLastUpdateOnBoot, writeLastUpdate } = await import('./last-update.js')

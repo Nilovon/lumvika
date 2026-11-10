@@ -3,7 +3,7 @@
 // outside the Next.js RSC pipeline and would crash on the server-only marker.
 import { Resend } from 'resend'
 
-import { DEFAULT_SENDERS } from '@rerun/cloud/senders'
+import { DEFAULT_SENDERS } from '@lumvika/cloud/senders'
 import { APP_URL } from '@/lib/app-url'
 
 export { APP_URL, notificationUrl } from '@/lib/app-url'

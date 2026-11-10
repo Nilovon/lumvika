@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-relay-'))
-process.env.RERUN_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-relay-'))
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
 
 const pool = vi.hoisted(() => ({ reachable: new Set<string>(), acquired: [] as Array<{ agentId: string; name: string; cwd: string }> }))
 

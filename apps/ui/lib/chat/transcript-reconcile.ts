@@ -1,4 +1,4 @@
-import { QUICK_REPLIES_TOOL, stripBridgePrefix } from '@rerun/contracts'
+import { QUICK_REPLIES_TOOL, stripBridgePrefix } from '@lumvika/contracts'
 
 type PartLike = { type: string; toolCallId?: string; toolName?: string; state?: string }
 type MessageLike = { role: string; parts: readonly PartLike[] }

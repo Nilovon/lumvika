@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AgentSharePreview } from '@rerun/contracts'
+import type { AgentSharePreview } from '@lumvika/contracts'
 
 // La fiche d'un agent reçu par lien (`?share=<token>`). Même rôle que template-flow.store : elle
 // vit dans un store parce que le board doit savoir qu'un parcours d'installation tient l'écran,

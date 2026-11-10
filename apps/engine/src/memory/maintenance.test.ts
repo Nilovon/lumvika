@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-maintenance-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-maintenance-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { logs } = vi.hoisted(() => ({ logs: [] as Array<{ level: string; data: Record<string, unknown>; msg: string }> }))
 
@@ -32,7 +32,7 @@ async function writeDecayed(agentId: string, content: string): Promise<string> {
     return id
 }
 
-const memoryFilePath = (agentId: string, id: string) => resolve(process.env.RERUN_DATA_DIR!, 'agents', agentId, 'memory', `${id}.md`)
+const memoryFilePath = (agentId: string, id: string) => resolve(process.env.LUMVIKA_DATA_DIR!, 'agents', agentId, 'memory', `${id}.md`)
 
 beforeEach(() => {
     logs.length = 0

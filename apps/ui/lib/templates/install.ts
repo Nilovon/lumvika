@@ -45,7 +45,7 @@ export async function installTemplate(supabase: SupabaseClient<Database>, slug: 
     const { data: template } = await selectSingle(supabase, 'templates', ['id', 'title', 'agents', 'agent_archives'] as const, { slug })
     if (!template) throw new AppError('templateSlugNotFound', { slug })
 
-    // A replayed install (the foreman calling twice, a retry after checkout, a second tab) would land
+    // A replayed install (the steward calling twice, a retry after checkout, a second tab) would land
     // a second team with the same names, each asking to be set up from scratch, so the workspace
     // gets back the coworkers it already has. Only the user's explicit "Install again" sets `again`.
     if (!target.again) {

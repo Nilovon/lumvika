@@ -1,5 +1,5 @@
 -- Le « What's new » de l'app : une poignée d'annonces produit, publiées sans déploiement. Jusqu'ici
--- ce que Rerun livrait ne se racontait que par la newsletter, donc par email, donc à une audience
+-- ce que Lumvika livrait ne se racontait que par la newsletter, donc par email, donc à une audience
 -- qui n'est pas celle des gens qui ouvrent l'app.
 --
 -- Rien n'est scopé à un workspace, contrairement au Rewind : c'est la même liste pour tout le

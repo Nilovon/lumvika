@@ -1,4 +1,4 @@
-import { normalizeNotificationPrefs, type EmailCategory } from '@rerun/contracts'
+import { normalizeNotificationPrefs, type EmailCategory } from '@lumvika/contracts'
 import type { NotificationKind } from '@/lib/engine/types'
 
 export {
@@ -23,7 +23,7 @@ export {
     type NotificationPrefs,
     type NotificationPrefsPatch,
     type NotificationScope,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 
 // Paused on 21/10/2026: no incident, recovery or budget email leaves. The in-app rows are still written.
 export const NOTIFICATION_EMAILS_PAUSED = true

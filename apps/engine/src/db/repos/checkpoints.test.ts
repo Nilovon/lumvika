@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-checkpoints-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-checkpoints-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const { getLatestCheckpoint, saveCheckpoint } = await import('./checkpoints.js')

@@ -1,6 +1,6 @@
-import { STORY_ACTION_MS, STORY_CARD_ENTER_MS, STORY_RESULT_HOLD_MS, type TemplateConnector, type TemplateStoryStep, playableStory, storyStepDurationMs, templateStoryStepSchema } from '@rerun/contracts'
-import { buildTemplateBoard } from '@rerun/ui/iso-grid'
-import { stageStory, storyFrame } from '@rerun/ui/template-story'
+import { STORY_ACTION_MS, STORY_CARD_ENTER_MS, STORY_RESULT_HOLD_MS, type TemplateConnector, type TemplateStoryStep, playableStory, storyStepDurationMs, templateStoryStepSchema } from '@lumvika/contracts'
+import { buildTemplateBoard } from '@lumvika/ui/iso-grid'
+import { stageStory, storyFrame } from '@lumvika/ui/template-story'
 import { describe, expect, it } from 'vitest'
 
 const CONNECTORS: TemplateConnector[] = [

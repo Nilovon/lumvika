@@ -46,7 +46,7 @@ describe('run phase', () => {
 describe('step group shows activity', () => {
     it('holds while the step group is thinking or running a tool', () => {
         expect(stepGroupShowsActivity(assistant([{ type: 'reasoning', text: '', state: 'streaming' }]))).toBe(true)
-        expect(stepGroupShowsActivity(assistant([{ type: 'dynamic-tool', toolName: 'mcp__rerun__web_search', toolCallId: 'c1', state: 'input-available', input: {} }]))).toBe(true)
+        expect(stepGroupShowsActivity(assistant([{ type: 'dynamic-tool', toolName: 'mcp__lumvika__web_search', toolCallId: 'c1', state: 'input-available', input: {} }]))).toBe(true)
     })
 
     it('leaves the run status when nothing in the group is live', () => {

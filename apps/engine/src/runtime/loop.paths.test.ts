@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-loop-paths-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-loop-paths-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
 
 const { sent, stream, prep, curator, recalls } = vi.hoisted(() => ({
     sent: [] as Array<Record<string, unknown>>,
@@ -52,7 +52,7 @@ vi.mock('../tools/registry.js', async () => {
             if (prep.toolsGate) await prep.toolsGate
             if (prep.toolsError) throw prep.toolsError
             return {
-                tools: { ask_user: hitl(), request_approval: hitl(), suggest_service: hitl(), request_secret: hitl(), mcp__rerun__ask_user: hitl() },
+                tools: { ask_user: hitl(), request_approval: hitl(), suggest_service: hitl(), request_secret: hitl(), mcp__lumvika__ask_user: hitl() },
                 close: async () => {},
             }
         },
@@ -86,7 +86,7 @@ vi.mock('../agents/providers.js', async importOriginal => {
                 },
             })
             return {
-                model: wrapLanguageModel({ model, middleware: [replies.middleware, createCardTagGuard('pathsagent', 'rerun')] }),
+                model: wrapLanguageModel({ model, middleware: [replies.middleware, createCardTagGuard('pathsagent', 'lumvika')] }),
                 close: async () => {
                     if (prep.closeError) throw prep.closeError
                 },
@@ -257,7 +257,7 @@ describe('run loop paths', () => {
         const stored = JSON.parse((await listMessages(id, sessionId))[0].contentJson) as Array<{ type: string; text: string; providerOptions?: unknown }>
         expect(stored).toHaveLength(2)
         expect(stored[0]).toEqual({ type: 'text', text: 'remember this' })
-        expect(stored[1].providerOptions).toEqual({ rerun: { context: true } })
+        expect(stored[1].providerOptions).toEqual({ lumvika: { context: true } })
         expect(stored[1].text).toMatch(/^<now>\n\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z .*\n<\/now>$/)
 
         const prompt = stream.calls[0].prompt as Array<{ role: string; content: Array<{ type: string; text?: string; providerOptions?: unknown }> }>
@@ -361,7 +361,7 @@ describe('run loop paths', () => {
             ['suggest_service', {}, 'connector', 'Set up an app'],
             ['request_secret', { secrets: [{ key: 'API_KEY', label: 'Stripe key' }] }, 'connector', 'Needs Stripe key'],
             ['request_approval', { approvals: [{ action: 'Send the email' }] }, 'approval', 'Send the email'],
-            ['mcp__rerun__ask_user', { question: 'Bridged?' }, 'question', 'Bridged?'],
+            ['mcp__lumvika__ask_user', { question: 'Bridged?' }, 'question', 'Bridged?'],
         ])('%s with %j notifies a %s and sends no completion', async (toolName, input, kind, message) => {
             stream.parts = toolTurn(toolName, input)
 
@@ -371,10 +371,10 @@ describe('run loop paths', () => {
             expect(completions()).toHaveLength(0)
             const notification = sent.find(n => n.event === 'agent.notification')
             expect(notification).toMatchObject({ kind, message, runId: started.runId, sessionId })
-            expect(notification?.metadata).toMatchObject({ toolCallId: 'call-1', toolName: toolName.replace('mcp__rerun__', '') })
+            expect(notification?.metadata).toMatchObject({ toolCallId: 'call-1', toolName: toolName.replace('mcp__lumvika__', '') })
             expect(curator.calls).toHaveLength(0)
             const stored = JSON.stringify(await listMessages(id, sessionId))
-            expect(stored).not.toContain('mcp__rerun__')
+            expect(stored).not.toContain('mcp__lumvika__')
             const calls = await listToolCalls(id, started.runId)
             expect(calls).toHaveLength(1)
             expect(calls[0]).toMatchObject({ toolName, isError: 0 })
@@ -478,23 +478,23 @@ describe('run loop paths', () => {
     })
 
     describe('the managed-model budget latch', () => {
-        it('arms on a budget error from the rerun provider', async () => {
+        it('arms on a budget error from the lumvika provider', async () => {
             stream.parts = [
                 { type: 'stream-start', warnings: [] },
-                { type: 'error', error: new Error('rerun_budget_exhausted: top up to continue') },
+                { type: 'error', error: new Error('lumvika_budget_exhausted: top up to continue') },
             ]
 
-            const { outcome } = await run('spend', { override: { provider: 'rerun' } })
+            const { outcome } = await run('spend', { override: { provider: 'lumvika' } })
 
-            expect(outcome.errorCode).toBe('rerun_budget_exhausted')
+            expect(outcome.errorCode).toBe('lumvika_budget_exhausted')
             expect(isBudgetLatched()).toBe(true)
         })
 
-        it('clears on a successful rerun turn', async () => {
+        it('clears on a successful lumvika turn', async () => {
             armBudgetLatch()
             stream.parts = textTurn('back in business')
 
-            await run('try again', { override: { provider: 'rerun' } })
+            await run('try again', { override: { provider: 'lumvika' } })
 
             expect(isBudgetLatched()).toBe(false)
         })
@@ -523,7 +523,7 @@ describe('run loop paths', () => {
             { type: 'error', error: refusal },
         ]
 
-        const { outcome } = await run('refused', { override: { provider: 'rerun' } })
+        const { outcome } = await run('refused', { override: { provider: 'lumvika' } })
 
         expect(outcome.errorCode).toBe('provider_refused')
         expect(outcome.error).toBe(`ProviderRefusedError: Provider returned error: ${reason}`)
@@ -645,12 +645,12 @@ describe('run loop paths', () => {
             })
         })
 
-        it('leaves the keyless Rerun connection alone, its key is the hub one', async () => {
+        it('leaves the keyless Lumvika connection alone, its key is the hub one', async () => {
             stream.parts = unauthorized()
 
-            await run('hub key', { override: { provider: 'rerun' } })
+            await run('hub key', { override: { provider: 'lumvika' } })
 
-            expect(isCredentialRejected('rerun')).toBe(false)
+            expect(isCredentialRejected('lumvika')).toBe(false)
         })
     })
 

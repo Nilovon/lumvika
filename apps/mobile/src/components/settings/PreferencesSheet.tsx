@@ -1,6 +1,6 @@
 import { Host, Picker, Text } from '@expo/ui/swift-ui'
 import { pickerStyle, tag } from '@expo/ui/swift-ui/modifiers'
-import type { Locale } from '@rerun/i18n'
+import type { Locale } from '@lumvika/i18n'
 import * as Application from 'expo-application'
 import { router } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
@@ -39,7 +39,7 @@ const LANGUAGE_NAMES: Record<Locale, string> = { en: 'English', fr: 'Français',
 
 const AVATAR_SIZE = 44
 
-const isPhoneAlias = (email: string) => email.endsWith('@phone.rerun.build')
+const isPhoneAlias = (email: string) => email.endsWith('@phone.lumvika.com')
 
 export function PreferencesSheet() {
     const theme = useTheme()
@@ -136,9 +136,9 @@ export function PreferencesSheet() {
                         <Separator />
                     </>
                 )}
-                <SettingsRow label={t('privacy')} accessory="external" onPress={() => WebBrowser.openBrowserAsync('https://rerun.build/privacy')} />
+                <SettingsRow label={t('privacy')} accessory="external" onPress={() => WebBrowser.openBrowserAsync('https://lumvika.com/privacy')} />
                 <Separator />
-                <SettingsRow label={t('terms')} accessory="external" onPress={() => WebBrowser.openBrowserAsync('https://rerun.build/terms')} />
+                <SettingsRow label={t('terms')} accessory="external" onPress={() => WebBrowser.openBrowserAsync('https://lumvika.com/terms')} />
             </Section>
 
             <Section title={t('about')}>

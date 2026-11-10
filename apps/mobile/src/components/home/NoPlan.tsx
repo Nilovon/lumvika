@@ -5,7 +5,7 @@ import { useTranslations } from 'use-intl'
 import { AccountMenu } from '@/components/home/AccountMenu'
 import { WorkspaceMenu } from '@/components/home/WorkspaceMenu'
 import { usePaneInsets } from '@/components/layout/PaneSize'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { AppText } from '@/components/ui/AppText'
 import { useTheme } from '@/theme/theme'
 import { spacing } from '@/theme/tokens'
@@ -25,7 +25,7 @@ export function NoPlan() {
                 <WorkspaceMenu />
             </View>
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg, paddingHorizontal: spacing.xl, paddingBottom: insets.bottom + spacing.xxl }}>
-                <ForemanOrb size={64} />
+                <StewardOrb size={64} />
                 <View style={{ alignItems: 'center', gap: spacing.xs }}>
                     <AppText variant="title" style={{ textAlign: 'center' }}>
                         {t('noPlan.title')}

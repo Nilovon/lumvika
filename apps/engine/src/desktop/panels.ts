@@ -1,4 +1,4 @@
-import type { DesktopApp } from '@rerun/contracts'
+import type { DesktopApp } from '@lumvika/contracts'
 
 export const DOCK_APPS: Array<{ app: DesktopApp; label: string; windowClass: string }> = [
     { app: 'browser', label: 'Chrome', windowClass: '[Cc]hrom' },
@@ -6,8 +6,8 @@ export const DOCK_APPS: Array<{ app: DesktopApp; label: string; windowClass: str
     { app: 'terminal', label: 'Terminal', windowClass: 'Xfce4-terminal' },
 ]
 
-export const DOCK_WINDOW_NAME = 'rerun-dock'
-export const BAR_WINDOW_NAME = 'rerun-bar'
+export const DOCK_WINDOW_NAME = 'lumvika-dock'
+export const BAR_WINDOW_NAME = 'lumvika-bar'
 
 export const windowClassOf = (app: DesktopApp): string => DOCK_APPS.find(entry => entry.app === app)!.windowClass
 
@@ -20,7 +20,7 @@ export function openboxConfig(): string {
     return [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<openbox_config xmlns="http://openbox.org/3.4/rc">',
-        `<theme><name>Rerun</name><titleLayout>LMC</titleLayout><font place="ActiveWindow">${TITLE_FONT}</font><font place="InactiveWindow">${TITLE_FONT}</font></theme>`,
+        `<theme><name>Lumvika</name><titleLayout>LMC</titleLayout><font place="ActiveWindow">${TITLE_FONT}</font><font place="InactiveWindow">${TITLE_FONT}</font></theme>`,
         '<keyboard></keyboard>',
         '</openbox_config>',
         '',
@@ -41,7 +41,7 @@ const PANEL = lines([
 
 // The engine only answers its own key, which every process on the screen already holds.
 const openOnClick = (app: DesktopApp): string =>
-    `curl -fsS -m 60 -X POST -H "Authorization: Bearer $RERUN_API_KEY" -H 'content-type: application/json' -d '{"app":"${app}"}' "$RERUN_DESKTOP_ENGINE/agents/$RERUN_DESKTOP_AGENT/desktop/apps"`
+    `curl -fsS -m 60 -X POST -H "Authorization: Bearer $LUMVIKA_API_KEY" -H 'content-type: application/json' -d '{"app":"${app}"}' "$LUMVIKA_DESKTOP_ENGINE/agents/$LUMVIKA_DESKTOP_AGENT/desktop/apps"`
 
 // The first line an item prints is the icon tint2 draws: the one with a dot while the app has a window.
 function dockItem(iconsDir: string, { app, label, windowClass }: (typeof DOCK_APPS)[number]): string {
@@ -78,7 +78,7 @@ export function dockConfig(iconsDir: string): string {
             ['background_color', '#000000 0'],
             ['border_color', '#000000 0'],
             ['background_color_hover', '#ffffff 8'],
-            ['background_color_pressed', '#4d34f7 40'],
+            ['background_color_pressed', '#0b6e63 40'],
         ]),
         lines([
             ['panel_items', 'E'.repeat(DOCK_APPS.length)],
@@ -123,7 +123,7 @@ export function barConfig(): string {
         PANEL,
         lines([
             ['execp', 'new'],
-            ['execp_command', `printf '%s' "$RERUN_DESKTOP_AGENT_NAME"`],
+            ['execp_command', `printf '%s' "$LUMVIKA_DESKTOP_AGENT_NAME"`],
             ['execp_interval', 0],
             ['execp_has_icon', 0],
             ['execp_continuous', 0],

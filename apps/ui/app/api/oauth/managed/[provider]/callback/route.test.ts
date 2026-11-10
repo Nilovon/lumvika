@@ -51,7 +51,7 @@ const CONTEXT: ManagedOAuthContext = {
     key: 'acme',
     provider: 'acme',
     serverName: 'acme',
-    redirectUri: 'https://rerun.test/api/oauth/managed/acme/callback',
+    redirectUri: 'https://lumvika.test/api/oauth/managed/acme/callback',
 }
 
 let agentWorkspace = SESSION_WORKSPACE
@@ -60,7 +60,7 @@ let role: 'admin' | 'member' = 'admin'
 let jar: Record<string, string> = {}
 
 function callback(params: Record<string, string>, provider = 'acme') {
-    return GET(new Request(`https://rerun.test/api/oauth/managed/${provider}/callback?${new URLSearchParams(params)}`), { params: Promise.resolve({ provider }) })
+    return GET(new Request(`https://lumvika.test/api/oauth/managed/${provider}/callback?${new URLSearchParams(params)}`), { params: Promise.resolve({ provider }) })
 }
 
 function withContext(ctx: ManagedOAuthContext) {
@@ -236,7 +236,7 @@ describe('GET /api/oauth/managed/[provider]/callback', () => {
 
         expect(res.status).toBe(302)
         const location = new URL(res.headers.get('location') ?? '')
-        expect(location.protocol).toBe('rerun:')
+        expect(location.protocol).toBe('lumvika:')
         expect(location.searchParams.get('message')).toBe('Invalid sign-in grant')
         expect(exchangeManagedCode).not.toHaveBeenCalled()
         expect(putMcpToken).not.toHaveBeenCalled()

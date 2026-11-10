@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-proposal-repo-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-proposal-repo-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it } = await import('vitest')
 const { insertSkillProposal, transitionSkillProposal, getSkillProposal, openSkillProposalForSession } = await import('./skill-proposals.js')

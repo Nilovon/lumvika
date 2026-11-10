@@ -10,7 +10,7 @@ import { capturePage, type CaptureFormat } from './shot'
 const FALLBACK_PATH = path.join(process.cwd(), 'public', 'og-image.png')
 
 // A short life on purpose: the normal card is cached for a day and served stale for a week, which is
-// exactly what a generic fallback must not inherit. A blip of rerun-shot then costs a minute, not a
+// exactly what a generic fallback must not inherit. A blip of lumvika-shot then costs a minute, not a
 // week of the wrong card in every unfurl.
 const FALLBACK_CACHE_CONTROL = 'public, max-age=60, must-revalidate'
 
@@ -18,8 +18,8 @@ let fallbackImage: Buffer | null = null
 
 const ogCache = createOgCache({ ttlMs: 60 * 60 * 1000, maxEntries: 200 })
 
-// Bump this on any visual change to a captured card. It travels in the URL rerun-shot is asked to
-// screenshot, so it is part of the cache key on both sides: the memo above and rerun-shot's own
+// Bump this on any visual change to a captured card. It travels in the URL lumvika-shot is asked to
+// screenshot, so it is part of the cache key on both sides: the memo above and lumvika-shot's own
 // content-addressed disk cache. A template card also carries its row's `updated_at`, but that only
 // covers an edit of the content: without this constant a change of the layout itself would keep
 // serving the old image. The public URL never carries it, so crawlers keep the one they know.

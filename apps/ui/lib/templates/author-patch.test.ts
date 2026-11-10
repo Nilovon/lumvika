@@ -1,4 +1,4 @@
-import { templateDocumentSchema } from '@rerun/contracts'
+import { templateDocumentSchema } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 import { mergeAuthorDocument, pickSentFields, templateAuthorPatchSchema } from './expert'
 
@@ -12,7 +12,7 @@ const stored = templateDocumentSchema.parse({
     title: 'Inbox triage',
     tagline: 'Sort the morning inbox and flag what needs you.',
     longDescription: 'The long version.',
-    gallery: [{ url: 'https://media.rerun.build/gallery/cover.webp', alt: 'Board' }],
+    gallery: [{ url: 'https://media.lumvika.com/gallery/cover.webp', alt: 'Board' }],
     faq: [{ question: 'How long does it take?', answer: 'Five minutes.' }],
     tags: ['email'],
 })

@@ -32,7 +32,7 @@ export const TEMPLATE_CATEGORY_TAGLINES: Record<TemplateCategory, string> = {
     other: 'Templates that solve one very specific problem.',
 }
 
-// `in_review` is a draft its author has handed to the Rerun team: still private, but frozen on
+// `in_review` is a draft its author has handed to the Lumvika team: still private, but frozen on
 // their side until we publish it or send it back.
 export const TEMPLATE_STATUSES = ['draft', 'in_review', 'published', 'unlisted', 'archived'] as const
 export type TemplateStatus = (typeof TEMPLATE_STATUSES)[number]
@@ -158,34 +158,34 @@ export function templateCardCtaLabel(pricing: TemplatePricing, t: TemplatePriceC
     return isPaid(pricing) ? t('hireCard', { price: priceLabel(pricing, t, locale) }) : t('useForFree')
 }
 
-// What Rerun keeps on a sale. Plain constants rather than env vars: the creator UI quotes the
+// What Lumvika keeps on a sale. Plain constants rather than env vars: the creator UI quotes the
 // figures back to the author before they price anything, so the browser has to know them too, and a
 // number that differs between the two would be worse than one that needs a deploy to change.
 // The fixed part is what makes the fee cover Stripe's own per-transaction cost on small sales.
 export const MARKETPLACE_FEE_PERCENT = 5
 export const MARKETPLACE_FEE_FIXED_CENTS = 30
 
-// Every figure here is computed on the amount left once the tax Rerun owes has been taken out of
+// Every figure here is computed on the amount left once the tax Lumvika owes has been taken out of
 // the charge, never on the total the buyer paid.
-export function rerunFeeCents(netOfTaxCents: number): number {
+export function lumvikaFeeCents(netOfTaxCents: number): number {
     if (netOfTaxCents <= 0) return 0
     const fee = Math.round((netOfTaxCents * MARKETPLACE_FEE_PERCENT) / 100) + MARKETPLACE_FEE_FIXED_CENTS
     return Math.min(fee, netOfTaxCents)
 }
 
 export function creatorNetCents(netOfTaxCents: number): number {
-    return Math.max(0, netOfTaxCents - rerunFeeCents(netOfTaxCents))
+    return Math.max(0, netOfTaxCents - lumvikaFeeCents(netOfTaxCents))
 }
 
 export function marketplaceFeeLabel(currency: string = TEMPLATE_CURRENCY): string {
     return `${MARKETPLACE_FEE_PERCENT}% + ${formatAmount(MARKETPLACE_FEE_FIXED_CENTS, currency)}`
 }
 
-// How one paid amount divides into the tax Rerun owes, the fee it keeps, and what the creator gets.
+// How one paid amount divides into the tax Lumvika owes, the fee it keeps, and what the creator gets.
 export type SaleSplit = { taxCents: number; feeCents: number; netCents: number }
 
 export function splitSale(grossCents: number, taxCents: number): SaleSplit {
     const netOfTax = Math.max(0, grossCents - taxCents)
-    const feeCents = rerunFeeCents(netOfTax)
+    const feeCents = lumvikaFeeCents(netOfTax)
     return { taxCents, feeCents, netCents: netOfTax - feeCents }
 }

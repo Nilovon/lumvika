@@ -38,7 +38,7 @@ export function suggestionsOnOffer(suggestions: AgentSuggestion[], offset: numbe
     return Array.from({ length: shown }, (_, index) => suggestions[(offset + index) % suggestions.length])
 }
 
-// The agent being described, wherever its composer is drawn: the text, what Rerun reads in it, and
+// The agent being described, wherever its composer is drawn: the text, what Lumvika reads in it, and
 // what the user changed by hand over that reading. `seed` is a draft, and the reading already known
 // for it, to open on.
 //

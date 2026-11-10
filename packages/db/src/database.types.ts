@@ -1165,7 +1165,7 @@ export type Database = {
           },
         ]
       }
-      foreman_conversations: {
+      steward_conversations: {
         Row: {
           backend: string
           created_at: string
@@ -1201,14 +1201,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "foreman_conversations_user_id_fkey"
+            foreignKeyName: "steward_conversations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "foreman_conversations_workspace_id_fkey"
+            foreignKeyName: "steward_conversations_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1216,7 +1216,7 @@ export type Database = {
           },
         ]
       }
-      foreman_builds: {
+      steward_builds: {
         Row: {
           finished_at: string | null
           result: Json | null
@@ -1237,7 +1237,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "foreman_builds_workspace_id_fkey"
+            foreignKeyName: "steward_builds_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: true
             referencedRelation: "workspaces"
@@ -1384,7 +1384,7 @@ export type Database = {
           category: string | null
           created_at: string
           details: string | null
-          foreman_conversation_id: string | null
+          steward_conversation_id: string | null
           id: string
           message_id: string
           message_text: string
@@ -1400,7 +1400,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           details?: string | null
-          foreman_conversation_id?: string | null
+          steward_conversation_id?: string | null
           id?: string
           message_id: string
           message_text: string
@@ -1416,7 +1416,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           details?: string | null
-          foreman_conversation_id?: string | null
+          steward_conversation_id?: string | null
           id?: string
           message_id?: string
           message_text?: string
@@ -1436,10 +1436,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "message_feedback_foreman_conversation_id_fkey"
-            columns: ["foreman_conversation_id"]
+            foreignKeyName: "message_feedback_steward_conversation_id_fkey"
+            columns: ["steward_conversation_id"]
             isOneToOne: false
-            referencedRelation: "foreman_conversations"
+            referencedRelation: "steward_conversations"
             referencedColumns: ["id"]
           },
           {
@@ -2078,7 +2078,7 @@ export type Database = {
         }
         Relationships: []
       }
-      rerun_usage_events: {
+      lumvika_usage_events: {
         Row: {
           billed: boolean
           cost_micros: number
@@ -2120,7 +2120,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "rerun_usage_events_workspace_id_fkey"
+            foreignKeyName: "lumvika_usage_events_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -3606,11 +3606,11 @@ export type Database = {
           publish_policy: string | null
           renewal_reminder_at: string | null
           renewal_reminder_user_id: string | null
-          rerun_budget_micros: number
-          rerun_credit_paused_at: string | null
-          rerun_period_anchor: string | null
-          rerun_topup_micros: number
-          rerun_used_micros: number
+          lumvika_budget_micros: number
+          lumvika_credit_paused_at: string | null
+          lumvika_period_anchor: string | null
+          lumvika_topup_micros: number
+          lumvika_used_micros: number
           stripe_customer_id: string | null
           stripe_price_id: string | null
           stripe_subscription_id: string | null
@@ -3644,11 +3644,11 @@ export type Database = {
           publish_policy?: string | null
           renewal_reminder_at?: string | null
           renewal_reminder_user_id?: string | null
-          rerun_budget_micros?: number
-          rerun_credit_paused_at?: string | null
-          rerun_period_anchor?: string | null
-          rerun_topup_micros?: number
-          rerun_used_micros?: number
+          lumvika_budget_micros?: number
+          lumvika_credit_paused_at?: string | null
+          lumvika_period_anchor?: string | null
+          lumvika_topup_micros?: number
+          lumvika_used_micros?: number
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
@@ -3682,11 +3682,11 @@ export type Database = {
           publish_policy?: string | null
           renewal_reminder_at?: string | null
           renewal_reminder_user_id?: string | null
-          rerun_budget_micros?: number
-          rerun_credit_paused_at?: string | null
-          rerun_period_anchor?: string | null
-          rerun_topup_micros?: number
-          rerun_used_micros?: number
+          lumvika_budget_micros?: number
+          lumvika_credit_paused_at?: string | null
+          lumvika_period_anchor?: string | null
+          lumvika_topup_micros?: number
+          lumvika_used_micros?: number
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
@@ -3766,7 +3766,7 @@ export type Database = {
         Args: { p_max: number; p_scopes: string[]; p_window_seconds: number }
         Returns: boolean
       }
-      consume_rerun_credit: {
+      consume_lumvika_credit: {
         Args: { p_micros: number; p_workspace_id: number }
         Returns: undefined
       }
@@ -3792,7 +3792,7 @@ export type Database = {
           points: Json
         }[]
       }
-      grant_rerun_topup: {
+      grant_lumvika_topup: {
         Args: { p_micros: number; p_workspace_id: number }
         Returns: undefined
       }
@@ -3823,7 +3823,7 @@ export type Database = {
         Args: { p_source_key: string; p_user_id: string }
         Returns: boolean
       }
-      rerun_credit_usage: {
+      lumvika_credit_usage: {
         Args: {
           p_since: string
           p_workspace_id: number

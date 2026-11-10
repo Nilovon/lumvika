@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearPendingKickoff, readPendingKickoff, readPendingKickoffs, savePendingKickoff } from './pending-kickoff'
 
-const KEY = 'rerun:pending-kickoffs'
-const LEGACY_KEY = 'rerun:pending-kickoff'
+const KEY = 'lumvika:pending-kickoffs'
+const LEGACY_KEY = 'lumvika:pending-kickoff'
 
 function memoryStorage() {
     const values = new Map<string, string>()

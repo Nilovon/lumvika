@@ -13,7 +13,7 @@ const reloaded = (payload: object) => ({ type: 'json', value: JSON.stringify([{ 
 describe('cardOf', () => {
     it('reads a table card from the live stream and from a reloaded transcript alike', () => {
         expect(cardOf({ type: 'tool-card_table', state: 'output-available', output: table })).toMatchObject({ kind: 'table', card: { table: 'leads', total: 40 } })
-        expect(cardOf({ type: 'dynamic-tool', toolName: 'rerun__card_table', state: 'output-available', output: reloaded(table) })).toMatchObject({ kind: 'table' })
+        expect(cardOf({ type: 'dynamic-tool', toolName: 'lumvika__card_table', state: 'output-available', output: reloaded(table) })).toMatchObject({ kind: 'table' })
     })
 
     it('reads a file card, the single-file shape of older engines included', () => {
@@ -48,7 +48,7 @@ describe('files', () => {
     it('hands the token to the hub alone, never to an address that merely looks like ours', () => {
         const caller = { accessToken: 'jwt', workspaceId: 7 }
         expect(isHubFileUrl('https://hub.test/api/files/raw?agentId=a1&path=a.png')).toBe(true)
-        expect(isHubFileUrl('https://hub.test/api/foreman/files/raw?sessionId=s1&path=a.png')).toBe(true)
+        expect(isHubFileUrl('https://hub.test/api/steward/files/raw?sessionId=s1&path=a.png')).toBe(true)
         expect(fileHeadersFor(caller, 'https://hub.test/api/files/raw?agentId=a1&path=a.png')).toMatchObject({ Authorization: 'Bearer jwt', 'x-workspace-id': '7' })
         expect(fileHeadersFor(caller, 'https://evil.example/api/files/raw?p=1')).toBeUndefined()
         expect(fileHeadersFor(caller, 'https://hub.test.evil.example/api/files/raw?p=1')).toBeUndefined()
@@ -94,8 +94,8 @@ describe('eventCardOf', () => {
 
 describe('connectCardOf', () => {
     it('shows an app the coworker installed, and one still waiting on a sign-in', () => {
-        expect(connectCardOf({ type: 'tool-rerun_hub_service_install', state: 'output-available', output: { status: 'installed', key: 'k', slug: 'gmail', name: 'Gmail', toolNames: ['gmail'], message: '' } })).toEqual({ kind: 'service-installed', name: 'Gmail', toolNames: ['gmail'] })
-        expect(connectCardOf({ type: 'tool-rerun_hub_service_install', state: 'output-available', output: reloaded({ status: 'needs_auth', key: 'k', slug: 'notion', name: 'Notion', message: '' }) })).toEqual({ kind: 'service-needs-auth', slug: 'notion', name: 'Notion' })
+        expect(connectCardOf({ type: 'tool-lumvika_hub_service_install', state: 'output-available', output: { status: 'installed', key: 'k', slug: 'gmail', name: 'Gmail', toolNames: ['gmail'], message: '' } })).toEqual({ kind: 'service-installed', name: 'Gmail', toolNames: ['gmail'] })
+        expect(connectCardOf({ type: 'tool-lumvika_hub_service_install', state: 'output-available', output: reloaded({ status: 'needs_auth', key: 'k', slug: 'notion', name: 'Notion', message: '' }) })).toEqual({ kind: 'service-needs-auth', slug: 'notion', name: 'Notion' })
     })
 
     it('shows a server registered outside the catalog, saved or refused', () => {
@@ -104,7 +104,7 @@ describe('connectCardOf', () => {
     })
 
     it('leaves a search of the catalog and a call still running to the steps', () => {
-        expect(connectCardOf({ type: 'tool-rerun_hub_service_search', state: 'output-available', output: [] })).toBeNull()
-        expect(connectCardOf({ type: 'tool-rerun_hub_service_install', state: 'input-available' })).toBeNull()
+        expect(connectCardOf({ type: 'tool-lumvika_hub_service_search', state: 'output-available', output: [] })).toBeNull()
+        expect(connectCardOf({ type: 'tool-lumvika_hub_service_install', state: 'input-available' })).toBeNull()
     })
 })

@@ -3,14 +3,14 @@ import { tmpdir } from 'node:os'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-paid-data-'))
-process.env.RERUN_API_KEY = 'engine-secret'
-process.env.RERUN_HUB_BASE_URL = 'https://hub.example.test/'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-paid-data-'))
+process.env.LUMVIKA_API_KEY = 'engine-secret'
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example.test/'
 
 const { afterEach, beforeEach, describe, expect, it, vi } = await import('vitest')
 
 const { paidDataTools } = await import('./paid-data.js')
-const { PAID_DATA_CAPABILITIES } = await import('@rerun/contracts')
+const { PAID_DATA_CAPABILITIES } = await import('@lumvika/contracts')
 const { workspaceDir } = await import('../../config/paths.js')
 const { lookupPaidSources } = await import('../../db/repos/paid-sources.js')
 const { HostBreaker } = await import('../host-breaker.js')
@@ -149,7 +149,7 @@ describe('paidDataTools', () => {
 
         const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
         expect(url).toBe('https://hub.example.test/api/paid-data')
-        expect(init.headers).toMatchObject({ Authorization: 'Bearer engine-secret', 'x-rerun-agent': 'prospector', 'x-rerun-paid-data-full': '1' })
+        expect(init.headers).toMatchObject({ Authorization: 'Bearer engine-secret', 'x-lumvika-agent': 'prospector', 'x-lumvika-paid-data-full': '1' })
         expect(JSON.parse(String(init.body))).toEqual({ capability: 'people.email.find', params: { full_name: 'Jane Doe', domain: 'acme.com' } })
         expect(output).toEqual({ status: 'found', billedMicros: 36_000, message: 'Found. Billed 4 credits.', servedBy: 'hunter', result: { output: { email: 'jane@acme.com' } } })
     })
@@ -182,7 +182,7 @@ describe('paidDataTools', () => {
 
             const output = await buy('tiktok.search.videos', { q: 'carousel' })
 
-            expect(output.saved).toMatch(/^\.rerun\/paid-data\/tiktok\.search\.videos-\d{4}-\d{2}-\d{2}-treg-call-9\.json$/)
+            expect(output.saved).toMatch(/^\.lumvika\/paid-data\/tiktok\.search\.videos-\d{4}-\d{2}-\d{2}-treg-call-9\.json$/)
             expect(Object.keys(output)[0]).toBe('saved')
             expect(output.message).toContain(`The whole answer is saved at ${output.saved}`)
             expect(output.message).toContain('paid_data_read')
@@ -226,7 +226,7 @@ describe('paidDataTools', () => {
         })
 
         it('refuses to read a file that is not a saved answer', async () => {
-            await expect(run('paid_data_read', { saved: '.rerun/paid-data/../services.json' })).rejects.toThrow('Not a saved paid answer')
+            await expect(run('paid_data_read', { saved: '.lumvika/paid-data/../services.json' })).rejects.toThrow('Not a saved paid answer')
             await expect(run('paid_data_read', { saved: 'notes.md' })).rejects.toThrow('Not a saved paid answer')
         })
 
@@ -277,11 +277,11 @@ describe('paidDataTools', () => {
     })
 
     it('marks a call refused for want of credit, so the chat shows the top-up notice, and tells the coworker to go on without paid data', async () => {
-        mockFetch(402, { error: 'rerun_budget_exhausted' })
+        mockFetch(402, { error: 'lumvika_budget_exhausted' })
 
         const output = await buy('google.serp.maps', { q: 'plumber Lyon', country: 'fr' })
         expect(output).toMatchObject({ status: 'not_run', reason: 'out_of_credit', billedMicros: 0 })
-        expect(output.message).toContain('no Rerun credit left')
+        expect(output.message).toContain('no Lumvika credit left')
         expect(output.message).toContain('finish the task with your free tools')
     })
 

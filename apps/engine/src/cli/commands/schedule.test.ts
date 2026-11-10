@@ -34,7 +34,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('rerun schedule list', () => {
+describe('lumvika schedule list', () => {
     it('prints each schedule with its trigger and next run or disabled state', async () => {
         state.schedules = [
             schedule({ slug: 'daily', cron: '0 9 * * *', timezone: 'UTC' }),
@@ -61,11 +61,11 @@ describe('rerun schedule list', () => {
     })
 
     it('asks for the agent id', async () => {
-        await expect(scheduleCommand(['list'])).rejects.toThrow('Usage: rerun schedule list <agentId>')
+        await expect(scheduleCommand(['list'])).rejects.toThrow('Usage: lumvika schedule list <agentId>')
     })
 
     it('prints the usage for anything else', async () => {
-        await expect(scheduleCommand([])).rejects.toThrow('Usage: rerun schedule <list>')
-        await expect(scheduleCommand(['create', 'agent1'])).rejects.toThrow('Usage: rerun schedule <list>')
+        await expect(scheduleCommand([])).rejects.toThrow('Usage: lumvika schedule <list>')
+        await expect(scheduleCommand(['create', 'agent1'])).rejects.toThrow('Usage: lumvika schedule <list>')
     })
 })

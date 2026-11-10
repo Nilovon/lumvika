@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTranslations } from 'next-intl'
 
-import type { TrackStep } from './ForemanTrack'
+import type { TrackStep } from './StewardTrack'
 import { StepError } from './step-bits'
 
 type NameStepParams = {

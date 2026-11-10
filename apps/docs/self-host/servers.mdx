@@ -19,12 +19,12 @@ You need a machine with Docker. It can be the same machine as the app, another c
     Click **Add server**. Fill **Address the app reaches it at** if you know it, for example `http://100.101.102.103:3000` or `https://engine.example.com`. Then copy the command.
 
     ```bash
-    docker run -d --name rerun-engine --restart unless-stopped \
-      -p 3000:3000 -v rerun-engine:/data \
-      -e RERUN_HUB_URL=https://rerun.example.com \
-      -e RERUN_PAIR_TOKEN=rrn_pair_... \
-      -e RERUN_PUBLIC_URL=https://engine.example.com \
-      ghcr.io/rerun-build/rerun-engine:latest
+    docker run -d --name lumvika-engine --restart unless-stopped \
+      -p 3000:3000 -v lumvika-engine:/data \
+      -e LUMVIKA_HUB_URL=https://lumvika.example.com \
+      -e LUMVIKA_PAIR_TOKEN=rrn_pair_... \
+      -e LUMVIKA_PUBLIC_URL=https://engine.example.com \
+      ghcr.io/schnebel-technologie/lumvika-engine:latest
     ```
 
     The command works once, for 15 minutes, and only for this workspace.
@@ -41,18 +41,18 @@ You need a machine with Docker. It can be the same machine as the app, another c
 ### What happens behind the command
 
 1. The engine starts and makes up its own key. It keeps it in its data-dir, at `/data/engine.key`. The key never appears in the command nor in a URL.
-2. It sends the key and the token to your app, at `RERUN_HUB_URL/api/engines/pair`.
+2. It sends the key and the token to your app, at `LUMVIKA_HUB_URL/api/engines/pair`.
 3. The app checks it can reach the server: first `GET /health`, then a call that needs the key.
 4. Only then does the app attach the server to the workspace, and spend the token.
 
-The address the app uses is `RERUN_PUBLIC_URL` when you set it. Without it, the app takes the address the request came from, on port 3000. Set it whenever the server sits behind a proxy, a NAT or a tunnel.
+The address the app uses is `LUMVIKA_PUBLIC_URL` when you set it. Without it, the app takes the address the request came from, on port 3000. Set it whenever the server sits behind a proxy, a NAT or a tunnel.
 
 ### When it does not connect
 
 The server logs say why, in one line:
 
 ```bash
-docker logs rerun-engine
+docker logs lumvika-engine
 ```
 
 The usual messages, and the fix for each:
@@ -65,13 +65,13 @@ The usual messages, and the fix for each:
 | This pairing token is not valid, or was already used | Same: a token works once. |
 | This workspace already has a server | Remove the current one first. |
 
-A refused pairing is final: the engine stops trying. A pairing that failed before the app attached the server did not spend the token, so within the 15 minutes you can fix the cause and run the command again, after `docker rm -f rerun-engine`.
+A refused pairing is final: the engine stops trying. A pairing that failed before the app attached the server did not spend the token, so within the 15 minutes you can fix the cause and run the command again, after `docker rm -f lumvika-engine`.
 
-The server also needs to reach the app. `RERUN_HUB_URL` is your `NEXT_PUBLIC_APP_URL`: when it is `http://localhost:3000`, only a server on the same machine can pair, and even then `localhost` inside the container is the container itself. Give the app an address the server can reach first.
+The server also needs to reach the app. `LUMVIKA_HUB_URL` is your `NEXT_PUBLIC_APP_URL`: when it is `http://localhost:3000`, only a server on the same machine can pair, and even then `localhost` inside the container is the container itself. Give the app an address the server can reach first.
 
 ### Enter a server by hand
 
-For an engine you started yourself with your own `RERUN_API_KEY`, click **Enter address and key** instead of **Add server**. Fill the address and the key, and click **Connect**. The app runs the same two checks before attaching it.
+For an engine you started yourself with your own `LUMVIKA_API_KEY`, click **Enter address and key** instead of **Add server**. Fill the address and the key, and click **Connect**. The app runs the same two checks before attaching it.
 
 ## Networking
 
@@ -81,14 +81,14 @@ The app must reach the server on its port, and the server must reach the app. Tw
   <Tab title="Tailscale">
     Put the app's machine and the server on the same [tailnet](https://tailscale.com). Nothing to open to the internet, and the traffic is encrypted.
 
-    Use the server's Tailscale IP as the address, for example `RERUN_PUBLIC_URL=http://100.101.102.103:3000`. An IP is safer than a MagicDNS name, which the app container may not resolve.
+    Use the server's Tailscale IP as the address, for example `LUMVIKA_PUBLIC_URL=http://100.101.102.103:3000`. An IP is safer than a MagicDNS name, which the app container may not resolve.
 
     The people watching a coworker's screen need to be on the tailnet too, since their browser opens it on the same address.
   </Tab>
   <Tab title="A public VPS with HTTPS">
     Never expose the engine on port 3000 in clear. Publish it on the loopback only, and put a reverse proxy in front for HTTPS. With [Caddy](https://caddyserver.com), the certificate is automatic.
 
-    Start the engine with `-p 127.0.0.1:3000:3000` instead of `-p 3000:3000`, and `RERUN_PUBLIC_URL=https://engine.example.com`. Then point a DNS record at the VPS and give Caddy this `Caddyfile`:
+    Start the engine with `-p 127.0.0.1:3000:3000` instead of `-p 3000:3000`, and `LUMVIKA_PUBLIC_URL=https://engine.example.com`. Then point a DNS record at the VPS and give Caddy this `Caddyfile`:
 
     ```text Caddyfile
     engine.example.com {
@@ -100,7 +100,7 @@ The app must reach the server on its port, and the server must reach the app. Tw
   </Tab>
 </Tabs>
 
-The app itself goes behind HTTPS the same way: a `Caddyfile` block for `rerun.example.com` with `reverse_proxy localhost:3000`, then `NEXT_PUBLIC_APP_URL=https://rerun.example.com` and a rebuild with `docker compose up -d --build`.
+The app itself goes behind HTTPS the same way: a `Caddyfile` block for `lumvika.example.com` with `reverse_proxy localhost:3000`, then `NEXT_PUBLIC_APP_URL=https://lumvika.example.com` and a rebuild with `docker compose up -d --build`.
 
 ## The desktop screen
 
@@ -109,7 +109,7 @@ Each coworker has a screen you can watch and take over. The browser opens it dir
 - The person watching must be able to reach the server, not just the app.
 - When the app is on HTTPS, the server must be on HTTPS too. A browser refuses a `ws://` connection from an `https://` page.
 
-A browser reaches the engine docker compose starts at `RERUN_ENGINE_BROWSER_URL`: `http://localhost:3001` by default, its own `https` domain on a server. See [On a server](/self-host/install#on-a-server).
+A browser reaches the engine docker compose starts at `LUMVIKA_ENGINE_BROWSER_URL`: `http://localhost:3001` by default, its own `https` domain on a server. See [On a server](/self-host/install#on-a-server).
 
 ## Remove or replace a server
 
@@ -121,25 +121,25 @@ To move a workspace to another machine:
 
 <Steps>
   <Step title="Stop the old server">
-    `docker stop rerun-engine`, so nothing changes while you copy.
+    `docker stop lumvika-engine`, so nothing changes while you copy.
   </Step>
   <Step title="Copy its data-dir">
-    Back up the volume as in [Backups](#backups), copy the archive to the new machine, and restore it there into a volume named `rerun-engine`.
+    Back up the volume as in [Backups](#backups), copy the archive to the new machine, and restore it there into a volume named `lumvika-engine`.
   </Step>
   <Step title="Start the engine on the new machine">
     Without a pairing token: the key and the app's address are already in the data-dir.
 
     ```bash
-    docker run -d --name rerun-engine --restart unless-stopped --shm-size 2g \
-      -p 3000:3000 -v rerun-engine:/data \
-      ghcr.io/rerun-build/rerun-engine:latest
+    docker run -d --name lumvika-engine --restart unless-stopped --shm-size 2g \
+      -p 3000:3000 -v lumvika-engine:/data \
+      ghcr.io/schnebel-technologie/lumvika-engine:latest
     ```
   </Step>
   <Step title="Point the workspace at it">
     In **Servers**, click **Remove**, then **Enter address and key**. The address is the new machine's, and the key is the one in the data-dir:
 
     ```bash
-    docker run --rm -v rerun-engine:/data alpine cat /data/engine.key
+    docker run --rm -v lumvika-engine:/data alpine cat /data/engine.key
     ```
   </Step>
 </Steps>
@@ -156,11 +156,11 @@ docker compose up -d --build
 A paired server updates by pulling the image and starting it again on the same volume, without a pairing token:
 
 ```bash
-docker pull ghcr.io/rerun-build/rerun-engine:latest
-docker rm -f rerun-engine
-docker run -d --name rerun-engine --restart unless-stopped --shm-size 2g \
-  -p 3000:3000 -v rerun-engine:/data \
-  ghcr.io/rerun-build/rerun-engine:latest
+docker pull ghcr.io/schnebel-technologie/lumvika-engine:latest
+docker rm -f lumvika-engine
+docker run -d --name lumvika-engine --restart unless-stopped --shm-size 2g \
+  -p 3000:3000 -v lumvika-engine:/data \
+  ghcr.io/schnebel-technologie/lumvika-engine:latest
 ```
 
 Keep the same `-p` you started it with. On start, the engine migrates its data-dir to the new version. An archive taken weeks ago boots on a newer engine the same way.
@@ -168,7 +168,7 @@ Keep the same `-p` you started it with. On start, the engine migrates its data-d
 To check a server's data-dir without changing it:
 
 ```bash
-docker exec rerun-engine node dist/cli/bin.js doctor                  # a paired server
+docker exec lumvika-engine node dist/cli/bin.js doctor                  # a paired server
 docker compose exec engine node dist/cli/bin.js doctor                # the engine started by compose
 ```
 
@@ -176,10 +176,10 @@ docker compose exec engine node dist/cli/bin.js doctor                # the engi
 
 Two things hold your data, and you back up both.
 
-**The Supabase database**: accounts, workspaces, members, the catalog. On supabase.com, the project's own backups cover it. With open source Supabase, run `docker exec supabase-db pg_dump -U postgres postgres | gzip > rerun-db.sql.gz`. Otherwise, dump it with `pg_dump` and the connection string from **Connect** in the Supabase dashboard. For the local stack:
+**The Supabase database**: accounts, workspaces, members, the catalog. On supabase.com, the project's own backups cover it. With open source Supabase, run `docker exec supabase-db pg_dump -U postgres postgres | gzip > lumvika-db.sql.gz`. Otherwise, dump it with `pg_dump` and the connection string from **Connect** in the Supabase dashboard. For the local stack:
 
 ```bash
-pg_dump postgresql://postgres:postgres@localhost:54422/postgres -Fc -f rerun-db.dump
+pg_dump postgresql://postgres:postgres@localhost:54422/postgres -Fc -f lumvika-db.dump
 ```
 
 Files people upload to the app live in Supabase Storage, which a database dump does not include.
@@ -189,13 +189,13 @@ Files people upload to the app live in Supabase Storage, which a database dump d
 <Tabs>
   <Tab title="Engine started by compose">
     ```bash
-    docker run --rm -v rerun_engine-data:/data -v $PWD:/backup alpine \
+    docker run --rm -v lumvika_engine-data:/data -v $PWD:/backup alpine \
       tar czf /backup/engine-data.tgz -C /data .
     ```
   </Tab>
   <Tab title="Paired server">
     ```bash
-    docker run --rm -v rerun-engine:/data -v $PWD:/backup alpine \
+    docker run --rm -v lumvika-engine:/data -v $PWD:/backup alpine \
       tar czf /backup/engine-data.tgz -C /data .
     ```
   </Tab>
@@ -209,9 +209,9 @@ Stop the engine, empty the volume, unpack the archive, and start again. For the 
 
 ```bash
 docker compose stop engine
-docker run --rm -v rerun_engine-data:/data -v $PWD:/backup alpine \
+docker run --rm -v lumvika_engine-data:/data -v $PWD:/backup alpine \
   sh -c "find /data -mindepth 1 -delete && tar xzf /backup/engine-data.tgz -C /data"
 docker compose start engine
 ```
 
-For a paired server, use `docker stop rerun-engine`, the volume `rerun-engine`, and `docker start rerun-engine`. The engine migrates an older archive on start.
+For a paired server, use `docker stop lumvika-engine`, the volume `lumvika-engine`, and `docker start lumvika-engine`. The engine migrates an older archive on start.

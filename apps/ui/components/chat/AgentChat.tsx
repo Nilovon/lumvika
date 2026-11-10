@@ -11,18 +11,18 @@ import { AlertBlock } from '@/components/chat/AlertBlock'
 import { McpSignInBlock } from '@/components/chat/McpSignInBlock'
 import { SecretRequestBlock } from '@/components/chat/SecretRequestBlock'
 import { ChatScreen } from '@/components/chat/ChatScreen'
-import { BudgetExhaustedNotice, usePriceArm } from '@rerun/cloud/billing.client'
+import { BudgetExhaustedNotice, usePriceArm } from '@lumvika/cloud/billing.client'
 import { ProviderErrorNotice } from '@/components/chat/ProviderErrorNotice'
 import { ComposerSubscriptionCta } from '@/components/chat/ComposerSubscriptionCta'
 import { InstallGate } from '@/components/chat/InstallGate'
 import { QuestionForm } from '@/components/chat/QuestionForm'
-import type { QuestionFormHandle } from '@rerun/ui/chat'
+import type { QuestionFormHandle } from '@lumvika/ui/chat'
 import { SkillProposalDock } from '@/components/chat/SkillProposalDock'
 import { ChatActivityLoader } from '@/components/chat/ChatActivityLoader'
 import { useAgentBuddyMood } from '@/hooks/useAgentBuddyMood'
 import { useConnectorServices } from '@/hooks/useConnectorServices'
-import { AgentBuddy } from '@rerun/ui/iso-grid'
-import type { CatalogEntry } from '@rerun/ui/new-agent'
+import { AgentBuddy } from '@lumvika/ui/iso-grid'
+import type { CatalogEntry } from '@lumvika/ui/new-agent'
 import { ChatComposer, type ChatComposerHandle } from '@/components/chat/ChatComposer'
 import { useMentionAutocomplete } from '@/components/chat/MentionAutocomplete'
 import { MessageFeedbackDialog } from '@/components/chat/MessageFeedbackDialog'
@@ -67,20 +67,20 @@ import { lastUserText } from '@/lib/chat-payload'
 import { historyCovers, needsReconcile } from '@/lib/chat/transcript-reconcile'
 import { browserPermission } from '@/lib/notifications/browser'
 import { modelContextWindow } from '@/lib/engine/models'
-import { rerunCreditOf } from '@/lib/engine/ai-sources'
+import { lumvikaCreditOf } from '@/lib/engine/ai-sources'
 import { toGroup } from '@/lib/engine/model-groups'
-import { isLifetimePlan, isPremiumModelEntitled } from '@rerun/cloud/billing'
+import { isLifetimePlan, isPremiumModelEntitled } from '@lumvika/cloud/billing'
 import { createClient } from '@/supabase/client'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { useChat } from '@ai-sdk/react'
-import { COWORKER_STARTER_SUGGESTIONS, paidDataSourcesByTurn, RERUN_CONNECTION_ID, runUsesScreen, screenSite } from '@rerun/contracts'
-import { track } from '@rerun/analytics/client'
+import { COWORKER_STARTER_SUGGESTIONS, paidDataSourcesByTurn, LUMVIKA_CONNECTION_ID, runUsesScreen, screenSite } from '@lumvika/contracts'
+import { track } from '@lumvika/analytics/client'
 import { AnimatePresence, motion } from 'motion/react'
 import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { scrollFadeMask, useScrollEdges } from '@rerun/ui/primitives'
+import { scrollFadeMask, useScrollEdges } from '@lumvika/ui/primitives'
 import { toast } from 'sonner'
 
 const SCROLL_FADE = 32
@@ -432,8 +432,8 @@ export function AgentChat({ uid, active, agentId, agentName, sessionId, onSessio
     // A failure read back from the engine on reopening, rather than one this tab just streamed. It
     // was reported when it happened, and a budget refusal is over once the credit has room again:
     // a payment made since must not meet the same notice on the way back.
-    const rerunCredit = useMemo(() => rerunCreditOf(workspace), [workspace])
-    const creditHasRoom = !rerunCredit.paused && rerunCredit.budgetMicros > rerunCredit.usedMicros
+    const lumvikaCredit = useMemo(() => lumvikaCreditOf(workspace), [workspace])
+    const creditHasRoom = !lumvikaCredit.paused && lumvikaCredit.budgetMicros > lumvikaCredit.usedMicros
     const creditHasRoomRef = useRef(creditHasRoom)
     useEffect(() => {
         creditHasRoomRef.current = creditHasRoom
@@ -684,10 +684,10 @@ export function AgentChat({ uid, active, agentId, agentName, sessionId, onSessio
     // this conversation, which is the composer's picker rather than the credentials dialog.
     const requestModelPicker = useModelPickerStore(state => state.request)
     const switchModel = useCallback(() => requestModelPicker(uid), [requestModelPicker, uid])
-    // The keyless Rerun connection has no sign-in of its own, so it keeps the plain list.
+    // The keyless Lumvika connection has no sign-in of its own, so it keeps the plain list.
     const reconnectAiProvider = useWorkspaceSettingsStore(state => state.reconnectAiProvider)
     const reconnectProvider = useCallback(() => {
-        if (activeConnectionId && activeConnectionId !== RERUN_CONNECTION_ID) reconnectAiProvider(activeConnectionId)
+        if (activeConnectionId && activeConnectionId !== LUMVIKA_CONNECTION_ID) reconnectAiProvider(activeConnectionId)
         else openAiProviders()
     }, [activeConnectionId, openAiProviders, reconnectAiProvider])
     // Same destination as manageModels, tracked apart: this one is a discovery pitch, not a repair.
@@ -697,11 +697,11 @@ export function AgentChat({ uid, active, agentId, agentName, sessionId, onSessio
     }, [manageModels])
     const addAiProvider = useWorkspaceSettingsStore(state => state.addAiProvider)
     // A Claude or ChatGPT plan already plugged into the Box, the Box default first. A conversation
-    // that ran into the Rerun credit while one is there was pinned to Rerun: the way out is to run it
+    // that ran into the Lumvika credit while one is there was pinned to Lumvika: the way out is to run it
     // on that plan, not to sign in to it again.
     const { connections, boxDefault } = useWorkspaceConnections()
     const ownConnection = useMemo(() => {
-        const own = connections.filter(connection => connection.connected && connection.id !== RERUN_CONNECTION_ID)
+        const own = connections.filter(connection => connection.connected && connection.id !== LUMVIKA_CONNECTION_ID)
         return own.find(connection => connection.id === boxDefault?.connectionId) ?? own[0] ?? null
     }, [connections, boxDefault])
     const premiumAllowed = !workspace || isPremiumModelEntitled(workspace)
@@ -1037,15 +1037,15 @@ export function AgentChat({ uid, active, agentId, agentName, sessionId, onSessio
                         {!screenShown && activityLoader}
                         {outOfPaidCredit && !showLoader && displayedError === null && (
                             <Message from="assistant">
-                                {/* Paid data only runs on Rerun credit: connecting a Claude or ChatGPT plan would not buy it. */}
+                                {/* Paid data only runs on Lumvika credit: connecting a Claude or ChatGPT plan would not buy it. */}
                                 <MessageContent>
-                                    <BudgetExhaustedNotice trialing={workspace?.subscription_status === 'trialing' || resumeAfterUpgrade} paused={!!workspace?.rerun_credit_paused_at} noCredit={rerunCredit.budgetMicros === 0} lifetime={isLifetimePlan(workspace)} {...trialUpgrade} />
+                                    <BudgetExhaustedNotice trialing={workspace?.subscription_status === 'trialing' || resumeAfterUpgrade} paused={!!workspace?.lumvika_credit_paused_at} noCredit={lumvikaCredit.budgetMicros === 0} lifetime={isLifetimePlan(workspace)} {...trialUpgrade} />
                                 </MessageContent>
                             </Message>
                         )}
                         {displayedError !== null && errorKind !== null && (
                             <Message from="assistant">
-                                <MessageContent>{errorKind === 'budget' ? <BudgetExhaustedNotice onConnectProvider={connectProvider} ownConnection={runOnOwnConnection} trialing={workspace?.subscription_status === 'trialing' || resumeAfterUpgrade} paused={!!workspace?.rerun_credit_paused_at} noCredit={rerunCredit.budgetMicros === 0} lifetime={isLifetimePlan(workspace)} {...trialUpgrade} /> : <ProviderErrorNotice kind={errorKind} message={displayedError} onSwitchModel={switchModel} onReconnect={reconnectProvider} onStopRun={handleStop} onContinue={continueInterruptedRun} onRetry={canRetry ? retryLastTurn : undefined} onNewConversation={onNewConversation} />}</MessageContent>
+                                <MessageContent>{errorKind === 'budget' ? <BudgetExhaustedNotice onConnectProvider={connectProvider} ownConnection={runOnOwnConnection} trialing={workspace?.subscription_status === 'trialing' || resumeAfterUpgrade} paused={!!workspace?.lumvika_credit_paused_at} noCredit={lumvikaCredit.budgetMicros === 0} lifetime={isLifetimePlan(workspace)} {...trialUpgrade} /> : <ProviderErrorNotice kind={errorKind} message={displayedError} onSwitchModel={switchModel} onReconnect={reconnectProvider} onStopRun={handleStop} onContinue={continueInterruptedRun} onRetry={canRetry ? retryLastTurn : undefined} onNewConversation={onNewConversation} />}</MessageContent>
                             </Message>
                         )}
                     </ConversationContent>

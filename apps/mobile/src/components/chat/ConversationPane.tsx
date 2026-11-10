@@ -1,4 +1,4 @@
-import { RERUN_CONNECTION_ID, appendAttachmentsRef, authorIdOf, queuedPreview, runUsesScreen, scrollCueOf, screenSite, shouldFlush, shouldKeepQueued, buildAttachmentsRef, findPendingAlert, findPendingHitl, findUnknownPendingCall, needsHuman, paidDataSourcesByTurn, pendingTakeover, quickRepliesOf, quickReplyDraft, type AgentModels, type AgentView, type SessionStatus } from '@rerun/contracts'
+import { LUMVIKA_CONNECTION_ID, appendAttachmentsRef, authorIdOf, queuedPreview, runUsesScreen, scrollCueOf, screenSite, shouldFlush, shouldKeepQueued, buildAttachmentsRef, findPendingAlert, findPendingHitl, findUnknownPendingCall, needsHuman, paidDataSourcesByTurn, pendingTakeover, quickRepliesOf, quickReplyDraft, type AgentModels, type AgentView, type SessionStatus } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -37,7 +37,7 @@ import { CHAT_HEADER_HEIGHT } from './ChatHeader'
 import { Composer, type ComposerHandle } from './Composer'
 import { ErrorCard, type ErrorCardActions } from './ErrorCard'
 import { ConversationSkeleton } from './ConversationSkeleton'
-import { CoworkerEmptyState, ForemanEmptyState } from './EmptyStates'
+import { CoworkerEmptyState, StewardEmptyState } from './EmptyStates'
 import { StartedByBanner, type StartedBy } from './origins/StartedByBanner'
 import type { VoiceSender } from './useVoiceMessage'
 import { AlertWidget } from './hitl/AlertWidget'
@@ -67,7 +67,7 @@ const AT_BOTTOM = 24
 // Under the fade at the top of the thread a block is not really seen, even when it is on screen.
 const SEEN_BAND = 24
 
-export type ChatCoworker = { id: string; kind: 'coworker' | 'foreman'; name: string; role: string; status: AgentView['agent']['status'] }
+export type ChatCoworker = { id: string; kind: 'coworker' | 'steward'; name: string; role: string; status: AgentView['agent']['status'] }
 
 type ConversationPaneProps = {
     coworker: ChatCoworker
@@ -88,7 +88,7 @@ type ConversationPaneProps = {
     startedBy?: StartedBy | null
     // Sent as soon as a new conversation is ready, the text someone asked from the search.
     initialMessage?: string
-    // False where the machine would refuse the upload: the Foreman of a box that predates its files.
+    // False where the machine would refuse the upload: the Steward of a box that predates its files.
     canAttach?: boolean
 }
 
@@ -110,7 +110,7 @@ export function ConversationPane({ coworker, makeEndpoints, initialSessionId, on
     const proposals = useSkillProposals(coworker.kind === 'coworker' ? chat.sessionId : null, chat.busy)
     // A decision lifts the wait the proposal raised on the session, as on the web.
     const skillProposals = { ...proposals, decide: (proposalId: string, decision: 'accept' | 'dismiss') => proposals.decide(proposalId, decision).then(onStatusChange) }
-    const feedback = useMessageFeedback(chat.sessionId, coworker.kind === 'foreman' ? 'foreman' : 'agent')
+    const feedback = useMessageFeedback(chat.sessionId, coworker.kind === 'steward' ? 'steward' : 'agent')
     enqueueRef.current = queue.enqueue
     const [stopping, setStopping] = useState(false)
     const [draft, setDraft] = useState('')
@@ -150,8 +150,8 @@ export function ConversationPane({ coworker, makeEndpoints, initialSessionId, on
     const lift = useAnimatedStyle(() => ({ paddingBottom: Math.max(keyboard.height.value + spacing.sm, insets.bottom) }))
 
     const lastAssistant = chat.messages.findLastIndex(message => message.role === 'assistant')
-    // The Foreman is the person's own assistant: nobody else writes there, so nothing is signed.
-    const authorIds = coworker.kind === 'foreman' ? [] : [...new Set(chat.messages.flatMap(message => authorIdOf(message) ?? []))]
+    // The Steward is the person's own assistant: nobody else writes there, so nothing is signed.
+    const authorIds = coworker.kind === 'steward' ? [] : [...new Set(chat.messages.flatMap(message => authorIdOf(message) ?? []))]
     const profileOf = useMemberProfiles(authorIds)
     const [dismissedCallId, setDismissedCallId] = useState<string | null>(null)
     // A live call never reads `idle` (it goes `working`, then `awaiting_*`): an idle session is one whose
@@ -328,19 +328,19 @@ export function ConversationPane({ coworker, makeEndpoints, initialSessionId, on
     const chip = runningModel(models)
     const model = chip && !models?.pinned ? { ...chip, label: t('defaultModel', { model: chip.label }) } : chip
 
-    const isForeman = coworker.kind === 'foreman'
-    const skills = useCoworkerSkills(isForeman ? null : coworker.id)
+    const isSteward = coworker.kind === 'steward'
+    const skills = useCoworkerSkills(isSteward ? null : coworker.id)
     const workspaceAgents = useWorkspaceAgents()
     const boxes = me ? (cachedBoard(me.workspace.id).read()?.boxes ?? []) : []
-    const mentionAgents = workspaceAgents ? mentionAgentsOf(workspaceAgents, boxes, isForeman ? null : coworker.id) : []
+    const mentionAgents = workspaceAgents ? mentionAgentsOf(workspaceAgents, boxes, isSteward ? null : coworker.id) : []
     // The web's chat notices: a dead sign-in opens the connection the coworker runs on, used-up
-    // credits open the two plans. Rerun itself has no sign-in, so it opens the list.
+    // credits open the two plans. Lumvika itself has no sign-in, so it opens the list.
     const runsOn = models?.resolved?.connectionId ?? models?.boxDefault?.connectionId
     const openModel = () => router.push({ pathname: '/model', params: { agent: coworker.id } })
     const errorActions: Omit<ErrorCardActions, 'onRetry'> = {
         onReconnect: () => {
             track('connection_cta_clicked', { source: 'ios_chat_error' })
-            router.push(runsOn && runsOn !== RERUN_CONNECTION_ID ? { pathname: '/providers/[id]', params: { id: runsOn } } : '/providers')
+            router.push(runsOn && runsOn !== LUMVIKA_CONNECTION_ID ? { pathname: '/providers/[id]', params: { id: runsOn } } : '/providers')
         },
         onSwitchModel: openModel,
         onConnect: provider => {
@@ -352,7 +352,7 @@ export function ConversationPane({ coworker, makeEndpoints, initialSessionId, on
         const runId = chat.activeRunId()
         if (caller && runId) cancelSubRun(caller, coworker.id, runId, taskId).catch(() => Alert.alert(t('stopTaskFailed'), tc('tryAgainShortly')))
     }
-    const placeholder = pending || unknownCall ? t('answerPlaceholder', { name: coworker.name }) : !chat.sessionId ? t('newPlaceholder') : isForeman ? t('foremanPlaceholder') : t('messagePlaceholder', { name: coworker.name })
+    const placeholder = pending || unknownCall ? t('answerPlaceholder', { name: coworker.name }) : !chat.sessionId ? t('newPlaceholder') : isSteward ? t('stewardPlaceholder') : t('messagePlaceholder', { name: coworker.name })
 
     return (
         <Animated.View style={[{ flex: 1 }, lift]}>
@@ -403,7 +403,7 @@ export function ConversationPane({ coworker, makeEndpoints, initialSessionId, on
                             <PillButton label={t('retry')} variant="secondary" onPress={chat.retry} />
                         </View>
                     )}
-                    {empty && (isForeman ? <ForemanEmptyState onSend={submit} onPrefill={setDraft} /> : <CoworkerEmptyState agentId={coworker.id} mood={moodOf(coworker.status)} asleep={coworker.status === 'offline'} onSend={submit} />)}
+                    {empty && (isSteward ? <StewardEmptyState onSend={submit} onPrefill={setDraft} /> : <CoworkerEmptyState agentId={coworker.id} mood={moodOf(coworker.status)} asleep={coworker.status === 'offline'} onSend={submit} />)}
                     {chat.history === 'ready' && !empty && (
                         // The transcript a conversation opens on is already there; the first bubble of a
                         // new conversation, sent as the list appears, still rises.
@@ -412,8 +412,8 @@ export function ConversationPane({ coworker, makeEndpoints, initialSessionId, on
                                 {startedBy && <StartedByBanner startedBy={startedBy} />}
                                 <TimedTurns
                                     messages={chat.messages}
-                                    authorOf={authorId => (isForeman ? undefined : profileOf(authorId))}
-                                    renderMessage={(message, index, stamp) => <MessageView key={message.id} message={message} isLastAssistant={index === lastAssistant} running={chat.busy} agentId={isForeman ? null : coworker.id} fileOwner={endpoints.fileOwner(chat.sessionId)} coworkerName={coworker.name} hiddenCallId={alert?.toolCallId ?? null} skillProposals={skillProposals} onStopTask={stopTask} onRegenerate={pending ? undefined : () => void chat.regenerate()} feedback={feedback} stamp={stamp} paidSources={paidSourcesByTurn.get(message.id)} />}
+                                    authorOf={authorId => (isSteward ? undefined : profileOf(authorId))}
+                                    renderMessage={(message, index, stamp) => <MessageView key={message.id} message={message} isLastAssistant={index === lastAssistant} running={chat.busy} agentId={isSteward ? null : coworker.id} fileOwner={endpoints.fileOwner(chat.sessionId)} coworkerName={coworker.name} hiddenCallId={alert?.toolCallId ?? null} skillProposals={skillProposals} onStopTask={stopTask} onRegenerate={pending ? undefined : () => void chat.regenerate()} feedback={feedback} stamp={stamp} paidSources={paidSourcesByTurn.get(message.id)} />}
                                 />
                                 {pending && !takeoverPending && (
                                     <Animated.View key={pending.toolCallId} entering={FadeInDown.duration(280)} onLayout={event => setBlockHeight(event.nativeEvent.layout.height)}>

@@ -4,7 +4,7 @@ const TONE_PARAM = 'tone'
 
 export function brandIconToneFromUrl(src: string): BrandIconTone {
     try {
-        const tone = new URL(src, 'https://rerun.build').searchParams.get(TONE_PARAM)
+        const tone = new URL(src, 'https://lumvika.com').searchParams.get(TONE_PARAM)
         return tone === 'dark' || tone === 'light' ? tone : 'color'
     } catch {
         return 'color'

@@ -84,9 +84,9 @@ TrialStarted.PreviewProps = {
   trialEndsLabel: "12 March",
   monthlyPriceLabel: "$49",
   includedLabel: "3 coworkers and 350 credits",
-  workspaceUrl: "https://app.rerun.build",
-  appUrl: "https://app.rerun.build",
-  unsubscribeUrl: "https://app.rerun.build/unsubscribe",
+  workspaceUrl: "https://app.lumvika.com",
+  appUrl: "https://app.lumvika.com",
+  unsubscribeUrl: "https://app.lumvika.com/unsubscribe",
 } satisfies TrialStartedProps;
 
 const meta: React.CSSProperties = {

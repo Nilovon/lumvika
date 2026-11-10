@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-packages-'))
-process.env.RERUN_LOG_LEVEL = 'fatal'
-process.env.RERUN_API_KEY = 'engine-key'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-packages-'))
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_API_KEY = 'engine-key'
 
 // A fake npm: it lays the tree `npm install --prefix <dir> <spec>` would, or fails as told.
 const npm = vi.hoisted(() => ({
@@ -94,7 +94,7 @@ describe('isPinnedSpec', () => {
     it.each([
         ['mcp-discord@1.4.1', true],
         ['@scope/pkg@2.0.0-beta.1', true],
-        ['github:Rerun-build/mcp-discord#v1.4.1-rerun.1', true],
+        ['github:Lumvika-build/mcp-discord#v1.4.1-lumvika.1', true],
         ['@getxapi/mcp@latest', false],
         ['pkg@^1.2.0', false],
         ['@scope/pkg', false],
@@ -122,8 +122,8 @@ describe('withInstalledPackage', () => {
         await installInBackground('mcp-tool@1.0.0')
         const [env] = npm.envs
         expect(env?.PATH).toBe(process.env.PATH)
-        expect(env).not.toHaveProperty('RERUN_API_KEY')
-        expect(env).not.toHaveProperty('RERUN_DATA_DIR')
+        expect(env).not.toHaveProperty('LUMVIKA_API_KEY')
+        expect(env).not.toHaveProperty('LUMVIKA_DATA_DIR')
     })
 
     it('installs a spec once however many runs ask for it at the same time', async () => {

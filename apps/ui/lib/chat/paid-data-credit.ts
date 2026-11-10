@@ -1,4 +1,4 @@
-import { isPaidDataOutOfCredit, isPaidDataTool, stripBridgePrefix } from '@rerun/contracts'
+import { isPaidDataOutOfCredit, isPaidDataTool, stripBridgePrefix } from '@lumvika/contracts'
 
 type PartLike = { type: string; toolName?: string; output?: unknown }
 type MessageLike = { role: string; parts: readonly PartLike[] }

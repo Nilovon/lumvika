@@ -1,7 +1,7 @@
 import { posix } from 'node:path'
 import { deleteFile, listFiles, readFileText, skillFilesBase } from '@/lib/engine/client'
 import type { EngineConnection } from '@/lib/engine/types'
-import { TEXT_FILE_PAGE_CHARS } from '@rerun/contracts'
+import { TEXT_FILE_PAGE_CHARS } from '@lumvika/contracts'
 import { SKILL_ENTRY, isTextSkillFile } from './folder-import'
 
 // A skill is a folder, and the engine only ever returns the paths of the files it bundles. These

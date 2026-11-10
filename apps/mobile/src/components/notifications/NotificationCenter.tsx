@@ -1,4 +1,4 @@
-import { EMAIL_CATEGORIES, NOTIFICATION_SCOPES, coworkerRuleOf, hasOwnRule, type CoworkerRule, type NotificationPrefs, type NotificationPrefsPatch, type NotificationScope } from '@rerun/contracts'
+import { EMAIL_CATEGORIES, NOTIFICATION_SCOPES, coworkerRuleOf, hasOwnRule, type CoworkerRule, type NotificationPrefs, type NotificationPrefsPatch, type NotificationScope } from '@lumvika/contracts'
 import type { PermissionStatus } from 'expo-notifications'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { ActionSheetIOS, Pressable, View } from 'react-native'

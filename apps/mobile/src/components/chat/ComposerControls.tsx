@@ -1,5 +1,5 @@
 import { Button, Menu, Toggle } from '@expo/ui/swift-ui'
-import type { SkillSummary } from '@rerun/contracts'
+import type { SkillSummary } from '@lumvika/contracts'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { ActivityIndicator, Pressable, View } from 'react-native'
 import { useTranslations } from 'use-intl'

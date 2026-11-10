@@ -1,15 +1,15 @@
 ---
-title: "Rerun API"
+title: "Lumvika API"
 description: "One MCP endpoint to build and drive coworkers from anywhere, plus webhook URLs to fire them from other services."
 ---
 
 import PaidPlanNote from '/snippets/paid-plan-note.mdx'
 
-Rerun exposes two programmatic surfaces, and only two.
+Lumvika exposes two programmatic surfaces, and only two.
 
 <CardGroup cols={2}>
   <Card title="The MCP server" icon="plug" href="/api/protocol">
-    A single endpoint, `POST https://app.rerun.build/api/mcp/account`, that speaks the Model Context Protocol. It carries 53 tools covering coworkers, skills, scheduled tasks, webhook triggers, apps, databases, runs, share links and template authoring.
+    A single endpoint, `POST https://app.lumvika.com/api/mcp/account`, that speaks the Model Context Protocol. It carries 53 tools covering coworkers, skills, scheduled tasks, webhook triggers, apps, databases, runs, share links and template authoring.
   </Card>
   <Card title="Webhook triggers" icon="bolt" href="/api/webhooks">
     A public URL per trigger. Anything that can send an HTTP request can start a coworker run, with no SDK and no key exchange.
@@ -24,13 +24,13 @@ Every capability is reached through the MCP endpoint. There is no `/v1/agents`, 
 
 ## Who this is for
 
-The API was designed for an AI coding assistant sitting next to you. You connect Claude Code, Codex or Cursor to your Rerun workspace, then describe what you want in plain language:
+The API was designed for an AI coding assistant sitting next to you. You connect Claude Code, Codex or Cursor to your Lumvika workspace, then describe what you want in plain language:
 
 > Create a coworker that watches our support inbox, writes a daily summary into the shared database, and pings me on Slack when a refund request comes in.
 
 The assistant calls `create_agent`, `upsert_skill`, `upsert_schedule`, `attach_connector` and `send_message` to build and test it. See [Connect a client](/api/connect).
 
-Everything the API does is also available in the Rerun app. The API exists so you can script it, version it, and repeat it.
+Everything the API does is also available in the Lumvika app. The API exists so you can script it, version it, and repeat it.
 
 ## What a key reaches
 
@@ -75,7 +75,7 @@ Some things are deliberately left to the app, mostly because they involve a secr
 - No credential ever goes through the API. `attach_connector` declares a connector, and the account owner finishes the sign-in in the app.
 - No billing, no plan change, no member management, no Box creation.
 - No API key management. You cannot mint or revoke a key over MCP.
-- No template publication. You submit a draft, the Rerun team publishes it.
+- No template publication. You submit a draft, the Lumvika team publishes it.
 
 ## Next steps
 

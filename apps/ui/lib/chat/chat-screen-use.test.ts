@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { runUsesScreen, screenSite, serializeTakeoverResult } from '@rerun/contracts'
+import { runUsesScreen, screenSite, serializeTakeoverResult } from '@lumvika/contracts'
 
 const user = (text: string) => ({ role: 'user', parts: [{ type: 'text', text }] })
 const assistant = (...parts: { type: string; toolName?: string; input?: unknown }[]) => ({ role: 'assistant', parts })
@@ -18,7 +18,7 @@ describe('runUsesScreen', () => {
     })
 
     it('knows the screen tools the CLI bridge prefixed', () => {
-        expect(runUsesScreen([user('go'), assistant({ type: 'dynamic-tool', toolName: 'mcp__rerun__computer_open_app' })])).toBe(true)
+        expect(runUsesScreen([user('go'), assistant({ type: 'dynamic-tool', toolName: 'mcp__lumvika__computer_open_app' })])).toBe(true)
     })
 })
 

@@ -1,7 +1,7 @@
 'use client'
 
-import { Orb } from '@rerun/ui/foreman'
-import { useFollow } from '@rerun/ui/new-agent'
+import { Orb } from '@lumvika/ui/steward'
+import { useFollow } from '@lumvika/ui/new-agent'
 import { useTranslations } from 'next-intl'
 import { type ReactNode, type RefObject, useRef } from 'react'
 
@@ -18,7 +18,7 @@ const STAGE_FADE = 'linear-gradient(to bottom, transparent 0%, #000 12%, #000 72
 // rather than tracing itself, and the drawn caret and cursor a screenshot cannot take.
 export type NewBoxStill = { name: string; frozen?: boolean; drawnCaret?: boolean; aim?: string; cursorRef?: RefObject<HTMLDivElement | null>; overlay?: ReactNode }
 
-// The Box leads, alone and large, with the Foreman standing in it; the field comes after, where the
+// The Box leads, alone and large, with the Steward standing in it; the field comes after, where the
 // eye lands once it has seen what it is naming.
 //
 // Nothing is created here: `onCreate` receives the name, and what it throws is shown under the field.

@@ -1,17 +1,17 @@
-import type { ForemanPhase, ForemanStateResponse } from '@rerun/contracts'
+import type { StewardPhase, StewardStateResponse } from '@lumvika/contracts'
 import { useCallback, useEffect, useState } from 'react'
 import { AppState } from 'react-native'
 
-import { fetchForemanState } from '@/api/foreman'
+import { fetchStewardState } from '@/api/steward'
 import { useAuth } from '@/auth/AuthProvider'
 import { cachedRoute } from '@/data/local-cache'
 
-const ONBOARDING_PHASES: readonly ForemanPhase[] = ['discover', 'plan', 'trial', 'build']
+const ONBOARDING_PHASES: readonly StewardPhase[] = ['discover', 'plan', 'trial', 'build']
 const WAITLIST_POLL_MS = 60_000
 
-export type OnboardingRoute = { kind: 'loading' } | { kind: 'onboarding'; state: ForemanStateResponse } | { kind: 'waitlist' } | { kind: 'app' }
+export type OnboardingRoute = { kind: 'loading' } | { kind: 'onboarding'; state: StewardStateResponse } | { kind: 'waitlist' } | { kind: 'app' }
 
-export function routeOf(state: ForemanStateResponse): OnboardingRoute {
+export function routeOf(state: StewardStateResponse): OnboardingRoute {
     if (state.phase === 'waitlist') return { kind: 'waitlist' }
     return ONBOARDING_PHASES.includes(state.phase) ? { kind: 'onboarding', state } : { kind: 'app' }
 }
@@ -33,7 +33,7 @@ export function useOnboardingRoute(): { route: OnboardingRoute; reload: () => vo
     useEffect(() => {
         if (!accessToken || !workspaceId) return
         let cancelled = false
-        fetchForemanState({ accessToken, workspaceId })
+        fetchStewardState({ accessToken, workspaceId })
             .then(state => {
                 if (cancelled) return
                 const route = routeOf(state)

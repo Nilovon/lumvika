@@ -1,7 +1,7 @@
 'use client'
 
-import { Orb } from '@rerun/ui/foreman'
-import { ScrollFade } from '@rerun/ui/primitives'
+import { Orb } from '@lumvika/ui/steward'
+import { ScrollFade } from '@lumvika/ui/primitives'
 
 import type { SubscriptionProvider } from '@/components/agent/ModelPickerProviders'
 import { DialogHeader } from '@/components/ui/dialog'

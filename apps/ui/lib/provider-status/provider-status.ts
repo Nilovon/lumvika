@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import type { EngineProvider } from '@/lib/engine/types'
 
-// `components` are the status page ids of what Rerun actually calls, `providers` the engine
+// `components` are the status page ids of what Lumvika actually calls, `providers` the engine
 // providers that reach them: an incident elsewhere on the page (a console, a consumer app) or on a
 // provider the workspace has no connection to concerns nobody here.
 export type StatusPage = { id: string; label: string; url: string; components: string[]; providers: EngineProvider[] }

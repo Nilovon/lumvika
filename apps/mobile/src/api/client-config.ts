@@ -1,4 +1,4 @@
-import { clientConfigSchema, type ClientConfig } from '@rerun/contracts'
+import { clientConfigSchema, type ClientConfig } from '@lumvika/contracts'
 
 import { api } from '@/api/client'
 

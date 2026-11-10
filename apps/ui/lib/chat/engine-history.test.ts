@@ -84,7 +84,7 @@ describe('toApiMessages', () => {
 
     it('keeps what a paid call billed when it trims its output, so the spend receipt still adds up', () => {
         const output = { status: 'found', billedMicros: 4_500, message: 'Found.', result: 'r'.repeat(MAX_TOOL_OUTPUT_CHARS) }
-        const [message] = toApiMessages([toolCall('mcp__rerun__paid_data', output)])
+        const [message] = toApiMessages([toolCall('mcp__lumvika__paid_data', output)])
         expect(message.parts[0]).toMatchObject({ output: { status: 'found', billedMicros: 4_500, truncated: true } })
     })
 
@@ -95,7 +95,7 @@ describe('toApiMessages', () => {
 
     it('never trims a card, whatever its size', () => {
         const rows = 'r'.repeat(MAX_TOOL_OUTPUT_CHARS * 2)
-        const [message] = toApiMessages([toolCall('mcp__rerun__card_table', { rows })])
+        const [message] = toApiMessages([toolCall('mcp__lumvika__card_table', { rows })])
         expect(message.parts[0]).toMatchObject({ output: { rows } })
     })
 })
@@ -128,10 +128,10 @@ describe('a card and the message written after it', () => {
     })
 
     it('keeps a failed call red once the transcript is reloaded', () => {
-        const call = { type: 'tool-call', toolCallId: 'c1', toolName: 'rerun_hub_service_search', input: { query: 'Discord' } }
-        const failed = { type: 'tool-result', toolCallId: 'c1', toolName: 'rerun_hub_service_search', output: { type: 'error-json', value: '<tool_use_error>Error: No such tool available: rerun_hub_service_search</tool_use_error>' } }
+        const call = { type: 'tool-call', toolCallId: 'c1', toolName: 'lumvika_hub_service_search', input: { query: 'Discord' } }
+        const failed = { type: 'tool-result', toolCallId: 'c1', toolName: 'lumvika_hub_service_search', output: { type: 'error-json', value: '<tool_use_error>Error: No such tool available: lumvika_hub_service_search</tool_use_error>' } }
         const messages = transformEngineMessages([assistant('a1', [call, failed], 1)])
-        expect(messages[0].parts[0]).toEqual({ type: 'tool-rerun_hub_service_search', toolCallId: 'c1', toolName: 'rerun_hub_service_search', state: 'output-error', input: { query: 'Discord' }, errorText: '<tool_use_error>Error: No such tool available: rerun_hub_service_search</tool_use_error>' })
+        expect(messages[0].parts[0]).toEqual({ type: 'tool-lumvika_hub_service_search', toolCallId: 'c1', toolName: 'lumvika_hub_service_search', state: 'output-error', input: { query: 'Discord' }, errorText: '<tool_use_error>Error: No such tool available: lumvika_hub_service_search</tool_use_error>' })
     })
 
     it('leaves a card that came with its message as it is', () => {
@@ -145,13 +145,13 @@ describe('a card and the message written after it', () => {
     // preceded the message dropped under it.
     it('keeps the blocks of a turn in the order they were streamed', () => {
         const listPages = { type: 'tool-call', toolCallId: 'c1', toolName: 'facebook_list_pages', input: {} }
-        const replies = { type: 'tool-call', toolCallId: 'c2', toolName: 'mcp__rerun__suggest_replies', input: { replies: ['Post it'] } }
-        const content = [listPages, { type: 'tool-result', toolCallId: 'c1', toolName: 'facebook_list_pages', output: { pages: ['Rerun AI'] } }, { type: 'text', text: 'Yes, I can see the Rerun AI page. What do you want to do with it?' }, replies, { type: 'tool-result', toolCallId: 'c2', toolName: 'mcp__rerun__suggest_replies', output: 'Shown as buttons.' }, { type: 'text', text: 'Yes, I have access to your Rerun AI page.' }]
+        const replies = { type: 'tool-call', toolCallId: 'c2', toolName: 'mcp__lumvika__suggest_replies', input: { replies: ['Post it'] } }
+        const content = [listPages, { type: 'tool-result', toolCallId: 'c1', toolName: 'facebook_list_pages', output: { pages: ['Lumvika AI'] } }, { type: 'text', text: 'Yes, I can see the Lumvika AI page. What do you want to do with it?' }, replies, { type: 'tool-result', toolCallId: 'c2', toolName: 'mcp__lumvika__suggest_replies', output: 'Shown as buttons.' }, { type: 'text', text: 'Yes, I have access to your Lumvika AI page.' }]
         const [message] = transformEngineMessages([assistant('a1', content, 1)])
-        expect(message.parts.map(p => p.type)).toEqual(['tool-facebook_list_pages', 'text', 'tool-mcp__rerun__suggest_replies', 'text'])
-        expect(message.parts[1]).toEqual({ type: 'text', text: 'Yes, I can see the Rerun AI page. What do you want to do with it?' })
-        expect(message.parts[3]).toEqual({ type: 'text', text: 'Yes, I have access to your Rerun AI page.' })
-        expect(message.parts[0]).toMatchObject({ state: 'output-available', output: { pages: ['Rerun AI'] } })
+        expect(message.parts.map(p => p.type)).toEqual(['tool-facebook_list_pages', 'text', 'tool-mcp__lumvika__suggest_replies', 'text'])
+        expect(message.parts[1]).toEqual({ type: 'text', text: 'Yes, I can see the Lumvika AI page. What do you want to do with it?' })
+        expect(message.parts[3]).toEqual({ type: 'text', text: 'Yes, I have access to your Lumvika AI page.' })
+        expect(message.parts[0]).toMatchObject({ state: 'output-available', output: { pages: ['Lumvika AI'] } })
     })
 
     it('reads a row stored as a plain string as one text block', () => {
@@ -187,7 +187,7 @@ describe('a card and the message written after it', () => {
 
 describe('a user turn stored as parts', () => {
     const row = (content: unknown) => ({ id: 'm1', sessionId: 's1', role: 'user' as const, contentJson: JSON.stringify(content), toolCallsJson: null, createdAt: '2026-10-05T10:00:00Z' })
-    const context = (text: string) => ({ type: 'text', text, providerOptions: { rerun: { context: true } } })
+    const context = (text: string) => ({ type: 'text', text, providerOptions: { lumvika: { context: true } } })
 
     // The engine stores the turn as it sent it to the model, the memories it recalled and the time
     // of the turn included: the chat shows the words typed and nothing else.

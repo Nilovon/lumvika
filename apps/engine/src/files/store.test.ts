@@ -3,8 +3,8 @@ import { chmod, lstat, mkdir, readdir, readFile, stat, symlink, writeFile } from
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-store-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-store-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const store = await import('./store.js')

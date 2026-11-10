@@ -5,7 +5,7 @@ import { ATTACHMENT_PATH, ATTACHMENT_REF_KEYS, downloadAttachment, type Attachme
 import type { LinkupAttachment } from './linkup/envelope'
 
 // A file somebody sent to a connected account. Linkup hands an attachment as a `download_url` on its
-// own API, behind the Rerun key, so a coworker can do nothing with it as is. This turns it into what
+// own API, behind the Lumvika key, so a coworker can do nothing with it as is. This turns it into what
 // it can use: a public link that serves the file for a day, and the words of a voice note.
 
 const LINKUP_HOST = 'api.linkupapi.com'

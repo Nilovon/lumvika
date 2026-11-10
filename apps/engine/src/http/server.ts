@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { ZodError } from 'zod'
 import { auth } from './auth.js'
-import { foremanGuard } from './foreman-guard.js'
+import { stewardGuard } from './steward-guard.js'
 import { healthRoutes } from './routes/health.js'
 import { agentRoutes } from './routes/agents.js'
 import { connectionRoutes } from './routes/connections.js'
@@ -38,8 +38,8 @@ export function createServer(): Hono {
 
     const api = new Hono()
     api.use('*', auth)
-    api.use('/agents/:id', foremanGuard)
-    api.use('/agents/:id/*', foremanGuard)
+    api.use('/agents/:id', stewardGuard)
+    api.use('/agents/:id/*', stewardGuard)
     api.route('/update', updateRoutes)
     api.route('/doctor', doctorRoutes)
     api.route('/tools', toolRoutes)

@@ -8,7 +8,7 @@ const HEIGHT = 640
 export function openPendingSignInPopup(name: string, label = `Connecting to ${name}…`): Window | null {
     const left = window.screenX + (window.outerWidth - WIDTH) / 2
     const top = window.screenY + (window.outerHeight - HEIGHT) / 2
-    const popup = window.open('about:blank', 'rerun-sign-in', `width=${WIDTH},height=${HEIGHT},left=${left},top=${top},popup=yes`)
+    const popup = window.open('about:blank', 'lumvika-sign-in', `width=${WIDTH},height=${HEIGHT},left=${left},top=${top},popup=yes`)
     if (!popup) return null
     // A window of that name left on a provider's page by an abandoned sign-in is still
     // cross-origin here: decorating it throws, redirecting it later works.

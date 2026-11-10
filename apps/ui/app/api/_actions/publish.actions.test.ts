@@ -15,7 +15,7 @@ vi.mock('@/app/api/_auth/access', () => ({
     visibleAgentIds: vi.fn(),
 }))
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@rerun/cloud/email', () => ({ EMAIL_DELIVERY: true }))
+vi.mock('@lumvika/cloud/email', () => ({ EMAIL_DELIVERY: true }))
 vi.mock('@/lib/services/publish-thumbnail', () => ({ publishWithThumbnail: vi.fn() }))
 vi.mock('@/lib/services/publish', () => ({
     listPublished: vi.fn(),
@@ -37,7 +37,7 @@ describe('publishFileAction', () => {
     it('publishes an owned agent file without a billing entitlement check', async () => {
         vi.mocked(publishWithThumbnail).mockResolvedValue({
             status: 'published',
-            url: 'https://file.rerun.test',
+            url: 'https://file.lumvika.test',
             slug: 'file',
             path: 'report.pdf',
             kind: 'file',
@@ -51,7 +51,7 @@ describe('publishFileAction', () => {
 
         await expect(publishFileAction('agent', 'report.pdf')).resolves.toEqual({
             success: true,
-            url: 'https://file.rerun.test',
+            url: 'https://file.lumvika.test',
             slug: 'file',
         })
         expect(assertAgentInWorkspace).toHaveBeenCalledWith('agent')

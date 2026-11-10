@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AddonKey } from '@rerun/cloud/billing'
+import type { AddonKey } from '@lumvika/cloud/billing'
 
 // The trial's coworker cap: the checkout opens straight on paying now, which is what lifts it. The
 // value is the one `paywall_viewed` has always carried for this gate, so its series stays whole.

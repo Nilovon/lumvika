@@ -74,7 +74,7 @@ Creates a coworker and places it on the board. It is visible in the app immediat
 </ParamField>
 
 <ParamField body="provider" type="string">
-  One of `rerun`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider. With several, the call is refused and lists them.
+  One of `lumvika`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider. With several, the call is refused and lists them.
 </ParamField>
 
 <ParamField body="model" type="string | null">
@@ -144,7 +144,7 @@ Updates a coworker. Every field is optional and only what you pass changes.
 </ParamField>
 
 <ParamField body="provider" type="string">
-  One of `rerun`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider. With several, the call is refused and lists them.
+  One of `lumvika`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider. With several, the call is refused and lists them.
 </ParamField>
 
 <ParamField body="model" type="string | null">
@@ -169,7 +169,7 @@ When the call changed what the coworker runs on, the response also carries `runs
 
 ## list_ai_connections
 
-Lists the AI connections of the workspace, which is what every coworker runs on: the subscriptions and API keys plugged into it, plus the keyless Rerun one. No parameter.
+Lists the AI connections of the workspace, which is what every coworker runs on: the subscriptions and API keys plugged into it, plus the keyless Lumvika one. No parameter.
 
 Each entry carries its `id`, the `name` the user gave it, its `provider`, the `models` it serves, whether it is `connected` and whether it holds the workspace default (`isDefault`). `default` is the connection and model every coworker that picked nothing runs on.
 

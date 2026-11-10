@@ -128,7 +128,7 @@ const displayNameOf = (agentId: string): Promise<string> =>
         .catch(() => agentId)
 
 function writeConfig(name: string, content: string): string {
-    const configDir = resolve(tmpdir(), 'rerun-desktop')
+    const configDir = resolve(tmpdir(), 'lumvika-desktop')
     mkdirSync(configDir, { recursive: true })
     const file = resolve(configDir, name)
     writeFileSync(file, content)
@@ -138,13 +138,13 @@ function writeConfig(name: string, content: string): string {
 // The dock asks this engine to open what is clicked, so each panel is told whose screen it sits on.
 // The panels are the one child given the engine's key: their click handler authenticates with it.
 async function startPanels(agentId: string, display: string, timeZone?: string): Promise<ChildProcess[]> {
-    const apiKey = env().RERUN_API_KEY
+    const apiKey = env().LUMVIKA_API_KEY
     const panelEnv = {
         ...desktopEnv(display),
-        ...(apiKey ? { RERUN_API_KEY: apiKey } : {}),
-        RERUN_DESKTOP_AGENT: agentId,
-        RERUN_DESKTOP_AGENT_NAME: await displayNameOf(agentId),
-        RERUN_DESKTOP_ENGINE: `http://127.0.0.1:${env().RERUN_PORT}`,
+        ...(apiKey ? { LUMVIKA_API_KEY: apiKey } : {}),
+        LUMVIKA_DESKTOP_AGENT: agentId,
+        LUMVIKA_DESKTOP_AGENT_NAME: await displayNameOf(agentId),
+        LUMVIKA_DESKTOP_ENGINE: `http://127.0.0.1:${env().LUMVIKA_PORT}`,
         ...(timeZone ? { TZ: timeZone } : {}),
     }
     const configs = [writeConfig('dock.tint2rc', dockConfig(resolve(ASSETS_DIR, 'icons'))), writeConfig('bar.tint2rc', barConfig())]

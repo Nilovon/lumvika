@@ -19,8 +19,8 @@ describe('service instances', () => {
 
     it('suffixes env vars with the instance id', () => {
         expect(instanceEnvVar('SLACK_BOT_TOKEN', 'k3x9ab')).toBe('SLACK_BOT_TOKEN_K3X9AB')
-        expect(defaultInstanceEnvVar('google-drive', 'k3x9ab', 'api_key')).toBe('RERUN_SVC_GOOGLE_DRIVE_K3X9AB_API_KEY')
-        expect(defaultInstanceEnvVar('google-drive', undefined, 'api_key')).toBe('RERUN_SVC_GOOGLE_DRIVE_API_KEY')
+        expect(defaultInstanceEnvVar('google-drive', 'k3x9ab', 'api_key')).toBe('LUMVIKA_SVC_GOOGLE_DRIVE_K3X9AB_API_KEY')
+        expect(defaultInstanceEnvVar('google-drive', undefined, 'api_key')).toBe('LUMVIKA_SVC_GOOGLE_DRIVE_API_KEY')
     })
 
     it('numbers a new account after the ones already shown', () => {

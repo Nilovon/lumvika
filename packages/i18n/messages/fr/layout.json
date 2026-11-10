@@ -13,10 +13,11 @@
         "whatsNew": "Nouveautés",
         "gettingStarted": "Premiers pas",
         "docs": "Documentation",
-        "community": "Communauté",
         "shortcuts": "Raccourcis",
         "installApp": "Installer l'app",
-        "hireExpert": "Engager un expert"
+        "hireExpert": "Engager un expert",
+        "about": "À propos",
+        "source": "Code source"
     },
     "power": {
         "menuItem": "Redémarrer la machine",
@@ -122,18 +123,18 @@
         "reload": "Recharger",
         "available": {
             "title": "Nouvelle version disponible",
-            "description": "Rechargez pour obtenir la dernière version de Rerun."
+            "description": "Rechargez pour obtenir la dernière version de Lumvika."
         },
         "required": {
-            "title": "Rerun a été mis à jour",
+            "title": "Lumvika a été mis à jour",
             "description": "Une nouvelle version est en ligne. Rechargez pour continuer."
         }
     },
     "controlCenter": {
         "title": "Centre de contrôle",
-        "description": "Accédez à un agent, un paramètre ou une conversation, ou demandez à Rerun.",
+        "description": "Accédez à un agent, un paramètre ou une conversation, ou demandez à Lumvika.",
         "back": "Retour",
-        "askRerun": "Demander à Rerun",
+        "askLumvika": "Demander à Lumvika",
         "quotedQuery": "« {query} »",
         "unnamedBox": "Box sans nom",
         "pro": "Pro",
@@ -166,7 +167,7 @@
             "notificationsDetail": "Quand cet agent vous contacte"
         },
         "placeholder": {
-            "rootAssistant": "Rechercher ou demander à Rerun…",
+            "rootAssistant": "Rechercher ou demander à Lumvika…",
             "root": "Rechercher agents, paramètres, conversations…",
             "agent": "Rechercher dans {name}…",
             "agentUnknown": "Rechercher dans cet agent…",
@@ -207,6 +208,6 @@
     "boxNameSuggestions": "Ou choisissez un nom",
     "dashboard": {
         "metaTitle": "Tableau de bord",
-        "metaDescription": "Vos Boxes et vos coworkers sur Rerun."
+        "metaDescription": "Vos Boxes et vos coworkers sur Lumvika."
     }
 }

@@ -1,0 +1,50 @@
+/* La boule du Steward (`StewardBall`). Importé via @lumvika/ui/styles.css. */
+
+/* The glint that crosses the material: what makes it read as polished and not as painted. It rests
+   off the shape for the second half of its period. */
+@keyframes steward-buddy-sheen {
+    0% { transform: translateX(0); }
+    55%, 100% { transform: translateX(170px); }
+}
+
+.steward-buddy-sheen {
+    animation: steward-buddy-sheen var(--steward-sheen-period, 6s) ease-in-out infinite;
+}
+
+/* A ball has no walls to stretch: it leaves the floor whole, lands squashed, and its shadow tightens
+   while it is in the air. --steward-amp sets how high, so each state keeps its rhythm. */
+@keyframes steward-ball-body {
+    0%, 100% {
+        transform: translateY(0) scale(calc(1 + var(--steward-amp) * 0.7), calc(1 - var(--steward-amp) * 0.7));
+        animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+    }
+    50% {
+        transform: translateY(calc(var(--steward-amp) * -170px)) scale(calc(1 - var(--steward-amp) * 0.3), calc(1 + var(--steward-amp) * 0.3));
+        animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4);
+    }
+}
+
+@keyframes steward-ball-shadow {
+    0%, 100% { transform: scale(calc(1 + var(--steward-amp) * 0.7)); opacity: 1; }
+    50% { transform: scale(calc(1 - var(--steward-amp) * 3)); opacity: 0.55; }
+}
+
+[data-steward-motion] .steward-ball-body {
+    animation: steward-ball-body var(--steward-period) infinite;
+}
+
+[data-steward-motion] .steward-ball-shadow {
+    animation: steward-ball-shadow var(--steward-period) ease-in-out infinite;
+}
+
+[data-buddy-still] .steward-buddy-sheen {
+    animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .steward-buddy-sheen,
+    [data-steward-motion] .steward-ball-body,
+    [data-steward-motion] .steward-ball-shadow {
+        animation: none;
+    }
+}

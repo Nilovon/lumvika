@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-shared-data-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-shared-data-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { createServer } = await import('../server.js')
@@ -25,9 +25,9 @@ describe('shared database over HTTP', () => {
 
     it('never exposes its bookkeeping table', async () => {
         const tables = (await (await app.request('/shared/data/tables')).json()) as { tables: { name: string }[] }
-        expect(tables.tables.map(t => t.name)).not.toContain('_rerun_shared_tables')
-        expect((await app.request('/shared/data/tables/_rerun_shared_tables/rows')).status).toBe(500)
-        expect((await app.request('/shared/data/tables/_rerun_shared_tables/purge', { method: 'POST' })).status).toBe(500)
+        expect(tables.tables.map(t => t.name)).not.toContain('_lumvika_shared_tables')
+        expect((await app.request('/shared/data/tables/_lumvika_shared_tables/rows')).status).toBe(500)
+        expect((await app.request('/shared/data/tables/_lumvika_shared_tables/purge', { method: 'POST' })).status).toBe(500)
     })
 
     it('reads back what was written and refuses a write on the query endpoint', async () => {

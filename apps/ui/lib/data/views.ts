@@ -1,4 +1,4 @@
-import type { CardLayout, EngineDbGroup, TableView } from '@rerun/contracts'
+import type { CardLayout, EngineDbGroup, TableView } from '@lumvika/contracts'
 import type { EngineDbColumn } from '@/lib/engine/types'
 import { ImagesIcon, KanbanIcon, ListIcon, TableIcon, type LucideIcon } from '@/lib/icons'
 import type { SqlValue } from '@/lib/data/source'
@@ -18,7 +18,7 @@ export function findView(views: TableView[], idOrName: string | undefined): Tabl
     return views.find(view => view.id === idOrName) ?? views.find(view => view.name.toLowerCase() === idOrName.toLowerCase())
 }
 
-const lastViewKey = (storageKey: string, table: string) => `rerun:data-view:${storageKey}:${table}`
+const lastViewKey = (storageKey: string, table: string) => `lumvika:data-view:${storageKey}:${table}`
 
 export function readLastView(storageKey: string, table: string): string | null {
     try {

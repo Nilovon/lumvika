@@ -1,5 +1,5 @@
-import type { FileCard } from '@rerun/contracts'
-import { formatNumber } from '@rerun/i18n/format'
+import type { FileCard } from '@lumvika/contracts'
+import { formatNumber } from '@lumvika/i18n/format'
 import { SymbolView } from 'expo-symbols'
 import { Pressable, View } from 'react-native'
 import { useLocale, useTranslations } from 'use-intl'

@@ -15,7 +15,7 @@ const websiteSchema = (required: string) => z.object({ website: z.string().trim(
 
 type SeedValues = z.infer<ReturnType<typeof websiteSchema>>
 
-// Rerun reads the site the way the onboarding does, then writes the identity card in the
+// Lumvika reads the site the way the onboarding does, then writes the identity card in the
 // background: the pages show up a few minutes later, not on submit.
 export function BrainSeedForm({ onStarted }: { onStarted: () => void }) {
     const t = useTranslations('brain.seed')

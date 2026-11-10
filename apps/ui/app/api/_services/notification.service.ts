@@ -1,14 +1,14 @@
 import { realEmail } from '@/lib/auth/placeholder-email'
 import { after } from 'next/server'
-import { FOREMAN_AGENT_ID } from '@rerun/contracts'
+import { STEWARD_AGENT_ID } from '@lumvika/contracts'
 
 import { boxAccessOf, toAccessLevel } from '@/app/api/_auth/access'
 import { toBoxScope } from '@/app/api/_auth/box-scope'
 import type { Database } from '@/app/api/database.types'
-import { BANNER_WARM_INLINE_MS, buildUnsubscribeUrl, emailBoardBanner, pushNotification, sendIncidentResolvedEmail, sendNotificationEmail } from '@rerun/cloud/email'
+import { BANNER_WARM_INLINE_MS, buildUnsubscribeUrl, emailBoardBanner, pushNotification, sendIncidentResolvedEmail, sendNotificationEmail } from '@lumvika/cloud/email'
 import { notificationUrl } from '@/lib/app-url'
 import type { NotificationPayload } from '@/lib/engine/types'
-import { RERUN_BUDGET_ERROR_CODE, suppressesErrorEmail } from '@/lib/notifications/budget-notice'
+import { LUMVIKA_BUDGET_ERROR_CODE, suppressesErrorEmail } from '@/lib/notifications/budget-notice'
 import { recipientLocale } from '@/lib/i18n/recipient-locale'
 import { announcesRecovery, emailSourceLabel, incidentKeyFor, resolvedIncidentKeysFor } from '@/lib/notifications/incidents'
 import { automatedRunOutcome, automatedRunReport, completionStatus, isRunCompletion, storedKind, type StoredNotification } from '@/lib/notifications/inbound'
@@ -25,8 +25,8 @@ import { writeNotificationPrefs } from './notification-audience.service'
 import { loadPresence } from './presence.service'
 import { authenticateEngineToken } from './workspace-engine.service'
 import { resolveWorkspaceMemberEmail, resolveWorkspaceOwner } from './workspace-owner.service'
-import { captureServer, deterministicUuid } from '@rerun/analytics/server'
-import { emailTranslator } from '@rerun/emails/i18n'
+import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
+import { emailTranslator } from '@lumvika/emails/i18n'
 
 type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
 type SessionUpdate = Database['public']['Tables']['sessions']['Update']
@@ -35,7 +35,7 @@ type ServiceRoleClient = ReturnType<typeof createServiceRoleClient>
 
 export type RecordNotificationResult = { ok: true } | { ok: false; status: number; error: string }
 
-// `token` is the engine's RERUN_API_KEY, which names one workspace: the same identity the engine
+// `token` is the engine's LUMVIKA_API_KEY, which names one workspace: the same identity the engine
 // uses for /api/embed and for the Hub. `notifications.space_id` records which Box the agent was
 // sitting in when it spoke, and nothing reads it back — the inbox filters on the workspace.
 export async function recordNotification(token: string, payload: NotificationPayload): Promise<RecordNotificationResult> {
@@ -44,9 +44,9 @@ export async function recordNotification(token: string, payload: NotificationPay
     const engine = await authenticateEngineToken(token)
     if (!engine) return { ok: false, status: 401, error: 'Unauthorized' }
 
-    // The foreman answers in the column the user is looking at: none of its runs is inbox news, an
+    // The steward answers in the column the user is looking at: none of its runs is inbox news, an
     // email, or the first agent run that counts as activation.
-    if (payload.agentId === FOREMAN_AGENT_ID) return { ok: true }
+    if (payload.agentId === STEWARD_AGENT_ID) return { ok: true }
 
     const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['id', 'name', 'space_id'] as const, { workspace_id: engine.workspaceId, engine_agent_id: payload.agentId })
 
@@ -136,7 +136,7 @@ async function reportChatRun(workspaceId: number, agentId: string, notification:
         const errorCode = typeof metadata.errorCode === 'string' ? metadata.errorCode : 'run_error'
         // The browser sees the same 402 in its stream and already reports it, along with the budget
         // refusals raised before any run exists: budget is the client's, whichever way it hit.
-        if (errorCode === RERUN_BUDGET_ERROR_CODE) return
+        if (errorCode === LUMVIKA_BUDGET_ERROR_CODE) return
         await captureServer(person, 'agent_run_failed', { ...props, error_type: errorCode }, { uuid })
     } catch (err) {
         console.error('[notification] failed to report the run to analytics', err)

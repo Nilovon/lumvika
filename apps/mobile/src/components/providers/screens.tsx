@@ -1,4 +1,4 @@
-import type { AddableProvider, AiConnectionKind, AiConnectionView, AiConnectionsView, UpdateConnectionInput } from '@rerun/contracts'
+import type { AddableProvider, AiConnectionKind, AiConnectionView, AiConnectionsView, UpdateConnectionInput } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useState } from 'react'
@@ -164,7 +164,7 @@ export function ConnectionDetailScreen({ connectionId }: { connectionId: string 
             onModels={onModels}
             onBaseUrl={baseUrl => patch({ baseUrl }, { baseUrl })}
             onExtraModels={extraModels => patch({ extraModels }, { extraModels })}
-            onSignInAgain={() => connection.provider !== 'rerun' && router.push(connectHref(connection.provider, connectionId))}
+            onSignInAgain={() => connection.provider !== 'lumvika' && router.push(connectHref(connection.provider, connectionId))}
             replacement={{ key, onKey: setKey, busy: keyBusy, error: keyError, onSave: saveKey }}
             onRemove={remove}
             readOnlyReason={readOnlyReason}

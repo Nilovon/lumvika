@@ -9,8 +9,8 @@ import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { normalizeEmail } from '@/lib/email'
 import { AlertTriangle } from '@/lib/icons'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { getCookie, setSharedCookie, track } from '@rerun/analytics/client'
-import { StepTransition } from '@rerun/ui/steps'
+import { getCookie, setSharedCookie, track } from '@lumvika/analytics/client'
+import { StepTransition } from '@lumvika/ui/steps'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
 import { CaptchaError } from '@/components/auth/captcha/captcha-error'
 import { useTranslations } from 'next-intl'
@@ -162,7 +162,7 @@ export function EmailCodeForm({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormControl>
-                                            <Input type="email" label={t('label')} placeholder="you@rerun.build" autoComplete="email" {...field} />
+                                            <Input type="email" label={t('label')} placeholder="you@lumvika.com" autoComplete="email" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

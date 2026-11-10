@@ -1,4 +1,4 @@
-import { SEO_DESCRIPTION_MAX_LENGTH, SEO_DESCRIPTION_MIN_LENGTH, type TemplateDocument, isSeoDescriptionLength } from '@rerun/contracts'
+import { SEO_DESCRIPTION_MAX_LENGTH, SEO_DESCRIPTION_MIN_LENGTH, type TemplateDocument, isSeoDescriptionLength } from '@lumvika/contracts'
 
 // What a template needs before it is worth our review. Deliberately the same list the author sees
 // as a checklist and the server enforces on submit, so the button never promises something the

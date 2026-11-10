@@ -1,4 +1,4 @@
-import { scanTextForSecrets, type TemplateDocument } from '@rerun/contracts'
+import { scanTextForSecrets, type TemplateDocument } from '@lumvika/contracts'
 
 // Every column of a template is readable by anonymous visitors, so a credential pasted into
 // a description walks straight onto the public page. This is a heuristic net, not a proof:

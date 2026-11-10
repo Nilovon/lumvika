@@ -1,5 +1,5 @@
 import type { Json } from '@/app/api/database.types'
-import type { Messages } from '@rerun/i18n/messages'
+import type { Messages } from '@lumvika/i18n/messages'
 
 // A notice the hub writes itself (an app slot paused, the credits used up) carries its sentence as a
 // key of `notifications.notices` with its values, so each member reads it in their own language.

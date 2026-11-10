@@ -18,7 +18,7 @@ export function mediaContentType(path: string): string | null {
 
 // What a browser renders without a script engine: these, and only these, come back inline from a
 // file route on the app's own origin. The type is ours, never the upstream's: the engine labels
-// `report.html` text/html, and a page a coworker wrote, rendered on app.rerun.build, would run with
+// `report.html` text/html, and a page a coworker wrote, rendered on app.lumvika.com, would run with
 // the session's cookies in reach.
 const INLINE_CONTENT_TYPES: Record<string, string> = {
     ...MEDIA_CONTENT_TYPES,

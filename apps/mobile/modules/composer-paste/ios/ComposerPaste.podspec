@@ -3,8 +3,8 @@ Pod::Spec.new do |s|
   s.version        = '1.0.0'
   s.summary        = 'Lets an image pasted into the chat composer become an attachment.'
   s.description    = 'Lets an image pasted into the chat composer become an attachment.'
-  s.author         = 'Rerun'
-  s.homepage       = 'https://rerun.build'
+  s.author         = 'Lumvika'
+  s.homepage       = 'https://lumvika.com'
   s.platforms      = {
     :ios => '16.4'
   }

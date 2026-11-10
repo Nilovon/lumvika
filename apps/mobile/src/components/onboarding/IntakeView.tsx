@@ -1,4 +1,4 @@
-import { INTAKE_INDUSTRIES, rolesForIndustry } from '@rerun/contracts'
+import { INTAKE_INDUSTRIES, rolesForIndustry } from '@lumvika/contracts'
 import { useState } from 'react'
 import { ScrollView, TextInput, View } from 'react-native'
 import Animated, { FadeIn, useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
@@ -7,7 +7,7 @@ import { useTranslations } from 'use-intl'
 
 import { AnswerInput, CustomOptionRow, OptionRow } from '@/components/chat/hitl/QuestionWidget'
 import { FORM_COLUMN_MAX_WIDTH } from '@/components/layout/split'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { AppText } from '@/components/ui/AppText'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -80,7 +80,7 @@ export function IntakeView({ intake }: { intake: IntakeController }) {
         <Animated.View style={[{ flex: 1, width: '100%', maxWidth: FORM_COLUMN_MAX_WIDTH, alignSelf: 'center' }, lift]}>
             <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.xl, gap: spacing.xl }}>
                 <View style={{ gap: spacing.lg }}>
-                    <ForemanOrb size={48} state={submitting ? 'thinking' : 'idle'} />
+                    <StewardOrb size={48} state={submitting ? 'thinking' : 'idle'} />
                     <StepDots count={steps.length} index={index} />
                     <Animated.View key={step} entering={FadeIn.duration(200)} style={{ gap: spacing.xs }}>
                         <AppText variant="title">{t(`intake.steps.${step}.title`)}</AppText>

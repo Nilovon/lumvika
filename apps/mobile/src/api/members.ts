@@ -1,4 +1,4 @@
-import { memberProfileSchema, type MemberProfile } from '@rerun/contracts'
+import { memberProfileSchema, type MemberProfile } from '@lumvika/contracts'
 
 import { api } from '@/api/client'
 

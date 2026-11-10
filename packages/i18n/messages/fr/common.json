@@ -12,5 +12,13 @@
         "title": "Une erreur est survenue",
         "body": "Cette page a rencontré une erreur inattendue. Vos coworkers et leur travail sont intacts. Rechargez pour reprendre là où vous en étiez.",
         "reload": "Recharger"
+    },
+    "about": {
+        "title": "À propos",
+        "license": "Lumvika est un logiciel libre, sous licence GNU Affero General Public License, version 3 (AGPL-3.0). Cette licence vous permet d'obtenir, de modifier et de partager son code source.",
+        "upstream": "Il repose sur un projet open source et contient le travail de ses auteurs, qui conservent leurs droits. Le fichier NOTICE du code source nomme ce projet et indique ce qui a été modifié.",
+        "warranty": "Ce programme est fourni sans aucune garantie, dans la mesure permise par la loi.",
+        "source": "Code source",
+        "licenseText": "Texte de la licence"
     }
 }

@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-apply-proposal-'))
-process.env.RERUN_DATA_DIR = dataDir
-process.env.RERUN_HUB_BASE_URL = 'https://hub.example.com'
-process.env.RERUN_API_KEY = 'hub-key'
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-apply-proposal-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example.com'
+process.env.LUMVIKA_API_KEY = 'hub-key'
 
 const draft = { value: { name: 'Publishing', description: 'How posts go out', body: 'Draft, review, publish.\n\nEvery post ends with a CTA.' } as unknown, fail: false }
 
@@ -46,12 +46,12 @@ const { writeSkillFolder } = await import('./loader.js')
 const { insertSkillProposal, getSkillProposal, transitionSkillProposal } = await import('../db/repos/skill-proposals.js')
 const { skillsDir, skillDir, connectionsDir } = await import('../config/paths.js')
 const { rm } = await import('node:fs/promises')
-const { DEFAULT_CONNECTION_MODELS, CONNECTION_TOKEN_KEY, agentConfigSchema } = await import('@rerun/contracts')
-const { createConnection, ensureRerunConnection } = await import('../connections/store.js')
+const { DEFAULT_CONNECTION_MODELS, CONNECTION_TOKEN_KEY, agentConfigSchema } = await import('@lumvika/contracts')
+const { createConnection, ensureLumvikaConnection } = await import('../connections/store.js')
 const { resolveConfiguredModel } = await import('../agents/availability.js')
 
 const id = 'applier'
-const agent = { id, resolved: { connection: null, provider: 'rerun', model: 'rerun-max' } } as any
+const agent = { id, resolved: { connection: null, provider: 'lumvika', model: 'lumvika-max' } } as any
 
 let seq = 0
 type Pair = { connectionId: string | null; provider: any; model: string }
@@ -136,15 +136,15 @@ describe('applySkillProposal', () => {
     })
 })
 
-// The agent follows the box default, which is the keyless Rerun connection, while the user chats
-// on a subscription picked in the composer: the case where the Rerun budget is spent.
+// The agent follows the box default, which is the keyless Lumvika connection, while the user chats
+// on a subscription picked in the composer: the case where the Lumvika budget is spent.
 describe('the model the skill is written with', () => {
     beforeEach(async () => {
         await rm(connectionsDir(), { recursive: true, force: true })
     })
 
-    async function rerunAgent() {
-        await ensureRerunConnection()
+    async function lumvikaAgent() {
+        await ensureLumvikaConnection()
         const config = agentConfigSchema.parse({ name: 'applier', connectionId: null, provider: null, model: null })
         return { id, config, soul: '', install: '', env: {}, resolved: await resolveConfiguredModel(config) } as any
     }
@@ -154,7 +154,7 @@ describe('the model the skill is written with', () => {
     }
 
     it('writes on the Claude subscription the conversation ran on', async () => {
-        const agent = await rerunAgent()
+        const agent = await lumvikaAgent()
         const claude = await subscription('claude')
         const row = await accepted({ mode: 'create', slug: null, title: 'On Claude' }, { connectionId: claude.id, provider: 'claude', model: 'claude-opus-5-5' })
 
@@ -168,7 +168,7 @@ describe('the model the skill is written with', () => {
     })
 
     it('writes on the Codex subscription and syncs its tokens back, even when the draft fails', async () => {
-        const agent = await rerunAgent()
+        const agent = await lumvikaAgent()
         const codex = await subscription('codex')
         const model = DEFAULT_CONNECTION_MODELS.codex[0]
         draft.fail = true
@@ -183,7 +183,7 @@ describe('the model the skill is written with', () => {
     })
 
     it("falls back to the agent's own pair when the subscription was signed out since", async () => {
-        const agent = await rerunAgent()
+        const agent = await lumvikaAgent()
         const signedOut = await subscription('claude', '')
         const row = await accepted({ mode: 'create', slug: null, title: 'Signed out' }, { connectionId: signedOut.id, provider: 'claude', model: 'claude-opus-5-5' })
 
@@ -193,7 +193,7 @@ describe('the model the skill is written with', () => {
     })
 
     it("falls back to the agent's own pair when the connection is gone", async () => {
-        const agent = await rerunAgent()
+        const agent = await lumvikaAgent()
         const row = await accepted({ mode: 'create', slug: null, title: 'Gone connection' }, { connectionId: 'deleted', provider: 'claude', model: 'claude-opus-5-5' })
 
         await applySkillProposal(agent, row)
@@ -202,13 +202,13 @@ describe('the model the skill is written with', () => {
     })
 
     it("keeps the agent's own pair for a proposal made before the pair was recorded", async () => {
-        const agent = await rerunAgent()
+        const agent = await lumvikaAgent()
         const row = await accepted({ mode: 'create', slug: null, title: 'Legacy row' })
 
         await applySkillProposal(agent, row)
 
         expect(calls.writtenBy[0]).toBe(agent.resolved)
-        expect(calls.cliAuth).toEqual([{ provider: 'rerun', connection: agent.resolved.connection.id }])
+        expect(calls.cliAuth).toEqual([{ provider: 'lumvika', connection: agent.resolved.connection.id }])
     })
 })
 

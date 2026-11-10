@@ -1,13 +1,13 @@
 ---
 title: "AI models"
-description: "The Rerun models on your OpenRouter key, your own API keys, and your Claude, ChatGPT or OpenCode plan."
+description: "The Lumvika models on your OpenRouter key, your own API keys, and your Claude, ChatGPT or OpenCode plan."
 ---
 
-Every coworker thinks with one model at a time. On a self-hosted Rerun you pay the AI provider directly: there is no credit, no meter and no plan in between.
+Every coworker thinks with one model at a time. On a self-hosted Lumvika you pay the AI provider directly: there is no credit, no meter and no plan in between.
 
-## The Rerun models
+## The Lumvika models
 
-A new coworker starts on **Rerun**, with three tiers to pick from:
+A new coworker starts on **Lumvika**, with three tiers to pick from:
 
 | Tier | For |
 | --- | --- |
@@ -17,15 +17,15 @@ A new coworker starts on **Rerun**, with three tiers to pick from:
 
 On your install, these run on your `OPENROUTER_API_KEY`. The engine asks the app, the app relays the call to OpenRouter with your key, and nothing is counted. All three tiers are open to every workspace.
 
-The app only relays for engines it knows, so your key never serves anybody else. The Foreman's onboarding and its helpers run on the same key. Without the key, the Foreman skips the onboarding and runs on the model you pick for it, like any coworker.
+The app only relays for engines it knows, so your key never serves anybody else. The Steward's onboarding and its helpers run on the same key. Without the key, the Steward skips the onboarding and runs on the model you pick for it, like any coworker.
 
 <Tip>
   Set a credit limit on the key in your OpenRouter dashboard. It is the simplest way to cap what your coworkers can spend.
 </Tip>
 
-Without `OPENROUTER_API_KEY`, a coworker on a Rerun model answers with an error asking you to set the key or connect another provider. Connect one below and pick it, and the coworker works again.
+Without `OPENROUTER_API_KEY`, a coworker on a Lumvika model answers with an error asking you to set the key or connect another provider. Connect one below and pick it, and the coworker works again.
 
-The OpenRouter model behind each tier is set in `RERUN_UPSTREAM_MODELS`, in `apps/ui/lib/engine/constants.ts`. Change it and rebuild to run a tier on another model.
+The OpenRouter model behind each tier is set in `LUMVIKA_UPSTREAM_MODELS`, in `apps/ui/lib/engine/constants.ts`. Change it and rebuild to run a tier on another model.
 
 ## Your own API keys
 
@@ -56,7 +56,7 @@ Under **Your API keys**, pick **Custom endpoint** to run coworkers on a model yo
 | **Mistral** | `https://api.mistral.ai/v1` | your Mistral key |
 | **DeepSeek** | `https://api.deepseek.com/v1` | your DeepSeek key |
 
-The engine is the one that calls the server, so the address has to work from the engine, not from your browser. With the Docker Compose setup, `localhost` inside the engine container is the container itself: Rerun tries `host.docker.internal` for you when `localhost` does not answer, and the address that worked is the one saved.
+The engine is the one that calls the server, so the address has to work from the engine, not from your browser. With the Docker Compose setup, `localhost` inside the engine container is the container itself: Lumvika tries `host.docker.internal` for you when `localhost` does not answer, and the address that worked is the one saved.
 
 <Warning>
   Ollama keeps a 4k-token context by default, and a coworker's instructions and tools alone take about 28k. Start Ollama with `OLLAMA_CONTEXT_LENGTH=32768` (or more) or the model reads a cut prompt without saying so. On Linux, also set `OLLAMA_HOST=0.0.0.0` so the engine's container can reach it.
@@ -64,13 +64,13 @@ The engine is the one that calls the server, so the address has to work from the
 
 In the connection, under **Endpoint**:
 
-- **Context window** is used for models the server does not size itself (Ollama never does). Rerun compacts a conversation before it fills the window, 128k when nothing is set.
+- **Context window** is used for models the server does not size itself (Ollama never does). Lumvika compacts a conversation before it fills the window, 128k when nothing is set.
 - **Models see images** stays off by default. Turn it on for a vision model: screenshots and the computer tools need it.
 - Add a model the server serves but does not list by its id.
 
 Small models are uneven at calling tools, which every coworker does all the time. A model of 30B parameters or more, or a hosted one, gives far better results than a 4B one.
 
-On Rerun Cloud, the address has to be a public one: a cloud machine cannot reach your computer. Expose a local server through a tunnel (Cloudflare Tunnel, ngrok) to use it there.
+On Lumvika Cloud, the address has to be a public one: a cloud machine cannot reach your computer. Expose a local server through a tunnel (Cloudflare Tunnel, ngrok) to use it there.
 
 ## Your Claude or ChatGPT plan
 
@@ -94,12 +94,12 @@ A model sold on both sides appears twice, once per catalog. OpenCode runs inside
 
 ## Choose the model per coworker
 
-Click the model name above a coworker's message box. The picker lists the Rerun tiers, your plans and your keys, with a power rating and the context window of each model.
+Click the model name above a coworker's message box. The picker lists the Lumvika tiers, your plans and your keys, with a power rating and the context window of each model.
 
 Picking a model in the chat changes it for that conversation. Click **Set as default** to change it for the coworker. See [Configure a coworker](/agents/configure#model-and-provider) for the details.
 
 ## Embeddings
 
-Semantic search of the services catalog and of the coworkers' memories needs embeddings. They run on `RERUN_EMBED_API_KEY`, an OpenRouter key, through the app. Without it, both searches fall back to keyword search, which works but matches less.
+Semantic search of the services catalog and of the coworkers' memories needs embeddings. They run on `LUMVIKA_EMBED_API_KEY`, an OpenRouter key, through the app. Without it, both searches fall back to keyword search, which works but matches less.
 
 You can use the same OpenRouter key for both variables, or a separate one to see the two costs apart.

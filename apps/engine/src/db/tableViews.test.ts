@@ -2,14 +2,14 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-table-views-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-table-views-'))
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { AGENT_HIDDEN_TABLES, getAgentDb, readAgentDbSchema } = await import('./agentDb.js')
 const { exportTableRows, listTables, updateTableRow } = await import('./sqlStore.js')
 const { deleteTableViews, deleteView, listViews, saveView, VIEWS_TABLE } = await import('./tableViews.js')
 const { cardTools } = await import('../tools/builtin/cards.js')
-const { tableCardSchema } = await import('@rerun/contracts')
+const { tableCardSchema } = await import('@lumvika/contracts')
 
 const AGENT = 'views-agent'
 let client: Awaited<ReturnType<typeof getAgentDb>>

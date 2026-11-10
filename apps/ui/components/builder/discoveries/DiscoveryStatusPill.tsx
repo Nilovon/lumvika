@@ -1,12 +1,12 @@
 'use client'
 
-import { TextShimmer } from '@rerun/ui'
-import { ChromeBar } from '@rerun/ui/chrome'
-import { Badge } from '@rerun/ui/primitives'
+import { TextShimmer } from '@lumvika/ui'
+import { ChromeBar } from '@lumvika/ui/chrome'
+import { Badge } from '@lumvika/ui/primitives'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslations } from 'next-intl'
 
-import { Orb } from '@/components/foreman/Orb'
+import { Orb } from '@/components/steward/Orb'
 import { CheckIcon } from '@/lib/icons'
 
 const SWAP = { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -4 }, transition: { duration: 0.2 } }

@@ -28,8 +28,8 @@ import { PUBLISHED_BUCKET } from '@/lib/services/publish'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 
-// What `<slug>.rerun.site` serves, reached only through the host rewrite in proxy.ts: the site's
-// files once the visitor may open the link, and the reserved `/__rerun/` paths (the gate's forms,
+// What `<slug>.lumvika.site` serves, reached only through the host rewrite in proxy.ts: the site's
+// files once the visitor may open the link, and the reserved `/__lumvika/` paths (the gate's forms,
 // the raw file, the preview image). The bytes live in the private `published` bucket and only
 // ever leave it through here, after the same access check the proxy made.
 export const dynamic = 'force-dynamic'
@@ -278,7 +278,7 @@ async function resolve(request: Request, { params }: Params): Promise<{ entry: P
 }
 
 function reserved(path: string[]): string | null {
-    return path[0] === '__rerun' ? path.slice(1).join('/') : null
+    return path[0] === '__lumvika' ? path.slice(1).join('/') : null
 }
 
 export async function GET(request: Request, context: Params): Promise<Response> {

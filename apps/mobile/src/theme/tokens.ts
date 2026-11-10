@@ -37,8 +37,8 @@ export type ColorScheme = keyof typeof palette
 export type Palette = { [K in keyof (typeof palette)['light']]: string }
 
 export const brand = {
-    base: '#4d34f7',
-    soft: '#b7a8ff',
+    base: '#0b6e63',
+    soft: '#7fdccb',
 } as const
 
 export const radius = {

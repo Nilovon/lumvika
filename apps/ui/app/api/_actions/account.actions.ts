@@ -6,8 +6,8 @@ import type { User } from '@supabase/supabase-js'
 
 import { AuthorizationError } from '@/app/api/_auth/ownership'
 import { accountDeletionBlockers, anonymizeAccount } from '@/app/api/_services/account-deletion.service'
-import { syncStripeCustomerEmail } from '@rerun/cloud/billing.server'
-import { phoneOwnerId } from '@rerun/cloud/phone.server'
+import { syncStripeCustomerEmail } from '@lumvika/cloud/billing.server'
+import { phoneOwnerId } from '@lumvika/cloud/phone.server'
 import { DELETE_ACCOUNT_CONFIRMATION, type AccountDeletionBlocker } from '@/lib/auth/account-deletion'
 import { OAUTH_PROVIDERS, type OAuthProvider } from '@/lib/auth/oauth-providers'
 import { isPlaceholderEmail, realEmail } from '@/lib/auth/placeholder-email'
@@ -18,7 +18,7 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { getServerSession } from '@/supabase/session/getServerSession'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 import type { Database } from '@/app/api/database.types'
-import { isStableLocale, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, PSEUDO_LOCALE, type Locale } from '@rerun/i18n'
+import { isStableLocale, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, PSEUDO_LOCALE, type Locale } from '@lumvika/i18n'
 import { failure, failureOf } from '@/lib/i18n/action-error'
 import type { ActionResult } from './space.actions'
 
@@ -48,7 +48,7 @@ export async function updateMyNameAction(params: { name: string }): Promise<Acti
         if (!name) return failure('nameRequired')
         if (name.length > PROFILE_NAME_MAX) return failure('keepItUnder', { max: PROFILE_NAME_MAX })
 
-        // The greeting of an email and the foreman read the first name from `user_metadata`.
+        // The greeting of an email and the steward read the first name from `user_metadata`.
         await writeChosenProfile(account, { full_name: name }, { full_name: name, first_name: name.split(' ')[0] })
         return { ok: true }
     } catch (err) {
@@ -57,7 +57,7 @@ export async function updateMyNameAction(params: { name: string }): Promise<Acti
 }
 
 // Saved on the account for the emails and notifications it receives, and mirrored in a cookie so
-// this device reads it without a query. The cookie sits on `.rerun.build`, where the landing reads it
+// this device reads it without a query. The cookie sits on `.lumvika.com`, where the landing reads it
 // too. `null` goes back to following the browser.
 export async function updateMyLocaleAction(params: { locale: Locale | typeof PSEUDO_LOCALE | null }): Promise<ActionResult> {
     try {
@@ -77,7 +77,7 @@ export async function updateMyLocaleAction(params: { locale: Locale | typeof PSE
 
         const cookieStore = await cookies()
         const host = ((await headers()).get('host') ?? '').split(':')[0]
-        const domain = host.endsWith('rerun.build') ? '.rerun.build' : undefined
+        const domain = host.endsWith('lumvika.com') ? '.lumvika.com' : undefined
         if (locale === null) cookieStore.set(LOCALE_COOKIE, '', { path: '/', maxAge: 0, domain })
         else cookieStore.set(LOCALE_COOKIE, locale, { path: '/', maxAge: LOCALE_COOKIE_MAX_AGE, sameSite: 'lax', domain })
         return { ok: true }

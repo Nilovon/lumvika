@@ -75,7 +75,7 @@ describe('splitIntoBubbles', () => {
     it('only ever grows the last bubble while an answer streams in', () => {
         const answers = [
             "C'est fait, **Site Cloner** est cloné. Trois choses ne suivent pas la copie :\n\n- **L'historique :** il reste.\n- **Les liens de test :** `/p/craft-demo-readme`.\n- **Le dossier :** 125 Mo.\n\n**À faire de ton côté :** capturer l'agent depuis la sandbox.\n\nDone.",
-            '## Deployed\n\nLive on **rerun.build**. Two things changed:\n\n1. Node 22\n2. cached `og/`\n\nRun this:\n\n```sh\npnpm build\n\npnpm start\n```\n\n| Page | Status |\n| --- | --- |\n| / | 200 |\n\n---\n\nWant me to watch it?',
+            '## Deployed\n\nLive on **lumvika.com**. Two things changed:\n\n1. Node 22\n2. cached `og/`\n\nRun this:\n\n```sh\npnpm build\n\npnpm start\n```\n\n| Page | Status |\n| --- | --- |\n| / | 200 |\n\n---\n\nWant me to watch it?',
         ]
         for (const answer of answers) {
             let shown = splitIntoBubbles('')

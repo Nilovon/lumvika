@@ -14,7 +14,7 @@ describe('getToolMeta', () => {
     it('shows a catalog read as a read, never as a purchase', () => {
         expect(getToolMeta('paid_data_catalog', { group: 'tiktok' }, t)).toEqual({ label: 'Paid data catalog', icon: BookOpenIcon })
         expect(isKnownTool('paid_data_catalog')).toBe(true)
-        expect(getToolMeta('paid_data_read', { saved: '.rerun/paid-data/x.json' }, t)).toEqual({ label: 'Read paid data', icon: BookOpenIcon })
+        expect(getToolMeta('paid_data_read', { saved: '.lumvika/paid-data/x.json' }, t)).toEqual({ label: 'Read paid data', icon: BookOpenIcon })
     })
 
     it('keeps the tools stored conversations still hold', () => {

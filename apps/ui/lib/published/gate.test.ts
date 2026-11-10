@@ -61,7 +61,7 @@ describe('safeNextPath', () => {
         expect(safeNextPath('https://evil.com')).toBe('/')
         expect(safeNextPath('//evil.com')).toBe('/')
         expect(safeNextPath('/\\evil.com')).toBe('/')
-        expect(safeNextPath('/__rerun/logout')).toBe('/')
+        expect(safeNextPath('/__lumvika/logout')).toBe('/')
         expect(safeNextPath(null)).toBe('/')
     })
 })

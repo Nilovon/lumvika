@@ -1,11 +1,11 @@
-// HTML an agent publishes is served from its own `<slug>.rerun.site` origin, never from the app's:
-// a page with scripts on app.rerun.build could read the session, and a fake sign-in form would sit
+// HTML an agent publishes is served from its own `<slug>.lumvika.site` origin, never from the app's:
+// a page with scripts on app.lumvika.com could read the session, and a fake sign-in form would sit
 // under our own address bar. One origin per slug also keeps two published mini-apps from reading
 // each other's localStorage. PUBLISH_HOST unset (staging) turns the whole thing off: HTML keeps
 // redirecting to Storage like any other file. In dev, `localhost:3050` serves `<slug>.localhost:3050`.
 import { isOpaqueToken } from '@/lib/opaque-token'
 
-// Names a slug can never take: the hosts DNS already answers for under rerun.site, plus the obvious
+// Names a slug can never take: the hosts DNS already answers for under lumvika.site, plus the obvious
 // infrastructure ones a visitor would trust.
 const RESERVED_SLUGS = new Set(['www', 'app', 'api', 'admin', 'auth', 'mail', 'welcome', 'links', 'send', 'staging', 'static', 'assets', 'cdn'])
 

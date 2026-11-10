@@ -1,5 +1,5 @@
 {
-    "name": "rerun-mobile",
+    "name": "lumvika-mobile",
     "main": "expo-router/entry",
     "version": "1.0.0",
     "dependencies": {
@@ -8,9 +8,9 @@
         "@posthog/react-native-plugin": "^2.12.7",
         "@react-native-google-signin/google-signin": "^16.1.5",
         "@react-native-masked-view/masked-view": "0.3.2",
-        "@rerun/contracts": "workspace:*",
-        "@rerun/db": "workspace:*",
-        "@rerun/i18n": "workspace:*",
+        "@lumvika/contracts": "workspace:*",
+        "@lumvika/db": "workspace:*",
+        "@lumvika/i18n": "workspace:*",
         "@supabase/supabase-js": "^2.106.1",
         "ai": "6.0.304",
         "expo": "~58.0.23",
@@ -60,7 +60,7 @@
         "use-intl": "^4.14.9"
     },
     "devDependencies": {
-        "@rerun/analytics": "workspace:*",
+        "@lumvika/analytics": "workspace:*",
         "@testing-library/react-native": "^14.1.0",
         "@types/jest": "30.0.0",
         "@types/react": "~19.2.2",
@@ -75,7 +75,7 @@
         "lint": "expo lint",
         "ts-check": "tsc --noEmit",
         "test": "jest",
-        "eas-build-post-install": "pnpm --filter @rerun/contracts build"
+        "eas-build-post-install": "pnpm --filter @lumvika/contracts build"
     },
     "private": true
 }

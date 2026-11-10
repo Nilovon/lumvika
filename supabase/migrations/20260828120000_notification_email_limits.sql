@@ -10,7 +10,7 @@ create type public.notification_email_status as enum ('sent', 'suppressed', 'dig
 
 -- One row per delivery decision, per recipient. `sent` rows are the sliding window, `suppressed`
 -- rows are the pending digest, `digested` rows are its receipt. Also the first record of what
--- Rerun actually emails, which nothing tracked before.
+-- Lumvika actually emails, which nothing tracked before.
 create table public.notification_email_dispatches (
     id uuid primary key default gen_random_uuid(),
     notification_id uuid not null references public.notifications(id) on delete cascade,

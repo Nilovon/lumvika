@@ -1,4 +1,4 @@
-import { paidDataEntry, paidDataRouteMaxCostUsd, type PaidDataCapability } from '@rerun/contracts'
+import { paidDataEntry, paidDataRouteMaxCostUsd, type PaidDataCapability } from '@lumvika/contracts'
 
 const TREG_BASE_URL = 'https://treg.to'
 // A routed call walks its providers one after the other and polls an async one for up to 60

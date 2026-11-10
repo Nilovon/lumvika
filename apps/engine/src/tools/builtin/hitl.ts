@@ -14,10 +14,10 @@ export const HITL_TOOL_SET = new Set<string>(HITL_TOOL_NAMES)
 // read. So it neither turns the message before it into narration nor hides a card.
 export const TRAILING_TOOL_SET = new Set<string>(['skill_propose'])
 
-// Both CLI providers surface Rerun's builtin tools through the bridged `rerun` MCP server, which
+// Both CLI providers surface Lumvika's builtin tools through the bridged `lumvika` MCP server, which
 // namespaces them. Claude Code always prefixes `mcp__`; Codex only does when `prefix_mcp_tool_names`
 // is on, so accept the bare form too.
-const BRIDGE_PREFIX = /^(?:mcp__)?rerun__/
+const BRIDGE_PREFIX = /^(?:mcp__)?lumvika__/
 
 export function canonicalBridgeName(name: string | undefined): string {
     return name?.replace(BRIDGE_PREFIX, '') ?? ''
@@ -174,9 +174,9 @@ export function takeoverSummary(input: Record<string, unknown> | undefined): str
     return reason ? `Needs you in the browser: ${reason}` : 'The coworker needs you in the browser'
 }
 
-// Nobody watches a delegate, and the foreman's chat has no card for it.
+// Nobody watches a delegate, and the steward's chat has no card for it.
 export function offersTakeover(config: AgentConfig): boolean {
-    return config.tools.browser && !config.ephemeral && config.kind !== 'foreman' && desktopAvailable()
+    return config.tools.browser && !config.ephemeral && config.kind !== 'steward' && desktopAvailable()
 }
 
 // The rules on options and on what goes in the card live in the `asking_the_user` section of the
@@ -243,13 +243,13 @@ export function suggestServiceTool(ctx: Pick<RunContext, 'turnOrder'>): ToolSet 
     return {
         suggest_service: hitlTool(
             ctx.turnOrder,
-            'Suggest one or more catalog apps for the user to set up, then END YOUR TURN. Call it at the moment an action needs the app, after showing the user what you prepared, not as a first step. The UI shows a setup card per app where the user enters keys, signs in (OAuth), or skips. Use this — NOT rerun_hub_service_install — whenever a service needs credentials or a sign-in: never ask the user to paste secrets in the chat. Get exact slugs from rerun_hub_service_search / rerun_hub_service_details first.',
+            'Suggest one or more catalog apps for the user to set up, then END YOUR TURN. Call it at the moment an action needs the app, after showing the user what you prepared, not as a first step. The UI shows a setup card per app where the user enters keys, signs in (OAuth), or skips. Use this — NOT lumvika_hub_service_install — whenever a service needs credentials or a sign-in: never ask the user to paste secrets in the chat. Get exact slugs from lumvika_hub_service_search / lumvika_hub_service_details first.',
             z.object({
                 services: jsonTolerantArray(
                     z
                         .array(
                             z.object({
-                                slug: z.string().min(1).describe('Exact catalog slug from rerun_hub_service_search / rerun_hub_service_details.'),
+                                slug: z.string().min(1).describe('Exact catalog slug from lumvika_hub_service_search / lumvika_hub_service_details.'),
                                 reason: nullTolerantOptional(z.string().max(300)).describe('One short line telling the user why this app helps with their request. The card truncates it to a single line, so keep it to a brief phrase; put any longer explanation in your message.'),
                             }),
                         )
@@ -265,7 +265,7 @@ export function requestSecretTool(ctx: Pick<RunContext, 'turnOrder'>): ToolSet {
     return {
         request_secret: hitlTool(
             ctx.turnOrder,
-            'Ask the user for one or more credentials (API key, token, password) through a secure masked form, then END YOUR TURN. NEVER ask anyone to paste a secret into the chat: the conversation is stored and sent to the model, this form is not. Each value the user enters is written straight into your coworker variables on the engine and is NEVER shown to you: you only get back the names of the variables that were filled. Reference a filled variable as ${KEY} in an MCP server config (headers, url, env, args) or in a shell command; that placeholder is resolved at run time. Use suggest_service instead when the service exists in the Rerun catalog; use this tool for anything else that needs a key. Group every credential you need for the same setup into a single call.',
+            'Ask the user for one or more credentials (API key, token, password) through a secure masked form, then END YOUR TURN. NEVER ask anyone to paste a secret into the chat: the conversation is stored and sent to the model, this form is not. Each value the user enters is written straight into your coworker variables on the engine and is NEVER shown to you: you only get back the names of the variables that were filled. Reference a filled variable as ${KEY} in an MCP server config (headers, url, env, args) or in a shell command; that placeholder is resolved at run time. Use suggest_service instead when the service exists in the Lumvika catalog; use this tool for anything else that needs a key. Group every credential you need for the same setup into a single call.',
             z.object({
                 secrets: jsonTolerantArray(
                     z

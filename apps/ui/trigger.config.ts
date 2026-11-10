@@ -10,7 +10,7 @@ const APP_DIR = fileURLToPath(new URL(".", import.meta.url));
 const EXTERNAL_PACKAGES = ["sharp", "apify-client", "ssh2"];
 const CLOUD_DIR = fileURLToPath(new URL("../../cloud/", import.meta.url));
 
-// Rerun Cloud's Trigger.dev project lives in cloud/; a self-hosted install names its own.
+// Lumvika Cloud's Trigger.dev project lives in cloud/; a self-hosted install names its own.
 const CLOUD_PROJECT_FILE = `${CLOUD_DIR}packages/cloud/trigger-project.json`;
 const PROJECT_REF =
   process.env.TRIGGER_PROJECT_REF ??
@@ -47,22 +47,22 @@ export default defineConfig({
     // and its pure-JS fallback never loads.
     external: EXTERNAL_PACKAGES,
     extensions: [
-      // @rerun/contracts resolves to a gitignored dist/ that the GitHub integration's fresh clone
+      // @lumvika/contracts resolves to a gitignored dist/ that the GitHub integration's fresh clone
       // never builds; bundling its sources keeps deploys independent of a local build.
       esbuildPlugin({
-        name: "rerun-contracts-from-source",
+        name: "lumvika-contracts-from-source",
         setup(build) {
-          build.onResolve({ filter: /^@rerun\/contracts$/ }, () => ({ path: CONTRACTS_SOURCE_ENTRY }));
+          build.onResolve({ filter: /^@lumvika\/contracts$/ }, () => ({ path: CONTRACTS_SOURCE_ENTRY }));
         },
       }),
       // The tasks of the private cloud/ folder take their packages from the app, the same copies its
       // own tasks load, whether or not the build ran the install of cloud/.
       esbuildPlugin({
-        name: "rerun-cloud-packages-from-the-app",
+        name: "lumvika-cloud-packages-from-the-app",
         setup(build) {
           build.onResolve({ filter: /^[^./]/ }, (args) => {
             if (!args.importer.startsWith(CLOUD_DIR) || args.pluginData?.fromApp) return undefined;
-            if (/^(node:|@\/|@rerun\/(contracts|cloud)(\/|$))/.test(args.path)) return undefined;
+            if (/^(node:|@\/|@lumvika\/(contracts|cloud)(\/|$))/.test(args.path)) return undefined;
             if (EXTERNAL_PACKAGES.some((name) => args.path === name || args.path.startsWith(`${name}/`))) return undefined;
             return build.resolve(args.path, { kind: args.kind, resolveDir: APP_DIR, pluginData: { fromApp: true } });
           });

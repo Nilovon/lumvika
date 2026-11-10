@@ -1,4 +1,4 @@
-import type { AgentModels, SetAgentModelInput } from '@rerun/contracts'
+import type { AgentModels, SetAgentModelInput } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
 import { SymbolView } from 'expo-symbols'

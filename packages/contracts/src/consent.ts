@@ -4,9 +4,9 @@
 //
 // No IP geolocation anywhere: the landing is prerendered and reading a header would turn it
 // dynamic. The audience is guessed in the browser from its time zone, and the decision is
-// remembered in a cookie on the parent domain so it survives the hop to app.rerun.build.
+// remembered in a cookie on the parent domain so it survives the hop to app.lumvika.com.
 
-export const CONSENT_COOKIE = 'rerun-consent'
+export const CONSENT_COOKIE = 'lumvika-consent'
 
 // Six months, the lifetime the CNIL recommends for a consent decision.
 export const CONSENT_COOKIE_MAX_AGE = 180 * 24 * 60 * 60
@@ -116,7 +116,7 @@ export function writeConsentCookie(decision: ConsentDecision) {
         `max-age=${CONSENT_COOKIE_MAX_AGE}`,
         'SameSite=Lax',
     ]
-    if (location.hostname.endsWith('rerun.build')) parts.push('domain=.rerun.build')
+    if (location.hostname.endsWith('lumvika.com')) parts.push('domain=.lumvika.com')
     if (location.protocol === 'https:') parts.push('Secure')
     document.cookie = parts.join('; ')
 }

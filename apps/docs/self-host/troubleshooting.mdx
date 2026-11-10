@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "The problems people meet when hosting Rerun, what causes them, and the fix."
+description: "The problems people meet when hosting Lumvika, what causes them, and the fix."
 ---
 
 Start with the logs. Most problems say their cause there in one line.
@@ -34,11 +34,11 @@ docker compose logs app | grep email-sign-up
 **With a project on supabase.com**, check in this order:
 
 1. **The mailer.** Set up your own SMTP server in **Authentication > Emails > SMTP Settings**. On the Free plan, a project that keeps Supabase's own mailer cannot edit its templates, so the email arrives without the code. That mailer also sends only 2 emails an hour, and only to the members of your Supabase organization.
-2. **The template.** Once SMTP is saved, the email must carry the code, `{{ .Token }}`. Supabase's default templates only carry a link. Paste the [Rerun template](/self-host/install#2-set-up-supabase) into **Magic Link**, **Confirm signup** and **Change Email Address**.
+2. **The template.** Once SMTP is saved, the email must carry the code, `{{ .Token }}`. Supabase's default templates only carry a link. Paste the [Lumvika template](/self-host/install#2-set-up-supabase) into **Magic Link**, **Confirm signup** and **Change Email Address**.
 3. **The logs.** **Logs > Auth** in the Supabase dashboard shows each email Supabase tried to send, and why it failed.
 4. **The spam folder**, with the built-in mailer especially.
 
-If the code arrives but is refused, it may have expired (15 minutes with the Rerun settings), or **Email OTP Length** is not 6.
+If the code arrives but is refused, it may have expired (15 minutes with the Lumvika settings), or **Email OTP Length** is not 6.
 
 ## The sign-in dialog fails, or "Anonymous sign-in failed" in the logs
 
@@ -114,7 +114,7 @@ Either [pair a server](/self-host/servers#add-a-server) for this workspace, or f
 
 The pairing says: "The app cannot reach your server at ...". The app checks the address before attaching the server, from inside its own container.
 
-- **The address.** Is it the one in the message? Without `RERUN_PUBLIC_URL`, the app guesses from where the request came from, which is wrong behind a proxy, a NAT or a tunnel. Set `RERUN_PUBLIC_URL` in the command.
+- **The address.** Is it the one in the message? Without `LUMVIKA_PUBLIC_URL`, the app guesses from where the request came from, which is wrong behind a proxy, a NAT or a tunnel. Set `LUMVIKA_PUBLIC_URL` in the command.
 - **The port.** The command publishes the engine on port 3000 with `-p 3000:3000`. Check nothing else holds it.
 - **The firewall.** Open port 3000 to the app's machine only, or use HTTPS behind a proxy. See [Networking](/self-host/servers#networking).
 - **Tailscale.** Both machines on the same tailnet, and the server's Tailscale IP as the address, not its MagicDNS name.
@@ -125,21 +125,21 @@ Run `curl http://<address>/health` from the app's machine: it must answer before
 
 The server logs say `pairing not done yet` a few times, then `pairing failed`.
 
-`RERUN_HUB_URL` in the command is your `NEXT_PUBLIC_APP_URL`. When it is `http://localhost:3000`, a server elsewhere cannot reach it, and a container on the same machine reaches itself. Give the app an address the server can reach, rebuild, and click **Add server** again.
+`LUMVIKA_HUB_URL` in the command is your `NEXT_PUBLIC_APP_URL`. When it is `http://localhost:3000`, a server elsewhere cannot reach it, and a container on the same machine reaches itself. Give the app an address the server can reach, rebuild, and click **Add server** again.
 
 ## The pairing token expired, or was already used
 
 A token works once, for 15 minutes, for one workspace. Click **Add server** again for a new command, then:
 
 ```bash
-docker rm -f rerun-engine
+docker rm -f lumvika-engine
 ```
 
 and run the new command. The volume keeps its data.
 
-## A coworker answers "Set OPENROUTER_API_KEY to run the Rerun models"
+## A coworker answers "Set OPENROUTER_API_KEY to run the Lumvika models"
 
-The coworker is on a Rerun model, and the app has no OpenRouter key. Either:
+The coworker is on a Lumvika model, and the app has no OpenRouter key. Either:
 
 - put your key in `OPENROUTER_API_KEY` in `.env` and run `docker compose up -d`, or
 - connect another provider in **AI providers** and pick it in the coworker's model picker. See [AI models](/self-host/models).
@@ -154,11 +154,11 @@ The engine could not reach the server of a **Custom endpoint** connection. The m
 
 If the model answers but forgets its instructions, its context is too small. See [Your own model](/self-host/models#your-own-model).
 
-## The Foreman does not answer
+## The Steward does not answer
 
-With `OPENROUTER_API_KEY` set, the Foreman walks a new workspace through its onboarding on that key: look for `[llm]` or OpenRouter errors in `docker compose logs app`, an empty balance or a spending limit on the key stops it too.
+With `OPENROUTER_API_KEY` set, the Steward walks a new workspace through its onboarding on that key: look for `[llm]` or OpenRouter errors in `docker compose logs app`, an empty balance or a spending limit on the key stops it too.
 
-Without the key, the Foreman skips the onboarding and runs on the AI you connect. If it answers "Set OPENROUTER_API_KEY to run the Rerun models", connect a provider or your Claude or ChatGPT plan from its model picker and pick it.
+Without the key, the Steward skips the onboarding and runs on the AI you connect. If it answers "Set OPENROUTER_API_KEY to run the Lumvika models", connect a provider or your Claude or ChatGPT plan from its model picker and pick it.
 
 ## A Composio app does not connect
 
@@ -170,10 +170,10 @@ Without the key, the Foreman skips the onboarding and runs on the AI you connect
 
 The browser opens a coworker's screen directly on the server's address, over `ws://` or `wss://`.
 
-- **The engine started by docker compose** needs `RERUN_ENGINE_BROWSER_URL`: its `https` domain on a server, as in [On a server](/self-host/install#on-a-server).
+- **The engine started by docker compose** needs `LUMVIKA_ENGINE_BROWSER_URL`: its `https` domain on a server, as in [On a server](/self-host/install#on-a-server).
 - **Your browser must reach the server.** On Tailscale, the person watching must be on the tailnet too.
 - **HTTPS on both sides.** When the app is on `https://`, the server must be too, or the browser blocks the connection. Put it behind [Caddy](/self-host/servers#networking).
-- **The screen was turned off** with `RERUN_DESKTOP=off` on the server.
+- **The screen was turned off** with `LUMVIKA_DESKTOP=off` on the server.
 
 ## Web search does not work
 
@@ -191,4 +191,4 @@ docker compose exec engine node dist/cli/bin.js doctor
 
 ## Still stuck
 
-Open an issue on [GitHub](https://github.com/rerun-build/rerun/issues) with what you ran, what you expected, and the output of `docker compose logs --since 30m app engine`. Remove keys and tokens first.
+Open an issue on [GitHub](https://github.com/schnebel-technologie/lumvika/issues) with what you ran, what you expected, and the output of `docker compose logs --since 30m app engine`. Remove keys and tokens first.

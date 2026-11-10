@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-files-missing-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-files-missing-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { createServer } = await import('../server.js')
@@ -21,10 +21,10 @@ beforeAll(async () => {
 })
 
 describe('reading a file that is not there', () => {
-    // The UI asks every agent for .rerun/services.json on load, and an agent with no connector
+    // The UI asks every agent for .lumvika/services.json on load, and an agent with no connector
     // installed simply has none. That has to read as "absent", not as a server fault.
     it('answers 404, not 500', async () => {
-        const res = await app.request(`/agents/${id}/files/read?path=${encodeURIComponent('.rerun/services.json')}`)
+        const res = await app.request(`/agents/${id}/files/read?path=${encodeURIComponent('.lumvika/services.json')}`)
         expect(res.status).toBe(404)
     })
 

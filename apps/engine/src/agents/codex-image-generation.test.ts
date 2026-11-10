@@ -2,14 +2,14 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-codex-images-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-codex-images-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { fileURLToPath } = await import('node:url')
 const { stat, readFile } = await import('node:fs/promises')
 const { streamText, wrapLanguageModel } = await import('ai')
 const { createCodexAppServer } = await import('ai-sdk-provider-codex-cli')
-const { fileCardSchema } = await import('@rerun/contracts')
+const { fileCardSchema } = await import('@lumvika/contracts')
 const { describe, expect, it } = await import('vitest')
 const { workspaceDir } = await import('../config/paths.js')
 const { createCodexImageMiddleware, rewriteImageGenerationPart } = await import('./codex-images.js')
@@ -54,7 +54,7 @@ describe('Codex image generation reaches the chat', () => {
     }, 15_000)
 
     it('copies the file Codex saved when the item carries no inline bytes, and leaves the original in place', async () => {
-        const saved = resolve(process.env.RERUN_DATA_DIR!, 'codex-home', 'generated_images', 'thread-1', 'ig_1.png')
+        const saved = resolve(process.env.LUMVIKA_DATA_DIR!, 'codex-home', 'generated_images', 'thread-1', 'ig_1.png')
         await import('node:fs/promises').then(fs => fs.mkdir(resolve(saved, '..'), { recursive: true }))
         writeFileSync(saved, Buffer.from(PNG_1PX, 'base64'))
 
@@ -92,7 +92,7 @@ describe('rewriteImageGenerationPart', () => {
     })
 
     it('keeps the extension of the file Codex saved, jpeg included', async () => {
-        const saved = resolve(process.env.RERUN_DATA_DIR!, 'codex-home', 'generated_images', 'thread-2', 'ig_4.jpeg')
+        const saved = resolve(process.env.LUMVIKA_DATA_DIR!, 'codex-home', 'generated_images', 'thread-2', 'ig_4.jpeg')
         await import('node:fs/promises').then(fs => fs.mkdir(resolve(saved, '..'), { recursive: true }))
         writeFileSync(saved, Buffer.from(JPEG_HEADER, 'base64'))
         const part = { type: 'tool-result', toolCallId: 'c', toolName: 'image_generation', result: { ...item, id: 'ig_4', result: null, savedPath: saved } }

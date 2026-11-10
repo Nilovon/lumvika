@@ -1,6 +1,6 @@
 import { createHmac } from 'crypto'
 
-import { DESKTOP_TICKET_TTL_MS, type DesktopViewMode } from '@rerun/contracts'
+import { DESKTOP_TICKET_TTL_MS, type DesktopViewMode } from '@lumvika/contracts'
 
 // The engine checks this in apps/engine/src/desktop/ticket.ts with the same key, so the Box key
 // itself never reaches a browser: what does is good for one WebSocket handshake within the minute,

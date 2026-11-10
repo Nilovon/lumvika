@@ -39,7 +39,7 @@ describe('listAgentTablesAction', () => {
     })
 
     it('keeps the transport details of a failed engine call out of the message', async () => {
-        mocks.listDbTables.mockRejectedValue(new EngineRequestError('rerun-engine GET /agents/cog1/data/tables failed: 500 boom', 500))
+        mocks.listDbTables.mockRejectedValue(new EngineRequestError('lumvika-engine GET /agents/cog1/data/tables failed: 500 boom', 500))
         await expect(listAgentTablesAction('agent-1')).resolves.toEqual({ success: false, error: 'Could not reach the engine for this coworker.', code: 'agentDbUnreachable' })
     })
 

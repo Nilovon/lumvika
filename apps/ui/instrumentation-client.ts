@@ -1,5 +1,5 @@
-import { rememberAttribution } from '@rerun/analytics/client'
-import { analyticsAllowed, detectConsentStatus } from '@rerun/contracts'
+import { rememberAttribution } from '@lumvika/analytics/client'
+import { analyticsAllowed, detectConsentStatus } from '@lumvika/contracts'
 import { isAnalyticsSurface, startAppAnalytics, startAppSessionReplay } from '@/lib/analytics'
 
 rememberAttribution()

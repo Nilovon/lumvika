@@ -1,9 +1,9 @@
 'use client'
 
-import { templateCategoryLabel } from '@rerun/contracts'
-import { BorderBeam } from '@rerun/ui'
-import { TemplateCardBoard, useBoardOnHover } from '@rerun/ui/iso-grid'
-import { Badge } from '@rerun/ui/primitives'
+import { templateCategoryLabel } from '@lumvika/contracts'
+import { BorderBeam } from '@lumvika/ui'
+import { TemplateCardBoard, useBoardOnHover } from '@lumvika/ui/iso-grid'
+import { Badge } from '@lumvika/ui/primitives'
 import { TemplateCardPrice } from '@/components/templates/TemplateCardPrice'
 import { TemplateCardThumbnail } from '@/components/templates/TemplateCardThumbnail'
 import { templateStatusLabel, templateStatusTone } from '@/lib/templates/status'

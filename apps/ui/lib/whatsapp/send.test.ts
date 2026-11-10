@@ -10,7 +10,7 @@ vi.mock('./client', () => ({ sendWhatsAppTemplate: vi.fn() }))
 vi.mock('./recipient', () => ({ loadWhatsAppRecipient: vi.fn() }))
 vi.mock('./store', () => ({ applyWhatsAppFailure: vi.fn(), claimWhatsAppMessage: vi.fn(), markWhatsAppMessageAccepted: vi.fn(), releaseWhatsAppMessage: vi.fn() }))
 
-const MESSAGE = paymentFailedMessage({ imageUrl: 'https://app.rerun.build/og/board?scene=x', team: 'Inbox Assistant', path: 'w/acme?billing=1' })
+const MESSAGE = paymentFailedMessage({ imageUrl: 'https://app.lumvika.com/og/board?scene=x', team: 'Inbox Assistant', path: 'w/acme?billing=1' })
 
 const deliver = () => deliverWhatsApp(fakeSupabase().client, { userId: 'user-1', workspaceId: 7, agentId: 'agent-1', message: MESSAGE, language: 'fr', dedupeKey: 'payment_failed:in_1' })
 
@@ -29,7 +29,7 @@ describe('deliverWhatsApp', () => {
         expect(vi.mocked(claimWhatsAppMessage).mock.calls[0][1]).toEqual({ userId: 'user-1', workspaceId: 7, agentId: 'agent-1', phone: '+32492000000', message: MESSAGE, language: 'fr', dedupeKey: 'payment_failed:in_1' })
         expect(sendWhatsAppTemplate).toHaveBeenCalledWith({
             to: '+32492000000',
-            slug: 'rerun_payment_failed',
+            slug: 'lumvika_payment_failed',
             language: 'fr',
             components: MESSAGE.components,
             idempotencyKey: 'whatsapp:row-1',

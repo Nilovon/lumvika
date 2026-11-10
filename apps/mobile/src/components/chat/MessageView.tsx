@@ -1,4 +1,4 @@
-import { hitlKindOf, isSubRunLive, pairSubRuns, parseHitlReply, parseInstallMessage, parseScheduledRun, parseTriggerPayload, QUICK_REPLIES_TOOL, skillProposalIdOf, stripBridgePrefix, SUB_RUN_TOOL_NAMES, toolActivityOf, toolLabelOf, type ConversationMessageMetadata, type MessageFeedbackRating, type PaidTurnSources, type TriggerPayload } from '@rerun/contracts'
+import { hitlKindOf, isSubRunLive, pairSubRuns, parseHitlReply, parseInstallMessage, parseScheduledRun, parseTriggerPayload, QUICK_REPLIES_TOOL, skillProposalIdOf, stripBridgePrefix, SUB_RUN_TOOL_NAMES, toolActivityOf, toolLabelOf, type ConversationMessageMetadata, type MessageFeedbackRating, type PaidTurnSources, type TriggerPayload } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 import { View } from 'react-native'
 import { useTranslations } from 'use-intl'
@@ -33,8 +33,8 @@ type ToolPart = { type: string; toolName?: string; toolCallId?: string; state?: 
 
 const toolNameOf = (part: ToolPart) => stripBridgePrefix(part.toolName ?? part.type.slice('tool-'.length))
 
-// The Foreman's shortcuts to a coworker: no question, nothing to answer, a chip under its text.
-const FOREMAN_SHORTCUTS = new Set(['show_agents', 'open_connector_setup'])
+// The Steward's shortcuts to a coworker: no question, nothing to answer, a chip under its text.
+const STEWARD_SHORTCUTS = new Set(['show_agents', 'open_connector_setup'])
 
 const isToolPart = (part: Part): part is Part & ToolPart => part.type.startsWith('tool-') || part.type === 'dynamic-tool'
 
@@ -68,14 +68,14 @@ type MessageViewProps = {
     message: UIMessage
     isLastAssistant: boolean
     running: boolean
-    // The coworker whose files a card points at; the Foreman's live elsewhere, and its cards stay steps.
+    // The coworker whose files a card points at; the Steward's live elsewhere, and its cards stay steps.
     agentId: string | null
     // Where the conversation's uploads sit, a voice message's recording among them.
     fileOwner: FileOwner | null
     coworkerName: string
     // A call drawn elsewhere for now, like the notification pinned until read.
     hiddenCallId: string | null
-    // The conversation's skill proposals, which a `skill_propose` call points at; none for the Foreman.
+    // The conversation's skill proposals, which a `skill_propose` call points at; none for the Steward.
     skillProposals?: SkillProposals
     // Stops one task of a delegation while its run goes on.
     onStopTask?: (taskId: string) => void
@@ -121,7 +121,7 @@ export function MessageView({ message, isLastAssistant, running, agentId, fileOw
     const blocks: Block[] = []
     let buffer = ''
     let steps: StepItem[] = []
-    // A shortcut the Foreman draws before it writes about it, shown under that text as on the web.
+    // A shortcut the Steward draws before it writes about it, shown under that text as on the web.
     let underText: Block[] = []
     const lastPart = message.parts.length - 1
     const subRuns = pairSubRuns(message.parts as { type: string; id?: string; toolCallId?: string; toolName?: string; data?: unknown }[])
@@ -204,7 +204,7 @@ export function MessageView({ message, isLastAssistant, running, agentId, fileOw
             addBlock({ key: `c${index}`, node: card.kind === 'table' ? <TableCardView card={card.card} agentId={agentId} /> : <FileCardView card={card.card} agentId={agentId} /> }, index)
             return
         }
-        if (!agentId && FOREMAN_SHORTCUTS.has(toolName) && part.state !== 'output-error') {
+        if (!agentId && STEWARD_SHORTCUTS.has(toolName) && part.state !== 'output-error') {
             underText.push({ key: `p${index}`, node: <AgentPickerCard picks={readAgentPicks(toolName, part.input)} /> })
             return
         }

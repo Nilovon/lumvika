@@ -1,4 +1,4 @@
-import { connectorSkillReadOnlyError, isSetupAnswered, MAX_TEXT_WRITE_CHARS, providerSchema, triggerMethodSchema, verbositySchema } from '@rerun/contracts'
+import { connectorSkillReadOnlyError, isSetupAnswered, MAX_TEXT_WRITE_CHARS, providerSchema, triggerMethodSchema, verbositySchema } from '@lumvika/contracts'
 import { AccessDeniedError, assertAgentInWorkspace, callableEngineAgentIds, isAdminActor, keepVisible, manageableSpaceIds, spaceAccessMap, visibleAgentIds, visibleSpaceIds, type Actor } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
 import {
@@ -223,7 +223,7 @@ function defaultContentType(body: string): string {
 
 // The public URL carries the token, so it stands in for it rather than being returned next to
 // it: nothing here should invite the caller to recompose the URL by hand. It is built from the
-// Rerun agent id, not the engine's local one, since that is what /api/t/... resolves.
+// Lumvika agent id, not the engine's local one, since that is what /api/t/... resolves.
 async function projectTrigger(agentId: string, trigger: EngineTrigger) {
     return {
         slug: trigger.slug,
@@ -258,7 +258,7 @@ async function resolveSpaceId(actor: Actor, requested?: string): Promise<string>
     const [{ data: all }, manageable] = await Promise.all([selectMany(supabase, 'spaces', ['id', 'name'] as const, { workspace_id: actor.workspaceId }), manageableSpaceIds(actor)])
     const spaces = keepVisible(all ?? [], manageable, space => space.id)
 
-    if (spaces.length === 0) throw new Error(all?.length ? 'You manage no Box in this workspace. Create one first, or ask an admin to make you a manager of one.' : 'This account has no Box yet — create one in the Rerun app first.')
+    if (spaces.length === 0) throw new Error(all?.length ? 'You manage no Box in this workspace. Create one first, or ask an admin to make you a manager of one.' : 'This account has no Box yet — create one in the Lumvika app first.')
     if (requested) {
         if (!spaces.some(space => space.id === requested)) throw new Error('Box not found')
         return requested
@@ -307,9 +307,9 @@ function readMemoryEntries(value: unknown): MemoryEntry[] {
     })
 }
 
-// `actor` is whose access the call runs with: the workspace for an API key, the member a foreman
+// `actor` is whose access the call runs with: the workspace for an API key, the member a steward
 // turn speaks for. `actorUserId` is the member recorded as the author of what the call starts (an
-// API key's creator, the foreman's member).
+// API key's creator, the steward's member).
 export async function dispatchAccountTool(actor: Actor, name: string, args: Record<string, unknown>, { actorUserId = null }: { actorUserId?: string | null } = {}): Promise<unknown> {
     const workspaceId = actor.workspaceId
     // Every tool that takes a `model` pins it, on a coworker, a scheduled task, a trigger or the
@@ -800,7 +800,7 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
             // reads as one subscriber leaving: the agent keeps working either way.
             await res.body?.cancel().catch(() => {})
             if (!runId) throw new Error('The engine accepted the message but did not return a run id.')
-            // Same reason as the foreman's setup hand-over: /chat announces no session, so without
+            // Same reason as the steward's setup hand-over: /chat announces no session, so without
             // this the conversation never shows up in the agent's chat.
             if (sessionId) await recordSessionParticipant(await ensureSessionRow(agentId, sessionId, requireString(args.message, 'message'), { source: 'api', status: 'working' }), actorUserId)
 
@@ -947,7 +947,7 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
                 message:
                     status === 'active'
                         ? `${name} is installed and its tools are available to the coworker.`
-                        : `${name} is declared on the coworker and waiting for the account owner to connect it from the Rerun app (coworker panel, Services tab). Do not ask anyone for credentials here.`,
+                        : `${name} is declared on the coworker and waiting for the account owner to connect it from the Lumvika app (coworker panel, Services tab). Do not ask anyone for credentials here.`,
             }
         }
 

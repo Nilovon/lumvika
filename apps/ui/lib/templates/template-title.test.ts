@@ -1,4 +1,4 @@
-import { TEMPLATE_TITLE_MAX_LENGTH, templateDocumentSchema } from '@rerun/contracts'
+import { TEMPLATE_TITLE_MAX_LENGTH, templateDocumentSchema } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 import { TEMPLATE_TOOL_DEFS } from '@/lib/mcp/template-tools'
 import { templateAuthorPatchSchema } from './expert'

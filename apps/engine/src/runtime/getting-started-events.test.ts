@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-getting-started-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-getting-started-'))
 
 const { sent } = vi.hoisted(() => ({ sent: [] as Array<Record<string, unknown>> }))
 
@@ -20,10 +20,10 @@ vi.mock('./notify.js', async importOriginal => {
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { rm } = await import('node:fs/promises')
-const { RERUN_CONNECTION_ID } = await import('@rerun/contracts')
+const { LUMVIKA_CONNECTION_ID } = await import('@lumvika/contracts')
 const { connectionRoutes } = await import('../http/routes/connections.js')
 const { agentsDir, connectionsDir } = await import('../config/paths.js')
-const { ensureRerunConnection } = await import('../connections/store.js')
+const { ensureLumvikaConnection } = await import('../connections/store.js')
 const { unloadConnection } = await import('../connections/registry.js')
 const { clearBoxDefault } = await import('../connections/default.js')
 const { writeSchedule } = await import('../schedules/loader.js')
@@ -39,11 +39,11 @@ const events = (event: string) => sent.filter(input => input.event === event)
 
 beforeEach(async () => {
     sent.length = 0
-    unloadConnection(RERUN_CONNECTION_ID)
+    unloadConnection(LUMVIKA_CONNECTION_ID)
     await clearBoxDefault()
     await rm(connectionsDir(), { recursive: true, force: true })
     await rm(agentsDir(), { recursive: true, force: true })
-    await ensureRerunConnection()
+    await ensureLumvikaConnection()
 })
 
 describe('box.connection.connected', () => {
@@ -62,8 +62,8 @@ describe('box.connection.connected', () => {
         expect(events('box.connection.connected')).toHaveLength(1)
     })
 
-    it('is never sent for the keyless Rerun connection', async () => {
-        await request('PATCH', `/${RERUN_CONNECTION_ID}`, { models: ['rerun-max'] })
+    it('is never sent for the keyless Lumvika connection', async () => {
+        await request('PATCH', `/${LUMVIKA_CONNECTION_ID}`, { models: ['lumvika-max'] })
         expect(events('box.connection.connected')).toEqual([])
     })
 })

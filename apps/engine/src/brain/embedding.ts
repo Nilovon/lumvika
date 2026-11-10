@@ -9,7 +9,7 @@ const PASS_LIMIT = 500
 const MAX_CONSECUTIVE_FAILURES = 3
 
 let running: Promise<number> | null = null
-let rerun = false
+let lumvika = false
 
 async function embedPass(): Promise<{ embedded: number; hubDown: boolean }> {
     const client = await getBrainDb()
@@ -44,18 +44,18 @@ async function embedPass(): Promise<{ embedded: number; hubDown: boolean }> {
 // is down, though: the maintenance tick retries later.
 export function embedPendingChunks(): Promise<number> {
     if (running) {
-        rerun = true
+        lumvika = true
         return running
     }
     running = (async () => {
         let total = 0
         let hubDown = false
         do {
-            rerun = false
+            lumvika = false
             const pass = await embedPass()
             total += pass.embedded
             hubDown = pass.hubDown
-        } while (rerun && !hubDown)
+        } while (lumvika && !hubDown)
         return total
     })().finally(() => (running = null))
     return running

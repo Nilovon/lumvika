@@ -1,4 +1,4 @@
-export const THEME_COOKIE = 'rerun-theme'
+export const THEME_COOKIE = 'lumvika-theme'
 
 export const THEME_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 

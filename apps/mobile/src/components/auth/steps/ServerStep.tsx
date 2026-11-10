@@ -25,7 +25,7 @@ export function ServerStep() {
                 value={address}
                 onChangeText={type}
                 onSubmitEditing={connect}
-                placeholder="rerun.example.com"
+                placeholder="lumvika.example.com"
                 placeholderTextColor={theme.mutedForeground}
                 keyboardType="url"
                 textContentType="URL"

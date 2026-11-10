@@ -21,12 +21,12 @@ import {
     BRAND_GATE_PARAM,
     brandGateVerdict,
     isGatedPath,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // The labs are work in progress, so they answer 404 unless the request carries the shared design
 // system token, as `?key=` or in the cookie that grants it. Same token and same cookie as the
-// landing, set on `.rerun.build`: unlocking once opens both hosts. The UI kit next to them is public.
+// landing, set on `.lumvika.com`: unlocking once opens both hosts. The UI kit next to them is public.
 // No Supabase session is read here, so a capture of these pages still provisions nothing, which is
 // what excluding `render/` from the matcher below exists for.
 function brandGate(request: NextRequest): NextResponse {
@@ -48,7 +48,7 @@ function brandGate(request: NextRequest): NextResponse {
             path: '/',
             maxAge: BRAND_GATE_MAX_AGE,
             sameSite: 'lax',
-            domain: host.endsWith('rerun.build') ? '.rerun.build' : undefined,
+            domain: host.endsWith('lumvika.com') ? '.lumvika.com' : undefined,
             secure: (forwarded ?? request.nextUrl.protocol.replace(':', '')) === 'https',
         })
     }
@@ -62,10 +62,10 @@ function rewriteTo(request: NextRequest, pathname: string, params: Record<string
     return NextResponse.rewrite(url, status ? { status } : undefined)
 }
 
-// A published host answers before anything reads or writes a session: rerun.site never provisions
+// A published host answers before anything reads or writes a session: lumvika.site never provisions
 // an anonymous user for every visitor of a shared link, and the only cookie it ever holds is the
 // one its own gate sets. The link decides what a path shows: the site's file, the viewer of a single
-// file, or the gate when the visitor may not open it yet. The reserved `/__rerun/` paths (the gate's
+// file, or the gate when the visitor may not open it yet. The reserved `/__lumvika/` paths (the gate's
 // forms, the raw file, the preview image) always reach the route, which checks for itself, and the
 // app's own `/_next/` assets serve the gate and the viewer unless the site has a file of that name.
 async function publishedHost(request: NextRequest, slug: string): Promise<NextResponse> {
@@ -151,7 +151,7 @@ export const config = {
         '/render/lab/:path*',
         // Every path of a published site, images and favicon.ico included, which the exclusions
         // above would otherwise hand to the app's own files instead of the site's.
-        { source: '/:path*', has: [{ type: 'host', value: '.+\\.rerun\\.site' }] },
+        { source: '/:path*', has: [{ type: 'host', value: '.+\\.lumvika\\.site' }] },
         { source: '/:path*', has: [{ type: 'host', value: '.+\\.localhost' }] },
     ],
 }

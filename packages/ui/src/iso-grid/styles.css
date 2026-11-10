@@ -1,5 +1,5 @@
 /* Keyframes utilisées par les blocs d'agents de l'isogrid.
-   Importées via @rerun/ui/styles.css (ne pas importer ce fichier directement). */
+   Importées via @lumvika/ui/styles.css (ne pas importer ce fichier directement). */
 
 /* Palette de la grille iso. `--iso-glint` est un triplet rgb (pas une couleur) : les couches de
    lumière s'écrivent `rgb(var(--iso-glint) / .15)` et s'inversent d'un thème à l'autre sans que les
@@ -41,7 +41,7 @@
        couleur entière, pas un triplet : en clair elle prend le violet de la marque, qu'aucun
        triplet ne peut porter. Du blanc sur un fond clair ne se verrait pas, et l'encre neutre de
        `--primary` peindrait une ombre plutôt qu'une lumière. */
-    --iso-halo: var(--color-brand, #4d34f7);
+    --iso-halo: var(--color-brand, #0b6e63);
     /* A buddy at rest. Its body stays dark in both themes, a figurine standing on the board and not
        a piece of the floor: that is what keeps its white face readable. What follows the floor is
        what it does to it, the shadow under its base and the label's plate. */

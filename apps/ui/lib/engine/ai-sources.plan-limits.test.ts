@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { RERUN_CONNECTION_ID, type PlanLimitWindow } from '@rerun/contracts'
-import { isUsable, livePlanWindows, pillUsage, planLimitTone, planWindowName, providerPitch, sourceSummary, tightestPlanWindow, type RerunCredit } from './ai-sources'
+import { LUMVIKA_CONNECTION_ID, type PlanLimitWindow } from '@lumvika/contracts'
+import { isUsable, livePlanWindows, pillUsage, planLimitTone, planWindowName, providerPitch, sourceSummary, tightestPlanWindow, type LumvikaCredit } from './ai-sources'
 import { englishTranslator } from '@/lib/i18n/english-translator'
 import type { BoxConnection } from './types'
 
 const NOW = Date.parse('2026-10-05T12:00:00.000Z')
 const session: PlanLimitWindow = { kind: 'session', label: null, usedPercent: 42, resetsAt: '2026-10-05T14:00:00.000Z' }
 const weekly: PlanLimitWindow = { kind: 'weekly', label: null, usedPercent: 81, resetsAt: '2026-10-09T08:00:00.000Z' }
-const credit: RerunCredit = { usedMicros: 0, budgetMicros: 0, resetAt: null, percent: 0 }
+const credit: LumvikaCredit = { usedMicros: 0, budgetMicros: 0, resetAt: null, percent: 0 }
 
 function plan(windows: PlanLimitWindow[] | null): BoxConnection {
     return {
@@ -100,7 +100,7 @@ describe('pillUsage', () => {
     const claude = (planWindows: PlanLimitWindow[]) => ({ connectionId: 'c1', planWindows })
     const monthly: PlanLimitWindow = { kind: 'monthly', label: null, usedPercent: 93, resetsAt: null }
     const opus: PlanLimitWindow = { kind: 'model', label: 'Opus', usedPercent: 88, resetsAt: null }
-    const rerun = { connectionId: RERUN_CONNECTION_ID, planWindows: [] }
+    const lumvika = { connectionId: LUMVIKA_CONNECTION_ID, planWindows: [] }
 
     it('puts the session inside and the weekly window outside', () => {
         expect(pillUsage(claude([session, weekly]), credit)).toEqual({ inner: 42, outer: 81, windows: [session, weekly] })
@@ -120,10 +120,10 @@ describe('pillUsage', () => {
         expect(pillUsage(claude([]), credit)).toBeNull()
     })
 
-    it('rings the Rerun credit of the month, unless there is none or it is paused', () => {
-        const spending: RerunCredit = { usedMicros: 840_000, budgetMicros: 2_000_000, resetAt: null, percent: 42 }
-        expect(pillUsage(rerun, spending)).toEqual({ inner: 42, outer: null, windows: [] })
-        expect(pillUsage(rerun, credit)).toBeNull()
-        expect(pillUsage(rerun, { ...spending, paused: true })).toBeNull()
+    it('rings the Lumvika credit of the month, unless there is none or it is paused', () => {
+        const spending: LumvikaCredit = { usedMicros: 840_000, budgetMicros: 2_000_000, resetAt: null, percent: 42 }
+        expect(pillUsage(lumvika, spending)).toEqual({ inner: 42, outer: null, windows: [] })
+        expect(pillUsage(lumvika, credit)).toBeNull()
+        expect(pillUsage(lumvika, { ...spending, paused: true })).toBeNull()
     })
 })

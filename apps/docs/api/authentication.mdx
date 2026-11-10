@@ -1,6 +1,6 @@
 ---
 title: "Authentication"
-description: "Create, use and revoke a Rerun API key."
+description: "Create, use and revoke a Lumvika API key."
 ---
 
 import PaidPlanNote from '/snippets/paid-plan-note.mdx'
@@ -9,7 +9,7 @@ Every API call authenticates with a bearer token in the `Authorization` header.
 
 ```http
 POST /api/mcp/account HTTP/1.1
-Host: app.rerun.build
+Host: app.lumvika.com
 Authorization: Bearer rk_your_key
 Content-Type: application/json
 ```
@@ -20,7 +20,7 @@ Content-Type: application/json
 
 <Steps>
   <Step title="Open the workspace menu">
-    In [the Rerun app](https://app.rerun.build), click the workspace pill in the top left corner.
+    In [the Lumvika app](https://app.lumvika.com), click the workspace pill in the top left corner.
   </Step>
   <Step title="Choose API keys & MCP">
     The dialog lists your active keys and the connection snippets for every supported client.
@@ -29,7 +29,7 @@ Content-Type: application/json
     Name it after what will hold it, for example `claude-code-laptop` or `ci`. Names are limited to 60 characters.
   </Step>
   <Step title="Copy it now">
-    The full key is shown once and never again. Rerun stores only a SHA-256 hash of it, so nobody, including Rerun, can read it back. If you lose it, revoke it and create another.
+    The full key is shown once and never again. Lumvika stores only a SHA-256 hash of it, so nobody, including Lumvika, can read it back. If you lose it, revoke it and create another.
   </Step>
 </Steps>
 
@@ -66,7 +66,7 @@ A key is bound to a workspace, not to a user, a Box or a coworker. It can:
 There is no read-only mode and no per-coworker scoping. If you need a narrower blast radius, use a separate workspace.
 
 <Warning>
-  A Rerun API key is a production secret. Keep it in an environment variable or a secret manager, never in a repository, a shared document or a chat message. If a key leaks, revoke it from the app right away.
+  A Lumvika API key is a production secret. Keep it in an environment variable or a secret manager, never in a repository, a shared document or a chat message. If a key leaks, revoke it from the app right away.
 </Warning>
 
 ## Errors

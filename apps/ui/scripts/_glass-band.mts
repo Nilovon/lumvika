@@ -1,6 +1,6 @@
 // The 3D-glass band that opens an email, from the prompt to the JPEG. Two scripts fill it in:
 // generate-email-scenes.mts for the re-engagement banners, generate-newsletter-art.mts for the
-// header of a newsletter issue. The prompt grammar follows the `rerun-image-glass` skill and is
+// header of a newsletter issue. The prompt grammar follows the `lumvika-image-glass` skill and is
 // shared with scripts/generate-category-art.mts, so a banner, an issue header and a category tile
 // read as the same family: only the hero pictogram, the satellites and the tilt change.
 //

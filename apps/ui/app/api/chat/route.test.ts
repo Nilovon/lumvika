@@ -24,7 +24,7 @@ const busy = () => Response.json({ runId: 'run-1', startedAt: null }, { status: 
 const streaming = (runId: string, sessionId = 'engine-session') => new Response('data: {}\n\n', { headers: { 'Content-Type': 'text/event-stream', 'x-run-id': runId, 'x-session-id': sessionId } })
 
 function request(body: Record<string, unknown>) {
-    return new Request('https://rerun.test/api/chat', { method: 'POST', body: JSON.stringify({ agentId: 'agent', sessionId: 'session', text: 'ship it', ...body }) })
+    return new Request('https://lumvika.test/api/chat', { method: 'POST', body: JSON.stringify({ agentId: 'agent', sessionId: 'session', text: 'ship it', ...body }) })
 }
 
 // The route sleeps between retries; without fake timers the queued cases would take 25 seconds.

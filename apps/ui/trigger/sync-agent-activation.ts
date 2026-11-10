@@ -1,6 +1,6 @@
 import { task } from '@trigger.dev/sdk/v3'
 import { startAgentOnEngine, stopAgentsOnEngine } from '@/app/api/_services/agent-activation.service'
-import { taskLogger as logger, triggerTask } from '@rerun/cloud/tasks'
+import { taskLogger as logger, triggerTask } from '@lumvika/cloud/tasks'
 
 // `switchOn` is a plan that grew, waking coworkers; without it the batch is switched off.
 export type SyncAgentActivationPayload = { agentIds: string[]; switchOn?: boolean }

@@ -1,5 +1,5 @@
 import { englishTranslator } from '@/lib/i18n/english-translator'
-import { loadMessages } from '@rerun/i18n/messages'
+import { loadMessages } from '@lumvika/i18n/messages'
 import { createTranslator } from 'use-intl'
 import { describe, expect, it } from 'vitest'
 import { chatErrorTitle as titleIn, classifyChatError, describeSubscriptionLimit, friendlyError as friendlyIn, isBudgetExhausted, stripErrorPrefix, installInFlightOf, subscriptionLimitMessage, subscriptionLimitTitle, teammateRunOf, unwrapChatError, type ChatErrorKind, type SubscriptionLimit } from './chat-error'
@@ -32,7 +32,7 @@ describe('unwrapChatError', () => {
     })
 
     it('preserves the budget marker for isBudgetExhausted', () => {
-        expect(isBudgetExhausted(unwrapChatError('{"error":"rerun_budget_exhausted"}'))).toBe(true)
+        expect(isBudgetExhausted(unwrapChatError('{"error":"lumvika_budget_exhausted"}'))).toBe(true)
     })
 })
 
@@ -42,7 +42,7 @@ describe('friendlyError', () => {
     })
 
     it('humanizes the budget marker', () => {
-        expect(friendlyError('rerun_budget_exhausted')).toContain('Rerun credits used up')
+        expect(friendlyError('lumvika_budget_exhausted')).toContain('Lumvika credits used up')
     })
 
     it('passes any other message through', () => {
@@ -221,7 +221,7 @@ describe('OpenCode limits', () => {
     const credits = 'AI_APICallError: OpenCode Console credits used up: Insufficient account funds'
     const goWeekly = 'AI_APICallError: OpenCode Go limit reached: weekly window · resets Nov 6, 3:00 PM UTC'
 
-    it('reads as a usage limit, never as the Rerun budget, and names OpenCode', () => {
+    it('reads as a usage limit, never as the Lumvika budget, and names OpenCode', () => {
         expect(classifyChatError(credits)).toBe('usage_limit')
         expect(classifyChatError(goWeekly)).toBe('usage_limit')
         expect(chatErrorTitle('usage_limit', credits)).toBe('OpenCode credits used up')
@@ -339,7 +339,7 @@ describe('the English copy of a spent subscription', () => {
     })
 
     it('keeps the fixed sentences', () => {
-        expect(friendlyError('rerun_budget_exhausted')).toBe('Rerun credits used up for this period. Add credits or wait for the monthly reset.')
+        expect(friendlyError('lumvika_budget_exhausted')).toBe('Lumvika credits used up for this period. Add credits or wait for the monthly reset.')
         expect(chatErrorTitle('run_in_flight', 'A run is already in flight')).toBe('This conversation is still busy')
         expect(chatErrorTitle('unauthorized', '401')).toBe('Connection signed out')
         expect(chatErrorTitle('overloaded', 'Selected model is at capacity')).toBe('Model at capacity')

@@ -1,10 +1,10 @@
 'use client'
 
-import { isSubscriptionEntitled } from '@rerun/cloud/billing'
+import { isSubscriptionEntitled } from '@lumvika/cloud/billing'
 import { useBillingStore } from '@/stores/billing.store'
 import { useBoardStore } from '@/stores/board.store'
 import { useSession } from '@/supabase/session/SessionProvider'
-import { track } from '@rerun/analytics/client'
+import { track } from '@lumvika/analytics/client'
 import type { LibraryTemplate } from '@/lib/templates/library'
 
 // Using a template, from the library as from a shared link. It never installs anything itself: it

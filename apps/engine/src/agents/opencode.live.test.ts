@@ -1,25 +1,25 @@
-// Against the real OpenCode, with a real key: skipped unless both `RERUN_LIVE=1` and
+// Against the real OpenCode, with a real key: skipped unless both `LUMVIKA_LIVE=1` and
 // `OPENCODE_API_KEY` are set (`apps/engine/.env` is read by the engine's own env loader, not here):
 //
-//   RERUN_LIVE=1 OPENCODE_API_KEY=oc_sk_… pnpm --filter rerun-engine exec vitest run src/agents/opencode.live.test.ts
+//   LUMVIKA_LIVE=1 OPENCODE_API_KEY=oc_sk_… pnpm --filter lumvika-engine exec vitest run src/agents/opencode.live.test.ts
 //
 // Writes what every Go model managed to `.context/opencode/compat.md` at the repo root.
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-opencode-live-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-opencode-live-'))
 
 const { describe, expect, it } = await import('vitest')
 const { generateText, stepCountIs, streamText, tool } = await import('ai')
 const { z } = await import('zod')
-const { OPENCODE_CATALOG_URL, OPENCODE_SNAPSHOT, OPENCODE_USAGE_URL, agentConfigSchema, connectionConfigSchema, parseOpencodeCatalog } = await import('@rerun/contracts')
+const { OPENCODE_CATALOG_URL, OPENCODE_SNAPSHOT, OPENCODE_USAGE_URL, agentConfigSchema, connectionConfigSchema, parseOpencodeCatalog } = await import('@lumvika/contracts')
 const { resolveModel } = await import('./providers.js')
 const { reasoningProviderOptions } = await import('./reasoning.js')
 const { refreshOpencodeCatalog, opencodeModels } = await import('../connections/opencode-catalog.js')
 
 const KEY = process.env.OPENCODE_API_KEY ?? ''
-const LIVE = process.env.RERUN_LIVE === '1' && KEY.length > 0
+const LIVE = process.env.LUMVIKA_LIVE === '1' && KEY.length > 0
 const REPORT = resolve(import.meta.dirname, '../../../../.context/opencode/compat.md')
 
 function agentOn(model: string) {
@@ -62,7 +62,7 @@ describe.skipIf(!LIVE)('OpenCode, live', () => {
         expect(bad.status).toBe(401)
     }, 30_000)
 
-    it('runs every Go model through the Rerun provider', async () => {
+    it('runs every Go model through the Lumvika provider', async () => {
         await refreshOpencodeCatalog()
         const rows: string[] = []
         for (const model of opencodeModels().filter(entry => entry.plan === 'go')) {

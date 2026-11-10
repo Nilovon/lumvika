@@ -1,5 +1,5 @@
-import { BILLING_ENABLED } from '@rerun/cloud/billing'
-import { SUPPORT_CHAT_ENABLED } from '@rerun/cloud/support'
+import { BILLING_ENABLED } from '@lumvika/cloud/billing'
+import { SUPPORT_CHAT_ENABLED } from '@lumvika/cloud/support'
 
 export const CONTROL_COMMAND_IDS = [
     'new_agent',
@@ -60,7 +60,7 @@ export function buildControlCommands(gates: ControlGates, reasons: ControlReason
         command('new_agent', 'actions', 'New agent', ['create', 'add', 'hire'], gates.needsMachineReason),
         command('browse_templates', 'actions', 'Browse templates', ['library', 'install', 'marketplace'], gates.needsMachineReason),
         command('new_box', 'actions', 'New Box', ['create', 'add', 'team', 'group'], gates.isSandbox ? reasons.singleBox : null),
-        gates.assistantReady && command('ask_assistant', 'actions', 'Ask the assistant', ['help', 'foreman', 'chat']),
+        gates.assistantReady && command('ask_assistant', 'actions', 'Ask the assistant', ['help', 'steward', 'chat']),
         SUPPORT_CHAT_ENABLED && command('contact_support', 'actions', 'Contact Support', ['help', 'chat', 'crisp', 'contact', 'bug', 'question', 'talk to us']),
         command('recenter_board', 'actions', 'Recenter the board', ['camera', 'zoom', 'fit', 'reset view']),
         command('toggle_theme', 'actions', gates.darkTheme ? 'Switch to light theme' : 'Switch to dark theme', ['appearance', 'mode', 'dark', 'light']),

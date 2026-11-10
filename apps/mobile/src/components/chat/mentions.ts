@@ -1,4 +1,4 @@
-import type { BoardAgent, Box, SkillSummary } from '@rerun/contracts'
+import type { BoardAgent, Box, SkillSummary } from '@lumvika/contracts'
 
 // The web composer's `@` and `/` menus, same strings: the engine reads `@handle` and `/slug` from the
 // text through its prompt, nothing parses them on the way.
@@ -46,7 +46,7 @@ export function insertAtCaret(text: string, caret: number, token: string): { tex
 }
 
 // Every other live coworker of the workspace answers to `call_agent`, whichever Box it sits in. Its own
-// Box opens the list, and only the others carry a Box name. The Foreman, in no Box, sees them all named.
+// Box opens the list, and only the others carry a Box name. The Steward, in no Box, sees them all named.
 export function mentionAgentsOf(agents: BoardAgent[], boxes: Box[], selfId: string | null): MentionAgent[] {
     const self = selfId ? agents.find(agent => agent.id === selfId) : undefined
     const boxNames = new Map(boxes.map(box => [box.id, box.name]))

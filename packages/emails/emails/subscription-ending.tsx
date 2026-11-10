@@ -85,8 +85,8 @@ SubscriptionEnding.PreviewProps = {
   endsLabel: "12 March",
   daysLeft: 7,
   keptUntilLabel: "10 June",
-  billingUrl: "https://app.rerun.build/?billing=1",
-  appUrl: "https://app.rerun.build",
+  billingUrl: "https://app.lumvika.com/?billing=1",
+  appUrl: "https://app.lumvika.com",
 } satisfies SubscriptionEndingProps;
 
 const meta: React.CSSProperties = {

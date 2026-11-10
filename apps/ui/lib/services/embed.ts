@@ -3,16 +3,16 @@ import { embed } from 'ai'
 import type { ServiceManifest } from './manifest'
 
 // Embeddings for the service library's semantic search and engine memory recall, via
-// OpenRouter. They use a dedicated key so embedding traffic and Rerun traffic are
+// OpenRouter. They use a dedicated key so embedding traffic and Lumvika traffic are
 // billed independently. Default model is OpenAI text-embedding-3-small (1536 dims), so
 // the `vector(1536)` columns stay consistent.
 // Returns null when no key is configured — callers fall back to keyword search.
 
-const EMBED_BASE_URL = process.env.RERUN_EMBED_BASE_URL ?? 'https://openrouter.ai/api/v1'
-const EMBED_MODEL = process.env.RERUN_EMBED_MODEL ?? 'openai/text-embedding-3-small'
+const EMBED_BASE_URL = process.env.LUMVIKA_EMBED_BASE_URL ?? 'https://openrouter.ai/api/v1'
+const EMBED_MODEL = process.env.LUMVIKA_EMBED_MODEL ?? 'openai/text-embedding-3-small'
 
 function embedModel() {
-    const apiKey = process.env.RERUN_EMBED_API_KEY
+    const apiKey = process.env.LUMVIKA_EMBED_API_KEY
     if (!apiKey) return null
     return createOpenAICompatible({ name: 'openrouter', apiKey, baseURL: EMBED_BASE_URL }).textEmbeddingModel(EMBED_MODEL)
 }

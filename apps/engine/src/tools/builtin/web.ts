@@ -19,7 +19,7 @@ const HUB_FETCH_TIMEOUT_MS = 60_000
 const MAX_FETCH_CHARS = 50_000
 const MAX_REDIRECTS = 10
 
-const USER_AGENT = { 'User-Agent': 'rerun-engine/1.0' }
+const USER_AGENT = { 'User-Agent': 'lumvika-engine/1.0' }
 
 function failureReason(e: unknown, signal: AbortSignal, timeoutMs: number): string {
     return signal.aborted ? `timed out after ${Math.round(timeoutMs / 1000)} s` : (e as Error).message
@@ -30,7 +30,7 @@ const refusal = (verb: string, e: NonPublicHostError, url: string): HostAttempt 
 // What a coworker auditing a site must not read as a fact about it: the status went to our reader,
 // from a datacenter with our user agent, and a URL it guessed proves nothing when it does not exist.
 function statusLine(status: number, url: string): string {
-    if (isFailureStatus(status)) return `[${status}] ${url} (sent to Rerun's reader: not proof that Google or visitors get the same)`
+    if (isFailureStatus(status)) return `[${status}] ${url} (sent to Lumvika's reader: not proof that Google or visitors get the same)`
     if (status === 404 || status === 410) return `[${status}] ${url} (no page here: if you guessed this URL instead of following a link, that is not proof of a broken page)`
     return `[${status}] ${url}`
 }
@@ -42,8 +42,8 @@ function isHtml(res: Response): boolean {
 type SearchResult = { title: string; url: string; snippet: string }
 
 async function searchHub(caller: HubCaller, query: string, maxResults: number): Promise<SearchResult[]> {
-    const { RERUN_HUB_BASE_URL: hub, RERUN_API_KEY: token } = env()
-    if (!hub || !token) throw new Error('web search is unavailable: the engine is not linked to a Rerun hub')
+    const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: token } = env()
+    if (!hub || !token) throw new Error('web search is unavailable: the engine is not linked to a Lumvika hub')
 
     const res = await fetch(`${hub.replace(/\/$/, '')}/api/search`, {
         method: 'POST',
@@ -53,7 +53,7 @@ async function searchHub(caller: HubCaller, query: string, maxResults: number): 
     })
     if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null
-        throw new Error(body?.error ?? `the Rerun hub answered ${res.status}`)
+        throw new Error(body?.error ?? `the Lumvika hub answered ${res.status}`)
     }
     const data = (await res.json()) as { results?: SearchResult[] }
     return data.results ?? []
@@ -68,7 +68,7 @@ function isRefusal(status: number | null): boolean {
 type HubPage = { markdown: string; rawHtml: string | null }
 
 async function fetchThroughHub(caller: HubCaller, url: string, directStatus: number | null, runSignal?: AbortSignal): Promise<HubPage | null> {
-    const { RERUN_HUB_BASE_URL: hub, RERUN_API_KEY: token } = env()
+    const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: token } = env()
     if (!hub || !token) return null
 
     try {
@@ -99,7 +99,7 @@ function hubPageText(url: string, note: string, page: HubPage, saved: string | n
 }
 
 const WEB_FETCH_DESCRIPTION =
-    'Fetch a URL and return its text content (HTML is stripped to plain text). An HTML page starts with its page facts as the site serves them, before JavaScript: title, meta description, canonical, robots, hreflang, JSON-LD types, h1 and links, including those of the navigation and footer. Every page read is also saved whole under .rerun/pages/ in your workspace, to grep for anything the result leaves out.'
+    'Fetch a URL and return its text content (HTML is stripped to plain text). An HTML page starts with its page facts as the site serves them, before JavaScript: title, meta description, canonical, robots, hreflang, JSON-LD types, h1 and links, including those of the navigation and footer. Every page read is also saved whole under .lumvika/pages/ in your workspace, to grep for anything the result leaves out.'
 
 const webSearchDescription = (paidData: boolean): string => `Search the web and return ranked results (title, URL, snippet). Use this to discover sources before fetching them.${paidData ? ' For people and their work emails or phones, lists of companies, social profiles and posts, SEO numbers or Google and Maps rows, use paid_data instead: it returns that as structured, verified rows, where a web search only finds pages that may mention it.' : ''}`
 
@@ -138,7 +138,7 @@ export function webTools(ctx: RunContext, fetchTimeoutMs = FETCH_TIMEOUT_MS): To
                     } catch (e) {
                         if (runSignal?.aborted) throw e
                         if (e instanceof NonPublicHostError) return refusal('Fetch', e, url)
-                        direct = { text: `Fetch failed: ${failureReason(e, signal, fetchTimeoutMs)} (${url}). This is Rerun's reader failing, not proof that the site is down.`, failed: true }
+                        direct = { text: `Fetch failed: ${failureReason(e, signal, fetchTimeoutMs)} (${url}). This is Lumvika's reader failing, not proof that the site is down.`, failed: true }
                     }
                     if (raw || !isRefusal(directStatus)) return direct
 
@@ -146,8 +146,8 @@ export function webTools(ctx: RunContext, fetchTimeoutMs = FETCH_TIMEOUT_MS): To
                     if (!page) return direct
                     const note =
                         directStatus === null
-                            ? "(read through Rerun: Rerun's reader could not reach the site directly, not proof that the site is down)"
-                            : `(read through Rerun: the site answered ${directStatus} to Rerun's reader, not proof that Google or visitors get the same)`
+                            ? "(read through Lumvika: Lumvika's reader could not reach the site directly, not proof that the site is down)"
+                            : `(read through Lumvika: the site answered ${directStatus} to Lumvika's reader, not proof that Google or visitors get the same)`
                     return { text: hubPageText(url, note, page, await saveHubPage(id, url, page)), failed: false }
                 }),
         }),

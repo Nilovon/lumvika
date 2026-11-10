@@ -1,6 +1,6 @@
 'use client'
 
-import type { NewAgentRequest } from '@rerun/ui/new-agent'
+import type { NewAgentRequest } from '@lumvika/ui/new-agent'
 import { useTranslations } from 'next-intl'
 
 import { readAgentJobAction } from '@/app/api/_actions/onboarding.actions'
@@ -12,7 +12,7 @@ import { useConnectorCatalog } from '@/lib/new-agent/useConnectorCatalog'
 import { useBoxAgentSuggestions } from '@/lib/onboarding/useBoxAgentSuggestions'
 import { useStartScratchAgent } from '@/lib/templates/useStartScratchAgent'
 
-// The agent described in one sentence: Rerun reads its name, its apps and its timing in it. The
+// The agent described in one sentence: Lumvika reads its name, its apps and its timing in it. The
 // dialog writes nothing and calls no action to create anything: the agent is created on the tile
 // drop, with its apps, and the description is its first message.
 //

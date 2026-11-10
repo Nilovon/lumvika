@@ -41,9 +41,9 @@ function resolve(table: string, calls: readonly SupabaseCall[]) {
 }
 
 function request(body: unknown, headers: Record<string, string> = {}) {
-    return new Request('https://rerun.test/api/mcp/composio/gmail', {
+    return new Request('https://lumvika.test/api/mcp/composio/gmail', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-rerun-key': BOX_KEY, 'x-rerun-agent': 'engine-own', ...headers },
+        headers: { 'content-type': 'application/json', 'x-lumvika-key': BOX_KEY, 'x-lumvika-agent': 'engine-own', ...headers },
         body: JSON.stringify(body),
     })
 }
@@ -70,7 +70,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
     })
 
     it('answers 401 without an engine key and loads no manifest', async () => {
-        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-rerun-key': '' }), context())
+        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-key': '' }), context())
 
         expect(response.status).toBe(401)
         expect(loadManifest).not.toHaveBeenCalled()
@@ -78,7 +78,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
     })
 
     it('answers 401 with an engine key that names no machine', async () => {
-        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-rerun-key': 'forged-key' }), context())
+        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-key': 'forged-key' }), context())
 
         expect(response.status).toBe(401)
         expect(authenticateEngineToken).toHaveBeenCalledWith('forged-key')
@@ -123,7 +123,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
     })
 
     it('refuses an engine agent of another workspace', async () => {
-        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-rerun-agent': 'engine-foreign' }), context())
+        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-agent': 'engine-foreign' }), context())
 
         expect(await response.json()).toMatchObject({ error: { code: -32603, message: 'Coworker does not belong to the authenticated workspace' } })
         expect(eqValue(db.chainsOn('agents')[0], 'workspace_id')).toBe(WORKSPACE_ID)
@@ -131,7 +131,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
     })
 
     it('refuses a tool call that names no engine agent', async () => {
-        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-rerun-agent': '' }), context())
+        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-agent': '' }), context())
 
         expect(await response.json()).toMatchObject({ error: { code: -32603 } })
         expect(db.chainsOn('agents')).toHaveLength(0)
@@ -145,15 +145,15 @@ describe('POST /api/mcp/composio/[slug]', () => {
         expect(executeTool).toHaveBeenCalledWith('GMAIL_SEND_EMAIL', composioUserId('agent-own'), { to: 'a@b.c' })
     })
 
-    it('runs the tool as the Composio user of the instance named by x-rerun-instance', async () => {
-        await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-rerun-instance': 'k3x9ab' }), context())
+    it('runs the tool as the Composio user of the instance named by x-lumvika-instance', async () => {
+        await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-instance': 'k3x9ab' }), context())
 
         expect(executeTool).toHaveBeenCalledWith('GMAIL_SEND_EMAIL', composioUserId('agent-own', 'k3x9ab'), { to: 'a@b.c' })
         expect(composioUserId('agent-own', 'k3x9ab')).toBe(`${composioUserId('agent-own')}_k3x9ab`)
     })
 
     it('answers 400 to a malformed instance id rather than acting as the base account', async () => {
-        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-rerun-instance': '../other' }), context())
+        const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-instance': '../other' }), context())
 
         expect(response.status).toBe(400)
         expect(executeTool).not.toHaveBeenCalled()
@@ -204,7 +204,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
             const base = registryWith({ status: 'active', composio: { toolkit: 'gmail', serverName: 'gmail', connectedAccountId: 'ca_1' } })
             vi.mocked(readRegistry).mockResolvedValue({ services: { gmail: base, 'gmail@k3x9ab': extra } })
 
-            const text = await errorText(await POST(request(toolCall('GMAIL_LIST_THREADS'), { 'x-rerun-instance': 'k3x9ab' }), context()))
+            const text = await errorText(await POST(request(toolCall('GMAIL_LIST_THREADS'), { 'x-lumvika-instance': 'k3x9ab' }), context()))
 
             expect(text).toMatch(/^Gmail's connection expired or was revoked\. Call suggest_service with slug "gmail"/)
             expect(upsertRegistryEntry).toHaveBeenCalledTimes(1)

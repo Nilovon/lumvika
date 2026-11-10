@@ -1,6 +1,6 @@
 'use client'
 
-import { TextShimmer } from '@rerun/ui'
+import { TextShimmer } from '@lumvika/ui'
 import { useTranslations } from 'next-intl'
 
 import { Skeleton } from '@/components/ui/skeleton'

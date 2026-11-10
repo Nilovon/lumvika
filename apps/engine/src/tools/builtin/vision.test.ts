@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-vision-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-vision-'))
 
 const { model } = vi.hoisted(() => ({
     model: { hang: false, prompts: [] as unknown[], calls: [] as unknown[][] },
@@ -44,7 +44,7 @@ const uploads = resolve(workspaceDir(agentId), 'chat-uploads')
 mkdirSync(uploads, { recursive: true })
 
 function ctxWith(abortSignal?: AbortSignal) {
-    return { agent: { id: agentId, resolved: { provider: 'rerun' } }, sessionId: 's', logger: { warn: () => {} }, abortSignal } as any
+    return { agent: { id: agentId, resolved: { provider: 'lumvika' } }, sessionId: 's', logger: { warn: () => {} }, abortSignal } as any
 }
 
 async function analyze(ctx: ReturnType<typeof ctxWith>, imagePath: string, timeoutMs?: number): Promise<string> {

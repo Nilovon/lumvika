@@ -1,4 +1,4 @@
-import { parseServiceRegistryKey } from '@rerun/contracts'
+import { parseServiceRegistryKey } from '@lumvika/contracts'
 import { loadManifest, markComposioAuthorized } from '@/app/api/_services/services.service'
 import { composioUserId, getConnectedAccount } from '@/lib/composio/client'
 import { COMPOSIO_COOKIE_PATH, COMPOSIO_COOKIE_PREFIX, type ComposioOAuthContext, decodeComposioContext } from '@/lib/composio/oauth'

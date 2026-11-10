@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Last pan/zoom of a canvas, so coming back to Rerun restores the framing the user left off at
+// Last pan/zoom of a canvas, so coming back to Lumvika restores the framing the user left off at
 // instead of snapping to the default view. Scoped per canvas: `board:<workspaceId>` for the iso board.
 const cameraSchema = z.object({
     pan: z.object({ x: z.number().finite(), y: z.number().finite() }),
@@ -9,7 +9,7 @@ const cameraSchema = z.object({
 
 export type Camera = z.infer<typeof cameraSchema>
 
-const keyFor = (scope: string) => `rerun:camera:${scope}`
+const keyFor = (scope: string) => `lumvika:camera:${scope}`
 
 const THROTTLE_MS = 250
 

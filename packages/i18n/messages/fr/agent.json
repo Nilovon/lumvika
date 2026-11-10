@@ -298,8 +298,8 @@
             },
             "paidData": {
                 "label": "Leads, SEO et données sociales",
-                "blurb": "Payé avec vos crédits Rerun",
-                "help": "Permet au coworker de trouver des prospects, leurs e-mails pro, leurs numéros et des données d'entreprise, de consulter volumes de recherche, idées de mots-clés et backlinks, de lire les résultats Google et les commerces locaux, et de lire profils et publications publics sur LinkedIn, TikTok, Instagram, X, YouTube, Facebook et Reddit, sans abonnement Apollo, Semrush ou de scraping. Chaque appel est payé avec vos crédits Rerun, dépensés par le coworker quand une tâche le demande."
+                "blurb": "Payé avec vos crédits Lumvika",
+                "help": "Permet au coworker de trouver des prospects, leurs e-mails pro, leurs numéros et des données d'entreprise, de consulter volumes de recherche, idées de mots-clés et backlinks, de lire les résultats Google et les commerces locaux, et de lire profils et publications publics sur LinkedIn, TikTok, Instagram, X, YouTube, Facebook et Reddit, sans abonnement Apollo, Semrush ou de scraping. Chaque appel est payé avec vos crédits Lumvika, dépensés par le coworker quand une tâche le demande."
             },
             "requestSecret": {
                 "label": "Demander un identifiant",
@@ -414,7 +414,7 @@
     },
     "modelsShared": {
         "boxManageReason": "Seul un admin ou un manager de cette Box peut modifier ceci",
-        "creditPaused": "Les crédits Rerun sont en pause"
+        "creditPaused": "Les crédits Lumvika sont en pause"
     },
     "modelSelector": {
         "setUp": "Configurer un modèle",

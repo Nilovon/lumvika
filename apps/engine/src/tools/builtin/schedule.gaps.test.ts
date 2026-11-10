@@ -3,8 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-schedule-gaps-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-schedule-gaps-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { afterAll, beforeAll, describe, expect, it, vi } = await import('vitest')
 
@@ -13,7 +13,7 @@ vi.mock('../../runtime/notify.js', async importOriginal => ({
     sendNotification: async () => ({ delivered: true }),
 }))
 
-const { DEFAULT_CONNECTION_MODELS } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS } = await import('@lumvika/contracts')
 const { createConnection } = await import('../../connections/store.js')
 const { scheduleTools } = await import('./schedule.js')
 const { listSchedules, readSchedule, scheduleExists, writeSchedule } = await import('../../schedules/loader.js')

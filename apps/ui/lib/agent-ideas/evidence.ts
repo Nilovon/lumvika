@@ -1,8 +1,8 @@
-import type { BrainPage } from '@rerun/contracts'
+import type { BrainPage } from '@lumvika/contracts'
 
 import type { CompanyFinding, CompanyFindingsRow } from '@/lib/company/explore/findings'
-import { describeNeed } from '@/lib/foreman/needs'
-import { foremanUseCases, type ForemanAnswers } from '@/lib/foreman/phase'
+import { describeNeed } from '@/lib/steward/needs'
+import { stewardUseCases, type StewardAnswers } from '@/lib/steward/phase'
 import type { Evidence, EvidenceDraft } from './types'
 
 const TEXT_MAX = 420
@@ -110,7 +110,7 @@ export function findingsEvidence(row: CompanyFindingsRow | null): EvidenceDraft[
 
 // What the person told us themselves. `withProfile` is for a workspace without a brain, where the
 // quick read of the home page is all there is on what the company sells.
-export function answersEvidence(answers: ForemanAnswers, { withProfile }: { withProfile: boolean }): EvidenceDraft[] {
+export function answersEvidence(answers: StewardAnswers, { withProfile }: { withProfile: boolean }): EvidenceDraft[] {
     const drafts: EvidenceDraft[] = []
     const add = (source: string, topic: string, text: string | undefined) => {
         if (text?.trim()) drafts.push({ source, topic, text: flatten(text) })
@@ -124,9 +124,9 @@ export function answersEvidence(answers: ForemanAnswers, { withProfile }: { with
     add('answers:industry', 'Industry', answers.industry)
     if (answers.tools?.length) add('answers:tools', 'Apps they picked', `Picked these apps at onboarding, in this order: ${answers.tools.join(', ')}`)
 
-    const foreman = answers.foreman ?? {}
-    for (const useCase of foremanUseCases(foreman)) add('interview:use-case', 'Job they asked to hand over first', useCase)
-    for (const need of foreman.needs ?? []) add('interview:need', 'What goes wrong today', describeNeed(need))
+    const steward = answers.steward ?? {}
+    for (const useCase of stewardUseCases(steward)) add('interview:use-case', 'Job they asked to hand over first', useCase)
+    for (const need of steward.needs ?? []) add('interview:need', 'What goes wrong today', describeNeed(need))
     return drafts
 }
 

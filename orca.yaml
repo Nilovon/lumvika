@@ -1,7 +1,7 @@
 scripts:
   # Same steps as paseo.json and .conductor/settings.toml: the private cloud/ when the clone works,
   # the .env files of the main checkout, a block of 10 ports for this worktree, dependencies and
-  # @rerun/contracts. The dev servers are Quick Commands, they read their port from
+  # @lumvika/contracts. The dev servers are Quick Commands, they read their port from
   # scripts/paseo/workspace-port.sh.
   setup: |
     #!/usr/bin/env bash
@@ -10,7 +10,7 @@ scripts:
     base_port=$(bash scripts/paseo/workspace-port.sh)
     mkdir -p .claude
     [ -e .claude/settings.local.json ] || printf '{\n  "env": { "CONDUCTOR_PORT": "%s" }\n}\n' "$base_port" > .claude/settings.local.json
-    [ -e cloud/.git ] || git clone -q --branch dev "$(git remote get-url origin | sed -E 's#/rerun(\.git)?$#/rerun-cloud.git#')" cloud || echo '[setup] cloud/ not cloned: open source build only'
+    [ -e cloud/.git ] || git clone -q --branch dev "$(git remote get-url origin | sed -E 's#/lumvika(\.git)?$#/lumvika-cloud.git#')" cloud || echo '[setup] cloud/ not cloned: open source build only'
     shopt -s nullglob
     for source in "$ORCA_ROOT_PATH"/apps/*/.env "$ORCA_ROOT_PATH"/apps/*/.env.local "$ORCA_ROOT_PATH"/apps/*/.env.profile.* "$ORCA_ROOT_PATH"/cloud/apps/*/.env "$ORCA_ROOT_PATH"/cloud/apps/*/.env.local "$ORCA_ROOT_PATH"/cloud/apps/*/.env.profile.*; do
       target="${source#"$ORCA_ROOT_PATH"/}"
@@ -19,7 +19,7 @@ scripts:
     done
     pnpm install --force --ignore-scripts
     pnpm rebuild esbuild sharp
-    pnpm --filter @rerun/contracts build
+    pnpm --filter @lumvika/contracts build
     [ ! -d cloud ] || node scripts/install-cloud.mjs
     [ ! -d cloud ] || pnpm cloud db:link || true
     [ ! -d cloud ] || pnpm cloud env:prod || true

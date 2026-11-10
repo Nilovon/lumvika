@@ -4,8 +4,8 @@
 //
 // Run: ../engine/node_modules/.bin/tsx --env-file=.env scripts/verify-template-prefill.mts [slug]
 
-import { TEMPLATE_CATEGORIES } from '@rerun/contracts'
-import { selectMany } from '@rerun/db/helpers'
+import { TEMPLATE_CATEGORIES } from '@lumvika/contracts'
+import { selectMany } from '@lumvika/db/helpers'
 import { loadServiceCatalog } from '../lib/templates/catalog'
 import { toTemplateBrief, withConnectorNames } from '../lib/templates/describe'
 import { rowToDocument, TEMPLATE_DOC_COLUMNS, type TemplateRow } from '../lib/templates/document'

@@ -8,7 +8,7 @@ export const MCP_ACCOUNT_PATH = '/api/mcp/account'
 // before a key exists, and the user swaps this for their own.
 export const KEY_PLACEHOLDER = 'rk_your_key'
 
-const SERVER_NAME = 'rerun'
+const SERVER_NAME = 'lumvika'
 
 export function mcpAccountUrl(origin: string): string {
     return `${origin.replace(/\/$/, '')}${MCP_ACCOUNT_PATH}`
@@ -33,7 +33,7 @@ export function mcpRemoteCommand(url: string, key: string): string {
     return `npx -y mcp-remote ${url} --header "Authorization: ${authorizationHeader(key)}"`
 }
 
-export type McpClientId = 'claude-code' | 'chatgpt' | 'cursor' | 'rerun' | 'other'
+export type McpClientId = 'claude-code' | 'chatgpt' | 'cursor' | 'lumvika' | 'other'
 
 // `block` marks a snippet that is a config to paste rather than a command to run, so it renders
 // multi-line instead of on a single scrollable row.
@@ -43,7 +43,7 @@ export const MCP_CLIENTS: { id: McpClientId; label: string; docs: string }[] = [
     { id: 'claude-code', label: 'Claude Code', docs: '/api/connect#claude-code' },
     { id: 'chatgpt', label: 'ChatGPT', docs: '/api/connect#codex' },
     { id: 'cursor', label: 'Cursor', docs: '/api/connect#cursor' },
-    { id: 'rerun', label: 'Rerun', docs: '/api/connect#a-rerun-agent' },
+    { id: 'lumvika', label: 'Lumvika', docs: '/api/connect#a-lumvika-agent' },
     { id: 'other', label: 'Other', docs: '/api/connect#any-other-client' },
 ]
 
@@ -53,13 +53,13 @@ export function mcpClientDocs(client: McpClientId): string {
 
 // Codex never takes the key inline: it reads it from the environment each time it starts the
 // server, so connecting takes an exported variable next to the `mcp add`.
-const CODEX_KEY_ENV = 'RERUN_MCP_KEY'
+const CODEX_KEY_ENV = 'LUMVIKA_MCP_KEY'
 
 function cursorConfig(url: string, key: string): string {
     return JSON.stringify({ mcpServers: { [SERVER_NAME]: { url, headers: { Authorization: authorizationHeader(key) } } } }, null, 2)
 }
 
-function rerunAgentConfig(url: string, key: string): string {
+function lumvikaAgentConfig(url: string, key: string): string {
     return JSON.stringify({ name: SERVER_NAME, transport: 'http', url, headers: { Authorization: authorizationHeader(key) } }, null, 2)
 }
 
@@ -78,11 +78,11 @@ export function mcpClientSnippets(client: McpClientId, url: string, key: string)
             ]
         case 'cursor':
             return [{ label: '~/.cursor/mcp.json', value: cursorConfig(url, key), block: true }]
-        case 'rerun':
+        case 'lumvika':
             return [
                 {
                     label: 'Coworker panel, MCP, New',
-                    value: rerunAgentConfig(url, key),
+                    value: lumvikaAgentConfig(url, key),
                     block: true,
                     hint: 'Gives one of your coworkers the same reach over this workspace as an outside client.',
                 },

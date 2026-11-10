@@ -1,4 +1,4 @@
-import { formatElapsed, isSubRunFailing, isSubRunLive, isSubRunStalled, stripBridgePrefix, subRunOutcome, toolLabelOf, type SubRunCall, type SubRunTask } from '@rerun/contracts'
+import { formatElapsed, isSubRunFailing, isSubRunLive, isSubRunStalled, stripBridgePrefix, subRunOutcome, toolLabelOf, type SubRunCall, type SubRunTask } from '@lumvika/contracts'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
 import { useEffect, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'

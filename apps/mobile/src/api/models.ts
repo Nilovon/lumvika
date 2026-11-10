@@ -1,4 +1,4 @@
-import { agentModelsSchema, type AgentModels, type Provider, type SetAgentModelInput } from '@rerun/contracts'
+import { agentModelsSchema, type AgentModels, type Provider, type SetAgentModelInput } from '@lumvika/contracts'
 
 import { api } from '@/api/client'
 import type { ModelProvider } from '@/mocks/models'
@@ -15,7 +15,7 @@ export async function setAgentModel(caller: Caller, agentId: string, choice: Set
 
 // The mark a connection's provider shows under: five logos cover every provider the engine runs.
 export function logoOf(provider: Provider): ModelProvider {
-    if (provider === 'rerun' || provider === 'openrouter') return 'rerun'
+    if (provider === 'lumvika' || provider === 'openrouter') return 'lumvika'
     if (provider === 'anthropic' || provider === 'claude') return 'claude'
     if (provider === 'openai' || provider === 'codex') return 'codex'
     if (provider === 'opencode') return 'opencode'

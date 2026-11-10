@@ -1,4 +1,4 @@
-import { MAX_UPLOAD_FILE_BYTES, type SkillSummary } from '@rerun/contracts'
+import { MAX_UPLOAD_FILE_BYTES, type SkillSummary } from '@lumvika/contracts'
 import * as DocumentPicker from 'expo-document-picker'
 import * as Haptics from 'expo-haptics'
 import { GlassView } from 'expo-glass-effect'

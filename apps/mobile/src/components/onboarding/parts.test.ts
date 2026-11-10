@@ -44,6 +44,6 @@ describe('the build', () => {
 })
 
 it('reads the app opening the conversation as nobody writing', () => {
-    expect(isKickoff({ id: 'k', role: 'user', parts: [{ type: 'text', text: '[[foreman:start]]' }] } as UIMessage)).toBe(true)
+    expect(isKickoff({ id: 'k', role: 'user', parts: [{ type: 'text', text: '[[steward:start]]' }] } as UIMessage)).toBe(true)
     expect(isKickoff({ id: 'u', role: 'user', parts: [{ type: 'text', text: 'Hello' }] } as UIMessage)).toBe(false)
 })

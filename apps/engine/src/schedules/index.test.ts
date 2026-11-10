@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-schedule-index-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-schedule-index-'))
+process.env.LUMVIKA_API_KEY = ''
 
 vi.mock('../runtime/notify.js', async importOriginal => ({
     ...(await importOriginal<typeof import('../runtime/notify.js')>()),

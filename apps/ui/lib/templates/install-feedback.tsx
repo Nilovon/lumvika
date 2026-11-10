@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import type { DuplicateAgentResult } from '@/app/api/_actions/agent.actions'
 import type { InstallSharedAgentResult } from '@/app/api/_actions/agent-share.actions'
 import type { InstallTemplateResult } from '@/app/api/_actions/template.actions'
-import { fireRerunConfetti } from '@/lib/confetti'
+import { fireLumvikaConfetti } from '@/lib/confetti'
 
 type Installed = Extract<InstallTemplateResult, { ok: true }>
 type SharedInstalled = Extract<InstallSharedAgentResult, { ok: true }>
@@ -57,16 +57,16 @@ export function reportInstall(result: Installed, title: string): void {
     }
     // The logo rain greets agents that really land, not the drop on the ghost block: during
     // onboarding that one is followed by the account and the payment.
-    if (result.imported > 0) void fireRerunConfetti()
+    if (result.imported > 0) void fireLumvikaConfetti()
     toast.success(translated(t => t('landed', { count: result.imported, title })), { description: translated(t => installDescription(result, t)) })
 }
 
 export function reportShareInstall(result: SharedInstalled): void {
-    if (!result.inactive) void fireRerunConfetti()
+    if (!result.inactive) void fireLumvikaConfetti()
     toast.success(translated(t => t('agentLanded', { name: result.agentName })), { description: translated(t => shareInstallDescription(result, t)) })
 }
 
 export function reportDuplicate(result: Duplicated): void {
-    if (!result.inactive) void fireRerunConfetti()
+    if (!result.inactive) void fireLumvikaConfetti()
     toast.success(translated(t => t('agentLanded', { name: result.agentName })), { description: translated(t => duplicateDescription(result, t)) })
 }

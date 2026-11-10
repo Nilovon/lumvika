@@ -157,9 +157,9 @@ export function readBuildResult(output: unknown): BuildResult | null {
     return { lead: asText(lead.agentId) ? { agentId: asText(lead.agentId), name: asText(lead.name) } : null, agents: Array.isArray(value.agents) ? value.agents.length : 0, failed }
 }
 
-// `[[foreman:start…]]` is the app opening the conversation, never something the person wrote.
+// `[[steward:start…]]` is the app opening the conversation, never something the person wrote.
 export function isKickoff(message: UIMessage): boolean {
-    return message.role === 'user' && message.parts.some(part => part.type === 'text' && part.text.trim().startsWith('[[foreman:start'))
+    return message.role === 'user' && message.parts.some(part => part.type === 'text' && part.text.trim().startsWith('[[steward:start'))
 }
 
 export function textOf(message: UIMessage): string {

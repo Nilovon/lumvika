@@ -1,0 +1,69 @@
+border.width: 1
+padding.width: 8
+padding.height: 6
+window.handle.width: 0
+window.client.padding.width: 0
+window.client.padding.height: 0
+window.label.text.justify: center
+
+window.active.border.color: #2e2e2e
+window.inactive.border.color: #262626
+window.active.title.separator.color: #2e2e2e
+window.inactive.title.separator.color: #262626
+
+window.active.title.bg: flat solid
+window.active.title.bg.color: #171717
+window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #0a0a0a
+
+window.active.label.bg: parentrelative
+window.inactive.label.bg: parentrelative
+window.active.label.text.color: #fafafa
+window.inactive.label.text.color: #a1a1a1
+
+window.active.button.unpressed.bg: parentrelative
+window.active.button.unpressed.image.color: #a1a1a1
+window.active.button.hover.bg: flat solid
+window.active.button.hover.bg.color: #262626
+window.active.button.hover.image.color: #fafafa
+window.active.button.pressed.bg: flat solid
+window.active.button.pressed.bg.color: #0b6e63
+window.active.button.pressed.image.color: #ffffff
+window.active.button.disabled.bg: parentrelative
+window.active.button.disabled.image.color: #404040
+window.active.button.toggled.bg: parentrelative
+window.active.button.toggled.image.color: #a1a1a1
+
+window.inactive.button.unpressed.bg: parentrelative
+window.inactive.button.unpressed.image.color: #525252
+window.inactive.button.hover.bg: flat solid
+window.inactive.button.hover.bg.color: #262626
+window.inactive.button.hover.image.color: #fafafa
+window.inactive.button.pressed.bg: flat solid
+window.inactive.button.pressed.bg.color: #0b6e63
+window.inactive.button.pressed.image.color: #ffffff
+window.inactive.button.disabled.bg: parentrelative
+window.inactive.button.disabled.image.color: #404040
+window.inactive.button.toggled.bg: parentrelative
+window.inactive.button.toggled.image.color: #525252
+
+menu.border.width: 1
+menu.border.color: #2e2e2e
+menu.separator.color: #2e2e2e
+menu.title.bg: flat solid
+menu.title.bg.color: #171717
+menu.title.text.color: #a1a1a1
+menu.items.bg: flat solid
+menu.items.bg.color: #171717
+menu.items.text.color: #fafafa
+menu.items.disabled.text.color: #525252
+menu.items.active.bg: flat solid
+menu.items.active.bg.color: #0b6e63
+menu.items.active.text.color: #ffffff
+
+osd.border.width: 1
+osd.border.color: #2e2e2e
+osd.bg: flat solid
+osd.bg.color: #171717
+osd.label.bg: parentrelative
+osd.label.text.color: #fafafa

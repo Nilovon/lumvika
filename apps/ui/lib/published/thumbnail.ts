@@ -32,7 +32,7 @@ async function pageThumbnail(slug: string, accessVersion: number, requestUrl: st
     const origin = publishedSiteOrigin(slug)
     if (!origin) return null
     const ticket = mintAccessTicket({ slug, v: accessVersion, grant: 'shot', sub: 'shot' })
-    const capture = await capturePage(`${origin}/__rerun/auth?ticket=${encodeURIComponent(ticket)}&next=%2F`, {
+    const capture = await capturePage(`${origin}/__lumvika/auth?ticket=${encodeURIComponent(ticket)}&next=%2F`, {
         requestUrl,
         width: THUMB_WIDTH,
         height: THUMB_HEIGHT,

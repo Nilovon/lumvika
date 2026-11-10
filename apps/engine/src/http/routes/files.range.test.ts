@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-files-range-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-files-range-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { mkdir, writeFile } = await import('node:fs/promises')

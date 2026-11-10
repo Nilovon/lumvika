@@ -6,7 +6,7 @@ const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`
 const GRAPH_VIDEO_BASE = `https://graph-video.facebook.com/${GRAPH_VERSION}`
 const MAX_PAGE_SIZE = 100
 
-// The Facebook Login for Business configuration on the Rerun app: Pages as assets, the seven
+// The Facebook Login for Business configuration on the Lumvika app: Pages as assets, the seven
 // Pages permissions, and a system-user token that never expires. The permissions live in the
 // configuration, so the authorize URL carries config_id instead of a scope.
 const LOGIN_CONFIG_ID = '1664481615043702'
@@ -79,13 +79,13 @@ const SCHEDULE = {
 const tools: ManagedTool[] = [
     {
         name: 'facebook_list_pages',
-        description: 'List the Facebook Pages the user shared with Rerun, with their id, name, category and follower count. Every other tool needs a Page id from here.',
+        description: 'List the Facebook Pages the user shared with Lumvika, with their id, name, category and follower count. Every other tool needs a Page id from here.',
         inputSchema: { type: 'object', properties: {} },
         execute: async (_args, token) => graph(token, 'GET', '/me/accounts', { fields: 'id,name,category,link,followers_count,fan_count', limit: MAX_PAGE_SIZE }),
     },
     {
         name: 'facebook_get_connected_account',
-        description: 'Get the Facebook identity Rerun acts as (id and name). Use it to confirm which account is connected.',
+        description: 'Get the Facebook identity Lumvika acts as (id and name). Use it to confirm which account is connected.',
         inputSchema: { type: 'object', properties: {} },
         execute: async (_args, token) => graph(token, 'GET', '/me', { fields: 'id,name' }),
     },
@@ -496,8 +496,8 @@ export const facebookProvider: ManagedProvider = {
         authorizationEndpoint: `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth`,
         tokenEndpoint: `${GRAPH_BASE}/oauth/access_token`,
         scopes: [],
-        clientIdEnv: 'RERUN_FACEBOOK_CLIENT_ID',
-        clientSecretEnv: 'RERUN_FACEBOOK_CLIENT_SECRET',
+        clientIdEnv: 'LUMVIKA_FACEBOOK_CLIENT_ID',
+        clientSecretEnv: 'LUMVIKA_FACEBOOK_CLIENT_SECRET',
         authorizeParams: { config_id: LOGIN_CONFIG_ID, override_default_response_type: 'true' },
         accountEmail: async accessToken => {
             const data = await graph(accessToken, 'GET', '/me/accounts', { fields: 'name', limit: MAX_PAGE_SIZE }).catch(() => null)

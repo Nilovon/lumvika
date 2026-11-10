@@ -2,13 +2,13 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-datadir-ladder-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-datadir-ladder-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { chmod, mkdir, readFile, rm, stat, symlink, writeFile } = await import('node:fs/promises')
 const { existsSync } = await import('node:fs')
-const { RERUN_CONNECTION_ID } = await import('@rerun/contracts')
+const { LUMVIKA_CONNECTION_ID } = await import('@lumvika/contracts')
 const { agentEnvPath, agentDir, agentsDir, boxPlanPath, configPath, connectionsDir, connectionsMigratedPath, dataVersionPath, mcpDir, mcpPackagesDir, mcpPendingPath, mcpTokenPath } = await import('../config/paths.js')
 const { writeEnvFile, readEnvFile } = await import('../lib/env-file.js')
 const { raw } = await import('../db/client.js')
@@ -32,7 +32,7 @@ function recorder(log: number[], fail?: number): Step[] {
 }
 
 beforeEach(async () => {
-    unloadConnection(RERUN_CONNECTION_ID)
+    unloadConnection(LUMVIKA_CONNECTION_ID)
     await rm(dataVersionPath(), { force: true })
     await rm(connectionsDir(), { recursive: true, force: true })
     await rm(agentsDir(), { recursive: true, force: true })
@@ -93,7 +93,7 @@ describe('a data-dir from before the ladder', () => {
         const tables = (await raw().execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.map(r => String(r.name))
         expect(tables).toContain('agents')
         expect(tables).not.toContain('runs')
-        expect((await listConnections()).map(c => c.config.provider).sort()).toEqual(['anthropic', 'rerun'])
+        expect((await listConnections()).map(c => c.config.provider).sort()).toEqual(['anthropic', 'lumvika'])
     })
 
     it('recreates the agents index on a migrated data-dir that lost it, without replaying the ladder', async () => {

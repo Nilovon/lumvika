@@ -1,7 +1,7 @@
 'use client'
 
-import { BorderBeam } from '@rerun/ui'
-import { useScrollFade } from '@rerun/ui/primitives'
+import { BorderBeam } from '@lumvika/ui'
+import { useScrollFade } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 

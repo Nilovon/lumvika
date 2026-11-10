@@ -118,7 +118,7 @@ describe('pointer', () => {
         expect(acted().filter(line => line.startsWith('click'))).toEqual(['click 3', 'click --repeat 2 --delay 80 1'])
     })
 
-    it.each(['rerun-dock', 'rerun-bar'])('refuses to click the %s, which belongs to the person', async name => {
+    it.each(['lumvika-dock', 'lumvika-bar'])('refuses to click the %s, which belongs to the person', async name => {
         state.windowName = name
         await expect(click(await controlScreen('a1'), [640, 700])).rejects.toBeInstanceOf(ControlRefusal)
         expect(acted().some(line => line.startsWith('click'))).toBe(false)

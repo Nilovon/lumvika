@@ -1,4 +1,4 @@
-import { REWIND_HOURS_PER_WEEK, type RewindAgentReport, type RewindRunOutput } from '@rerun/contracts'
+import { REWIND_HOURS_PER_WEEK, type RewindAgentReport, type RewindRunOutput } from '@lumvika/contracts'
 import { BRIDGE_SERVER_NAME } from '../agents/types.js'
 
 const HOUR_MS = 60 * 60 * 1000

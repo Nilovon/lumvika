@@ -1,6 +1,6 @@
 ---
 title: "Contributing"
-description: "Run Rerun from source, find your way in the code, and get a pull request in."
+description: "Run Lumvika from source, find your way in the code, and get a pull request in."
 ---
 
 Bug reports, fixes and docs are welcome. This page is the short version of `CONTRIBUTING.md` at the root of the repository.
@@ -26,14 +26,14 @@ You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and
     ```bash
     node scripts/self-host-check.mjs
     cp .env apps/ui/.env
-    echo "RERUN_ENGINE_URL=http://localhost:3000" >> apps/ui/.env
+    echo "LUMVIKA_ENGINE_URL=http://localhost:3000" >> apps/ui/.env
     ```
 
-    `RERUN_ENGINE_URL` gives the engine below to the first workspace that needs one.
+    `LUMVIKA_ENGINE_URL` gives the engine below to the first workspace that needs one.
   </Step>
   <Step title="Start the app">
     ```bash
-    pnpm --filter @rerun/contracts build
+    pnpm --filter @lumvika/contracts build
     pnpm dev:ui             # http://localhost:3050
     ```
   </Step>
@@ -44,7 +44,7 @@ You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and
     cp apps/engine/.env.example apps/engine/.env
     ```
 
-    In `apps/engine/.env`, set `RERUN_API_KEY` to the `RERUN_ENGINE_API_KEY` of `.env`, and `RERUN_HUB_BASE_URL=http://localhost:3050`. Then:
+    In `apps/engine/.env`, set `LUMVIKA_API_KEY` to the `LUMVIKA_ENGINE_API_KEY` of `.env`, and `LUMVIKA_HUB_BASE_URL=http://localhost:3050`. Then:
 
     ```bash
     pnpm dev:engine         # http://localhost:3000
@@ -60,9 +60,9 @@ To work on these docs, run `pnpm dev:docs` and open [http://localhost:3333](http
 
 ```bash
 pnpm -r --if-present ts-check
-pnpm --filter rerun lint
-pnpm --filter rerun test
-pnpm --filter rerun-engine test
+pnpm --filter lumvika lint
+pnpm --filter lumvika test
+pnpm --filter lumvika-engine test
 ```
 
 CI runs the same, plus every migration on an empty database and a build of both Docker images.
@@ -86,7 +86,7 @@ CI runs the same, plus every migration on an empty database and a build of both 
 
 A schema change is a new migration: `pnpm db:new <name>` creates the file, and `pnpm db:reset` replays every migration and the seed on the local stack.
 
-`apps/ui/cloud/` is the seam where Rerun Cloud plugs in billing, paid apps, emails and its machine pool. In this repository it holds the self-hosted behaviour. Pull requests that change what it exports are unlikely to be merged.
+`apps/ui/cloud/` is the seam where Lumvika Cloud plugs in billing, paid apps, emails and its machine pool. In this repository it holds the self-hosted behaviour. Pull requests that change what it exports are unlikely to be merged.
 
 ## Pull requests
 
@@ -94,6 +94,6 @@ A schema change is a new migration: `pnpm db:new <name>` creates the file, and `
 2. Keep a pull request to one change, with tests where the code has them.
 3. Sign the CLA when the bot asks: once, for all your contributions.
 
-Rerun is developed in a private repository that Rerun Cloud deploys from, and this repository is published from it at each release. A merged pull request is applied there with its author kept, and comes back here with the next release, credited in the release notes.
+Lumvika is developed in a private repository that Lumvika Cloud deploys from, and this repository is published from it at each release. A merged pull request is applied there with its author kept, and comes back here with the next release, credited in the release notes.
 
 What will not be merged: anything that touches `apps/ui/cloud/`, a dependency with a license incompatible with the AGPL, or a feature that only makes sense for one deployment.

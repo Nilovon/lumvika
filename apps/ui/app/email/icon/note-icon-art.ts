@@ -1,4 +1,4 @@
-import type { NoteIcon } from '@rerun/emails'
+import type { NoteIcon } from '@lumvika/emails'
 
 // The glyph that opens a compact note in a newsletter issue. It sits in an 18px gutter next to a
 // one-line item, so it carries no tile, no frame and no tint of its own: twelve coloured glyphs

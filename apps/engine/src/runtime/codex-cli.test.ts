@@ -6,11 +6,11 @@ const state = vi.hoisted(() => ({ layout: 'monorepo' as 'monorepo' | 'release' |
 
 vi.mock('./layout.js', async importOriginal => ({
     ...(await importOriginal<typeof import('./layout.js')>()),
-    detectLayout: () => ({ kind: state.layout, root: '/opt/rerun', packageDir: '/opt/rerun/current' }),
+    detectLayout: () => ({ kind: state.layout, root: '/opt/lumvika', packageDir: '/opt/lumvika/current' }),
 }))
 vi.mock('../config/env.js', async importOriginal => ({
     ...(await importOriginal<typeof import('../config/env.js')>()),
-    env: () => ({ RERUN_CODEX_PATH: state.configured }),
+    env: () => ({ LUMVIKA_CODEX_PATH: state.configured }),
 }))
 vi.mock('node:child_process', () => ({
     execFileSync: (command: string, args: string[]) => (command === 'sh' && args[1] === 'command -v codex' ? '/usr/local/bin/codex\n' : ''),
@@ -32,7 +32,7 @@ describe('CODEX_VERSION', () => {
         expect(pinsIn('Dockerfile')).toEqual([CODEX_VERSION])
     })
 
-    // The installer of Rerun Cloud's boxes lives in the private cloud/ folder.
+    // The installer of Lumvika Cloud's boxes lives in the private cloud/ folder.
     it.skipIf(!existsSync(resolve(ENGINE_DIR, BOX_INSTALLER)))('is the exact version a new box installs', () => {
         expect(pinsIn(BOX_INSTALLER)).toEqual([CODEX_VERSION])
     })
@@ -67,7 +67,7 @@ describe('codexOffPin', () => {
 describe('parseCodexVersion', () => {
     it('reads the version from `codex --version` and from the app-server user agent', () => {
         expect(parseCodexVersion('codex-cli 0.166.0\n')).toBe('0.166.0')
-        expect(parseCodexVersion('rerun-engine/0.159.3 (Ubuntu 24.4.0; x86_64) unknown (rerun-engine; 1)')).toBe('0.159.3')
+        expect(parseCodexVersion('lumvika-engine/0.159.3 (Ubuntu 24.4.0; x86_64) unknown (lumvika-engine; 1)')).toBe('0.159.3')
         expect(parseCodexVersion('codex-cli 0.167.0-alpha.4')).toBe('0.167.0-alpha.4')
     })
 

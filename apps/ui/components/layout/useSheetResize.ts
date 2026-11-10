@@ -2,7 +2,7 @@
 
 import { type PointerEvent as ReactPointerEvent, type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 
-import { coversTheBoard } from '@/lib/foreman-open'
+import { coversTheBoard } from '@/lib/steward-open'
 
 /** Les deux crans d'une sheet mobile, ceux d'iOS. */
 export type SheetDetent = 'medium' | 'large'

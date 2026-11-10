@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@lumvika/contracts'
 
 // The library's own labels are written for someone browsing it ("SaaS", "Other") and read as too
 // narrow to a model: on them alone Stripe buckets to "other". These say what line of business each

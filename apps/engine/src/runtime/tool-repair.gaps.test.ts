@@ -26,13 +26,13 @@ describe('repairToolCall', () => {
         expect(await repair(new NoSuchToolError({ toolName: 'fs_read' }))).toBeNull()
     })
 
-    it('calls the Rerun tool a model named the way Claude does', async () => {
-        const call = { toolName: 'mcp__rerun__schedule_list', input: '{}' }
+    it('calls the Lumvika tool a model named the way Claude does', async () => {
+        const call = { toolName: 'mcp__lumvika__schedule_list', input: '{}' }
         expect(await repair(new NoSuchToolError({ toolName: call.toolName }), call.input, call, loopTools)).toEqual({ ...toolCall, ...call, toolName: 'schedule_list' })
     })
 
-    it('calls the Rerun tool a model named the way Codex does', async () => {
-        const call = { toolName: 'rerun__schedule_list', input: '{}' }
+    it('calls the Lumvika tool a model named the way Codex does', async () => {
+        const call = { toolName: 'lumvika__schedule_list', input: '{}' }
         expect(await repair(new NoSuchToolError({ toolName: call.toolName }), call.input, call, loopTools)).toMatchObject({ toolName: 'schedule_list' })
     })
 
@@ -42,12 +42,12 @@ describe('repairToolCall', () => {
     })
 
     it('drops the nulls of a renamed call in the same repair', async () => {
-        const call = { toolName: 'mcp__rerun__fs_read' }
+        const call = { toolName: 'mcp__lumvika__fs_read' }
         expect(await repair(new NoSuchToolError({ toolName: call.toolName }), toolCall.input, call, loopTools)).toEqual({ ...toolCall, toolName: 'fs_read', input: JSON.stringify({ path: 'notes.md' }) })
     })
 
     it('gives up on a prefixed name whose tool does not exist in this run', async () => {
-        const call = { toolName: 'mcp__rerun__schedule_delete', input: '{}' }
+        const call = { toolName: 'mcp__lumvika__schedule_delete', input: '{}' }
         expect(await repair(new NoSuchToolError({ toolName: call.toolName }), call.input, call, loopTools)).toBeNull()
     })
 })

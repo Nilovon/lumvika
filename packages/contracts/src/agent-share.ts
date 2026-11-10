@@ -32,7 +32,7 @@ const WORKSPACE_PREFIX = 'workspace/'
 const AGENT_DB_PATH = 'data/agent.db'
 // The agent's own connector registry. It lives under `workspace/` but it is not workspace data:
 // dropping it would land a copy that cannot say which services it needs reconnecting.
-const REGISTRY_PATH = 'workspace/.rerun/services.json'
+const REGISTRY_PATH = 'workspace/.lumvika/services.json'
 
 // Turns the three switches into the `exclude` list the engine's archive routes take.
 //

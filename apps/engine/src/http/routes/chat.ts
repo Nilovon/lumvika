@@ -1,4 +1,4 @@
-import { chatRequestSchema, ENGINE_SESSION_NOT_FOUND, type SessionSource } from '@rerun/contracts'
+import { chatRequestSchema, ENGINE_SESSION_NOT_FOUND, type SessionSource } from '@lumvika/contracts'
 import { Hono } from 'hono'
 import { resolveRunModel } from '../../agents/availability.js'
 import { getAgent } from '../../agents/registry.js'
@@ -27,7 +27,7 @@ chatRoutes.post('/chat', async c => {
     const agent = await getAgent(agentId)
     if (!agent.config.enabled) throw agentDisabled()
     const body = chatRequestSchema.parse(await c.req.json())
-    const runAgentView = agent.config.kind === 'foreman' && body.foreman ? { ...agent, brief: body.foreman } : agent
+    const runAgentView = agent.config.kind === 'steward' && body.steward ? { ...agent, brief: body.steward } : agent
     const source = body.source ?? 'dashboard'
     const claim = body.install && !body.sessionId ? await claimInstallSession(agentId, () => createSession(agentId, undefined, undefined, source)) : null
     if (claim && 'inFlight' in claim) return c.json({ error: 'the installation is already under way in another conversation', code: 'install_in_flight', sessionId: claim.inFlight }, 409)

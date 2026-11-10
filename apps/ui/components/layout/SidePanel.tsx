@@ -10,7 +10,7 @@ import { type ComponentProps, type CSSProperties, type ReactNode, useRef } from 
 
 /**
  * À partir de `md`, un panneau qui glisse depuis la droite du board. En dessous, une sheet qui monte
- * du bas comme celle du Foreman : tirée par sa poignée ou son en-tête d'un cran à l'autre ou jusqu'à
+ * du bas comme celle du Steward : tirée par sa poignée ou son en-tête d'un cran à l'autre ou jusqu'à
  * la fermeture (voir `useSheetResize`), le board reste vivant au-dessus. Le rail n'y existe pas :
  * `mobileBar` s'ancre tout en haut, sous la poignée, et `mobileHeader` remplace `header` juste dessous.
  * Sans en-tête, seule la poignée tire la sheet.

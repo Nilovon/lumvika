@@ -1,5 +1,5 @@
 // The settings surfaces of the app, the ones that live in a dialog over the board rather than on a
-// tab of a panel. Declared here rather than beside their dialogs so the stores and the foreman's
+// tab of a panel. Declared here rather than beside their dialogs so the stores and the steward's
 // tool belt can name one without importing the component it opens, exactly as lib/board/types.ts
 // does for the tabs of the agent panel.
 export const SETTINGS_PANELS = ['workspace', 'members', 'api_keys', 'ai_providers', 'knowledge_base', 'billing', 'notifications', 'shortcuts', 'delete_account'] as const

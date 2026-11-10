@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-shell-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-shell-'))
 
 const { describe, expect, it, vi } = await import('vitest')
 const { HostBreaker, BLOCKED_SOURCE_PREFIX } = await import('../host-breaker.js')

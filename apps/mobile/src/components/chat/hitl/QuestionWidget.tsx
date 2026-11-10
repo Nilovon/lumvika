@@ -1,4 +1,4 @@
-import { pendingQuestions, serializeAnswers } from '@rerun/contracts'
+import { pendingQuestions, serializeAnswers } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { SymbolView } from 'expo-symbols'
 import { useRef, useState, type ReactNode } from 'react'

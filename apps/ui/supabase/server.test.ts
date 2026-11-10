@@ -69,7 +69,7 @@ describe('getRequestWorkspaceId', () => {
     it('reads the workspace a URL loaded by the browser on its own names in its query', async () => {
         mocks.headers = new Headers()
         const route = withQueryWorkspace(async (_req: Request) => Response.json(await getRequestWorkspaceId()))
-        const response = await route(new Request('https://rerun.test/api/files/raw?path=a&workspace=42'))
+        const response = await route(new Request('https://lumvika.test/api/files/raw?path=a&workspace=42'))
         await expect(response.json()).resolves.toBe(42)
     })
 

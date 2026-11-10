@@ -20,7 +20,7 @@ const summary = (components: ({ id: string; name: string } & { status: string })
 })
 
 describe('parseStatusSummary', () => {
-    it('ignores an incident on a component Rerun does not call', () => {
+    it('ignores an incident on a component Lumvika does not call', () => {
         const json = summary(
             [
                 { ...CLAUDE_API, status: 'operational' },
@@ -94,9 +94,9 @@ describe('parseStatusSummary', () => {
 
 describe('statusPagesFor', () => {
     it.each([
-        [['rerun'], []],
+        [['lumvika'], []],
         [['openrouter', 'google'], []],
-        [['claude', 'rerun'], ['anthropic']],
+        [['claude', 'lumvika'], ['anthropic']],
         [['codex', 'openai'], ['openai']],
         [['anthropic', 'codex'], ['openai', 'anthropic']],
     ] as const)('maps the connections %j to the status pages %j', (providers, pages) => {

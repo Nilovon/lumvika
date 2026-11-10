@@ -1,5 +1,5 @@
 import { streamText, type LanguageModelUsage, type ModelMessage, type StreamTextResult, type ToolSet, type UIMessageStreamWriter } from 'ai'
-import { RERUN_CONNECTION_ID, contextTextPart, type ContextOccupancy, type MessageAuthor } from '@rerun/contracts'
+import { LUMVIKA_CONNECTION_ID, contextTextPart, type ContextOccupancy, type MessageAuthor } from '@lumvika/contracts'
 import { applyCaching, withTailBreakpoint } from '../agents/caching.js'
 import { mergeProviderOptions, reasoningProviderOptions } from '../agents/reasoning.js'
 import { prepareRunHistory } from './compaction/compact.js'
@@ -21,7 +21,7 @@ import { behaviourOf } from '../agents/opencode.js'
 import { buildSystemPrompt, nowBlock, recallMemories, recallSection, systemPromptText, userBlock, userLanguageBlock } from '../agents/systemPrompt.js'
 import type { LoadedAgent } from '../agents/types.js'
 import { turnOrder } from '../agents/turn-order.js'
-import { answeringModel } from '../agents/rerun-upstream.js'
+import { answeringModel } from '../agents/lumvika-upstream.js'
 import { listAgentIndex, setAgentStatus } from '../db/repos/agents.js'
 import { appendMessage, lastMessageId, listSessionAuthorIds, setMessageToolCalls } from '../db/repos/messages.js'
 import type { MessageRow } from '../db/schema.js'
@@ -46,7 +46,7 @@ import { stepWithScreenshots } from './screenshots.js'
 import { authorMetadata, sendNotification, type NotificationKind } from './notify.js'
 import { emitRunTerminal } from './run-events.js'
 import { ClaudeSignInRenewedError, classifyFinishReason, classifyProviderError, errorMessageOf, isFailedFinish, ProviderRefusedError, ProviderStreamCutError, RUN_ERROR_CODES, refusalReason, unreachableEndpointError, type RunErrorCode } from './provider-errors.js'
-import { armBudgetLatch, clearBudgetLatch, RERUN_BUDGET_ERROR_CODE } from './budget-latch.js'
+import { armBudgetLatch, clearBudgetLatch, LUMVIKA_BUDGET_ERROR_CODE } from './budget-latch.js'
 
 export type RunOutcome = { kind: 'done' | 'error' | 'cancelled'; error?: string; errorCode?: RunErrorCode | null }
 
@@ -298,7 +298,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             // A turn that ends on a card ignores the replies: the card already says how to answer.
             const replies = quickReplies?.()
             if (replies && answerRow && !pending) await setMessageToolCalls(agent.id, answerRow.id, [quickRepliesCall(replies)]).catch(() => {})
-            if (provider === 'rerun') clearBudgetLatch()
+            if (provider === 'lumvika') clearBudgetLatch()
             if (provider === 'codex') await keepCodexThread().catch(() => forgetCodexThread(agent.id, sessionId))
             await finishRun(agent.id, run.id, settlement.usage, steps, settlement.costMicros, contextUsage?.()).catch(() => {})
             await touchSession(agent.id, sessionId).catch(() => {})
@@ -325,11 +325,11 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             const errorMessage = errorMessageOf(settlement.error)
             forgetCodexThread(agent.id, sessionId)
             logger.error({ err: errorMessage, errorCode, agent: agent.id, run: run.id }, 'run error')
-            if (errorCode === RERUN_BUDGET_ERROR_CODE) armBudgetLatch()
-            if (errorCode === RUN_ERROR_CODES.usageLimit && connection && connection.id !== RERUN_CONNECTION_ID) armPlanLimitLatch(connection.id)
+            if (errorCode === LUMVIKA_BUDGET_ERROR_CODE) armBudgetLatch()
+            if (errorCode === RUN_ERROR_CODES.usageLimit && connection && connection.id !== LUMVIKA_CONNECTION_ID) armPlanLimitLatch(connection.id)
             // The token is still on file, so the connection would keep reading "Ready" while every
-            // run on it fails. The keyless Rerun connection answers for the hub's key, not the user's.
-            if (errorCode === RUN_ERROR_CODES.unauthorized && connection && connection.id !== RERUN_CONNECTION_ID) recordCredentialRejected(connection.id)
+            // run on it fails. The keyless Lumvika connection answers for the hub's key, not the user's.
+            if (errorCode === RUN_ERROR_CODES.unauthorized && connection && connection.id !== LUMVIKA_CONNECTION_ID) recordCredentialRejected(connection.id)
             // Codex's answer to a real request outranks the list it gave: the model is greyed out from now
             // on, and a box default naming it moves to one the account serves.
             if (errorCode === RUN_ERROR_CODES.modelNotInPlan && provider === 'codex' && connection) {
@@ -391,7 +391,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
     const keepCodexThread = async (): Promise<void> => {
         const throughMessageId = codexThreadId ? await lastMessageId(agent.id, sessionId) : undefined
         if (!codexThreadId || !throughMessageId) return forgetCodexThread(agent.id, sessionId)
-        rememberCodexThread(agent.id, sessionId, { threadId: codexThreadId, connectionId: connection?.id ?? RERUN_CONNECTION_ID, throughMessageId })
+        rememberCodexThread(agent.id, sessionId, { threadId: codexThreadId, connectionId: connection?.id ?? LUMVIKA_CONNECTION_ID, throughMessageId })
     }
 
     // Stop has to be able to end a run the provider refuses to end: codex ignores the abort signal
@@ -450,7 +450,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
 
         // Read before the turn is stored: a resumed thread only gets this turn, so the session must
         // hold nothing the thread has not seen.
-        const resumeThreadId = provider === 'codex' ? codexThreadToResume(agent.id, sessionId, connection?.id ?? RERUN_CONNECTION_ID, await lastMessageId(agent.id, sessionId)) : undefined
+        const resumeThreadId = provider === 'codex' ? codexThreadToResume(agent.id, sessionId, connection?.id ?? LUMVIKA_CONNECTION_ID, await lastMessageId(agent.id, sessionId)) : undefined
 
         // The turn is stored as it is sent, its context part included: the history the next turn
         // replays is then byte for byte the prompt the provider already cached. Only the signature

@@ -1,5 +1,5 @@
-import type { AiConnectionFailureReason, AiConnectionMethod, AiConnectionSurface } from '@rerun/analytics'
-import { track } from '@rerun/analytics/client'
+import type { AiConnectionFailureReason, AiConnectionMethod, AiConnectionSurface } from '@lumvika/analytics'
+import { track } from '@lumvika/analytics/client'
 
 const ERROR_MAX_LENGTH = 200
 

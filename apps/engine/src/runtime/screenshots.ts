@@ -1,6 +1,6 @@
 import type { LoadedConnection } from '../connections/types.js'
 import { behaviourOf, modelSeesImages } from '../agents/opencode.js'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import type { ModelMessage } from 'ai'
 import { newId } from '../lib/ids.js'
 
@@ -35,7 +35,7 @@ export function createScreenshotStore(): ScreenshotStore {
 // A chat-completions tool message is text only: a provider speaking that format gets the picture
 // in a user message right after it.
 export type ScreenshotDelivery = 'tool-result' | 'user-message'
-const CHAT_COMPLETIONS_PROVIDERS = new Set<Provider>(['rerun', 'openrouter', 'custom'])
+const CHAT_COMPLETIONS_PROVIDERS = new Set<Provider>(['lumvika', 'openrouter', 'custom'])
 
 type ToolResultPart = Extract<Exclude<Extract<ModelMessage, { role: 'tool' }>['content'][number], { type: 'tool-approval-response' }>, { type: 'tool-result' }>
 

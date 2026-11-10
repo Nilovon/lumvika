@@ -163,7 +163,7 @@ export type BrainChange = { status: BrainChangeStatus; slug: string; title: stri
 const BRAIN_CHANGE_TOOLS = new Set(['brain_write', 'brain_delete', 'brain_decide'])
 const BRAIN_CHANGE_STATUSES = new Set<string>(['saved', 'deleted', 'accepted', 'dismissed'])
 
-// The foreman's brain tools answer a change that landed as JSON, and anything else (a conflict, a
+// The steward's brain tools answer a change that landed as JSON, and anything else (a conflict, a
 // page that is not there) as a sentence for the model, which stays an ordinary tool step.
 export function brainChangeOf(toolName: string, output: unknown): BrainChange | null {
     if (!BRAIN_CHANGE_TOOLS.has(toolName)) return null

@@ -1,7 +1,7 @@
 import type { LanguageModelMiddleware } from 'ai'
 import { copyFile, mkdir, stat, writeFile } from 'node:fs/promises'
 import { extname, resolve } from 'node:path'
-import type { FileCard } from '@rerun/contracts'
+import type { FileCard } from '@lumvika/contracts'
 import { workspaceDir } from '../config/paths.js'
 
 // Codex's own image tool, named by the provider patch. Codex writes the picture under the

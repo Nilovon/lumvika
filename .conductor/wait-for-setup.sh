@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 
 # Anchored on the pnpm process itself, so a shell whose command line merely mentions these steps
 # (an action, an agent's Bash call) never counts as a running setup.
-SETUP_STEPS='^(node \S*pnpm\S* |pnpm )(install|build:contracts|db:link|env:prod|--filter @rerun/contracts build)'
+SETUP_STEPS='^(node \S*pnpm\S* |pnpm )(install|build:contracts|db:link|env:prod|--filter @lumvika/contracts build)'
 GRACE_SECONDS=30
 TIMEOUT_SECONDS=900
 

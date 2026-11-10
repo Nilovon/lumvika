@@ -2,10 +2,10 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-providers-gaps-'))
-process.env.RERUN_HUB_BASE_URL = 'https://hub.example.com/'
-process.env.RERUN_API_KEY = 'hub-key'
-process.env.RERUN_CODEX_PATH = '/opt/codex/bin/codex'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-providers-gaps-'))
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example.com/'
+process.env.LUMVIKA_API_KEY = 'hub-key'
+process.env.LUMVIKA_CODEX_PATH = '/opt/codex/bin/codex'
 // The provider SDKs read these from the shell, and a developer routing through a gateway has them set.
 delete process.env.ANTHROPIC_BASE_URL
 delete process.env.OPENAI_BASE_URL
@@ -41,12 +41,12 @@ vi.mock('ai-sdk-provider-claude-code', async importOriginal => {
 const { afterEach, beforeEach, describe, expect, it } = await import('vitest')
 const { generateText, tool } = await import('ai')
 const { z } = await import('zod')
-const { agentConfigSchema, connectionConfigSchema } = await import('@rerun/contracts')
+const { agentConfigSchema, connectionConfigSchema } = await import('@lumvika/contracts')
 const { CLAUDE_HARNESS_ENV, CODEX_HARNESS_OVERRIDES, CODEX_ONE_SHOT_INSTRUCTIONS, modelFor, resolveModel } = await import('./providers.js')
 const { applyCaching } = await import('./caching.js')
 const { codexHomeDir, workspaceDir } = await import('../config/paths.js')
 
-type Provider = import('@rerun/contracts').Provider
+type Provider = import('@lumvika/contracts').Provider
 
 function agentOn(provider: Provider, model: string, keys: Record<string, string> | null, connectionExtra: Record<string, unknown> = {}) {
     const connection = keys
@@ -111,9 +111,9 @@ afterEach(() => {
 })
 
 describe('resolveModel over the OpenAI chat format', () => {
-    it('sends the keyless rerun provider through the hub proxy with the box key and the coworker, asking for reasoning', async () => {
+    it('sends the keyless lumvika provider through the hub proxy with the box key and the coworker, asking for reasoning', async () => {
         respondWith(CHAT_COMPLETION)
-        const agent = agentOn('rerun', 'rerun-max', null)
+        const agent = agentOn('lumvika', 'lumvika-max', null)
         const resolved = resolveModel(agent)
 
         await generateText({ model: resolved.model, prompt: 'hello' })
@@ -121,8 +121,8 @@ describe('resolveModel over the OpenAI chat format', () => {
         const request = sent()
         expect(request.url).toBe('https://hub.example.com/api/llm/chat/completions')
         expect(request.headers.get('authorization')).toBe('Bearer hub-key')
-        expect(request.headers.get('x-rerun-agent')).toBe(agent.id)
-        expect(request.body.model).toBe('rerun-max')
+        expect(request.headers.get('x-lumvika-agent')).toBe(agent.id)
+        expect(request.body.model).toBe('lumvika-max')
         expect(request.body.reasoning).toEqual({ enabled: true })
         await expect(resolved.close()).resolves.toBeUndefined()
         expect(resolved.contextUsage).toBeUndefined()
@@ -201,7 +201,7 @@ describe('modelFor', () => {
     it('reaches the hub without the reasoning request on a one-shot call', async () => {
         respondWith(CHAT_COMPLETION)
 
-        await generateText({ model: modelFor(agentOn('rerun', 'rerun-max', null)), prompt: 'summarise' })
+        await generateText({ model: modelFor(agentOn('lumvika', 'lumvika-max', null)), prompt: 'summarise' })
 
         const request = sent()
         expect(request.url).toBe('https://hub.example.com/api/llm/chat/completions')
@@ -211,11 +211,11 @@ describe('modelFor', () => {
     it('takes the model from the override but always the provider the agent resolved to', async () => {
         respondWith(CHAT_COMPLETION)
 
-        await generateText({ model: modelFor(agentOn('rerun', 'rerun-max', null), { provider: 'openai', model: 'rerun-mini' }), prompt: 'summarise' })
+        await generateText({ model: modelFor(agentOn('lumvika', 'lumvika-max', null), { provider: 'openai', model: 'lumvika-mini' }), prompt: 'summarise' })
 
         const request = sent()
         expect(request.url).toBe('https://hub.example.com/api/llm/chat/completions')
-        expect(request.body.model).toBe('rerun-mini')
+        expect(request.body.model).toBe('lumvika-mini')
     })
 
     it('signs an anthropic call with the key of the connection', async () => {
@@ -271,8 +271,8 @@ describe('modelFor', () => {
             cwd: workspaceDir('agent-codex'),
             configOverrides: { ...CODEX_HARNESS_OVERRIDES, instructions: CODEX_ONE_SHOT_INSTRUCTIONS },
         })
-        expect(model.settings.env).toMatchObject({ CODEX_HOME: codexHomeDir('codex-cnx'), AGENT_SECRET: 's', RERUN_WORKSPACE: workspaceDir('agent-codex'), PATH: process.env.PATH })
-        expect(model.settings.env).toMatchObject({ RERUN_API_KEY: '', RERUN_HUB_BASE_URL: '', RERUN_DATA_DIR: '' })
+        expect(model.settings.env).toMatchObject({ CODEX_HOME: codexHomeDir('codex-cnx'), AGENT_SECRET: 's', LUMVIKA_WORKSPACE: workspaceDir('agent-codex'), PATH: process.env.PATH })
+        expect(model.settings.env).toMatchObject({ LUMVIKA_API_KEY: '', LUMVIKA_HUB_BASE_URL: '', LUMVIKA_DATA_DIR: '' })
     })
 
     it('reopens the named claude built-ins for that call alone', () => {
@@ -284,10 +284,10 @@ describe('modelFor', () => {
 
 describe('resolveModel on the claude subscription', () => {
     it('runs the CLI on the connection token, never on an API key, with the harness switched off', () => {
-        resolveModel(agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 'oauth-token' }), undefined, undefined, undefined, { system: 'You are Rerun.' })
+        resolveModel(agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 'oauth-token' }), undefined, undefined, undefined, { system: 'You are Lumvika.' })
         const settings = claudeCalls[0]!.defaultSettings
 
-        expect(settings.systemPrompt).toBe('You are Rerun.')
+        expect(settings.systemPrompt).toBe('You are Lumvika.')
         expect(settings.cwd).toBe(workspaceDir('agent-claude'))
         expect(settings.tools).toEqual(['WebSearch'])
         expect(settings.persistSession).toBe(false)
@@ -301,8 +301,8 @@ describe('resolveModel on the claude subscription', () => {
         const resolved = resolveModel(agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 't' }), undefined, tools)
         const settings = claudeCalls[0]!.defaultSettings
 
-        expect(settings.allowedTools).toEqual(['mcp__rerun__fs_read'])
-        expect(Object.keys(settings.mcpServers)).toEqual(['rerun'])
+        expect(settings.allowedTools).toEqual(['mcp__lumvika__fs_read'])
+        expect(Object.keys(settings.mcpServers)).toEqual(['lumvika'])
         expect(resolved.contextUsage?.()).toBeUndefined()
     })
 
@@ -323,16 +323,16 @@ describe('resolveModel on the claude subscription', () => {
 describe('resolveModel on the codex subscription', () => {
     it('streams through the app-server, with the run prompt as its base instructions', async () => {
         const tools = { fs_read: tool({ description: 'read', inputSchema: z.object({ path: z.string() }), execute: async () => 'ok' }) }
-        const resolved = resolveModel(agentOn('codex', 'gpt-5.5', { CODEX_OAUTH_TOKEN: 't' }), { model: 'gpt-5.5-mini' }, tools, [], { system: 'You are Rerun.' })
+        const resolved = resolveModel(agentOn('codex', 'gpt-5.5', { CODEX_OAUTH_TOKEN: 't' }), { model: 'gpt-5.5-mini' }, tools, [], { system: 'You are Lumvika.' })
 
         expect((resolved.model as any).modelId).toBe('gpt-5.5-mini')
         expect(codexAppServerCalls).toHaveLength(1)
         const settings = codexAppServerCalls[0]!.defaultSettings
-        expect(settings).toMatchObject({ baseInstructions: 'You are Rerun.', approvalPolicy: 'never', threadMode: 'persistent', codexPath: '/opt/codex/bin/codex', minCodexVersion: '0.144.0' })
+        expect(settings).toMatchObject({ baseInstructions: 'You are Lumvika.', approvalPolicy: 'never', threadMode: 'persistent', codexPath: '/opt/codex/bin/codex', minCodexVersion: '0.144.0' })
         expect(settings.env.CODEX_HOME).toBe(codexHomeDir('codex-cnx'))
         expect(settings.configOverrides).not.toHaveProperty('instructions')
-        expect(settings.configOverrides).toMatchObject({ ...CODEX_HARNESS_OVERRIDES, web_search: 'live', prefix_mcp_tool_names: true, 'mcp_servers.rerun.tool_timeout_sec': 3600, model_reasoning_summary: 'auto' })
-        expect(Object.keys(settings.mcpServers)).toEqual(['rerun'])
+        expect(settings.configOverrides).toMatchObject({ ...CODEX_HARNESS_OVERRIDES, web_search: 'live', prefix_mcp_tool_names: true, 'mcp_servers.lumvika.tool_timeout_sec': 3600, model_reasoning_summary: 'auto' })
+        expect(Object.keys(settings.mcpServers)).toEqual(['lumvika'])
         expect(resolved.contextUsage).toBeUndefined()
         await expect(resolved.close()).resolves.toBeUndefined()
     })
@@ -350,10 +350,10 @@ describe('resolveModel on the codex subscription', () => {
         await resolved.close()
     })
 
-    // Every agent on the keyless box shares the Rerun home rather than one of its own.
-    it('falls back to the rerun connection home for a codex agent without a connection', async () => {
+    // Every agent on the keyless box shares the Lumvika home rather than one of its own.
+    it('falls back to the lumvika connection home for a codex agent without a connection', async () => {
         const resolved = resolveModel(agentOn('codex', 'gpt-5.5', null))
-        expect(codexAppServerCalls[0]!.defaultSettings.env.CODEX_HOME).toBe(codexHomeDir('rerun'))
+        expect(codexAppServerCalls[0]!.defaultSettings.env.CODEX_HOME).toBe(codexHomeDir('lumvika'))
         await resolved.close()
     })
 })

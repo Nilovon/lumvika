@@ -1,4 +1,4 @@
-import type { Me } from '@rerun/contracts'
+import type { Me } from '@lumvika/contracts'
 import type { Session } from '@supabase/supabase-js'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
@@ -15,7 +15,7 @@ import { registerDevice, unregisterDevice } from '@/notifications/push'
 
 // Each device keeps its own active workspace, as the hub expects: it is named on every request
 // instead of moving the account's default under the web session.
-const WORKSPACE_KEY = 'rerun.workspace-id'
+const WORKSPACE_KEY = 'lumvika.workspace-id'
 
 type AuthState = {
     // False until the stored session has been read: the app shows nothing rather than flash sign-in.

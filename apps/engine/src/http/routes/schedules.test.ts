@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-schedules-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_HUB_BASE_URL = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-schedules-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_HUB_BASE_URL = ''
 
 const fired = vi.hoisted(() => [] as { agentId: string; slug: string; opts: unknown }[])
 

@@ -1,8 +1,8 @@
-# Rerun documentation instructions
+# Lumvika documentation instructions
 
 ## About this project
 
-- Public documentation for Rerun, built on [Mintlify](https://mintlify.com) and living in `apps/docs` of the `rerun-cloud` monorepo
+- Public documentation for Lumvika, built on [Mintlify](https://mintlify.com) and living in `apps/docs` of the `lumvika-cloud` monorepo
 - Pages are MDX files with YAML frontmatter, configuration lives in `docs.json`
 - A page only appears on the site once it is listed in `docs.json` navigation
 - Preview locally with `pnpm dev:docs` from the repo root

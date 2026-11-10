@@ -4,7 +4,7 @@ import { Layout } from "../components/Layout";
 import { Button } from "../components/Button";
 import { MetaTable } from "../components/MetaTable";
 import { strong } from "../components/rich";
-import { formatNumber } from "@rerun/i18n/format";
+import { formatNumber } from "@lumvika/i18n/format";
 import { emailTranslator, type EmailLocale } from "../i18n";
 import { text } from "../theme";
 
@@ -62,9 +62,9 @@ export default function AgentIdle({
 AgentIdle.PreviewProps = {
   agentName: "Atlas",
   createdLabel: "3 hours ago",
-  agentUrl: "https://app.rerun.build/?agent=8f2b",
-  appUrl: "https://app.rerun.build",
-  unsubscribeUrl: "https://app.rerun.build/unsubscribe",
+  agentUrl: "https://app.lumvika.com/?agent=8f2b",
+  appUrl: "https://app.lumvika.com",
+  unsubscribeUrl: "https://app.lumvika.com/unsubscribe",
 } satisfies AgentIdleProps;
 
 const meta: React.CSSProperties = {

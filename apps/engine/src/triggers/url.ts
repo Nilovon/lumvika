@@ -1,7 +1,7 @@
 import { callHub } from '../runtime/hub.js'
 import type { Trigger } from './loader.js'
 
-// The public URL is built from the agent's Rerun id, which only the hub knows: the engine
+// The public URL is built from the agent's Lumvika id, which only the hub knows: the engine
 // addresses agents by its own local ids. A self-hosted engine with no hub simply has no URL to
 // give, so callers fall back to telling the user to copy it from the Triggers tab.
 export async function triggerPublicUrl(agentId: string, trigger: Trigger): Promise<string | null> {
@@ -15,5 +15,5 @@ export async function triggerPublicUrl(agentId: string, trigger: Trigger): Promi
 }
 
 export function urlLine(url: string | null): string {
-    return url ? `Its public URL is ${url}` : "Its public URL is not available from here — open the coworker's Triggers tab in Rerun to copy it."
+    return url ? `Its public URL is ${url}` : "Its public URL is not available from here — open the coworker's Triggers tab in Lumvika to copy it."
 }

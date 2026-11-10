@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   // scripts to unless it is listed here. A Conductor cloud workspace serves it behind
   // *.conductor.show: without that origin the page arrives but never hydrates, so every click dies.
   allowedDevOrigins: [...(process.env.ALLOWED_DEV_ORIGINS?.split(",") ?? []), "*.conductor.show"],
-  transpilePackages: ["@rerun/ui", "@rerun/emails", "@rerun/db", "@rerun/analytics", "@rerun/i18n"],
+  transpilePackages: ["@lumvika/ui", "@lumvika/emails", "@lumvika/db", "@lumvika/analytics", "@lumvika/i18n"],
   // ssh2 (the Incus hosts transport) loads an optional native crypto binding; bundled, Turbopack
   // cannot place the .node asset in an ESM chunk. Left external, Node requires it at runtime and
   // falls back to pure JS when the binding is missing.
@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "64mb" },
   },
-  // The brand pages live in the back office of Rerun Cloud, an app of its own.
+  // The brand pages live in the back office of Lumvika Cloud, an app of its own.
   async redirects() {
     const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
     if (!adminUrl) return [];
@@ -58,7 +58,7 @@ export default withPostHogConfig(withNextIntl(nextConfig), {
   sourcemaps: {
     enabled: Boolean(reportsErrorsToPostHog && posthogApiKey && posthogProjectId),
     releaseMode: "symbol-set",
-    releaseName: "rerun-ui",
+    releaseName: "lumvika-ui",
     releaseVersion: process.env.NEXT_PUBLIC_BUILD_SHA,
   },
 });

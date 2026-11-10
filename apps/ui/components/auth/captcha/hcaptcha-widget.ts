@@ -24,7 +24,7 @@ declare global {
     }
 }
 
-const READY_CALLBACK = 'rerunHcaptchaReady'
+const READY_CALLBACK = 'lumvikaHcaptchaReady'
 
 const loadHcaptcha = scriptLoader({
     src: `https://js.hcaptcha.com/1/api.js?render=explicit&recaptchacompat=off&onload=${READY_CALLBACK}`,

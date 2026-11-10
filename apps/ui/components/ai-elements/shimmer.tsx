@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import { TextShimmer, type TextShimmerProps } from "@rerun/ui";
+import { TextShimmer, type TextShimmerProps } from "@lumvika/ui";
 
 export type { TextShimmerProps };
 
 /**
- * App-flavored shimmer text. Thin wrapper over the shared `@rerun/ui` TextShimmer
+ * App-flavored shimmer text. Thin wrapper over the shared `@lumvika/ui` TextShimmer
  * that preserves the previous behavior: renders as <p> by default, scales the
  * gradient spread with text length, and themes via --color-muted-foreground /
  * --color-background (so existing className overrides keep working).

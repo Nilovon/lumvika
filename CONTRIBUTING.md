@@ -1,6 +1,6 @@
-# Contributing to Rerun
+# Contributing to Lumvika
 
-Thank you for helping. This page covers running Rerun from source, the shape of the code, and how a
+Thank you for helping. This page covers running Lumvika from source, the shape of the code, and how a
 pull request gets in.
 
 ## Run it from source
@@ -10,7 +10,7 @@ You need Node 22, pnpm 8 (`corepack enable`), Docker (for the local Supabase) an
 ```bash
 pnpm install
 npx supabase start                 # Postgres, auth, storage and Mailpit on ports 54420 to 54429
-pnpm --filter @rerun/contracts build
+pnpm --filter @lumvika/contracts build
 cp .env.example apps/ui/.env
 cp apps/engine/.env.example apps/engine/.env
 ```
@@ -23,13 +23,13 @@ Then fill the two files. Pick any long random string as the engine key and use i
 | `NEXT_PUBLIC_SUPABASE_URL` | `http://localhost:54421` |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | the keys `npx supabase status` prints |
 | `OPENROUTER_API_KEY` | your OpenRouter key |
-| `RERUN_ENGINE_URL` | `http://localhost:3000` |
-| `RERUN_ENGINE_API_KEY` | the engine key |
+| `LUMVIKA_ENGINE_URL` | `http://localhost:3000` |
+| `LUMVIKA_ENGINE_API_KEY` | the engine key |
 
 | `apps/engine/.env` | Value |
 |---|---|
-| `RERUN_API_KEY` | the engine key |
-| `RERUN_HUB_BASE_URL` | `http://localhost:3050` |
+| `LUMVIKA_API_KEY` | the engine key |
+| `LUMVIKA_HUB_BASE_URL` | `http://localhost:3050` |
 
 Start both, each in its own terminal:
 
@@ -45,9 +45,9 @@ http://localhost:54424.
 
 ```bash
 pnpm -r --if-present ts-check
-pnpm --filter rerun lint
-pnpm --filter rerun test
-pnpm --filter rerun-engine test
+pnpm --filter lumvika lint
+pnpm --filter lumvika test
+pnpm --filter lumvika-engine test
 ```
 
 CI runs the same, plus the migrations on an empty database and both Docker images.
@@ -66,7 +66,7 @@ CI runs the same, plus the migrations on an empty database and both Docker image
 `CLAUDE.md` holds the conventions of the codebase (and is what coding agents read): Supabase access
 through the typed helpers, responsive from the first version, migrations of the engine data-dir.
 
-`@rerun/cloud/*` is the seam where Rerun Cloud plugs in billing, paid apps, emails and its machine
+`@lumvika/cloud/*` is the seam where Lumvika Cloud plugs in billing, paid apps, emails and its machine
 pool. In this repository it resolves to `apps/ui/cloud-oss/`, the self-hosted behaviour. Pull requests that change what it
 exports are unlikely to be merged.
 
@@ -75,7 +75,7 @@ exports are unlikely to be merged.
 1. Open an issue first for anything bigger than a fix, so we agree on the direction.
 2. Keep a pull request to one change, with tests where the code has them.
 
-Rerun is developed in a private repository that Rerun Cloud deploys from, and this repository is
+Lumvika is developed in a private repository that Lumvika Cloud deploys from, and this repository is
 published from it at each release. A merged pull request is applied there with its author kept,
 and comes back here with the next release, with credit in the release notes.
 

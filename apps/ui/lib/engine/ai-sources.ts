@@ -1,15 +1,15 @@
-import { rerunCreditTotalMicros, type RerunCreditColumns } from '@rerun/cloud/billing'
+import { lumvikaCreditTotalMicros, type LumvikaCreditColumns } from '@lumvika/cloud/billing'
 import { catalogFor, modelLabel, modelPower, type CatalogModel } from '@/lib/engine/models'
 import type { BoxConnection, BoxDefault } from '@/lib/engine/types'
 import { shortUntil } from '@/lib/time'
-import { formatNumber, shortDate } from '@rerun/i18n/format'
-import { PROVIDER_LABELS, RERUN_CONNECTION_ID, RERUN_MODEL, RERUN_MODELS, RERUN_TIERS, OPENCODE_SNAPSHOT, canonicalModelId, cliServesModel, isPremiumModel, opencodePlanOf, opencodeServesModel, toProviderModel, type OpencodePlan, type ProviderModel, type PlanLimitWindow, type Provider, type RerunTier } from '@rerun/contracts'
+import { formatNumber, shortDate } from '@lumvika/i18n/format'
+import { PROVIDER_LABELS, LUMVIKA_CONNECTION_ID, LUMVIKA_MODEL, LUMVIKA_MODELS, LUMVIKA_TIERS, OPENCODE_SNAPSHOT, canonicalModelId, cliServesModel, isPremiumModel, opencodePlanOf, opencodeServesModel, toProviderModel, type OpencodePlan, type ProviderModel, type PlanLimitWindow, type Provider, type LumvikaTier } from '@lumvika/contracts'
 
 // The AI providers dialog sorts every connection by who pays for it: the credit included with
-// Rerun, the user's own subscription, or the user's own API key.
+// Lumvika, the user's own subscription, or the user's own API key.
 export type SourceKind = 'included' | 'plan' | 'key'
 
-export type AddableProvider = Exclude<Provider, 'rerun'>
+export type AddableProvider = Exclude<Provider, 'lumvika'>
 
 // The API key providers with a key to fetch from a console. A custom endpoint is listed beside them
 // but asks for its address first, and its key is optional.
@@ -87,38 +87,38 @@ export const PLAN_LABELS: Partial<Record<AddableProvider, string>> = { claude: '
 
 const PLAN_NAMES: Partial<Record<Provider, string>> = { claude: 'Claude', codex: 'ChatGPT', opencode: 'OpenCode' }
 
-export const RERUN_FALLBACK: BoxDefault = { connectionId: RERUN_CONNECTION_ID, model: RERUN_MODEL }
+export const LUMVIKA_FALLBACK: BoxDefault = { connectionId: LUMVIKA_CONNECTION_ID, model: LUMVIKA_MODEL }
 
-// What agents with no model of their own run on: a fresh workspace has no default, and runs on Rerun.
+// What agents with no model of their own run on: a fresh workspace has no default, and runs on Lumvika.
 export function effectiveDefault(boxDefault: BoxDefault | null): BoxDefault {
-    return boxDefault ?? RERUN_FALLBACK
+    return boxDefault ?? LUMVIKA_FALLBACK
 }
 
-// `paused`: a member turned the credit off, and the hub refuses every Rerun call until it is resumed.
-export type RerunCredit = { usedMicros: number; budgetMicros: number; resetAt: string | null; percent: number; paused?: boolean }
+// `paused`: a member turned the credit off, and the hub refuses every Lumvika call until it is resumed.
+export type LumvikaCredit = { usedMicros: number; budgetMicros: number; resetAt: string | null; percent: number; paused?: boolean }
 
-export function rerunCreditOf(workspace: (RerunCreditColumns & { current_period_end?: string | null; rerun_credit_paused_at?: string | null }) | null | undefined): RerunCredit {
-    const usedMicros = workspace?.rerun_used_micros ?? 0
-    const budgetMicros = rerunCreditTotalMicros(workspace)
+export function lumvikaCreditOf(workspace: (LumvikaCreditColumns & { current_period_end?: string | null; lumvika_credit_paused_at?: string | null }) | null | undefined): LumvikaCredit {
+    const usedMicros = workspace?.lumvika_used_micros ?? 0
+    const budgetMicros = lumvikaCreditTotalMicros(workspace)
     const percent = budgetMicros > 0 ? Math.min(100, Math.round((usedMicros / budgetMicros) * 100)) : 0
-    return { usedMicros, budgetMicros, resetAt: workspace?.current_period_end ?? null, percent, paused: !!workspace?.rerun_credit_paused_at }
+    return { usedMicros, budgetMicros, resetAt: workspace?.current_period_end ?? null, percent, paused: !!workspace?.lumvika_credit_paused_at }
 }
 
-export function isCreditUsedUp(credit: RerunCredit) {
+export function isCreditUsedUp(credit: LumvikaCredit) {
     return credit.budgetMicros > 0 && credit.usedMicros >= credit.budgetMicros
 }
 
 // Set inside a sentence of the iOS app ("back {backOn}"), which is why it carries its own preposition.
-export function creditResetPhrase(credit: RerunCredit, t: SourceCopy, locale: string) {
+export function creditResetPhrase(credit: LumvikaCredit, t: SourceCopy, locale: string) {
     return credit.resetAt ? t('sources.creditBackOn', { date: shortDate(credit.resetAt, locale) }) : t('sources.creditBackNextMonth')
 }
 
-// Rerun offers Balanced alone for now, shown as "Rerun". The boxes still list Fast and Smart and the
+// Lumvika offers Balanced alone for now, shown as "Lumvika". The boxes still list Fast and Smart and the
 // hub still serves them, so what is already pinned on one keeps running: only the pickers drop them.
-const HIDDEN_RERUN_MODELS = new Set<string>([RERUN_MODELS.fast, RERUN_MODELS.smart])
+const HIDDEN_LUMVIKA_MODELS = new Set<string>([LUMVIKA_MODELS.fast, LUMVIKA_MODELS.smart])
 
 export function isHiddenModel(connectionId: string, model: string): boolean {
-    return connectionId === RERUN_CONNECTION_ID && HIDDEN_RERUN_MODELS.has(model)
+    return connectionId === LUMVIKA_CONNECTION_ID && HIDDEN_LUMVIKA_MODELS.has(model)
 }
 
 // Extra ids are served on top of `models` by the engine, so they are always on.
@@ -149,9 +149,9 @@ export function enabledModels(source: BoxConnection): CatalogModel[] {
     return offeredModels(source).filter(m => isModelEnabled(source, m.id))
 }
 
-// Balanced is labelled "Rerun" already; only a tier pinned before the others were hidden needs the prefix.
+// Balanced is labelled "Lumvika" already; only a tier pinned before the others were hidden needs the prefix.
 export function modelName(connectionId: string, model: string) {
-    return connectionId === RERUN_CONNECTION_ID && canonicalModelId(model) !== RERUN_MODEL ? `Rerun ${modelLabel(model)}` : modelLabel(model)
+    return connectionId === LUMVIKA_CONNECTION_ID && canonicalModelId(model) !== LUMVIKA_MODEL ? `Lumvika ${modelLabel(model)}` : modelLabel(model)
 }
 
 // Before paying, the hub serves Balanced for Smart and the box steps Opus, Fable and Astra down, so
@@ -159,10 +159,10 @@ export function modelName(connectionId: string, model: string) {
 // plan instead.
 export function isModelLocked(connectionId: string, model: string, premiumAllowed: boolean): boolean {
     if (premiumAllowed) return false
-    return (connectionId === RERUN_CONNECTION_ID && model === RERUN_MODELS.smart) || isPremiumModel(model)
+    return (connectionId === LUMVIKA_CONNECTION_ID && model === LUMVIKA_MODELS.smart) || isPremiumModel(model)
 }
 
-// A model the subscription's own CLI does not list on this box. Upgrading the Rerun plan would not
+// A model the subscription's own CLI does not list on this box. Upgrading the Lumvika plan would not
 // bring it, so the row is disabled rather than routed to billing. Undefined when the CLI serves it,
 // when it has not been asked yet, or for Claude, whose list is its picker rather than the account.
 // OpenCode's counterpart is a model it stopped publishing: its own wording, since no plan of the
@@ -176,8 +176,8 @@ export function cliUnavailableReason(connection: Pick<BoxConnection, 'provider' 
 // What the billing dialog is told opened it, for the funnel.
 export const PREMIUM_MODEL_BILLING_TRIGGER = 'premium_model'
 
-// None for Balanced: alone in its list, it reads as a plain "Rerun" row.
-const RERUN_TIER_DESCRIPTION: Partial<Record<RerunTier, 'fast' | 'smart'>> = { fast: 'fast', smart: 'smart' }
+// None for Balanced: alone in its list, it reads as a plain "Lumvika" row.
+const LUMVIKA_TIER_DESCRIPTION: Partial<Record<LumvikaTier, 'fast' | 'smart'>> = { fast: 'fast', smart: 'smart' }
 
 // What an OpenCode model costs on top of the plan, beside its name in every picker: a Go model is
 // paid by the subscription, a Console one by the account's credits. Plan-scoped ids only.
@@ -187,9 +187,9 @@ export function opencodePlanDescription(provider: string, model: string, t: Sour
     return plan ? t(`sources.opencodePlan.${plan}`) : undefined
 }
 
-// The line under a model's name in a picker: a Rerun tier's hint, or what an OpenCode model is paid with.
+// The line under a model's name in a picker: a Lumvika tier's hint, or what an OpenCode model is paid with.
 export function modelDescription(connection: Pick<BoxConnection, 'id' | 'provider'>, model: string, t: SourceCopy): string | undefined {
-    return rerunTierDescription(connection.id, model, t) ?? opencodePlanDescription(connection.provider, model, t)
+    return lumvikaTierDescription(connection.id, model, t) ?? opencodePlanDescription(connection.provider, model, t)
 }
 
 // Go before Console, each in the order it came: the models the plan pays for come first.
@@ -225,37 +225,37 @@ export function pricePerMillion(price: ProviderModel['price'], t: SourceCopy, lo
     return t('sources.pricePerMillion', { input: usd(price.input), output: usd(price.output) })
 }
 
-// The hint beside a Rerun tier's name. Nothing for any other model: only the tiers get one, a
+// The hint beside a Lumvika tier's name. Nothing for any other model: only the tiers get one, a
 // provider's own list is too long for it.
-export function rerunTierDescription(connectionId: string, model: string, t: SourceCopy): string | undefined {
-    if (connectionId !== RERUN_CONNECTION_ID) return undefined
+export function lumvikaTierDescription(connectionId: string, model: string, t: SourceCopy): string | undefined {
+    if (connectionId !== LUMVIKA_CONNECTION_ID) return undefined
     const id = canonicalModelId(model)
-    const tier = RERUN_TIERS.find(candidate => RERUN_MODELS[candidate] === id)
-    const described = tier && RERUN_TIER_DESCRIPTION[tier]
+    const tier = LUMVIKA_TIERS.find(candidate => LUMVIKA_MODELS[candidate] === id)
+    const described = tier && LUMVIKA_TIER_DESCRIPTION[tier]
     return described ? t(`sources.tiers.${described}`) : undefined
 }
 
 // Fast, Balanced, Smart, whatever order the box stores them in: its own list starts with Balanced,
 // because the first entry is what the connection runs when no model is named.
 export function inTierOrder<T extends { id: string }>(connectionId: string, models: T[]): T[] {
-    if (connectionId !== RERUN_CONNECTION_ID) return models
+    if (connectionId !== LUMVIKA_CONNECTION_ID) return models
     const rank = (id: string) => {
-        const at = RERUN_TIERS.findIndex(tier => RERUN_MODELS[tier] === id)
-        return at === -1 ? RERUN_TIERS.length : at
+        const at = LUMVIKA_TIERS.findIndex(tier => LUMVIKA_MODELS[tier] === id)
+        return at === -1 ? LUMVIKA_TIERS.length : at
     }
     return [...models].sort((a, b) => rank(a.id) - rank(b.id))
 }
 
-export function isCreditExhausted(source: BoxConnection, credit: RerunCredit) {
-    return source.id === RERUN_CONNECTION_ID && isCreditUsedUp(credit)
+export function isCreditExhausted(source: BoxConnection, credit: LumvikaCredit) {
+    return source.id === LUMVIKA_CONNECTION_ID && isCreditUsedUp(credit)
 }
 
-export function isRerunPaused(source: BoxConnection, credit: RerunCredit) {
-    return source.id === RERUN_CONNECTION_ID && !!credit.paused
+export function isLumvikaPaused(source: BoxConnection, credit: LumvikaCredit) {
+    return source.id === LUMVIKA_CONNECTION_ID && !!credit.paused
 }
 
-export function isUsable(source: BoxConnection, credit: RerunCredit) {
-    return source.connected && !source.credentialRejected && !isCreditExhausted(source, credit) && !isRerunPaused(source, credit)
+export function isUsable(source: BoxConnection, credit: LumvikaCredit) {
+    return source.connected && !source.credentialRejected && !isCreditExhausted(source, credit) && !isLumvikaPaused(source, credit)
 }
 
 // Where a subscription stands against its plan, as of now rather than as of the reading: a window
@@ -270,12 +270,12 @@ export function tightestPlanWindow(windows: PlanLimitWindow[]): PlanLimitWindow 
 }
 
 // What the model pill draws around its logo: the session inside, and outside the longer window that
-// runs out first. A plan with a single window, or the Rerun credit, fills one ring on its own.
-// `windows` are the plan windows the rings stand for, empty for the Rerun credit.
+// runs out first. A plan with a single window, or the Lumvika credit, fills one ring on its own.
+// `windows` are the plan windows the rings stand for, empty for the Lumvika credit.
 export type PillUsage = { inner: number; outer: number | null; windows: PlanLimitWindow[] }
 
-export function pillUsage(group: { connectionId: string; planWindows: PlanLimitWindow[] }, credit: RerunCredit): PillUsage | null {
-    if (group.connectionId === RERUN_CONNECTION_ID) {
+export function pillUsage(group: { connectionId: string; planWindows: PlanLimitWindow[] }, credit: LumvikaCredit): PillUsage | null {
+    if (group.connectionId === LUMVIKA_CONNECTION_ID) {
         if (credit.paused || credit.budgetMicros <= 0) return null
         return { inner: credit.percent, outer: null, windows: [] }
     }
@@ -311,14 +311,14 @@ export function planWindowReset(window: PlanLimitWindow, t: SourceCopy, locale: 
     return window.resetsAt ? t('sources.windowResets', { when: shortUntil(window.resetsAt, locale) }) : null
 }
 
-function creditSummary(credit: RerunCredit, t: SourceCopy, locale: string): string {
+function creditSummary(credit: LumvikaCredit, t: SourceCopy, locale: string): string {
     if (credit.paused) return t('sources.creditPaused')
     if (!isCreditUsedUp(credit)) return t('sources.creditUsed', { percent: credit.percent })
     return credit.resetAt ? t('sources.creditUsedUpOn', { date: shortDate(credit.resetAt, locale) }) : t('sources.creditUsedUpNextMonth')
 }
 
-export function sourceSummary(source: BoxConnection, credit: RerunCredit, t: SourceCopy, locale: string): string {
-    if (source.id === RERUN_CONNECTION_ID) return creditSummary(credit, t, locale)
+export function sourceSummary(source: BoxConnection, credit: LumvikaCredit, t: SourceCopy, locale: string): string {
+    if (source.id === LUMVIKA_CONNECTION_ID) return creditSummary(credit, t, locale)
     const planWindows = livePlanWindows(source).filter(window => window.kind !== 'model')
     if (planWindows.length) return planWindows.map(window => t('sources.summaryWindow', { name: planWindowName(window, t, source.provider), percent: planWindowPercent(window) })).join(' · ')
     const kind = source.provider === 'custom' ? t('sources.pitch.custom.title') : t(`sources.kinds.${sourceKind(source.provider)}`)

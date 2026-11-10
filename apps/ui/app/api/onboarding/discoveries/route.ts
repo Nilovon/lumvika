@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
             send([{ type: 'pending', source: 'profile' }])
             await Promise.all([
-                // Also fills the cache saveForemanIntakeAction reads the profile from at submit.
+                // Also fills the cache saveStewardIntakeAction reads the profile from at submit.
                 analyzeCompanyProfile(url).then(
                     result => queue(() => translator.fromProfile(result.ok ? result.analysis.profile : null)),
                     () => queue(() => translator.fromProfile(null))

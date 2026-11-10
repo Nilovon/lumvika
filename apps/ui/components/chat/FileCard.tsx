@@ -5,17 +5,17 @@ import { AttachmentLightbox, type ReadChatFile } from '@/components/chat/Attachm
 import { AttachmentTile } from '@/components/chat/AttachmentTile'
 import { MediaAlbum, isMediaAlbum, type MediaAlbumItem } from '@/components/chat/MediaAlbum'
 import { rawUrlResolver, sharedFileRawUrl, type RawUrlFor } from '@/lib/files/raw-url'
-import type { FileCard as FileCardData, FileCardEntry } from '@rerun/contracts'
+import type { FileCard as FileCardData, FileCardEntry } from '@lumvika/contracts'
 import { useState } from 'react'
 
 type FileCardProps = {
     /** Absent on read-only transcripts rendered outside a Box: the tiles stay inert. */
     agentId?: string
     card: FileCardData
-    /** Where the bytes come from when they are not a Box's: the foreman's bucket, the design lab. */
+    /** Where the bytes come from when they are not a Box's: the steward's bucket, the design lab. */
     rawUrlFor?: RawUrlFor
     readFile?: ReadChatFile
-    /** Where the shared space is read from when `rawUrlFor` stands for one agent's files only: the foreman on its engine. */
+    /** Where the shared space is read from when `rawUrlFor` stands for one agent's files only: the steward on its engine. */
     sharedFiles?: FileAccess
 }
 

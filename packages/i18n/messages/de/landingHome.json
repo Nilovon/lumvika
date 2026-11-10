@@ -4,14 +4,14 @@
             "lead": "Hol dir <keep>KI-<chip>Coworker</chip></keep>",
             "tail": "Sie arbeiten wie du."
         },
-        "subtitle": "Chatbots sagen dir, was zu tun ist. KI-Coworker erledigen die Arbeit. Verbinde das LLM, für das du schon zahlst, mit Rerun und gib ihnen Aufgaben.",
+        "subtitle": "Chatbots sagen dir, was zu tun ist. KI-Coworker erledigen die Arbeit. Verbinde das LLM, für das du schon zahlst, mit Lumvika und gib ihnen Aufgaben.",
         "cta": "5 Tage testen für {price}",
-        "productHuntAlt": "Unterstütze Rerun auf Product Hunt",
-        "trust": "{count, number}+ Nutzer vertrauen Rerun für ihr Geschäft",
+        "productHuntAlt": "Unterstütze Lumvika auf Product Hunt",
+        "trust": "{count, number}+ Nutzer vertrauen Lumvika für ihr Geschäft",
         "pillLeads": {
             "jobs": "Dein neuer",
             "tasks": "Lass einen Coworker",
-            "sectors": "Rerun für"
+            "sectors": "Lumvika für"
         },
         "tiles": {
             "tour-research": {
@@ -66,7 +66,7 @@
         "screen": {
             "hint": {
                 "tap": "Tipp einen Coworker an, um ihn zu sehen",
-                "click": "Klick einen Coworker an oder frag Rerun"
+                "click": "Klick einen Coworker an oder frag Lumvika"
             },
             "inboxSettings": "Einstellungen: In deinem eigenen Workspace verfügbar",
             "useCases": {
@@ -349,7 +349,7 @@
                 "close": "Coworker schließen",
                 "newConversation": "Neue Unterhaltung"
             },
-            "foreman": {
+            "steward": {
                 "newTask": "Neue Aufgabe",
                 "unknown": "Unbekannter Coworker",
                 "running": {

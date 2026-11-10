@@ -2,10 +2,10 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-system-prompt-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-system-prompt-'))
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
-const { agentConfigSchema } = await import('@rerun/contracts')
+const { agentConfigSchema } = await import('@lumvika/contracts')
 const { buildSystemPrompt: buildSystemPromptBlocks, systemPromptText, currentTimeNote, nowBlock, userBlock, userLanguageBlock } = await import('./systemPrompt.js')
 
 // The tests read the prompt as the model does, both blocks joined.
@@ -13,18 +13,18 @@ const buildSystemPrompt = async (...args: Parameters<typeof buildSystemPromptBlo
 
 const agent = {
     id: 'prompt-agent',
-    config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'rerun', tools: { memory: false, db: false, schedule: false } }),
+    config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'lumvika', tools: { memory: false, db: false, schedule: false } }),
     soul: 'You are a test agent.',
     env: {},
-    resolved: { connection: null, provider: 'rerun', model: 'rerun-max' },
+    resolved: { connection: null, provider: 'lumvika', model: 'lumvika-max' },
 }
 
 function agentWith(tools: Record<string, boolean>) {
-    return { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'rerun', tools }) }
+    return { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'lumvika', tools }) }
 }
 
 function agentWithVerbosity(verbosity: string, selfImprovementEnabled: boolean) {
-    return { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'rerun', verbosity, selfImprovement: { enabled: selfImprovementEnabled }, tools: { memory: false, db: false, schedule: false } }) }
+    return { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'lumvika', verbosity, selfImprovement: { enabled: selfImprovementEnabled }, tools: { memory: false, db: false, schedule: false } }) }
 }
 
 describe('buildSystemPrompt database sections', () => {
@@ -33,14 +33,14 @@ describe('buildSystemPrompt database sections', () => {
         expect(prompt).toContain('<shared_database>')
         expect(prompt).toContain('private SQL database that no other coworker can read')
         expect(prompt).not.toContain('one private SQL database, and only one')
-        expect(prompt).toContain('RERUN_SHARED_DB')
+        expect(prompt).toContain('LUMVIKA_SHARED_DB')
     })
 
     it('keeps the single-database wording and says nothing about sharing when the gate is off', async () => {
         const prompt = await buildSystemPrompt(agentWith({ db: true, sharedDb: false }), { source: 'chat' })
         expect(prompt).toContain('one private SQL database, and only one')
         expect(prompt).not.toContain('<shared_database>')
-        expect(prompt).not.toContain('RERUN_SHARED_DB')
+        expect(prompt).not.toContain('LUMVIKA_SHARED_DB')
     })
 
     it('still states the routing doctrine when the shared database is empty', async () => {
@@ -116,7 +116,7 @@ describe('operating notes', () => {
     })
 
     it('spares an ephemeral delegate the rule, its reader is the coworker that called it', async () => {
-        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'rerun', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
+        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'lumvika', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
         expect(await buildSystemPrompt(delegate, { source: 'chat' })).not.toContain('<what_the_user_sees>')
     })
 })
@@ -187,7 +187,7 @@ describe('skills section', () => {
     })
 
     it('drops the capture note when self-improvement is off', async () => {
-        const off = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'rerun', selfImprovement: { enabled: false }, tools: { skills: true } }) }
+        const off = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test', provider: 'lumvika', selfImprovement: { enabled: false }, tools: { skills: true } }) }
         const prompt = await buildSystemPrompt(off, { source: 'chat' })
         expect(prompt).not.toContain('skill_propose')
     })
@@ -237,13 +237,13 @@ describe('buildSystemPrompt provider notes', () => {
     it.each(['claude', 'codex'] as const)('adds the MCP bridge note for the effective %s provider', async provider => {
         const prompt = await buildSystemPrompt(agent, { source: 'chat' }, provider)
         expect(prompt).toContain('<bridged_tools>')
-        expect(prompt).toContain('mcp__rerun__ask_user')
+        expect(prompt).toContain('mcp__lumvika__ask_user')
     })
 
-    it.each(['rerun', 'openai', 'anthropic', 'google', 'openrouter'] as const)('leaves the %s prompt without the bridge note', async provider => {
+    it.each(['lumvika', 'openai', 'anthropic', 'google', 'openrouter'] as const)('leaves the %s prompt without the bridge note', async provider => {
         const prompt = await buildSystemPrompt(agent, { source: 'chat' }, provider)
         expect(prompt).not.toContain('<bridged_tools>')
-        expect(prompt).not.toContain('mcp__rerun__ask_user')
+        expect(prompt).not.toContain('mcp__lumvika__ask_user')
     })
 
     it.each([['claude', 'WebSearch'], ['codex', 'web_search']] as const)('points web_search at the %s built-in', async (provider, builtIn) => {
@@ -258,14 +258,14 @@ describe('buildSystemPrompt provider notes', () => {
         expect(prompt).not.toContain('A turn ends in this order, your message first')
     })
 
-    it('puts the message before the closing calls on a Rerun alias the hub has not resolved', async () => {
-        const prompt = await buildSystemPrompt(agent, { source: 'chat' }, 'rerun')
+    it('puts the message before the closing calls on a Lumvika alias the hub has not resolved', async () => {
+        const prompt = await buildSystemPrompt(agent, { source: 'chat' }, 'lumvika')
         expect(prompt).toContain('A turn ends in this order, your message first')
         expect(prompt).not.toContain('a message written before a call does not reach the user as your message')
     })
 
     it('leaves the turn order out for an agent with nothing that closes a turn', async () => {
-        const nothingCloses = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test agent', provider: 'rerun', tools: { askUser: false, requestApproval: false, suggestService: false, requestSecret: false, quickReplies: false, skills: false, paidData: false, browser: false }, selfImprovement: { enabled: false } }) }
+        const nothingCloses = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test agent', provider: 'lumvika', tools: { askUser: false, requestApproval: false, suggestService: false, requestSecret: false, quickReplies: false, skills: false, paidData: false, browser: false }, selfImprovement: { enabled: false } }) }
         const prompt = await buildSystemPrompt(nothingCloses, { source: 'chat' }, 'codex')
         expect(prompt).not.toContain('<turn_order>')
     })
@@ -320,7 +320,7 @@ describe('memory routing', () => {
 
 describe('buildSystemPrompt sub-agent rules', () => {
     it('tells an ephemeral delegate to give up on a refusing source and to answer on its own', async () => {
-        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'rerun', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
+        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'lumvika', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
         const prompt = await buildSystemPrompt(delegate, { source: 'chat' })
         expect(prompt).toContain('<sub_agent_rules>')
         expect(prompt).toContain('never ask a question')
@@ -342,7 +342,7 @@ describe('reporting failures', () => {
     })
 
     it('holds for a sub-agent too, whose caller reads only its result', async () => {
-        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'rerun', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
+        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'lumvika', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
         expect(await buildSystemPrompt(delegate, { source: 'chat' })).toContain('<reporting_failures>')
     })
 })
@@ -351,7 +351,7 @@ describe('quick replies section', () => {
     // The replies are a block of the message, never a call: a tool to call right before or after
     // the message had the model drafting that message in its thinking instead of writing it.
     it('tells a regular agent to close its message with the block, on every provider', async () => {
-        for (const provider of ['rerun', 'claude', 'codex'] as const) {
+        for (const provider of ['lumvika', 'claude', 'codex'] as const) {
             const prompt = await buildSystemPrompt(agent, { source: 'chat' }, provider)
             expect(prompt).toContain('<quick_replies>')
             expect(prompt).toContain('one per line, between a <quick_replies> line and a </quick_replies> line, as the very last lines of your message')
@@ -364,11 +364,11 @@ describe('quick replies section', () => {
 
     it('keeps the replies out of the turn order, which only orders the cards', async () => {
         expect(await buildSystemPrompt(agent, { source: 'chat' }, 'codex')).toMatch(/the calls first: .*at most one card that asks the user something \(.*ask_user.*\); \d\) your message, complete/)
-        expect(await buildSystemPrompt(agent, { source: 'chat' }, 'rerun')).toMatch(/A turn ends in this order, your message first: 1\) your message.*\) at most one card that asks the user something/)
+        expect(await buildSystemPrompt(agent, { source: 'chat' }, 'lumvika')).toMatch(/A turn ends in this order, your message first: 1\) your message.*\) at most one card that asks the user something/)
     })
 
     it('stays out of a sub-agent, and out of an agent with the switch off', async () => {
-        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'rerun', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
+        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'lumvika', ephemeral: true, tools: { memory: false, db: false, schedule: false } }) }
         expect(await buildSystemPrompt(delegate, { source: 'chat' })).not.toContain('<quick_replies>')
         expect(await buildSystemPrompt(agentWith({ quickReplies: false }), { source: 'chat' })).not.toContain('<quick_replies>')
     })
@@ -419,7 +419,7 @@ describe('paid data section', () => {
     })
 
     it('buys a big spend without asking as an ephemeral delegate, which has no user to answer', async () => {
-        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'rerun', ephemeral: true, tools: { paidData: true, memory: false, db: false, schedule: false } }) }
+        const delegate = { ...agent, config: agentConfigSchema.parse({ name: 'Prompt test delegate', provider: 'lumvika', ephemeral: true, tools: { paidData: true, memory: false, db: false, schedule: false } }) }
         const prompt = await buildSystemPrompt(delegate, { source: 'chat' })
         expect(prompt).toContain('You use it without asking first: call it directly')
         expect(prompt).not.toContain('big spend')

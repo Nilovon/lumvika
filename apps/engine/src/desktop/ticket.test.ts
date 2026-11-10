@@ -10,7 +10,7 @@ function ticket(claims: Record<string, unknown>, key = KEY): string {
 
 async function verifierWith(key: string) {
     vi.resetModules()
-    vi.stubEnv('RERUN_API_KEY', key)
+    vi.stubEnv('LUMVIKA_API_KEY', key)
     return (await import('./ticket.js')).verifyDesktopTicket
 }
 

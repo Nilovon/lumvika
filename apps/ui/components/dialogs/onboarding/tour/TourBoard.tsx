@@ -1,8 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { STEP_TRANSITION } from '@rerun/ui/steps'
-import { TourScene } from '@rerun/ui/tour'
+import { STEP_TRANSITION } from '@lumvika/ui/steps'
+import { TourScene } from '@lumvika/ui/tour'
 import { motion } from 'motion/react'
 
 // The board the tour is told on. Mounted once for the whole step and never keyed on the slide: it is

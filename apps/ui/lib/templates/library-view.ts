@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateConnector } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateConnector } from '@lumvika/contracts'
 import { isInMyLibrary, type LibraryCreator, type LibraryTemplate } from './library'
 
 // Where the library's rail points. Discover is the editorial home; every other view is one list.

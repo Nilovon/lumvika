@@ -36,7 +36,7 @@ export const boxSchema = z.object({
     id: z.string(),
     name: z.string().nullable(),
     createdAt: z.string().nullable(),
-    // Runs on an instance Rerun provisioned, as opposed to an engine the workspace hosts itself.
+    // Runs on an instance Lumvika provisioned, as opposed to an engine the workspace hosts itself.
     managed: z.boolean(),
     visibility: boxVisibilitySchema.optional(),
     access: boxAccessSchema.optional(),

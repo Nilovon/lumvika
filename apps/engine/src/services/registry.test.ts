@@ -3,16 +3,16 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-registry-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-registry-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it } = await import('vitest')
 const { connectorServerStates, connectorSkillOwners } = await import('./registry.js')
 const { workspaceDir } = await import('../config/paths.js')
 
 async function writeRegistry(id: string, content: string): Promise<void> {
-    await mkdir(resolve(workspaceDir(id), '.rerun'), { recursive: true })
-    await writeFile(resolve(workspaceDir(id), '.rerun/services.json'), content, 'utf8')
+    await mkdir(resolve(workspaceDir(id), '.lumvika'), { recursive: true })
+    await writeFile(resolve(workspaceDir(id), '.lumvika/services.json'), content, 'utf8')
 }
 
 describe('connectorSkillOwners', () => {

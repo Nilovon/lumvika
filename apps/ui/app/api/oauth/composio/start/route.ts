@@ -1,4 +1,4 @@
-import { parseServiceRegistryKey } from '@rerun/contracts'
+import { parseServiceRegistryKey } from '@lumvika/contracts'
 import { assertAgentAccess } from '@/app/api/_auth/access'
 import { resolveAgentTarget } from '@/app/api/_services/chat.service'
 import { loadManifest } from '@/app/api/_services/services.service'
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         if (!manifest || !method?.composio || !serverName) {
             return NextResponse.json({ error: `${key} has no Composio connection to set up.` }, { status: 400 })
         }
-        // A self-hosted install ships the catalog without Rerun Cloud's auth configs: each one is created in
+        // A self-hosted install ships the catalog without Lumvika Cloud's auth configs: each one is created in
         // Composio and its id written on the service before the app can connect.
         if (!method.composio.authConfigId) {
             return NextResponse.json({ error: `${manifest.name} needs a Composio auth config: create one for ${method.composio.toolkit} in Composio and set its id on the service.` }, { status: 400 })

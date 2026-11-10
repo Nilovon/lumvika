@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-scheduler-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-scheduler-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
 
 type Outcome = { kind: 'done' | 'error' | 'cancelled'; error?: string }
 
@@ -14,7 +14,7 @@ const state = vi.hoisted(() => ({
     agentIds: [] as string[] | Error,
     schedules: {} as Record<string, unknown[] | Error>,
     due: new Set<string>(),
-    provider: 'rerun' as string,
+    provider: 'lumvika' as string,
     connectionId: undefined as string | undefined,
     computer: true,
     liveRuns: false,
@@ -112,7 +112,7 @@ beforeEach(() => {
     state.agentIds = []
     state.schedules = {}
     state.due = new Set()
-    state.provider = 'rerun'
+    state.provider = 'lumvika'
     state.connectionId = undefined
     state.computer = true
     state.liveRuns = false
@@ -238,7 +238,7 @@ describe('fireSchedule', () => {
         expect(state.sent).toEqual([
             { event: 'agent.session.created', kind: 'info', agentId: 'on', sessionId: started.sessionId, runId: null, message: 'Scheduled run: Name daily', title: 'Name daily', source: 'schedule' },
         ])
-        expect(state.runs[0]).toMatchObject({ agentId: 'on', sessionId: started.sessionId, message: '<scheduled_run schedule="daily" name="Name daily">\ndo daily\n</scheduled_run>', override: { provider: 'rerun', model: 'gpt-x' }, trigger: { source: 'schedule', slug: 'daily', name: 'Name daily' } })
+        expect(state.runs[0]).toMatchObject({ agentId: 'on', sessionId: started.sessionId, message: '<scheduled_run schedule="daily" name="Name daily">\ndo daily\n</scheduled_run>', override: { provider: 'lumvika', model: 'gpt-x' }, trigger: { source: 'schedule', slug: 'daily', name: 'Name daily' } })
         expect(started.runId).toBe(state.runs[0].runId)
     })
 
@@ -356,7 +356,7 @@ describe('startScheduler', () => {
 
         const stop = startScheduler()
         await vi.advanceTimersByTimeAsync(0)
-        expect(debug).toHaveBeenCalledWith({ agent: 'on', schedule: 'skipped' }, 'scheduled run skipped: rerun budget latched')
+        expect(debug).toHaveBeenCalledWith({ agent: 'on', schedule: 'skipped' }, 'scheduled run skipped: lumvika budget latched')
         expect(errors).not.toHaveBeenCalled()
 
         clearBudgetLatch()

@@ -1,11 +1,11 @@
 'use client'
 
-import type { OrbGaze } from '../foreman'
+import type { OrbGaze } from '../steward'
 import { type RefObject, useEffect, useRef } from 'react'
 
 type Point = { x: number; y: number }
 
-// How the Foreman answers the pointer. The eyes take its direction over a short reach, the creature
+// How the Steward answers the pointer. The eyes take its direction over a short reach, the creature
 // leans a few pixels toward it, and its light swings to fall where it points, never higher than the
 // horizon: a light that rose would leave the field it is there to light.
 const LOOK_REACH = 320

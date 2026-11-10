@@ -18,7 +18,7 @@ import { GENERAL_MESSAGES, GENERAL_THREADS, placeThreads } from '@/mocks/threads
 import { ThemeScope, useTheme } from '@/theme/theme'
 import { spacing, type ColorScheme } from '@/theme/tokens'
 
-import { MockPane, type LabState } from './lab-foreman'
+import { MockPane, type LabState } from './lab-steward'
 
 // Dev only: a coworker's General with its threads hanging between the messages, General pinned first
 // in the header and the pager, the open threads after it. A tap on a thread slides to it.

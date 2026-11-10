@@ -2,8 +2,8 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-files-write-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-files-write-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { createServer } = await import('../server.js')
@@ -11,7 +11,7 @@ const { agentConfigSchema } = await import('../../agents/types.js')
 const { writeAgentConfig } = await import('../../agents/config-write.js')
 const { mkdir } = await import('node:fs/promises')
 const { agentDir, workspaceDir } = await import('../../config/paths.js')
-const { MAX_TEXT_WRITE_CHARS } = await import('@rerun/contracts')
+const { MAX_TEXT_WRITE_CHARS } = await import('@lumvika/contracts')
 
 const id = 'writeagent'
 const app = createServer()

@@ -1,5 +1,5 @@
-import type { Messages } from '@rerun/i18n/messages'
-import { ENGLISH_MESSAGES } from '@rerun/i18n/messages/en'
+import type { Messages } from '@lumvika/i18n/messages'
+import { ENGLISH_MESSAGES } from '@lumvika/i18n/messages/en'
 import { createTranslator } from 'use-intl'
 
 // A refusal a server action sends back to the screen: a key of the `errors` namespace the screen

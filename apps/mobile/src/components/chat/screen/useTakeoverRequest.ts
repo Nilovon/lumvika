@@ -1,4 +1,4 @@
-import { HITL_CANCELLED, pendingTakeover, serializeTakeoverResult, type PendingHitl } from '@rerun/contracts'
+import { HITL_CANCELLED, pendingTakeover, serializeTakeoverResult, type PendingHitl } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useRef, useState } from 'react'

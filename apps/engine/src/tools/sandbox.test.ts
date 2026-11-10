@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-sandbox-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-sandbox-'))
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { mkdir, symlink, writeFile } = await import('node:fs/promises')
@@ -40,7 +40,7 @@ describe('resolveWithin', () => {
 //   base/root/loop-a        -> base/root/loop-b -> base/root/loop-a
 //   base/rootlink           -> base/root
 describe('resolveWithinReal', () => {
-    const base = mkdtempSync(resolve(tmpdir(), 'rerun-sandbox-real-'))
+    const base = mkdtempSync(resolve(tmpdir(), 'lumvika-sandbox-real-'))
     const outside = resolve(base, 'outside')
     const real = resolve(base, 'root')
     const rootlink = resolve(base, 'rootlink')

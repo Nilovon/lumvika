@@ -2,8 +2,8 @@ import { mkdtempSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-migrate-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-migrate-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it } = await import('vitest')
 const { raw } = await import('./client.js')

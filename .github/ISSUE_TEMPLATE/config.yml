@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security issue
-    url: https://github.com/rerun-build/rerun/blob/master/SECURITY.md
+    url: https://github.com/schnebel-technologie/lumvika/blob/master/SECURITY.md
     about: Please report vulnerabilities privately.
-  - name: Rerun Cloud support
-    url: https://rerun.build
+  - name: Lumvika Cloud support
+    url: https://lumvika.com
     about: Questions about a hosted workspace go to support, not here.

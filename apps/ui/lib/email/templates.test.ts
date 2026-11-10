@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs'
 import path from 'node:path'
 import * as React from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { EMAIL_PREVIEWS, NEWSLETTERS, renderEmail, TONES, TrialEnded, theme } from '@rerun/emails'
+import { EMAIL_PREVIEWS, NEWSLETTERS, renderEmail, TONES, TrialEnded, theme } from '@lumvika/emails'
 
 // The email design system only holds if the templates keep going through it. These three checks
 // are what stop the old habits from creeping back: per-file colour constants, flexbox that no
@@ -26,8 +26,8 @@ function allowedColours(): Set<string> {
 // Newsletters go through the same checks: they are written by hand, one file per issue, and
 // nothing else would stop a pasted hex from landing in one.
 const NEWSLETTER_PREVIEW_PROPS = {
-    appUrl: 'https://app.rerun.build',
-    unsubscribeUrl: 'https://app.rerun.build/unsubscribe?token=test',
+    appUrl: 'https://app.lumvika.com',
+    unsubscribeUrl: 'https://app.lumvika.com/unsubscribe?token=test',
 }
 
 async function renderAll() {
@@ -104,9 +104,9 @@ describe('email templates in the reader\'s language', () => {
                 pausedLabel: '12 mars à 16:00 UTC',
                 keptUntilLabel: '10 juin',
                 summary: { agents: 3, runs: 41 },
-                billingUrl: 'https://app.rerun.build/?billing=1',
-                appUrl: 'https://app.rerun.build',
-                unsubscribeUrl: 'https://app.rerun.build/unsubscribe?token=test',
+                billingUrl: 'https://app.lumvika.com/?billing=1',
+                appUrl: 'https://app.lumvika.com',
+                unsubscribeUrl: 'https://app.lumvika.com/unsubscribe?token=test',
                 locale: 'fr',
             }),
         )

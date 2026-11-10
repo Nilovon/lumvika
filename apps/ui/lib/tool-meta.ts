@@ -1,4 +1,4 @@
-import { capabilityOfCall, isKnownTool, PAID_DATA_TOOL, toolLabelOf, type ToolCopy } from '@rerun/contracts'
+import { capabilityOfCall, isKnownTool, PAID_DATA_TOOL, toolLabelOf, type ToolCopy } from '@lumvika/contracts'
 import {
     ActivityIcon,
     BellIcon,
@@ -151,18 +151,18 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
     table_view_save: DatabaseIcon,
     table_view_delete: DatabaseIcon,
 
-    rerun_hub_service_search: SearchIcon,
-    rerun_hub_service_details: PlugIcon,
-    rerun_hub_service_install: LinkIcon,
-    rerun_hub_service_list_installed: ListIcon,
-    rerun_hub_service_uninstall: Trash2Icon,
-    rerun_hub_publish_file: GlobeIcon,
-    rerun_hub_unpublish_file: Trash2Icon,
-    rerun_hub_list_published: ListIcon,
+    lumvika_hub_service_search: SearchIcon,
+    lumvika_hub_service_details: PlugIcon,
+    lumvika_hub_service_install: LinkIcon,
+    lumvika_hub_service_list_installed: ListIcon,
+    lumvika_hub_service_uninstall: Trash2Icon,
+    lumvika_hub_publish_file: GlobeIcon,
+    lumvika_hub_unpublish_file: Trash2Icon,
+    lumvika_hub_list_published: ListIcon,
 
     task_complete: SendIcon,
 
-    // The foreman's belt.
+    // The steward's belt.
     list_spaces: BoxIcon,
     list_agents: UsersIcon,
     get_agent: BotIcon,

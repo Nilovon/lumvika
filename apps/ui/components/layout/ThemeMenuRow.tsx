@@ -1,6 +1,6 @@
 'use client'
 
-import { ThemeToggle } from '@rerun/ui/theme'
+import { ThemeToggle } from '@lumvika/ui/theme'
 
 import { SunMoonIcon } from '@/lib/icons'
 import { useTranslations } from 'next-intl'

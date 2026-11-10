@@ -4,12 +4,12 @@ import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } fro
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import { BrainCircuitIcon, ChevronRightIcon, Settings2Icon } from '@/lib/icons'
-import type { Provider } from '@rerun/contracts'
-import { Badge } from '@rerun/ui/primitives'
+import type { Provider } from '@lumvika/contracts'
+import { Badge } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
 
-export type AddableProvider = Exclude<Provider, 'rerun'>
+export type AddableProvider = Exclude<Provider, 'lumvika'>
 export type SubscriptionProvider = Extract<AddableProvider, 'claude' | 'codex'>
 
 export const SUBSCRIPTION_PROVIDERS: SubscriptionProvider[] = ['claude', 'codex']
@@ -31,7 +31,7 @@ const ADDABLE: { provider: Extract<AddableProvider, 'claude' | 'codex' | 'anthro
 
 type SubscriptionCallProps = { providers: SubscriptionProvider[]; onConnect: (provider: SubscriptionProvider) => void }
 
-// The full pitch, for a workspace that runs on Rerun alone: a group of its own rather than a line,
+// The full pitch, for a workspace that runs on Lumvika alone: a group of its own rather than a line,
 // but dressed like every other group of the list.
 export function SubscriptionPitch({ providers, onConnect }: SubscriptionCallProps) {
     const t = useTranslations('agent.modelPickerProviders')

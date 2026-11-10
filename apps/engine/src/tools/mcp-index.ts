@@ -1,7 +1,7 @@
 import { mcpToolNameFor, resolveTransport } from './mcp.js'
 import { loadToken } from './mcp-auth.js'
 import { connectorServerStates, type ConnectorServerState } from '../services/registry.js'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import type { LoadedAgent } from '../agents/types.js'
 
 // Names the app behind a server, and which of its accounts when the agent holds several or the

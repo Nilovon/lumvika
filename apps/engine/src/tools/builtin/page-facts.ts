@@ -162,7 +162,7 @@ export function pageFacts(html: string, { url, source, xRobotsTag, redirectedTo 
     if (!title && !description && !canonical && !robots.length && !lang && !hreflang.length && !types.length && !h1.length && !anchors.size) return null
 
     const lines = [
-        source === 'served' ? 'Page facts (HTML as served, before JavaScript):' : 'Page facts (HTML after JavaScript, read through Rerun):',
+        source === 'served' ? 'Page facts (HTML as served, before JavaScript):' : 'Page facts (HTML after JavaScript, read through Lumvika):',
         `title: ${title || 'none'}`,
         `description: ${description ?? 'none'}`,
         `canonical: ${canonical ?? 'none'}`,

@@ -53,7 +53,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('rerun mcp login', () => {
+describe('lumvika mcp login', () => {
     it('runs the device flow and prints where to sign in', async () => {
         state.servers = [{ name: 'linear', url: 'https://mcp.linear.app' }]
         await mcpCommand(['login', 'agent1', 'linear'])
@@ -68,12 +68,12 @@ describe('rerun mcp login', () => {
     })
 
     it('asks for both the agent and the server', async () => {
-        await expect(mcpCommand(['login'])).rejects.toThrow('Usage: rerun mcp login <agentId> <server>')
-        await expect(mcpCommand(['login', 'agent1'])).rejects.toThrow('Usage: rerun mcp login <agentId> <server>')
+        await expect(mcpCommand(['login'])).rejects.toThrow('Usage: lumvika mcp login <agentId> <server>')
+        await expect(mcpCommand(['login', 'agent1'])).rejects.toThrow('Usage: lumvika mcp login <agentId> <server>')
     })
 })
 
-describe('rerun mcp logout', () => {
+describe('lumvika mcp logout', () => {
     it('clears the stored token', async () => {
         await mcpCommand(['logout', 'agent1', 'linear'])
         expect(state.events).toEqual([['clearToken', 'agent1', 'linear']])
@@ -81,11 +81,11 @@ describe('rerun mcp logout', () => {
     })
 
     it('asks for both the agent and the server', async () => {
-        await expect(mcpCommand(['logout', 'agent1'])).rejects.toThrow('Usage: rerun mcp logout <agentId> <server>')
+        await expect(mcpCommand(['logout', 'agent1'])).rejects.toThrow('Usage: lumvika mcp logout <agentId> <server>')
     })
 })
 
-describe('rerun mcp status', () => {
+describe('lumvika mcp status', () => {
     it('probes every server with the agent env, spawned like a run, and prints one line each', async () => {
         state.servers = [{ name: 'linear' }, { name: 'broken' }]
         state.probes = {
@@ -107,13 +107,13 @@ describe('rerun mcp status', () => {
     })
 
     it('asks for the agent', async () => {
-        await expect(mcpCommand(['status'])).rejects.toThrow('Usage: rerun mcp status <agentId>')
+        await expect(mcpCommand(['status'])).rejects.toThrow('Usage: lumvika mcp status <agentId>')
     })
 })
 
-describe('rerun mcp', () => {
+describe('lumvika mcp', () => {
     it('prints the usage for anything else', async () => {
-        await expect(mcpCommand([])).rejects.toThrow('Usage: rerun mcp <login|logout|status>')
-        await expect(mcpCommand(['add'])).rejects.toThrow('Usage: rerun mcp <login|logout|status>')
+        await expect(mcpCommand([])).rejects.toThrow('Usage: lumvika mcp <login|logout|status>')
+        await expect(mcpCommand(['add'])).rejects.toThrow('Usage: lumvika mcp <login|logout|status>')
     })
 })

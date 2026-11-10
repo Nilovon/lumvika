@@ -1,5 +1,5 @@
 import type { Database } from '@/app/api/database.types'
-import { BASE_PLAN_SLUG, MICROS_PER_USD } from '@rerun/cloud/billing'
+import { BASE_PLAN_SLUG, MICROS_PER_USD } from '@lumvika/cloud/billing'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { ensureWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
 import { isSandboxLocked } from '@/lib/sandbox-idle/lock'
@@ -106,8 +106,8 @@ async function createSandboxWorkspace(userId: string): Promise<number | ActionFa
             max_seats: 1,
             model_access: 'self_hosted',
             custom_integrations: true,
-            rerun_budget_micros: SANDBOX_BUDGET_USD * MICROS_PER_USD,
-            rerun_period_anchor: new Date().toISOString(),
+            lumvika_budget_micros: SANDBOX_BUDGET_USD * MICROS_PER_USD,
+            lumvika_period_anchor: new Date().toISOString(),
             subscription_status: 'active',
             // A sandbox has no onboarding: the funnel never runs there, so nothing would ever stamp it.
             onboarded_at: new Date().toISOString(),

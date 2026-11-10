@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react'
 
 export type GroupMode = 'recent' | 'box'
 
-const GROUP_KEY = 'rerun.home-group'
+const GROUP_KEY = 'lumvika.home-group'
 
 // Shared by the Home and the Preferences sheet above it: a choice made in the sheet regroups the Home
 // underneath before the sheet closes.

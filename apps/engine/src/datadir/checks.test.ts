@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-datadir-checks-'))
-process.env.RERUN_API_KEY = 'secret'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-datadir-checks-'))
+process.env.LUMVIKA_API_KEY = 'secret'
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { mkdir, rm, writeFile } = await import('node:fs/promises')
@@ -89,10 +89,10 @@ describe('runDataDirChecks', () => {
     })
 
     it('flags a connection this build cannot read', async () => {
-        await writeFile(connectionConfigPath('rerun'), '{ not json', 'utf8')
+        await writeFile(connectionConfigPath('lumvika'), '{ not json', 'utf8')
         const check = (await runDataDirChecks()).checks.find(c => c.name === 'connections')
-        expect(check).toMatchObject({ ok: false, detail: 'unreadable: rerun' })
-        await rm(connectionConfigPath('rerun'))
+        expect(check).toMatchObject({ ok: false, detail: 'unreadable: lumvika' })
+        await rm(connectionConfigPath('lumvika'))
     })
 })
 

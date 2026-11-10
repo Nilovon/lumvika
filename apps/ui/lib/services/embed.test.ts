@@ -9,24 +9,24 @@ vi.mock('@ai-sdk/openai-compatible', () => ({
 
 vi.mock('ai', () => ({ embed: vi.fn(async () => ({ embedding: [0.1, 0.2] })) }))
 
-const originalEmbedKey = process.env.RERUN_EMBED_API_KEY
+const originalEmbedKey = process.env.LUMVIKA_EMBED_API_KEY
 const originalOpenRouterKey = process.env.OPENROUTER_API_KEY
 
 describe('embedText', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         process.env.OPENROUTER_API_KEY = 'max-key'
-        process.env.RERUN_EMBED_API_KEY = 'embedding-key'
+        process.env.LUMVIKA_EMBED_API_KEY = 'embedding-key'
     })
 
     afterEach(() => {
-        if (originalEmbedKey === undefined) delete process.env.RERUN_EMBED_API_KEY
-        else process.env.RERUN_EMBED_API_KEY = originalEmbedKey
+        if (originalEmbedKey === undefined) delete process.env.LUMVIKA_EMBED_API_KEY
+        else process.env.LUMVIKA_EMBED_API_KEY = originalEmbedKey
         if (originalOpenRouterKey === undefined) delete process.env.OPENROUTER_API_KEY
         else process.env.OPENROUTER_API_KEY = originalOpenRouterKey
     })
 
-    it('uses the dedicated embedding key when the Rerun key is also configured', async () => {
+    it('uses the dedicated embedding key when the Lumvika key is also configured', async () => {
         await expect(embedText('hello')).resolves.toEqual([0.1, 0.2])
 
         expect(createOpenAICompatible).toHaveBeenCalledWith({
@@ -36,8 +36,8 @@ describe('embedText', () => {
         })
     })
 
-    it('does not fall back to the Rerun key', async () => {
-        delete process.env.RERUN_EMBED_API_KEY
+    it('does not fall back to the Lumvika key', async () => {
+        delete process.env.LUMVIKA_EMBED_API_KEY
 
         await expect(embedText('hello')).resolves.toBeNull()
         expect(createOpenAICompatible).not.toHaveBeenCalled()

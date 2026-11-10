@@ -7,7 +7,7 @@ export async function mcpCommand(args: string[]): Promise<void> {
     const sub = args[0]
     if (sub === 'login') {
         const [, agentId, name] = args
-        if (!agentId || !name) throw new Error('Usage: rerun mcp login <agentId> <server>')
+        if (!agentId || !name) throw new Error('Usage: lumvika mcp login <agentId> <server>')
         const agent = await getAgent(agentId)
         const server = agent.config.mcpServers.find(s => s.name === name)
         if (!server) throw new Error(`No MCP server "${name}" registered for agent ${agentId}`)
@@ -19,14 +19,14 @@ export async function mcpCommand(args: string[]): Promise<void> {
     }
     if (sub === 'logout') {
         const [, agentId, name] = args
-        if (!agentId || !name) throw new Error('Usage: rerun mcp logout <agentId> <server>')
+        if (!agentId || !name) throw new Error('Usage: lumvika mcp logout <agentId> <server>')
         await clearToken(agentId, name)
         process.stdout.write(`Cleared stored token for ${name}.\n`)
         return
     }
     if (sub === 'status') {
         const [, agentId] = args
-        if (!agentId) throw new Error('Usage: rerun mcp status <agentId>')
+        if (!agentId) throw new Error('Usage: lumvika mcp status <agentId>')
         const agent = await getAgent(agentId)
         if (agent.config.mcpServers.length === 0) {
             process.stdout.write('No MCP servers registered.\n')
@@ -41,5 +41,5 @@ export async function mcpCommand(args: string[]): Promise<void> {
         }
         return
     }
-    throw new Error('Usage: rerun mcp <login|logout|status>')
+    throw new Error('Usage: lumvika mcp <login|logout|status>')
 }

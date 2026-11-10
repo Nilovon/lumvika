@@ -1,4 +1,4 @@
-import type { InstalledServiceView } from '@rerun/contracts'
+import type { InstalledServiceView } from '@lumvika/contracts'
 import { Image } from 'expo-image'
 import { Fragment } from 'react'
 import { View } from 'react-native'

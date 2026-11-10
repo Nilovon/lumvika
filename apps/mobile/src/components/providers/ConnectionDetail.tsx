@@ -1,4 +1,4 @@
-import type { AiConnectionView, AiConnectionsView } from '@rerun/contracts'
+import type { AiConnectionView, AiConnectionsView } from '@lumvika/contracts'
 import { Fragment, useState, type ReactNode } from 'react'
 import { Switch, View } from 'react-native'
 import { useTranslations } from 'use-intl'
@@ -37,7 +37,7 @@ type ConnectionDetailProps = {
 export function ConnectionDetail({ connection, view, error, onBack, onRename, onModels, onBaseUrl, onExtraModels, onSignInAgain, replacement, onRemove, readOnlyReason }: ConnectionDetailProps) {
     const t = useTranslations('mobileProviders.detail')
     const readOnly = !!readOnlyReason
-    const isRerun = connection.kind === 'included'
+    const isLumvika = connection.kind === 'included'
     const isOpenRouter = connection.provider === 'openrouter'
     return (
         <SheetFrame title={connection.name} onBack={onBack}>
@@ -54,11 +54,11 @@ export function ConnectionDetail({ connection, view, error, onBack, onRename, on
             <ReadOnlyNote reason={readOnlyReason} />
             <ErrorLine error={error} />
 
-            {isRerun ? <CreditBlock view={view} /> : connection.status === 'reconnect' && <ReconnectBlock connection={connection} readOnly={readOnly} onSignInAgain={onSignInAgain} replacement={replacement} />}
+            {isLumvika ? <CreditBlock view={view} /> : connection.status === 'reconnect' && <ReconnectBlock connection={connection} readOnly={readOnly} onSignInAgain={onSignInAgain} replacement={replacement} />}
 
             {connection.kind === 'plan' && connection.status === 'connected' && <PlanUsage connection={connection} />}
 
-            {!isRerun && (
+            {!isLumvika && (
                 <Section>
                     <SettingsRow label={t('name')} value={connection.name} disabled={readOnly} onPress={onRename} />
                 </Section>
@@ -69,7 +69,7 @@ export function ConnectionDetail({ connection, view, error, onBack, onRename, on
             {isOpenRouter && <BaseUrl baseUrl={connection.baseUrl} readOnly={readOnly} onCommit={onBaseUrl} />}
             {isOpenRouter && connection.credentialOnFile && <CustomModels connection={connection} readOnly={readOnly} onChange={onExtraModels} />}
 
-            {!isRerun && <Button label={t('removeButton', { name: connection.name })} symbol="trash" variant="destructive" disabled={readOnly} onPress={onRemove} />}
+            {!isLumvika && <Button label={t('removeButton', { name: connection.name })} symbol="trash" variant="destructive" disabled={readOnly} onPress={onRemove} />}
         </SheetFrame>
     )
 }

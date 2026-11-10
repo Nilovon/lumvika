@@ -75,7 +75,7 @@ describe('prefillPatch', () => {
             enriched({ skills: ['Agent Design'], languages: ['English'], budget: '$1,000 – $5,000', github_url: 'https://github.com/jane' }),
             'linkedin',
             url,
-            'https://cdn.rerun/avatar.webp',
+            'https://cdn.lumvika/avatar.webp',
         )
 
         expect(patch).toMatchObject({
@@ -83,7 +83,7 @@ describe('prefillPatch', () => {
             timezone: 'Europe/Paris',
             bio: 'I build agents.',
             budget: '$1,000 – $5,000',
-            avatar_url: 'https://cdn.rerun/avatar.webp',
+            avatar_url: 'https://cdn.lumvika/avatar.webp',
             github_url: 'https://github.com/jane',
             skills: ['Agent Design'],
             languages: ['English'],

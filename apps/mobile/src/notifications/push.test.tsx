@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react-native'
-import { FOREMAN_AGENT_ID } from '@rerun/contracts'
+import { STEWARD_AGENT_ID } from '@lumvika/contracts'
 import * as Notifications from 'expo-notifications'
 
 import { askForPushOnce, registerDevice, setConversationOnScreen, unregisterDevice } from './push'
@@ -80,9 +80,9 @@ describe('push display and taps', () => {
         expect(mockPush).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'conv-2', to: 'a1' } })
     })
 
-    it('opens a push from the Foreman on its own chat page', async () => {
+    it('opens a push from the Steward on its own chat page', async () => {
         mockPush.mockClear()
-        mockLastResponse = { notification: notification({ agentId: FOREMAN_AGENT_ID, conversationId: 'conv-3', kind: 'question' }, 'n10') }
+        mockLastResponse = { notification: notification({ agentId: STEWARD_AGENT_ID, conversationId: 'conv-3', kind: 'question' }, 'n10') }
         await render(<PushRouting />)
         expect(mockPush).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'conv-3' } })
     })

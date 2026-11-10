@@ -9,12 +9,12 @@ import { RewindBackdrop, type RewindBackdropShape } from './RewindBackdrop'
 export type RewindTone = 'violet' | 'blue' | 'magenta' | 'lime' | 'amber' | 'ink'
 
 const TONES: Record<RewindTone, { base: string; colors: string[]; shape: RewindBackdropShape }> = {
-    violet: { base: '#120a3a', colors: ['#4d34f7', '#b7a8ff', '#2a1a9e'], shape: 'corners' },
+    violet: { base: '#120a3a', colors: ['#0b6e63', '#7fdccb', '#2a1a9e'], shape: 'corners' },
     blue: { base: '#04132e', colors: ['#1f6bff', '#38d4ff', '#123a8f'], shape: 'wave' },
     magenta: { base: '#2a0626', colors: ['#ff3fa4', '#8a3cff', '#ff9a5a'], shape: 'ripple' },
     lime: { base: '#0b1a07', colors: ['#7fd13b', '#1f9e5a', '#123d16'], shape: 'truchet' },
     amber: { base: '#140802', colors: ['#ffb020', '#c2410c', '#ff5a1f'], shape: 'corners' },
-    ink: { base: '#0a0a0a', colors: ['#4d34f7', '#3a3a3a', '#b7a8ff'], shape: 'dots' },
+    ink: { base: '#0a0a0a', colors: ['#0b6e63', '#3a3a3a', '#7fdccb'], shape: 'dots' },
 }
 
 // `visual` is the slide's data: pinned to the bottom of a portrait card, beside the copy on a wide one.

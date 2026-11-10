@@ -1,4 +1,4 @@
-import { brainChangeOf, fileCardSchema, mcpRegisterCardOf, parseHubOutput, stripBridgePrefix, tableCardSchema, type BrainChange, type FileCard, type McpRegisterCard, type TableCard } from '@rerun/contracts'
+import { brainChangeOf, fileCardSchema, mcpRegisterCardOf, parseHubOutput, stripBridgePrefix, tableCardSchema, type BrainChange, type FileCard, type McpRegisterCard, type TableCard } from '@lumvika/contracts'
 
 type ToolPart = { type: string; toolName?: string; state?: string; output?: unknown }
 
@@ -73,7 +73,7 @@ export type ConnectCard = { kind: 'service-installed'; name: string; toolNames: 
 export function connectCardOf(part: EventPart): ConnectCard | null {
     if (part.state !== 'output-available') return null
     const name = stripBridgePrefix(part.toolName ?? (part.type.startsWith('tool-') ? part.type.slice('tool-'.length) : ''))
-    if (name === 'rerun_hub_service_install') {
+    if (name === 'lumvika_hub_service_install') {
         const out = parseHubOutput<{ status?: string; slug?: string; name?: string; toolNames?: string[] }>(part.output)
         if (out?.status === 'installed' && out.name) return { kind: 'service-installed', name: out.name, toolNames: out.toolNames ?? [] }
         if (out?.status === 'needs_auth' && out.slug && out.name) return { kind: 'service-needs-auth', slug: out.slug, name: out.name }

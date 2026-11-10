@@ -115,7 +115,7 @@ describe('stepWithScreenshots', () => {
         ['anthropic', 'tool'],
         ['openai', 'tool'],
         ['google', 'tool'],
-        ['rerun', 'user'],
+        ['lumvika', 'user'],
         ['openrouter', 'user'],
     ] as const)('hands %s its picture in a %s message', (provider, role) => {
         const store = createScreenshotStore()

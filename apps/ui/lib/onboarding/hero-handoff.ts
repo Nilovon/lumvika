@@ -1,4 +1,4 @@
-import { AGENT_NAME_MAX, MAX_APPS_AT_CREATION } from '@rerun/ui/new-agent/reading'
+import { AGENT_NAME_MAX, MAX_APPS_AT_CREATION } from '@lumvika/ui/new-agent/reading'
 
 // What the landing page's composer read in the visitor's prompt and sends along with it, in the
 // query string: the agent's name, and the catalogue slugs of its apps. Both come from a URL anyone

@@ -20,7 +20,7 @@ export type BoxAccess = 'none' | 'use' | 'manage'
 export type AccessLevel = 'use' | 'manage'
 export type SpaceVisibility = 'workspace' | 'restricted'
 
-// Who is asking. A person signed in, or the workspace itself: an API key, the onboarding, a foreman
+// Who is asking. A person signed in, or the workspace itself: an API key, the onboarding, a steward
 // turn with no person behind it. The workspace stands for its admins, so it reaches every Box.
 export type Actor = { kind: 'user'; userId: string; workspaceId: number; role: WorkspaceRole; boxScope: BoxScope } | { kind: 'workspace'; workspaceId: number }
 
@@ -238,7 +238,7 @@ async function readSessionWithAgent(sessionId: string) {
     return data
 }
 
-// A member named by something the hub signed (a foreman turn's token), held to their membership
+// A member named by something the hub signed (a steward turn's token), held to their membership
 // as it stands now: someone who left since the token was minted reaches nothing.
 export async function memberActor(workspaceId: number, userId: string): Promise<Actor | null> {
     const { data: membership } = await selectMaybeSingle(createServiceRoleClient(), 'workspace_members', ['role', 'box_scope'] as const, { user_id: userId, workspace_id: workspaceId })

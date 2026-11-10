@@ -80,7 +80,7 @@
         "boxLabel": "Box",
         "submit": "Crear",
         "pausedTitle": "{name} está en pausa",
-        "pausedMessage": "Tu plan no tiene ningún hueco libre para coworkers. Empieza Pro en rerun.build para tener coworkers ilimitados.",
+        "pausedMessage": "Tu plan no tiene ningún hueco libre para coworkers. Empieza Pro en lumvika.com para tener coworkers ilimitados.",
         "failed": "No se pudo crear el coworker"
     }
 }

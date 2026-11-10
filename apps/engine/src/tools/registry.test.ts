@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-registry-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_DESKTOP = 'on'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-registry-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_DESKTOP = 'on'
 
 const state = vi.hoisted(() => ({
     connected: [] as string[],
@@ -36,7 +36,7 @@ vi.mock('../desktop/session.js', async importOriginal => ({
 }))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
-const { TOOL_KEYS } = await import('@rerun/contracts')
+const { TOOL_KEYS } = await import('@lumvika/contracts')
 const { buildTools } = await import('./registry.js')
 const { toolPayloadChars } = await import('./payload.js')
 const { toolCatalog } = await import('./catalog.js')
@@ -48,8 +48,8 @@ const familyTools = Object.fromEntries(toolCatalog().map(f => [f.family, f.tools
 type ConfigInput = Record<string, unknown>
 
 function ctxWith(config: ConfigInput = {}, extra: Record<string, unknown> = {}, install = '') {
-    const agent = { id: 'reg-agent', config: agentConfigSchema.parse({ name: 'reg', ...config }), soul: '', install, env: {}, resolved: { provider: 'rerun', model: 'rerun-max', connection: null } }
-    return { agent, sessionId: 's', logger: quiet, provider: 'rerun', model: 'rerun-max', turnOrder: 'message-first', ...extra } as any
+    const agent = { id: 'reg-agent', config: agentConfigSchema.parse({ name: 'reg', ...config }), soul: '', install, env: {}, resolved: { provider: 'lumvika', model: 'lumvika-max', connection: null } }
+    return { agent, sessionId: 's', logger: quiet, provider: 'lumvika', model: 'lumvika-max', turnOrder: 'message-first', ...extra } as any
 }
 
 async function namesOf(ctx: ReturnType<typeof ctxWith>): Promise<string[]> {
@@ -115,7 +115,7 @@ describe('buildTools', () => {
         expect(await namesOf(ctxWith())).toEqual(expect.arrayContaining(['computer', 'computer_open_app']))
         expect(await namesOf(ctxWith({ tools: { computer: false } }))).not.toContain('computer')
         expect(await namesOf(ctxWith({ ephemeral: true }))).not.toContain('computer')
-        expect(await namesOf(ctxWith({ kind: 'foreman' }))).not.toContain('computer')
+        expect(await namesOf(ctxWith({ kind: 'steward' }))).not.toContain('computer')
         expect(await namesOf(ctxWith({}, { provider: 'claude' }))).toContain('computer')
         expect(await namesOf(ctxWith({}, { provider: 'codex' }))).toContain('computer')
         // Decided on the model the run uses: an OpenCode model that cannot see never gets the screen.
@@ -156,8 +156,8 @@ describe('buildTools', () => {
         expect(await namesOf(ctxWith({ setup: { required: false } }, {}, 'Connect Gmail.'))).not.toContain('install_complete')
     })
 
-    it('gives a foreman the agent file tools on top of its switches', async () => {
-        const names = await namesOf(ctxWith({ kind: 'foreman' }))
+    it('gives a steward the agent file tools on top of its switches', async () => {
+        const names = await namesOf(ctxWith({ kind: 'steward' }))
         expect(names).toEqual(expect.arrayContaining(['agent_files_read', 'agent_files_write', 'agent_files_list', 'agent_files_edit', 'agent_files_search']))
     })
 

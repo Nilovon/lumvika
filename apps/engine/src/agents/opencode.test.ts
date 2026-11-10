@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-opencode-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-opencode-'))
 // A developer routing their own SDK calls through a gateway has these set: OpenCode must not follow.
 process.env.ANTHROPIC_BASE_URL = 'https://gateway.example.com/anthropic'
 process.env.OPENAI_BASE_URL = 'https://gateway.example.com/openai'
@@ -10,7 +10,7 @@ process.env.OPENAI_BASE_URL = 'https://gateway.example.com/openai'
 const { afterEach, beforeEach, describe, expect, it, vi } = await import('vitest')
 const { APICallError, generateText, streamText, tool } = await import('ai')
 const { z } = await import('zod')
-const { agentConfigSchema, connectionConfigSchema, OPENCODE_SNAPSHOT, OPENCODE_USAGE_URL } = await import('@rerun/contracts')
+const { agentConfigSchema, connectionConfigSchema, OPENCODE_SNAPSHOT, OPENCODE_USAGE_URL } = await import('@lumvika/contracts')
 const { modelFor, resolveModel } = await import('./providers.js')
 const { behaviourOf, modelSeesImages, opencodeFetch, opencodeVisionModel } = await import('./opencode.js')
 const { findOpencodeUsage, opencodeCost } = await import('./opencode-stream.js')
@@ -74,7 +74,7 @@ describe('resolveModel on OpenCode, one SDK per wire format', () => {
         expect(request.url).toBe('https://opencode.ai/inference/go/openai/v1/chat/completions')
         expect(request.headers.get('authorization')).toBe('Bearer oc_sk_test')
         expect(request.headers.get('x-opencode-session')).toBe('session-42')
-        expect(request.headers.get('user-agent')).toMatch(/^rerun-engine\//)
+        expect(request.headers.get('user-agent')).toMatch(/^lumvika-engine\//)
         expect(request.init.redirect).toBe('error')
         expect(request.body.model).toBe('deepseek-v4-pro')
         expect(request.body.reasoning).toBeUndefined()

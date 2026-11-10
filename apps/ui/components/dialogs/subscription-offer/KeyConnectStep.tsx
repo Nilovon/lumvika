@@ -1,8 +1,8 @@
 'use client'
 
 import { useErrorText } from '@/hooks/useErrorText'
-import { CONNECTION_TOKEN_KEY } from '@rerun/contracts'
-import { ScrollFade } from '@rerun/ui/primitives'
+import { CONNECTION_TOKEN_KEY } from '@lumvika/contracts'
+import { ScrollFade } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 

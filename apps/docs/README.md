@@ -1,8 +1,8 @@
-# Rerun docs
+# Lumvika docs
 
 Public documentation site, built with [Mintlify](https://mintlify.com) and deployed from this folder of the monorepo.
 
-Mintlify is configured in monorepo mode on the Rerun Cloud repository, docs directory `/apps/docs`: every push to its production branch that touches this folder redeploys the site. The public repository is a snapshot of it, taken at each release.
+Mintlify is configured in monorepo mode on the Lumvika Cloud repository, docs directory `/apps/docs`: every push to its production branch that touches this folder redeploys the site. The public repository is a snapshot of it, taken at each release.
 
 ## Local preview
 
@@ -12,7 +12,7 @@ pnpm dev:docs
 
 This runs the Mintlify CLI (`npx mint dev`) on http://localhost:3333, with hot reload on every save. The CLI is not a workspace dependency, so nothing here affects the pnpm lockfile or the app builds.
 
-The CLI pulls in puppeteer. If its install fails on `chrome-headless-shell ... exists but the executable is missing`, delete the incomplete cache folder it names under `~/.cache/puppeteer` and rerun.
+The CLI pulls in puppeteer. If its install fails on `chrome-headless-shell ... exists but the executable is missing`, delete the incomplete cache folder it names under `~/.cache/puppeteer` and lumvika.
 
 Search is disabled in local preview unless you run `npx mint login`. Everything else renders exactly like production.
 

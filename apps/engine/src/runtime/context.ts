@@ -1,4 +1,4 @@
-import type { MessageAuthor, Provider } from '@rerun/contracts'
+import type { MessageAuthor, Provider } from '@lumvika/contracts'
 import type { UIMessageStreamWriter } from 'ai'
 import type { TurnOrder } from '../agents/turn-order.js'
 import type { LoadedAgent } from '../agents/types.js'

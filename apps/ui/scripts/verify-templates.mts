@@ -4,7 +4,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../app/api/database.types'
-import { templateDocumentSchema, type TemplateAgent, type TemplateDocument } from '@rerun/contracts'
+import { templateDocumentSchema, type TemplateAgent, type TemplateDocument } from '@lumvika/contracts'
 import { AGENT_ARCHIVE_BUCKET, archivePath, type TemplateAgentArchive } from '../lib/templates/archives'
 import { removeCapturedAgent } from '../lib/templates/capture'
 import { rowToDocument, TEMPLATE_DOC_COLUMNS, type TemplateRow } from '../lib/templates/document'
@@ -13,7 +13,7 @@ import { createTemplate, updateTemplateBySlug } from '../lib/templates/write'
 import { createServiceRoleClient } from '../supabase/serviceRole'
 // Straight from the package rather than through `@/supabase/supabase-helpers`: that barrel is a
 // star re-export, which the tsx runner cannot read named exports from.
-import { selectMany, selectMaybeSingle } from '@rerun/db/helpers'
+import { selectMany, selectMaybeSingle } from '@lumvika/db/helpers'
 
 const SLUG = 'zz-verify-scratch-template'
 

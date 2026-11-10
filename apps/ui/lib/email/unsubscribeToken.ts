@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 // No 'server-only': this module is imported both from email.service.ts (Next server) and from the
 // Trigger.dev trial lifecycle tasks, which are bundled outside the Next.js RSC pipeline.
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.rerun.build'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.lumvika.com'
 
 function getSecret(): string {
     const secret = process.env.UNSUBSCRIBE_SECRET

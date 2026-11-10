@@ -33,7 +33,7 @@ export function findOpencodeUsage(value: unknown, depth = 0): OpencodeUsage | un
 
 const asNumber = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined)
 
-// The cost Rerun records is the real one: nothing on top of the Go plan, the list price on Console.
+// The cost Lumvika records is the real one: nothing on top of the Go plan, the list price on Console.
 export function opencodeCost(usage: OpencodeUsage): OpencodeCost | undefined {
     if (typeof usage.billing_source !== 'string') return undefined
     if (usage.billing_source === 'go') return { billingSource: 'go', cost: 0 }

@@ -2,12 +2,12 @@
 // `recommend.ts` does.
 import { warmImage } from '@/lib/og/warm'
 
-// One capture per warm-up, and rerun-shot runs two tabs at a time before it queues: an email with
+// One capture per warm-up, and lumvika-shot runs two tabs at a time before it queues: an email with
 // three picks is warmed in two rounds rather than fired at once.
 const WARM_CONCURRENCY = 2
 
 // A cold capture is a real browser on a shared service. Longer than the send itself is fine; what
-// is not fine is holding a sweep hostage, so this is well under rerun-shot's own 30s.
+// is not fine is holding a sweep hostage, so this is well under lumvika-shot's own 30s.
 const WARM_TIMEOUT_MS = 25_000
 
 /**

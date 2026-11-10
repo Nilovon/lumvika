@@ -324,7 +324,7 @@ alter table "public"."notifications" enable row level security;
 alter table "public"."published_files" enable row level security;
 
 
-  create table "public"."rerun_usage_events" (
+  create table "public"."lumvika_usage_events" (
     "id" uuid not null default gen_random_uuid(),
     "workspace_id" bigint not null,
     "space_id" uuid,
@@ -336,7 +336,7 @@ alter table "public"."published_files" enable row level security;
       );
 
 
-alter table "public"."rerun_usage_events" enable row level security;
+alter table "public"."lumvika_usage_events" enable row level security;
 
 
   create table "public"."services" (
@@ -558,13 +558,13 @@ alter table "public"."workspace_members" enable row level security;
     "subscription_status" text,
     "current_period_end" timestamp with time zone,
     "icon_url" text not null,
-    "rerun_budget_micros" bigint not null default 0,
-    "rerun_used_micros" bigint not null default 0,
-    "rerun_period_anchor" timestamp with time zone,
+    "lumvika_budget_micros" bigint not null default 0,
+    "lumvika_used_micros" bigint not null default 0,
+    "lumvika_period_anchor" timestamp with time zone,
     "subdomain" text not null,
     "max_pages" integer default 2,
     "is_sandbox" boolean not null default false,
-    "rerun_topup_micros" bigint not null default 0
+    "lumvika_topup_micros" bigint not null default 0
       );
 
 
@@ -664,9 +664,9 @@ CREATE UNIQUE INDEX published_files_slug_key ON public.published_files USING btr
 
 CREATE INDEX published_files_workspace_idx ON public.published_files USING btree (workspace_id);
 
-CREATE UNIQUE INDEX rerun_usage_events_pkey ON public.rerun_usage_events USING btree (id);
+CREATE UNIQUE INDEX lumvika_usage_events_pkey ON public.lumvika_usage_events USING btree (id);
 
-CREATE INDEX rerun_usage_events_workspace_idx ON public.rerun_usage_events USING btree (workspace_id, created_at DESC);
+CREATE INDEX lumvika_usage_events_workspace_idx ON public.lumvika_usage_events USING btree (workspace_id, created_at DESC);
 
 CREATE UNIQUE INDEX services_pkey ON public.services USING btree (slug);
 
@@ -782,7 +782,7 @@ alter table "public"."notifications" add constraint "notifications_pkey" PRIMARY
 
 alter table "public"."published_files" add constraint "published_files_pkey" PRIMARY KEY using index "published_files_pkey";
 
-alter table "public"."rerun_usage_events" add constraint "rerun_usage_events_pkey" PRIMARY KEY using index "rerun_usage_events_pkey";
+alter table "public"."lumvika_usage_events" add constraint "lumvika_usage_events_pkey" PRIMARY KEY using index "lumvika_usage_events_pkey";
 
 alter table "public"."services" add constraint "services_pkey" PRIMARY KEY using index "services_pkey";
 
@@ -904,9 +904,9 @@ alter table "public"."published_files" add constraint "published_files_workspace
 
 alter table "public"."published_files" validate constraint "published_files_workspace_id_fkey";
 
-alter table "public"."rerun_usage_events" add constraint "rerun_usage_events_workspace_id_fkey" FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id) ON DELETE CASCADE not valid;
+alter table "public"."lumvika_usage_events" add constraint "lumvika_usage_events_workspace_id_fkey" FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id) ON DELETE CASCADE not valid;
 
-alter table "public"."rerun_usage_events" validate constraint "rerun_usage_events_workspace_id_fkey";
+alter table "public"."lumvika_usage_events" validate constraint "lumvika_usage_events_workspace_id_fkey";
 
 alter table "public"."services" add constraint "services_category_check" CHECK ((category = ANY (ARRAY['payments'::text, 'ecommerce'::text, 'crm'::text, 'marketing'::text, 'seo'::text, 'analytics'::text, 'dev'::text, 'productivity'::text, 'other'::text]))) not valid;
 
@@ -1014,9 +1014,9 @@ alter table "public"."workspace_members" add constraint "workspace_members_works
 
 alter table "public"."workspace_members" validate constraint "workspace_members_workspace_id_fkey";
 
-alter table "public"."workspaces" add constraint "workspaces_rerun_topup_non_negative" CHECK ((rerun_topup_micros >= 0)) not valid;
+alter table "public"."workspaces" add constraint "workspaces_lumvika_topup_non_negative" CHECK ((lumvika_topup_micros >= 0)) not valid;
 
-alter table "public"."workspaces" validate constraint "workspaces_rerun_topup_non_negative";
+alter table "public"."workspaces" validate constraint "workspaces_lumvika_topup_non_negative";
 
 alter table "public"."workspaces" add constraint "workspaces_subdomain_key" UNIQUE using index "workspaces_subdomain_key";
 
@@ -1035,14 +1035,14 @@ AS $function$
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.consume_rerun_credit(p_workspace_id bigint, p_micros bigint)
+CREATE OR REPLACE FUNCTION public.consume_lumvika_credit(p_workspace_id bigint, p_micros bigint)
  RETURNS void
  LANGUAGE sql
 AS $function$
     update workspaces set
-        rerun_used_micros = rerun_used_micros + p_micros,
-        rerun_topup_micros = greatest(
-            rerun_topup_micros - greatest(p_micros - greatest(rerun_budget_micros - rerun_used_micros, 0), 0), 0)
+        lumvika_used_micros = lumvika_used_micros + p_micros,
+        lumvika_topup_micros = greatest(
+            lumvika_topup_micros - greatest(p_micros - greatest(lumvika_budget_micros - lumvika_used_micros, 0), 0), 0)
     where id = p_workspace_id;
 $function$
 ;
@@ -1057,11 +1057,11 @@ AS $function$
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.grant_rerun_topup(p_workspace_id bigint, p_micros bigint)
+CREATE OR REPLACE FUNCTION public.grant_lumvika_topup(p_workspace_id bigint, p_micros bigint)
  RETURNS void
  LANGUAGE sql
 AS $function$
-    update workspaces set rerun_topup_micros = rerun_topup_micros + p_micros where id = p_workspace_id;
+    update workspaces set lumvika_topup_micros = lumvika_topup_micros + p_micros where id = p_workspace_id;
 $function$
 ;
 
@@ -1077,12 +1077,12 @@ END;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.increment_rerun_usage(p_workspace_id bigint, p_micros bigint)
+CREATE OR REPLACE FUNCTION public.increment_lumvika_usage(p_workspace_id bigint, p_micros bigint)
  RETURNS void
  LANGUAGE sql
 AS $function$
   update public.workspaces
-     set rerun_used_micros = rerun_used_micros + p_micros
+     set lumvika_used_micros = lumvika_used_micros + p_micros
    where id = p_workspace_id;
 $function$
 ;
@@ -1813,47 +1813,47 @@ grant truncate on table "public"."published_files" to "service_role";
 
 grant update on table "public"."published_files" to "service_role";
 
-grant delete on table "public"."rerun_usage_events" to "anon";
+grant delete on table "public"."lumvika_usage_events" to "anon";
 
-grant insert on table "public"."rerun_usage_events" to "anon";
+grant insert on table "public"."lumvika_usage_events" to "anon";
 
-grant references on table "public"."rerun_usage_events" to "anon";
+grant references on table "public"."lumvika_usage_events" to "anon";
 
-grant select on table "public"."rerun_usage_events" to "anon";
+grant select on table "public"."lumvika_usage_events" to "anon";
 
-grant trigger on table "public"."rerun_usage_events" to "anon";
+grant trigger on table "public"."lumvika_usage_events" to "anon";
 
-grant truncate on table "public"."rerun_usage_events" to "anon";
+grant truncate on table "public"."lumvika_usage_events" to "anon";
 
-grant update on table "public"."rerun_usage_events" to "anon";
+grant update on table "public"."lumvika_usage_events" to "anon";
 
-grant delete on table "public"."rerun_usage_events" to "authenticated";
+grant delete on table "public"."lumvika_usage_events" to "authenticated";
 
-grant insert on table "public"."rerun_usage_events" to "authenticated";
+grant insert on table "public"."lumvika_usage_events" to "authenticated";
 
-grant references on table "public"."rerun_usage_events" to "authenticated";
+grant references on table "public"."lumvika_usage_events" to "authenticated";
 
-grant select on table "public"."rerun_usage_events" to "authenticated";
+grant select on table "public"."lumvika_usage_events" to "authenticated";
 
-grant trigger on table "public"."rerun_usage_events" to "authenticated";
+grant trigger on table "public"."lumvika_usage_events" to "authenticated";
 
-grant truncate on table "public"."rerun_usage_events" to "authenticated";
+grant truncate on table "public"."lumvika_usage_events" to "authenticated";
 
-grant update on table "public"."rerun_usage_events" to "authenticated";
+grant update on table "public"."lumvika_usage_events" to "authenticated";
 
-grant delete on table "public"."rerun_usage_events" to "service_role";
+grant delete on table "public"."lumvika_usage_events" to "service_role";
 
-grant insert on table "public"."rerun_usage_events" to "service_role";
+grant insert on table "public"."lumvika_usage_events" to "service_role";
 
-grant references on table "public"."rerun_usage_events" to "service_role";
+grant references on table "public"."lumvika_usage_events" to "service_role";
 
-grant select on table "public"."rerun_usage_events" to "service_role";
+grant select on table "public"."lumvika_usage_events" to "service_role";
 
-grant trigger on table "public"."rerun_usage_events" to "service_role";
+grant trigger on table "public"."lumvika_usage_events" to "service_role";
 
-grant truncate on table "public"."rerun_usage_events" to "service_role";
+grant truncate on table "public"."lumvika_usage_events" to "service_role";
 
-grant update on table "public"."rerun_usage_events" to "service_role";
+grant update on table "public"."lumvika_usage_events" to "service_role";
 
 grant delete on table "public"."services" to "anon";
 

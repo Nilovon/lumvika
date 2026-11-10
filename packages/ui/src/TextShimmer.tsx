@@ -24,7 +24,7 @@ export interface TextShimmerProps {
 /**
  * Animated "shimmer" sweep across text, via an animated background-position on a
  * `bg-clip-text` gradient. Pure CSS (no JS animation lib) so it works in Server
- * Components. The `text-shimmer` keyframe lives in `@rerun/ui/styles.css`.
+ * Components. The `text-shimmer` keyframe lives in `@lumvika/ui/styles.css`.
  *
  * Colors are overridable through two CSS vars (set them via `className`):
  *   --shimmer-base       text color (default: --muted-foreground)

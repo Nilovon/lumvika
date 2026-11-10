@@ -3,13 +3,13 @@ import { lstat, mkdir, symlink, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-skills-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-skills-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { skillTools } = await import('./skills.js')
 const { workspaceDir, skillDir } = await import('../../config/paths.js')
-const { TEXT_FILE_PAGE_CHARS } = await import('@rerun/contracts')
+const { TEXT_FILE_PAGE_CHARS } = await import('@lumvika/contracts')
 
 const id = 'testagent'
 const ctx = { agent: { id } } as any
@@ -201,9 +201,9 @@ describe('connector skills', () => {
     beforeAll(async () => {
         await run('skill_create', { name: 'Stripe Payments', description: 'd', body: 'the connector procedure' })
         await run('skill_write_file', { slug: 'stripe-payments', path: 'references/api.md', content: 'endpoints' })
-        await mkdir(resolve(ws, '.rerun'), { recursive: true })
+        await mkdir(resolve(ws, '.lumvika'), { recursive: true })
         await writeFile(
-            resolve(ws, '.rerun/services.json'),
+            resolve(ws, '.lumvika/services.json'),
             JSON.stringify({ services: { stripe: { status: 'active', mcpServers: ['stripe'], envKeys: [], skills: ['stripe-payments'] } } }),
             'utf8',
         )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_CONNECTION_MODELS, MODEL_CONTEXT_WINDOW, MODEL_LABEL, OPENCODE_SNAPSHOT, isPremiumModel, providerSchema, trialModelFor } from '@rerun/contracts'
+import { DEFAULT_CONNECTION_MODELS, MODEL_CONTEXT_WINDOW, MODEL_LABEL, OPENCODE_SNAPSHOT, isPremiumModel, providerSchema, trialModelFor } from '@lumvika/contracts'
 import { ENGINE_MODEL_CATALOG, catalogFor } from './models'
 
 describe('ENGINE_MODEL_CATALOG', () => {
@@ -62,7 +62,7 @@ describe('premium models on a trial', () => {
 
     it('covers Opus, Fable and Astra, and leaves Sonnet and Sol open', () => {
         expect(premium.map(p => p.model)).toEqual(expect.arrayContaining(['console/claude-opus-5-5', 'console/gpt-6-astra', 'claude-opus-5-5', 'claude-fable-5-1', 'claude-opus-4-8[1m]', 'gpt-6-astra', 'openai/gpt-6-astra', 'anthropic/claude-opus-5.5']))
-        for (const model of ['claude-sonnet-5[1m]', 'claude-haiku-4-5', 'gpt-6-sol', 'gpt-5.6-sol', 'gpt-6-luna', 'rerun-smart']) expect(isPremiumModel(model), model).toBe(false)
+        for (const model of ['claude-sonnet-5[1m]', 'claude-haiku-4-5', 'gpt-6-sol', 'gpt-5.6-sol', 'gpt-6-luna', 'lumvika-smart']) expect(isPremiumModel(model), model).toBe(false)
     })
 
     // The box runs the substitute without asking the connection, so it has to be a model the

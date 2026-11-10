@@ -1,4 +1,4 @@
-// The shape the billing dialog reads from a quote, the same as Rerun Cloud's list.
+// The shape the billing dialog reads from a quote, the same as Lumvika Cloud's list.
 export type Testimonial = { id: string; quote: string; author: string; role: string; company: string; companyLogo?: string; avatar?: string }
 
 // No customer quote ships with the open source build: the billing dialog shows none.

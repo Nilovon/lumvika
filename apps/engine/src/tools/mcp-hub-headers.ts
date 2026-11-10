@@ -1,11 +1,11 @@
 import type { McpServer } from '../agents/types.js'
 import { env } from '../config/env.js'
 
-// Every MCP server Rerun hosts itself lives under this prefix. /api/mcp/account also matches: it
+// Every MCP server Lumvika hosts itself lives under this prefix. /api/mcp/account also matches: it
 // authenticates with its own bearer and ignores both headers, so it costs two useless headers and
 // nothing else — not worth an exception.
 const HUB_MCP_PREFIX = '/api/mcp/'
-const INJECTED_HEADERS = ['x-rerun-key', 'x-rerun-agent']
+const INJECTED_HEADERS = ['x-lumvika-key', 'x-lumvika-agent']
 
 // Matched on parsed URLs, not strings: parsing normalises host casing, default ports and `..`
 // segments, so `/api/mcp/../../evil` cannot pass as one of ours. The hub base is a parameter
@@ -24,12 +24,12 @@ export function isHubMcpUrl(url: string | undefined, hubBaseUrl: string | undefi
 // The hub identifies its caller with these two headers. They are no longer written into an agent's
 // config: an agent that edits its own could otherwise authenticate as any other agent of the same
 // Box. The engine rebuilds them at connect time from its own env — hence the comparison against
-// env().RERUN_HUB_BASE_URL and never the agent's, which the agent can override to point elsewhere —
+// env().LUMVIKA_HUB_BASE_URL and never the agent's, which the agent can override to point elsewhere —
 // and they overwrite whatever the config carries, header casing included. `Authorization` is left
 // alone: on /api/mcp/managed it carries the third party's token, put there by withAuth.
 export function withHubHeaders(server: McpServer, agentId: string): McpServer {
-    const { RERUN_HUB_BASE_URL, RERUN_API_KEY } = env()
-    if (!isHubMcpUrl(server.url, RERUN_HUB_BASE_URL)) return server
+    const { LUMVIKA_HUB_BASE_URL, LUMVIKA_API_KEY } = env()
+    if (!isHubMcpUrl(server.url, LUMVIKA_HUB_BASE_URL)) return server
     const carried = Object.entries(server.headers).filter(([key]) => !INJECTED_HEADERS.includes(key.toLowerCase()))
-    return { ...server, headers: { ...Object.fromEntries(carried), 'x-rerun-key': RERUN_API_KEY ?? '', 'x-rerun-agent': agentId } }
+    return { ...server, headers: { ...Object.fromEntries(carried), 'x-lumvika-key': LUMVIKA_API_KEY ?? '', 'x-lumvika-agent': agentId } }
 }

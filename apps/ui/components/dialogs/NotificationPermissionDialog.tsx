@@ -5,7 +5,7 @@ import { Icon } from '@/components/ui/icon'
 import { BellIcon } from '@/lib/icons'
 import { requestBrowserPermission } from '@/lib/notifications/browser'
 import { useNotificationsStore } from '@/stores/notifications.store'
-import { Stripes } from '@rerun/ui/primitives'
+import { Stripes } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 
 // Asked once, when the onboarding ends and there is an agent to hear from: a run can outlive the

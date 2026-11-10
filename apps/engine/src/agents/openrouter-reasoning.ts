@@ -11,7 +11,7 @@ type GeneratePart = GenerateResult['content'][number]
 
 // `enabled` rather than an effort or a token budget: it asks OpenRouter to hand back the reasoning
 // the model decides to produce, without buying more of it. Models that already reason (the one the
-// keyless `rerun` provider serves) return it either way; the Anthropic family needs the ask.
+// keyless `lumvika` provider serves) return it either way; the Anthropic family needs the ask.
 const REASONING_REQUEST = { enabled: true }
 
 // What a call cost and what it wrote into the prompt cache only come back in the last frame of the

@@ -1,7 +1,7 @@
 import type { SFSymbol } from 'expo-symbols'
 
 // The web's tool icons (apps/ui/lib/tool-meta.ts) as SF Symbols, tool for tool. The labels are shared
-// through @rerun/contracts.
+// through @lumvika/contracts.
 const TOOL_SYMBOLS: Record<string, SFSymbol> = {
     shell_exec: 'terminal',
 
@@ -86,14 +86,14 @@ const TOOL_SYMBOLS: Record<string, SFSymbol> = {
     table_view_save: 'cylinder',
     table_view_delete: 'cylinder',
 
-    rerun_hub_service_search: 'magnifyingglass',
-    rerun_hub_service_details: 'link',
-    rerun_hub_service_install: 'link',
-    rerun_hub_service_list_installed: 'list.bullet',
-    rerun_hub_service_uninstall: 'trash',
-    rerun_hub_publish_file: 'globe',
-    rerun_hub_unpublish_file: 'trash',
-    rerun_hub_list_published: 'list.bullet',
+    lumvika_hub_service_search: 'magnifyingglass',
+    lumvika_hub_service_details: 'link',
+    lumvika_hub_service_install: 'link',
+    lumvika_hub_service_list_installed: 'list.bullet',
+    lumvika_hub_service_uninstall: 'trash',
+    lumvika_hub_publish_file: 'globe',
+    lumvika_hub_unpublish_file: 'trash',
+    lumvika_hub_list_published: 'list.bullet',
 
     task_complete: 'paperplane',
 

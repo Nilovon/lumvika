@@ -1,4 +1,4 @@
-import { pushDataSchema, type PushData } from '@rerun/contracts'
+import { pushDataSchema, type PushData } from '@lumvika/contracts'
 import * as Application from 'expo-application'
 import Constants from 'expo-constants'
 import * as Device from 'expo-device'
@@ -10,9 +10,9 @@ import { onCustomServer } from '@/config/environment'
 
 type Caller = { accessToken: string; workspaceId: number }
 
-const ASKED_KEY = 'rerun.push-asked'
+const ASKED_KEY = 'lumvika.push-asked'
 
-// Pushes go out through Rerun's Expo project, which only Rerun Cloud sends with: on a server of the
+// Pushes go out through Lumvika's Expo project, which only Lumvika Cloud sends with: on a server of the
 // person's own, the app never asks for them.
 export const pushAvailable = !onCustomServer
 

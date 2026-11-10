@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-web-gaps-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-web-gaps-'))
 
 // Hosts in these tests are made up: they resolve to a public address, except the ones named private.
 vi.mock('node:dns/promises', () => ({
     lookup: async (host: string) => [{ address: host.startsWith('internal.') ? '10.0.0.7' : '93.184.216.34', family: 4 }],
 }))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_API_KEY = ''
 
 const { afterEach, describe, expect, it } = await import('vitest')
 const { HostBreaker } = await import('../host-breaker.js')
@@ -107,7 +107,7 @@ describe('web_fetch', () => {
 describe('web_search', () => {
     it('fails with a readable message when the engine is linked to no hub', async () => {
         const fetchMock = mockFetch(() => Response.json({ results: [] }))
-        expect(await call(ctxWith(), 'web_search', { query: 'x', maxResults: 5 })).toBe('Search failed: web search is unavailable: the engine is not linked to a Rerun hub')
+        expect(await call(ctxWith(), 'web_search', { query: 'x', maxResults: 5 })).toBe('Search failed: web search is unavailable: the engine is not linked to a Lumvika hub')
         expect(fetchMock).not.toHaveBeenCalled()
     })
 })
@@ -174,24 +174,24 @@ describe('web_fetch saving the page', () => {
 
         const out = await fetchSaved('https://altarflow.test/es')
 
-        expect(out.split('\n').slice(0, 2)).toEqual(['[200] https://altarflow.test/es', 'Saved whole: .rerun/pages/altarflow.test/es.served.html (read or grep it for anything this result leaves out)'])
-        expect(await readFile(resolve(workspaceDir('surfer'), '.rerun/pages/altarflow.test/es.served.html'), 'utf8')).toBe(html)
-        const meta = JSON.parse(await readFile(resolve(workspaceDir('surfer'), '.rerun/pages/altarflow.test/es.meta.json'), 'utf8'))
+        expect(out.split('\n').slice(0, 2)).toEqual(['[200] https://altarflow.test/es', 'Saved whole: .lumvika/pages/altarflow.test/es.served.html (read or grep it for anything this result leaves out)'])
+        expect(await readFile(resolve(workspaceDir('surfer'), '.lumvika/pages/altarflow.test/es.served.html'), 'utf8')).toBe(html)
+        const meta = JSON.parse(await readFile(resolve(workspaceDir('surfer'), '.lumvika/pages/altarflow.test/es.meta.json'), 'utf8'))
         expect(meta.views.served).toMatchObject({ status: 200, contentType: 'text/html', xRobotsTag: 'noindex' })
     })
 
     it('keeps a robots.txt as text, and the body of a missing page as proof', async () => {
         mockFetch(url => (url.endsWith('robots.txt') ? new Response('User-agent: *\nDisallow: /admin', { headers: { 'content-type': 'text/plain' } }) : new Response('<h1>Not here</h1>', { status: 404, headers: { 'content-type': 'text/html' } })))
 
-        expect(await fetchSaved('https://site.test/robots.txt')).toContain('Saved whole: .rerun/pages/site.test/robots.txt.served.txt')
-        expect(await fetchSaved('https://site.test/gone')).toContain('Saved whole: .rerun/pages/site.test/gone.served.html')
-        expect(await readFile(resolve(workspaceDir('surfer'), '.rerun/pages/site.test/gone.served.html'), 'utf8')).toBe('<h1>Not here</h1>')
+        expect(await fetchSaved('https://site.test/robots.txt')).toContain('Saved whole: .lumvika/pages/site.test/robots.txt.served.txt')
+        expect(await fetchSaved('https://site.test/gone')).toContain('Saved whole: .lumvika/pages/site.test/gone.served.html')
+        expect(await readFile(resolve(workspaceDir('surfer'), '.lumvika/pages/site.test/gone.served.html'), 'utf8')).toBe('<h1>Not here</h1>')
     })
 
     it('saves the body with raw set too', async () => {
         mockFetch(() => new Response('{"ok":true}', { headers: { 'content-type': 'application/json' } }))
 
-        expect(await fetchSaved('https://api.test/v1', true)).toBe('[200] https://api.test/v1\nSaved whole: .rerun/pages/api.test/v1.served.json (read or grep it for anything this result leaves out)\n\n{"ok":true}')
+        expect(await fetchSaved('https://api.test/v1', true)).toBe('[200] https://api.test/v1\nSaved whole: .lumvika/pages/api.test/v1.served.json (read or grep it for anything this result leaves out)\n\n{"ok":true}')
     })
 
     it('saves nothing for a binary body', async () => {

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const workspace = { id: 7, subscription_status: 'active', is_sandbox: false, rerun_used_micros: 2_000_000, rerun_budget_micros: 10_000_000, rerun_topup_micros: 0, current_period_end: '2026-11-01T00:00:00Z' }
+const workspace = { id: 7, subscription_status: 'active', is_sandbox: false, lumvika_used_micros: 2_000_000, lumvika_budget_micros: 10_000_000, lumvika_topup_micros: 0, current_period_end: '2026-11-01T00:00:00Z' }
 let signedIn = true
 let role: 'admin' | 'member' = 'admin'
 // The dialog of a workspace on a deployment that bills.
-vi.mock('@rerun/cloud/billing', async () => ({
-    ...(await vi.importActual<typeof import('@rerun/cloud/billing')>('@rerun/cloud/billing')),
+vi.mock('@lumvika/cloud/billing', async () => ({
+    ...(await vi.importActual<typeof import('@lumvika/cloud/billing')>('@lumvika/cloud/billing')),
     BILLING_ENABLED: true,
 }))
 vi.mock('@/app/api/_auth/ownership', async importOriginal => {
@@ -53,8 +53,8 @@ vi.mock('@/lib/features', async importOriginal => ({
     },
 }))
 let cloud = true
-vi.mock('@rerun/cloud/edition', () => ({
-    get RERUN_CLOUD() {
+vi.mock('@lumvika/cloud/edition', () => ({
+    get LUMVIKA_CLOUD() {
         return cloud
     },
 }))
@@ -107,12 +107,12 @@ const claudeFinish = await import('./claude/finish/route')
 const codexPoll = await import('./codex/poll/route')
 const { EngineRequestError } = await import('@/lib/engine/client')
 
-const base = 'https://app.rerun.build/api/v1/ai-connections'
+const base = 'https://app.lumvika.com/api/v1/ai-connections'
 const send = (handler: (req: Request, segment: { params: Promise<Record<string, string>> }) => Promise<Response>, method: string, path = '', body?: object, params: Record<string, string> = {}, headers: Record<string, string> = {}) =>
     handler(new Request(`${base}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined }), { params: Promise.resolve(params) })
 
 const connection = (overrides: object) => ({ name: 'X', provider: 'anthropic', models: [], extraModels: [], createdAt: '', connected: true, credentialRejected: false, planLimits: null, ...overrides })
-const rerun = connection({ id: 'rerun', name: 'Rerun', provider: 'rerun', models: ['rerun-max'] })
+const lumvika = connection({ id: 'lumvika', name: 'Lumvika', provider: 'lumvika', models: ['lumvika-max'] })
 const claude = connection({ id: 'cnx-claude', name: 'Claude', provider: 'claude', models: ['claude-opus-5-5', 'claude-sonnet-4-6'] })
 
 beforeEach(() => {
@@ -120,7 +120,7 @@ beforeEach(() => {
     role = 'admin'
     vi.clearAllMocks()
     findWorkspaceEngine.mockResolvedValue({ instanceId: 'i', conn, managed: true })
-    engine.listConnections.mockResolvedValue({ connections: [claude, rerun], default: null })
+    engine.listConnections.mockResolvedValue({ connections: [claude, lumvika], default: null })
     engine.createConnection.mockImplementation(async (_conn: unknown, params: { name: string; provider: string }) => connection({ id: 'cnx-new', ...params }))
     providerKeyProblem.mockResolvedValue(null)
     opencodeEnabled = false
@@ -132,22 +132,22 @@ beforeEach(() => {
 })
 
 describe('GET /api/v1/ai-connections', () => {
-    it('shapes the web dialog for the app: Rerun first, the default on Rerun when none is set, premium models locked on a trial', async () => {
+    it('shapes the web dialog for the app: Lumvika first, the default on Lumvika when none is set', async () => {
         workspace.subscription_status = 'trialing'
         const view = await (await send(list.GET, 'GET')).json()
         workspace.subscription_status = 'active'
-        expect(view.connections.map((entry: { id: string }) => entry.id)).toEqual(['rerun', 'cnx-claude'])
-        expect(view.default).toEqual({ connectionId: 'rerun', model: 'rerun-max', label: expect.any(String) })
-        expect(view.connections[0]).toMatchObject({ kind: 'included', status: 'connected', isDefault: true, summary: "20% of this month's credits used" })
+        expect(view.connections.map((entry: { id: string }) => entry.id)).toEqual(['lumvika', 'cnx-claude'])
+        expect(view.default).toEqual({ connectionId: 'lumvika', model: 'lumvika-max', label: expect.any(String) })
+        expect(view.connections[0]).toMatchObject({ kind: 'included', status: 'connected', isDefault: true, summary: "0% of this month's credits used" })
         const opus = view.connections[1].models.find((model: { id: string }) => model.id === 'claude-opus-5-5')
-        expect(opus).toMatchObject({ enabled: true, locked: true })
+        expect(opus).toMatchObject({ enabled: true, locked: false })
         expect(view.addable.map((entry: { provider: string }) => entry.provider)).toEqual(['claude', 'codex', 'anthropic', 'openai', 'google', 'openrouter'])
         expect(view.addable[0]).toMatchObject({ kind: 'plan', suggestedName: 'Claude 2', guide: null })
         expect(view.addable[2].guide).toMatchObject({ title: 'How to get your Anthropic key' })
     })
 
     it('asks a signed-in user to reconnect a credential its provider turned away', async () => {
-        engine.listConnections.mockResolvedValue({ connections: [rerun, { ...claude, credentialRejected: true }], default: null })
+        engine.listConnections.mockResolvedValue({ connections: [lumvika, { ...claude, credentialRejected: true }], default: null })
         const view = await (await send(list.GET, 'GET')).json()
         expect(view.connections[1]).toMatchObject({ status: 'reconnect', credentialOnFile: true })
     })
@@ -163,7 +163,7 @@ describe('GET /api/v1/ai-connections', () => {
 describe('OpenCode', () => {
     const opencode = connection({ id: 'cnx-oc', name: 'OpenCode', provider: 'opencode', models: ['go/deepseek-v4-pro'] })
     const addable = async (headers: Record<string, string> = {}) => ((await (await send(list.GET, 'GET', '', undefined, {}, headers)).json()) as { addable: { provider: string }[] }).addable.map(entry => entry.provider)
-    const iosBuild = (build: number) => ({ 'x-rerun-client': `ios/1.4.0 (${build})` })
+    const iosBuild = (build: number) => ({ 'x-lumvika-client': `ios/1.4.0 (${build})` })
 
     it('is offered only behind its flag, and only on a machine whose engine runs it', async () => {
         vi.stubEnv('MOBILE_IOS_OPENCODE_BUILD', '40')
@@ -188,13 +188,13 @@ describe('OpenCode', () => {
     // An iOS build that predates OpenCode parses the provider strictly and would drop the whole list.
     it('stays out of the list an older iOS build reads, or one that sends no header', async () => {
         opencodeEnabled = true
-        engine.listConnections.mockResolvedValue({ connections: [rerun, opencode], default: { connectionId: 'cnx-oc', model: 'go/deepseek-v4-pro' } })
+        engine.listConnections.mockResolvedValue({ connections: [lumvika, opencode], default: { connectionId: 'cnx-oc', model: 'go/deepseek-v4-pro' } })
         vi.stubEnv('MOBILE_IOS_OPENCODE_BUILD', '40')
         const ids = async (headers: Record<string, string>) => ((await (await send(list.GET, 'GET', '', undefined, {}, headers)).json()) as { connections: { id: string }[] }).connections.map(entry => entry.id)
-        expect(await ids({})).toEqual(['rerun'])
-        expect(await ids(iosBuild(39))).toEqual(['rerun'])
+        expect(await ids({})).toEqual(['lumvika'])
+        expect(await ids(iosBuild(39))).toEqual(['lumvika'])
         expect(await addable(iosBuild(39))).not.toContain('opencode')
-        expect(await ids(iosBuild(40))).toEqual(['rerun', 'cnx-oc'])
+        expect(await ids(iosBuild(40))).toEqual(['lumvika', 'cnx-oc'])
     })
 })
 
@@ -204,11 +204,11 @@ describe('custom endpoints', () => {
 
     it('are offered last among the API keys, only on a machine whose engine runs them, and to an iOS build that knows them', async () => {
         vi.stubEnv('MOBILE_IOS_CUSTOM_BUILD', '50')
-        const current = { 'x-rerun-client': 'ios/1.5.0 (50)' }
+        const current = { 'x-lumvika-client': 'ios/1.5.0 (50)' }
         expect(await addable(current)).not.toContain('custom')
         engine.supportsCustomProvider.mockResolvedValue(true)
         expect(await addable(current)).toEqual(['claude', 'codex', 'anthropic', 'openai', 'google', 'openrouter', 'custom'])
-        expect(await addable({ 'x-rerun-client': 'ios/1.4.0 (49)' })).not.toContain('custom')
+        expect(await addable({ 'x-lumvika-client': 'ios/1.4.0 (49)' })).not.toContain('custom')
     })
 
     it('take no key, and keep the models the endpoint listed', async () => {
@@ -228,9 +228,9 @@ describe('custom endpoints', () => {
         expect(engine.createConnection).not.toHaveBeenCalled()
     })
 
-    // On Rerun Cloud the box would send the key to the host's own network; a self-hosted install
+    // On Lumvika Cloud the box would send the key to the host's own network; a self-hosted install
     // runs on its owner's, where Ollama listens.
-    it('refuse a private address on Rerun Cloud and take it on a self-hosted install', async () => {
+    it('refuse a private address on Lumvika Cloud and take it on a self-hosted install', async () => {
         engine.supportsCustomProvider.mockResolvedValue(true)
         const refused = await create({ baseUrl: 'http://192.168.1.20:11434/v1' })
         expect(refused.status).toBe(400)
@@ -276,7 +276,7 @@ describe('POST /api/v1/ai-connections', () => {
 })
 
 describe('PUT /api/v1/ai-connections/default', () => {
-    it('sets the pair, clears it back to Rerun, and refuses a model the plan does not include', async () => {
+    it('sets the pair, clears it back to Lumvika, and refuses a model the plan does not include', async () => {
         expect((await send(defaultRoute.PUT, 'PUT', '/default', { connectionId: 'cnx-claude', model: 'claude-sonnet-4-6' })).status).toBe(204)
         expect(engine.setBoxDefault).toHaveBeenLastCalledWith(conn, { connectionId: 'cnx-claude', model: 'claude-sonnet-4-6' })
         expect((await send(defaultRoute.PUT, 'PUT', '/default', { connectionId: null, model: null })).status).toBe(204)
@@ -290,16 +290,16 @@ describe('PUT /api/v1/ai-connections/default', () => {
 })
 
 describe('/api/v1/ai-connections/:id', () => {
-    it('replaces the key of the connection under its provider’s env var, drops the old refresh material, and never touches Rerun', async () => {
+    it('replaces the key of the connection under its provider’s env var, drops the old refresh material, and never touches Lumvika', async () => {
         expect((await send(keysRoute.PUT, 'PUT', '/cnx-claude/keys', { apiKey: 'sk-ant-oat01-new' }, { id: 'cnx-claude' })).status).toBe(204)
         expect(engine.updateConnectionKeys).toHaveBeenCalledWith(conn, 'cnx-claude', { set: { CLAUDE_CODE_OAUTH_TOKEN: 'sk-ant-oat01-new' }, remove: ['CLAUDE_CODE_OAUTH_REFRESH_TOKEN', 'CLAUDE_CODE_OAUTH_EXPIRES_AT'] })
-        expect((await send(keysRoute.PUT, 'PUT', '/rerun/keys', { apiKey: 'x' }, { id: 'rerun' })).status).toBe(404)
+        expect((await send(keysRoute.PUT, 'PUT', '/lumvika/keys', { apiKey: 'x' }, { id: 'lumvika' })).status).toBe(404)
     })
 
-    it('reads a connection the machine no longer has as missing, and never deletes Rerun', async () => {
+    it('reads a connection the machine no longer has as missing, and never deletes Lumvika', async () => {
         expect((await send(connectionRoute.PATCH, 'PATCH', '/gone', { name: 'New' }, { id: 'gone' })).status).toBe(404)
         expect(engine.patchConnection).not.toHaveBeenCalled()
-        expect((await send(connectionRoute.DELETE, 'DELETE', '/rerun', undefined, { id: 'rerun' })).status).toBe(400)
+        expect((await send(connectionRoute.DELETE, 'DELETE', '/lumvika', undefined, { id: 'lumvika' })).status).toBe(400)
         expect(engine.deleteConnection).not.toHaveBeenCalled()
     })
 

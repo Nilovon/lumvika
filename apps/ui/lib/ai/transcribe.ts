@@ -8,7 +8,7 @@
 // Base64 JSON rather than the multipart form: it is the shape that carries the provider block.
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/audio/transcriptions'
-const MODEL = process.env.RERUN_TRANSCRIBE_MODEL ?? 'openai/whisper-large-v3-turbo'
+const MODEL = process.env.LUMVIKA_TRANSCRIBE_MODEL ?? 'openai/whisper-large-v3-turbo'
 
 export async function transcribeAudio(audio: Uint8Array, format: string, signal?: AbortSignal): Promise<string> {
     const apiKey = process.env.OPENROUTER_API_KEY

@@ -7,7 +7,7 @@ import {
     type TemplatePricingModel,
     type TemplateStatus,
     templateImageSchema,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { z } from 'zod'
 import { agentsFromRow, connectorsFromRow } from './document'
 import { archiveAgentNames, archivesFromRow } from './archives'
@@ -69,7 +69,7 @@ export type LibraryRow = {
 }
 
 // The public fiche that signs a template. Only a published expert profile signs: anything else,
-// and every template without an author, is credited to the Rerun team, which is what null says.
+// and every template without an author, is credited to the Lumvika team, which is what null says.
 export type LibraryCreator = {
     slug: string
     name: string

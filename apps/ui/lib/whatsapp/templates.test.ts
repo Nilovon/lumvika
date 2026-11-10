@@ -14,7 +14,7 @@ import {
     whatsappLanguage,
 } from './templates'
 
-const IMAGE = 'https://app.rerun.build/og/board?scene=x'
+const IMAGE = 'https://app.lumvika.com/og/board?scene=x'
 
 describe('WhatsApp template builders', () => {
     it('fills the header image, the named body variables and the button path', () => {
@@ -22,7 +22,7 @@ describe('WhatsApp template builders', () => {
 
         expect(message).toEqual({
             key: 'access_ends_recap',
-            slug: 'rerun_access_ends_coworker',
+            slug: 'lumvika_access_ends_coworker',
             category: 'marketing',
             components: [
                 { type: 'header', parameters: [{ type: 'image', url: IMAGE }] },
@@ -39,15 +39,15 @@ describe('WhatsApp template builders', () => {
     })
 
     it.each([
-        [accessEndsRecapMessage({ imageUrl: IMAGE, firstName: 'L', taskCount: 14, path: 'w' }), 'rerun_access_ends_coworker', 'marketing', ['first_name', 'task_count'], true],
-        [paymentFailedMessage({ imageUrl: IMAGE, team: 'A', path: 'w' }), 'rerun_payment_failed', 'utility', ['team'], true],
-        [trialFirstJobDoneMessage({ imageUrl: IMAGE, firstName: 'L', result: 'r', path: 'w' }), 'rerun_trial_first_job_done', 'marketing', ['first_name', 'result'], true],
-        [trialMorningReportMessage({ imageUrl: IMAGE, firstName: 'L', result: 'r', teaser: 't', path: 'w' }), 'rerun_trial_morning_report', 'marketing', ['first_name', 'result', 'teaser'], true],
-        [trialNoFirstJobMessage({ imageUrl: IMAGE, firstName: 'L', coworker: 'c', path: 'w' }), 'rerun_trial_no_first_job', 'marketing', ['first_name', 'coworker'], true],
-        [trialIdeaForYouMessage({ imageUrl: IMAGE, firstName: 'L', company: 'c', idea: 'i', path: 'w' }), 'rerun_trial_idea_for_you', 'marketing', ['first_name', 'company', 'idea'], true],
-        [trialAnythingBlockingMessage({ imageUrl: IMAGE, firstName: 'L', lastDay: 'd', path: 'w' }), 'rerun_trial_anything_blocking', 'marketing', ['first_name', 'last_day'], true],
-        [trialNeedsYourOkMessage({ imageUrl: IMAGE, firstName: 'L', action: 'a', path: 'w' }), 'rerun_trial_needs_your_ok', 'marketing', ['first_name', 'action'], true],
-        [trialWeekRecapMessage({ imageUrl: IMAGE, firstName: 'L', taskCount: 9, path: 'w' }), 'rerun_trial_week_recap', 'marketing', ['first_name', 'task_count'], true],
+        [accessEndsRecapMessage({ imageUrl: IMAGE, firstName: 'L', taskCount: 14, path: 'w' }), 'lumvika_access_ends_coworker', 'marketing', ['first_name', 'task_count'], true],
+        [paymentFailedMessage({ imageUrl: IMAGE, team: 'A', path: 'w' }), 'lumvika_payment_failed', 'utility', ['team'], true],
+        [trialFirstJobDoneMessage({ imageUrl: IMAGE, firstName: 'L', result: 'r', path: 'w' }), 'lumvika_trial_first_job_done', 'marketing', ['first_name', 'result'], true],
+        [trialMorningReportMessage({ imageUrl: IMAGE, firstName: 'L', result: 'r', teaser: 't', path: 'w' }), 'lumvika_trial_morning_report', 'marketing', ['first_name', 'result', 'teaser'], true],
+        [trialNoFirstJobMessage({ imageUrl: IMAGE, firstName: 'L', coworker: 'c', path: 'w' }), 'lumvika_trial_no_first_job', 'marketing', ['first_name', 'coworker'], true],
+        [trialIdeaForYouMessage({ imageUrl: IMAGE, firstName: 'L', company: 'c', idea: 'i', path: 'w' }), 'lumvika_trial_idea_for_you', 'marketing', ['first_name', 'company', 'idea'], true],
+        [trialAnythingBlockingMessage({ imageUrl: IMAGE, firstName: 'L', lastDay: 'd', path: 'w' }), 'lumvika_trial_anything_blocking', 'marketing', ['first_name', 'last_day'], true],
+        [trialNeedsYourOkMessage({ imageUrl: IMAGE, firstName: 'L', action: 'a', path: 'w' }), 'lumvika_trial_needs_your_ok', 'marketing', ['first_name', 'action'], true],
+        [trialWeekRecapMessage({ imageUrl: IMAGE, firstName: 'L', taskCount: 9, path: 'w' }), 'lumvika_trial_week_recap', 'marketing', ['first_name', 'task_count'], true],
     ])('declares what %o needs', (message, slug, category, names, hasImage) => {
         expect(message.slug).toBe(slug)
         expect(message.category).toBe(category)

@@ -3,9 +3,9 @@
 // agent, a `curl`, the screenshot service, only ever carry a URL.
 //
 // The token travels as `?key=` and is then kept in a cookie on the parent domain, so unlocking on
-// rerun.build also unlocks app.rerun.build.
+// lumvika.com also unlocks app.lumvika.com.
 
-export const BRAND_GATE_COOKIE = 'rerun-kit'
+export const BRAND_GATE_COOKIE = 'lumvika-kit'
 export const BRAND_GATE_PARAM = 'key'
 export const BRAND_GATE_MAX_AGE = 365 * 24 * 60 * 60
 

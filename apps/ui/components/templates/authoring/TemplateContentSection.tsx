@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@rerun/ui/primitives'
-import { RichTextEditor } from '@rerun/ui/rich-text-editor'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@lumvika/ui/primitives'
+import { RichTextEditor } from '@lumvika/ui/rich-text-editor'
 import * as React from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 import { useTranslations } from 'next-intl'

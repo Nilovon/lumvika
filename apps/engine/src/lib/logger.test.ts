@@ -1,4 +1,4 @@
-process.env.RERUN_LOG_LEVEL = 'error'
+process.env.LUMVIKA_LOG_LEVEL = 'error'
 
 const { describe, expect, it } = await import('vitest')
 const { logger } = await import('./logger.js')

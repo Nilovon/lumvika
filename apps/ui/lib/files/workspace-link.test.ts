@@ -3,7 +3,7 @@ import { AGENT_WORKSPACE_FILE_TAG, agentImageSrc, agentWorkspacePathFromHref, re
 
 describe('agentWorkspacePathFromHref', () => {
     it('extracts the nested path from an engine workspace link', () => {
-        expect(agentWorkspacePathFromHref('/home/rerun/rerun/agents/wxpacyfio82izmpv41j6c/workspace/Hooks/E-commerce/50-HOOKS.md')).toBe('Hooks/E-commerce/50-HOOKS.md')
+        expect(agentWorkspacePathFromHref('/home/lumvika/lumvika/agents/wxpacyfio82izmpv41j6c/workspace/Hooks/E-commerce/50-HOOKS.md')).toBe('Hooks/E-commerce/50-HOOKS.md')
     })
 
     it('decodes spaces and unicode characters', () => {

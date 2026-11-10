@@ -12,17 +12,17 @@
 //   --missing            only templates whose pair is incomplete, to finish an interrupted run
 //   --concurrency=N      templates captured in parallel, default 3
 //
-// Rerun Shot loads the page in a browser of its own, so the two ends have to be able to reach each
-// other. Against production, NEXT_PUBLIC_APP_URL and RERUN_SHOT_URL are both the deployed services
+// Lumvika Shot loads the page in a browser of its own, so the two ends have to be able to reach each
+// other. Against production, NEXT_PUBLIC_APP_URL and LUMVIKA_SHOT_URL are both the deployed services
 // and there is nothing to set. Locally, both have to be local:
 //
-//   NEXT_PUBLIC_APP_URL=http://localhost:3050 RERUN_SHOT_URL=http://localhost:4600 \
+//   NEXT_PUBLIC_APP_URL=http://localhost:3050 LUMVIKA_SHOT_URL=http://localhost:4600 \
 //     ../engine/node_modules/.bin/tsx --env-file=.env scripts/regenerate-template-cards.mts --apply
 //
 // The hosted screenshot service cannot see a laptop, which is what the preflight below is about.
 
-import { Constants, type Database } from '@rerun/db/types'
-import { selectAll } from '@rerun/db/helpers'
+import { Constants, type Database } from '@lumvika/db/types'
+import { selectAll } from '@lumvika/db/helpers'
 import { captureTemplateCard } from '../lib/templates/card-render'
 import { createServiceRoleClient } from '../supabase/serviceRole'
 
@@ -35,11 +35,11 @@ const concurrency = Number(flagArg('concurrency') ?? 3)
 
 const TEMPLATE_COLUMNS = ['slug', 'title', 'status', 'agent_count', 'card_image_dark_url', 'card_image_light_url'] as const
 
-// lib/og/shot.ts only falls back to a local Rerun Shot when NODE_ENV says development, which a
+// lib/og/shot.ts only falls back to a local Lumvika Shot when NODE_ENV says development, which a
 // plain tsx run does not, so the default here is the hosted service.
 const LOCAL_HOST = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-const shotUrl = process.env.RERUN_SHOT_URL ?? 'https://shot.rerun.build'
+const shotUrl = process.env.LUMVIKA_SHOT_URL ?? 'https://shot.lumvika.com'
 
 const supabase = createServiceRoleClient()
 
@@ -76,7 +76,7 @@ if (!apply) {
 // Pointing the hosted screenshot service at a localhost app answers ERR_CONNECTION_REFUSED from a
 // machine in a datacentre, one failure per template, minutes into a run. Say it before the first one.
 if (LOCAL_HOST.test(appUrl) && !LOCAL_HOST.test(shotUrl)) {
-    throw new Error(`The app is ${appUrl}, which only a local Rerun Shot can reach. Set RERUN_SHOT_URL=http://localhost:4600 and run \`pnpm dev\` in rerun-shot.`)
+    throw new Error(`The app is ${appUrl}, which only a local Lumvika Shot can reach. Set LUMVIKA_SHOT_URL=http://localhost:4600 and run \`pnpm dev\` in lumvika-shot.`)
 }
 
 console.log('')

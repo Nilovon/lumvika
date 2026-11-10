@@ -1,7 +1,7 @@
 // No 'server-only', see lib/email/client.ts: the lifecycle emails are sent from Trigger.dev tasks.
-import { emailTranslator } from '@rerun/emails/i18n'
-import { DEFAULT_LOCALE, type Locale } from '@rerun/i18n'
-import { dayAndMonth, utcClockTime } from '@rerun/i18n/format'
+import { emailTranslator } from '@lumvika/emails/i18n'
+import { DEFAULT_LOCALE, type Locale } from '@lumvika/i18n'
+import { dayAndMonth, utcClockTime } from '@lumvika/i18n/format'
 
 export function emailDateLabel(value: Date, locale: Locale = DEFAULT_LOCALE): string {
     return dayAndMonth(value, locale)

@@ -11,14 +11,14 @@
 //
 // The native project is built with xcodebuild rather than `expo run:ios`: the latter targets the
 // paired iPhone first and dies on code signing. `ios/` is generated and gitignored, so a fresh
-// workspace goes through `expo prebuild` first. The built Rerun.app only depends on the native inputs,
+// workspace goes through `expo prebuild` first. The built Lumvika.app only depends on the native inputs,
 // the JS comes from Metro, so every successful build is kept in a cache shared by all the workspaces of
 // this Mac, keyed by those inputs. A workspace whose key was already built skips prebuild and build.
 // The key leaves pnpm-lock.yaml out, it changes with every PR: a native module bumped through the
 // lockfile alone needs --rebuild.
 // Every dev build uses the personal team config (see app.config.ts): no Sign in with Apple
 // capability and a `.dev` bundle ID, so the same `ios/` serves the simulator and a free-signed iPhone.
-// Metro gets CONDUCTOR_PORT + 2 and each workspace gets its own simulator, "Rerun · <workspace>",
+// Metro gets CONDUCTOR_PORT + 2 and each workspace gets its own simulator, "Lumvika · <workspace>",
 // so two workspaces can run the app at once. Metro's `i` key opens the first booted simulator of the
 // Mac, whichever workspace it belongs to: reload with `r` or ⌘R instead.
 
@@ -35,16 +35,16 @@ const APP_DIR = join(REPO_ROOT, 'apps/mobile')
 const IOS_DIR = join(APP_DIR, 'ios')
 // Outside ios/: prebuild recreates that directory from scratch and would take the build cache with it.
 const DERIVED_DATA_DIR = join(APP_DIR, '.expo/xcode-build')
-const PREBUILD_STAMP = join(DERIVED_DATA_DIR, '.rerun-prebuild-stamp')
-const TEAM_STAMP = join(DERIVED_DATA_DIR, '.rerun-apple-team')
+const PREBUILD_STAMP = join(DERIVED_DATA_DIR, '.lumvika-prebuild-stamp')
+const TEAM_STAMP = join(DERIVED_DATA_DIR, '.lumvika-apple-team')
 const NATIVE_INPUTS = ['package.json', 'app.json', 'app.config.ts']
 // Outside every worktree, so archiving a workspace does not take the dev clients with it.
-const CLIENT_CACHE_DIR = join(homedir(), 'Library/Caches/rerun-mobile')
+const CLIENT_CACHE_DIR = join(homedir(), 'Library/Caches/lumvika-mobile')
 const INSTALLED_DIR = join(CLIENT_CACHE_DIR, 'installed')
 const CLIENT_KEY = /^[0-9a-f]{64}$/
 const KEPT_CLIENTS = 4
 const STALE_COPY_MS = 60 * 60_000
-const SIMULATOR_PREFIX = 'Rerun · '
+const SIMULATOR_PREFIX = 'Lumvika · '
 const SIMULATOR_TYPE = 'com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro'
 const WORKSPACE_NAME = process.env.CONDUCTOR_WORKSPACE_NAME || basename(REPO_ROOT)
 const API_PORT = Number(process.env.CONDUCTOR_PORT ?? 3050)
@@ -71,7 +71,7 @@ function apiUrl() {
 
 // CocoaPods from Homebrew: the system 1.11 is too old for React Native 0.86. Without
 // EXPO_NO_GIT_STATUS, prebuild stops on a prompt as soon as the worktree is dirty.
-const env = { ...process.env, PATH: `/opt/homebrew/bin:${process.env.PATH}`, EXPO_NO_GIT_STATUS: '1', RERUN_PERSONAL_TEAM: '1', EXPO_PUBLIC_API_URL: apiUrl() }
+const env = { ...process.env, PATH: `/opt/homebrew/bin:${process.env.PATH}`, EXPO_NO_GIT_STATUS: '1', LUMVIKA_PERSONAL_TEAM: '1', EXPO_PUBLIC_API_URL: apiUrl() }
 
 function log(message) {
     console.log(`[mobile] ${message}`)
@@ -120,7 +120,7 @@ function capture(command, args) {
 }
 
 function devicectlJson(args) {
-    const output = join(tmpdir(), `rerun-devicectl-${process.pid}.json`)
+    const output = join(tmpdir(), `lumvika-devicectl-${process.pid}.json`)
     spawnSync('xcrun', ['devicectl', ...args, '--quiet', '--json-output', output], { stdio: 'ignore', env })
     if (!existsSync(output)) return null
     const json = JSON.parse(readFileSync(output, 'utf8'))
@@ -202,15 +202,15 @@ function pickPhone() {
 
 // Xcode fetches the teams of the Apple IDs in Settings > Accounts on demand and only caches them
 // once a project picked one, so the team is looked up wherever a previous signing left it:
-// RERUN_APPLE_TEAM_ID, the last team this script used, the Xcode cache, the generated project, the
+// LUMVIKA_APPLE_TEAM_ID, the last team this script used, the Xcode cache, the generated project, the
 // signing certificate. A free account shows up as a "Personal Team".
 function pickTeamId() {
     const remembered = existsSync(TEAM_STAMP) ? readFileSync(TEAM_STAMP, 'utf8').trim() : ''
-    const teamId = process.env.RERUN_APPLE_TEAM_ID || remembered || teamFromXcodeCache() || teamFromProject() || teamFromCertificate()
+    const teamId = process.env.LUMVIKA_APPLE_TEAM_ID || remembered || teamFromXcodeCache() || teamFromProject() || teamFromCertificate()
     if (!teamId) {
-        spawnSync('open', [join(IOS_DIR, 'Rerun.xcworkspace')], { stdio: 'ignore' })
+        spawnSync('open', [join(IOS_DIR, 'Lumvika.xcworkspace')], { stdio: 'ignore' })
         fail(
-            'no Apple team found yet. In the Xcode window that just opened: Rerun target > Signing & Capabilities > Team > "<your name> (Personal Team)", then run this again',
+            'no Apple team found yet. In the Xcode window that just opened: Lumvika target > Signing & Capabilities > Team > "<your name> (Personal Team)", then run this again',
         )
     }
     mkdirSync(DERIVED_DATA_DIR, { recursive: true })
@@ -225,7 +225,7 @@ function teamFromXcodeCache() {
 }
 
 function teamFromProject() {
-    const project = join(IOS_DIR, 'Rerun.xcodeproj/project.pbxproj')
+    const project = join(IOS_DIR, 'Lumvika.xcodeproj/project.pbxproj')
     return existsSync(project) ? readFileSync(project, 'utf8').match(/DEVELOPMENT_TEAM = "?(\w{10})"?;/)?.[1] : undefined
 }
 
@@ -258,7 +258,7 @@ async function apiAnswers(timeoutMs) {
 // group. Its output is prefixed to stay readable next to Metro's.
 function startApi() {
     log(`starting the API (Next) on port ${API_PORT}`)
-    const api = spawn('pnpm', ['--filter', 'rerun', 'exec', 'next', 'dev', '-p', String(API_PORT)], {
+    const api = spawn('pnpm', ['--filter', 'lumvika', 'exec', 'next', 'dev', '-p', String(API_PORT)], {
         cwd: REPO_ROOT,
         env: { ...process.env, FORCE_COLOR: '1' },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -316,7 +316,7 @@ function clientKey({ sdk, bundleId, teamId }) {
 function storeClient(builtApp, entry) {
     const copy = `${entry}.tmp-${process.pid}`
     rmSync(copy, { recursive: true, force: true })
-    runOrExit('ditto', [builtApp, join(copy, 'Rerun.app')])
+    runOrExit('ditto', [builtApp, join(copy, 'Lumvika.app')])
     if (forceRebuild) rmSync(entry, { recursive: true, force: true })
     try {
         renameSync(copy, entry)
@@ -350,16 +350,16 @@ if (!onDevice) deleteArchivedWorkspaceSimulators()
 const target = onDevice ? pickPhone() : workspaceSimulator()
 const teamId = onDevice ? pickTeamId() : null
 const sdk = onDevice ? 'iphoneos' : 'iphonesimulator'
-const builtApp = join(DERIVED_DATA_DIR, `Build/Products/Debug-${sdk}/Rerun.app`)
+const builtApp = join(DERIVED_DATA_DIR, `Build/Products/Debug-${sdk}/Lumvika.app`)
 
 if (!onDevice) spawnSync('open', ['-a', 'Simulator'], { stdio: 'ignore' })
 
 const inputsHash = nativeInputsHash()
-const prebuildIsCurrent = existsSync(PREBUILD_STAMP) && readFileSync(PREBUILD_STAMP, 'utf8') === inputsHash && existsSync(join(IOS_DIR, 'Rerun.xcworkspace'))
+const prebuildIsCurrent = existsSync(PREBUILD_STAMP) && readFileSync(PREBUILD_STAMP, 'utf8') === inputsHash && existsSync(join(IOS_DIR, 'Lumvika.xcworkspace'))
 const bundleId = readBundleId()
 const key = clientKey({ sdk, bundleId, teamId })
 const clientEntry = join(CLIENT_CACHE_DIR, key)
-const cachedApp = join(clientEntry, 'Rerun.app')
+const cachedApp = join(clientEntry, 'Lumvika.app')
 const reusesClient = !forceRebuild && existsSync(cachedApp)
 
 if (reusesClient) {
@@ -380,8 +380,8 @@ if (reusesClient) {
     log(`building the dev client for ${target.name} (the first build takes a while)`)
     const signing = onDevice ? ['-allowProvisioningUpdates', '-allowProvisioningDeviceRegistration', `DEVELOPMENT_TEAM=${teamId}`, 'CODE_SIGN_STYLE=Automatic'] : []
     await runBuild([
-        '-workspace', 'ios/Rerun.xcworkspace',
-        '-scheme', 'Rerun',
+        '-workspace', 'ios/Lumvika.xcworkspace',
+        '-scheme', 'Lumvika',
         '-configuration', 'Debug',
         '-sdk', sdk,
         '-destination', `id=${target.udid}`,
@@ -415,7 +415,7 @@ if (onDevice) {
 if (usesLocalApi) {
     log('waiting for the API to answer')
     if (await waitForApi()) log(`API ready, the app calls ${env.EXPO_PUBLIC_API_URL}`)
-    else log(`the API does not answer on port ${API_PORT}, the app will show "Can't reach Rerun" until it does`)
+    else log(`the API does not answer on port ${API_PORT}, the app will show "Can't reach Lumvika" until it does`)
 }
 
 log(`starting Metro on port ${METRO_PORT}`)
@@ -429,19 +429,19 @@ metro.on('exit', (code, signal) => process.exit(signal ? 1 : (code ?? 0)))
 process.on('exit', () => metro.kill('SIGTERM'))
 
 if (!(await waitForMetro())) {
-    log(`Metro does not answer on port ${METRO_PORT}, open Rerun by hand once it does`)
+    log(`Metro does not answer on port ${METRO_PORT}, open Lumvika by hand once it does`)
 } else if (onDevice) {
     const bundleUrl = `http://${lanAddress()}:${METRO_PORT}`
-    const launch = spawnSync('xcrun', ['devicectl', 'device', 'process', 'launch', '--device', target.coreDeviceId, '--terminate-existing', '--payload-url', `exp+rerun://expo-development-client/?url=${encodeURIComponent(bundleUrl)}`, bundleId], { stdio: 'ignore', env })
+    const launch = spawnSync('xcrun', ['devicectl', 'device', 'process', 'launch', '--device', target.coreDeviceId, '--terminate-existing', '--payload-url', `exp+lumvika://expo-development-client/?url=${encodeURIComponent(bundleUrl)}`, bundleId], { stdio: 'ignore', env })
     if (launch.status === 0) {
-        log(`Rerun opened on ${target.name}, the phone must be on the same Wi-Fi as this Mac`)
+        log(`Lumvika opened on ${target.name}, the phone must be on the same Wi-Fi as this Mac`)
     } else {
-        log(`could not open Rerun on ${target.name}. A free Apple ID needs a one-time approval on the phone: Settings > General > VPN & Device Management > your Apple ID > Trust. Then open the app or scan the QR code`)
+        log(`could not open Lumvika on ${target.name}. A free Apple ID needs a one-time approval on the phone: Settings > General > VPN & Device Management > your Apple ID > Trust. Then open the app or scan the QR code`)
     }
 } else {
-    // --initialUrl is read by the dev launcher itself: unlike an exp+rerun:// URL, it skips the
-    // "Open in Rerun?" prompt of a fresh simulator.
+    // --initialUrl is read by the dev launcher itself: unlike an exp+lumvika:// URL, it skips the
+    // "Open in Lumvika?" prompt of a fresh simulator.
     const launch = spawnSync('xcrun', ['simctl', 'launch', '--terminate-running-process', target.udid, bundleId, '--initialUrl', `http://localhost:${METRO_PORT}`], { stdio: 'ignore', env, timeout: 180_000 })
-    if (launch.status === 0) log(`Rerun opened on ${target.name}`)
-    else log(`could not open Rerun on ${target.name}, open it by hand in the simulator`)
+    if (launch.status === 0) log(`Lumvika opened on ${target.name}`)
+    else log(`could not open Lumvika on ${target.name}, open it by hand in the simulator`)
 }

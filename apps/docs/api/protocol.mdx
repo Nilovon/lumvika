@@ -3,10 +3,10 @@ title: "Protocol"
 description: "JSON-RPC 2.0 over HTTP: the handshake, the call shape, and how errors come back."
 ---
 
-The Rerun MCP server is a stateless JSON-RPC 2.0 endpoint. There is no SSE stream, no session id and no long-lived connection. Every request is a `POST` that carries its own authentication and gets a complete answer.
+The Lumvika MCP server is a stateless JSON-RPC 2.0 endpoint. There is no SSE stream, no session id and no long-lived connection. Every request is a `POST` that carries its own authentication and gets a complete answer.
 
 ```
-POST https://app.rerun.build/api/mcp/account
+POST https://app.lumvika.com/api/mcp/account
 Authorization: Bearer rk_your_key
 Content-Type: application/json
 ```
@@ -34,7 +34,7 @@ Optional in practice, since the server keeps no state, but every MCP client send
   "result": {
     "protocolVersion": "2025-06-18",
     "capabilities": { "tools": {} },
-    "serverInfo": { "name": "rerun", "version": "1.0.0" }
+    "serverInfo": { "name": "lumvika", "version": "1.0.0" }
   }
 }
 ```
@@ -138,8 +138,8 @@ A ninth asks for the same agreement without destroying anything. `create_agent_s
 Nothing about this endpoint requires an MCP client.
 
 ```bash
-curl -s https://app.rerun.build/api/mcp/account \
-  -H "Authorization: Bearer $RERUN_API_KEY" \
+curl -s https://app.lumvika.com/api/mcp/account \
+  -H "Authorization: Bearer $LUMVIKA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",

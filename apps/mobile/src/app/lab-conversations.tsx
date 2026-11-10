@@ -14,7 +14,7 @@ import { LAB_CONVERSATIONS, type LabConversation } from '@/mocks/conversations'
 import { useTheme } from '@/theme/theme'
 import { spacing } from '@/theme/tokens'
 
-import { MockPane } from './lab-foreman'
+import { MockPane } from './lab-steward'
 
 // Dev only: ways to find a conversation by its state from a coworker's chat header.
 //   /lab-conversations?variant=a   a: the native menu, in sections; b and c: the chip opens a sheet,

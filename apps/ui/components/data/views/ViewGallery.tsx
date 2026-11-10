@@ -2,8 +2,8 @@
 
 import type { DbRow } from '@/components/data/DataBrowserTable'
 import { cn } from '@/lib/utils'
-import type { TableView } from '@rerun/contracts'
-import { GalleryItem, type CellContext } from '@rerun/ui/chat'
+import type { TableView } from '@lumvika/contracts'
+import { GalleryItem, type CellContext } from '@lumvika/ui/chat'
 
 type ViewGalleryProps = { view: TableView; rows: DbRow[]; context: CellContext; onOpenRow?: (row: DbRow) => void }
 

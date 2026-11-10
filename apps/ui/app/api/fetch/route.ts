@@ -5,7 +5,7 @@ import { isPublicUrl, scrapePage } from '@/lib/company/firecrawl'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 // Where a coworker's web_fetch falls back once the site refused the box itself. The engine calls it
-// with its RERUN_API_KEY, which names one workspace, so the scraping key never leaves the app.
+// with its LUMVIKA_API_KEY, which names one workspace, so the scraping key never leaves the app.
 export const dynamic = 'force-dynamic'
 
 const MAX_MARKDOWN = 50_000
@@ -51,7 +51,7 @@ export async function POST(req: Request): Promise<Response> {
     const markdown = page.ok ? page.markdown.slice(0, MAX_MARKDOWN) : ''
     await recordWebFetch({
         workspace_id: engine.workspaceId,
-        engine_agent_id: req.headers.get('x-rerun-agent'),
+        engine_agent_id: req.headers.get('x-lumvika-agent'),
         url,
         host: new URL(url).hostname,
         direct_status: directStatus,

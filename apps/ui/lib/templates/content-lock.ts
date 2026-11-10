@@ -1,4 +1,4 @@
-import { isPaidSubscription } from '@rerun/cloud/billing'
+import { isPaidSubscription } from '@lumvika/cloud/billing'
 
 // An agent installed from a template carries the work of whoever authored it: its skills, its
 // system prompt, the prompts behind its schedules and triggers. A free trial is enough to install

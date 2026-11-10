@@ -5,17 +5,17 @@ import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AffiliateTracking } from "@rerun/cloud/support";
+import { AffiliateTracking } from "@lumvika/cloud/support";
 import { AppChrome } from "@/components/layout/AppChrome";
 import { CookieConsent } from "@/components/layout/CookieConsent";
 import { DeployUpdateWatcher } from "@/components/deploy-update/DeployUpdateWatcher";
-import { DomMutationGuard } from "@rerun/ui/dom-guard";
+import { DomMutationGuard } from "@lumvika/ui/dom-guard";
 import { RegisterSW } from "@/components/pwa/RegisterSW";
-import { ThemeCookieBootstrap, ThemeProvider } from "@rerun/ui/theme";
+import { ThemeCookieBootstrap, ThemeProvider } from "@lumvika/ui/theme";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { TimeZoneCookie } from "@/components/layout/TimeZoneCookie";
-import { UiLocaleProvider } from "@rerun/ui/locale";
+import { UiLocaleProvider } from "@lumvika/ui/locale";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
-  keywords: ["Rerun", "AI agents", "autonomous agents", "agent orchestration", "AI workforce", "no-code agents"],
+  keywords: ["Lumvika", "AI agents", "autonomous agents", "agent orchestration", "AI workforce", "no-code agents"],
   authors: [{ name: site.name }],
   metadataBase: new URL(site.url),
   // iOS Safari otherwise wraps what looks like a phone number or an address in a link before React

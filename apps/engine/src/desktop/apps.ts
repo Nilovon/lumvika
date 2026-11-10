@@ -1,5 +1,5 @@
 import { execFile, spawn } from 'node:child_process'
-import type { DesktopApp } from '@rerun/contracts'
+import type { DesktopApp } from '@lumvika/contracts'
 import { workspaceDir } from '../config/paths.js'
 import { windowClassOf } from './panels.js'
 import { desktopEnv, ensureDesktop, trackDesktopChild } from './session.js'

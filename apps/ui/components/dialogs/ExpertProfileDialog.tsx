@@ -4,8 +4,8 @@ import { useErrorText } from '@/hooks/useErrorText'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { ExpertProfileWizard, type OwnerExpert } from '@rerun/ui/experts'
-import { Spinner } from '@rerun/ui/primitives'
+import { ExpertProfileWizard, type OwnerExpert } from '@lumvika/ui/experts'
+import { Spinner } from '@lumvika/ui/primitives'
 
 import {
     getMyExpertProfileAction,

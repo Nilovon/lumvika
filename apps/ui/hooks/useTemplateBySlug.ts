@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { getSharedTemplateAction } from '@/app/api/_actions/template.actions'
 import type { LibraryTemplate } from '@/lib/templates/library'
 
-// One template, by slug, for a surface that holds a slug and nothing else — the foreman's card is
+// One template, by slug, for a surface that holds a slug and nothing else — the steward's card is
 // drawn from what its model wrote, and the model cannot write a board capture. The read goes
 // through the shared-link action rather than the library listing: `show_in_library` has no say on a
 // link somebody arrived on, an unlisted template is exactly the case it serves, and it comes back

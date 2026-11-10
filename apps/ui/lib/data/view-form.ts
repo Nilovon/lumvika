@@ -11,7 +11,7 @@ import {
     type TableCard,
     type TableView,
     type TableViewInput,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { z } from 'zod'
 import { cellInputText } from '@/lib/data/views'
 

@@ -2,20 +2,20 @@ import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cx-store-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cx-store-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { readFile, rm, stat } = await import('node:fs/promises')
-const { DEFAULT_CONNECTION_MODELS, RERUN_CONNECTION_ID, RERUN_MODEL } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID, LUMVIKA_MODEL } = await import('@lumvika/contracts')
 const { connectionConfigPath, connectionDir, connectionEnvPath, connectionsDir } = await import('../config/paths.js')
 const { readEnvFile } = await import('../lib/env-file.js')
 const { getConnection, listConnections, unloadConnection } = await import('./registry.js')
-const { createConnection, deleteConnection, ensureRerunConnection, patchConnection, updateConnectionKeys } = await import('./store.js')
+const { createConnection, deleteConnection, ensureLumvikaConnection, patchConnection, updateConnectionKeys } = await import('./store.js')
 const { isCredentialRejected, recordCredentialRejected } = await import('./credential-rejections.js')
 
 beforeEach(async () => {
-    unloadConnection(RERUN_CONNECTION_ID)
+    unloadConnection(LUMVIKA_CONNECTION_ID)
     await rm(connectionsDir(), { recursive: true, force: true })
 })
 
@@ -58,38 +58,38 @@ describe('updateConnectionKeys', () => {
         expect(isCredentialRejected(cnx.id)).toBe(false)
     })
 
-    it('refuses the keyless Rerun connection', async () => {
-        await ensureRerunConnection()
-        await expect(updateConnectionKeys(RERUN_CONNECTION_ID, { set: { X: 'y' }, remove: [] })).rejects.toMatchObject({ status: 400, message: 'The Rerun connection is keyless' })
+    it('refuses the keyless Lumvika connection', async () => {
+        await ensureLumvikaConnection()
+        await expect(updateConnectionKeys(LUMVIKA_CONNECTION_ID, { set: { X: 'y' }, remove: [] })).rejects.toMatchObject({ status: 400, message: 'The Lumvika connection is keyless' })
     })
 })
 
-describe('the Rerun connection', () => {
-    it('is provisioned once, keyless, and cannot be renamed, stripped of Rerun Balanced or deleted', async () => {
-        await ensureRerunConnection()
-        await ensureRerunConnection()
-        const rerun = await getConnection(RERUN_CONNECTION_ID)
-        expect(rerun.config.provider).toBe('rerun')
-        expect(rerun.env).toEqual({})
+describe('the Lumvika connection', () => {
+    it('is provisioned once, keyless, and cannot be renamed, stripped of Lumvika Balanced or deleted', async () => {
+        await ensureLumvikaConnection()
+        await ensureLumvikaConnection()
+        const lumvika = await getConnection(LUMVIKA_CONNECTION_ID)
+        expect(lumvika.config.provider).toBe('lumvika')
+        expect(lumvika.env).toEqual({})
 
-        await expect(patchConnection(RERUN_CONNECTION_ID, { name: 'Mine' })).rejects.toMatchObject({ status: 400 })
-        await expect(patchConnection(RERUN_CONNECTION_ID, { models: [] })).rejects.toMatchObject({ status: 400 })
-        await expect(deleteConnection(RERUN_CONNECTION_ID)).rejects.toMatchObject({ status: 400 })
-        expect(existsSync(connectionDir(RERUN_CONNECTION_ID))).toBe(true)
-        expect((await patchConnection(RERUN_CONNECTION_ID, { models: [RERUN_MODEL] })).config.models).toEqual([RERUN_MODEL])
+        await expect(patchConnection(LUMVIKA_CONNECTION_ID, { name: 'Mine' })).rejects.toMatchObject({ status: 400 })
+        await expect(patchConnection(LUMVIKA_CONNECTION_ID, { models: [] })).rejects.toMatchObject({ status: 400 })
+        await expect(deleteConnection(LUMVIKA_CONNECTION_ID)).rejects.toMatchObject({ status: 400 })
+        expect(existsSync(connectionDir(LUMVIKA_CONNECTION_ID))).toBe(true)
+        expect((await patchConnection(LUMVIKA_CONNECTION_ID, { models: [LUMVIKA_MODEL] })).config.models).toEqual([LUMVIKA_MODEL])
     })
 
-    // A box provisioned when Rerun had one model. Balanced stays first: it is what the connection
+    // A box provisioned when Lumvika had one model. Balanced stays first: it is what the connection
     // runs when no model is named.
     it('gains the tiers that came after it at boot, once, behind the model it already had', async () => {
-        await ensureRerunConnection()
-        await patchConnection(RERUN_CONNECTION_ID, { models: [RERUN_MODEL] })
+        await ensureLumvikaConnection()
+        await patchConnection(LUMVIKA_CONNECTION_ID, { models: [LUMVIKA_MODEL] })
 
-        await ensureRerunConnection()
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
+        await ensureLumvikaConnection()
 
-        expect((await getConnection(RERUN_CONNECTION_ID)).config.models).toEqual(['rerun-max', 'rerun-fast', 'rerun-smart'])
-        expect(DEFAULT_CONNECTION_MODELS.rerun[0]).toBe(RERUN_MODEL)
+        expect((await getConnection(LUMVIKA_CONNECTION_ID)).config.models).toEqual(['lumvika-max', 'lumvika-fast', 'lumvika-smart'])
+        expect(DEFAULT_CONNECTION_MODELS.lumvika[0]).toBe(LUMVIKA_MODEL)
     })
 })
 

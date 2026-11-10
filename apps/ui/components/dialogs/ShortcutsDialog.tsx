@@ -6,7 +6,7 @@ import { useModKeyLabel } from '@/hooks/useModKeyLabel'
 import { useShortcutsStore } from '@/stores/shortcuts.store'
 import { useTranslations } from 'next-intl'
 
-type ShortcutAction = 'controlCenter' | 'askRerun' | 'holdToTalk' | 'searchInPage' | 'newConversation' | 'closeTab' | 'sendMessage' | 'newLine' | 'previousFile' | 'nextFile'
+type ShortcutAction = 'controlCenter' | 'askLumvika' | 'holdToTalk' | 'searchInPage' | 'newConversation' | 'closeTab' | 'sendMessage' | 'newLine' | 'previousFile' | 'nextFile'
 type Shortcut = { keys: string[]; action: ShortcutAction }
 type ShortcutGroup = { title: 'general' | 'chat' | 'files'; shortcuts: Shortcut[] }
 
@@ -16,7 +16,7 @@ function buildGroups(mod: string): ShortcutGroup[] {
             title: 'general',
             shortcuts: [
                 { keys: [mod, 'F'], action: 'controlCenter' },
-                { keys: [mod, 'K'], action: 'askRerun' },
+                { keys: [mod, 'K'], action: 'askLumvika' },
                 { keys: ['Space'], action: 'holdToTalk' },
                 { keys: [mod, 'F', '×2'], action: 'searchInPage' },
             ],

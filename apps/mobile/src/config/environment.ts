@@ -1,7 +1,7 @@
 import * as Updates from 'expo-updates'
 
 import { readCustomServer, type CustomServer } from '@/config/custom-server'
-import { PRODUCTION, STAGING } from '@rerun/cloud-mobile/environments'
+import { PRODUCTION, STAGING } from '@lumvika/cloud-mobile/environments'
 
 export type Environment = {
     name: 'production' | 'staging' | 'local' | 'custom'
@@ -25,7 +25,7 @@ export function environmentForChannel(channel: string | null): Environment {
     }
 }
 
-// A server the person picked in the app, their own Rerun, comes before the one the build was made for.
+// A server the person picked in the app, their own Lumvika, comes before the one the build was made for.
 export function environmentAtLaunch(channel: string | null, custom: CustomServer | null): Environment {
     if (custom) return { name: 'custom', ...custom }
     return environmentForChannel(channel)
@@ -35,5 +35,5 @@ export const environment = environmentAtLaunch(Updates.channel, readCustomServer
 
 export const onCustomServer = environment.name === 'custom'
 
-// Where a person is sent to do what the app does not: rerun.build, or their own server.
-export const webHost = onCustomServer ? new URL(environment.apiUrl).host : 'rerun.build'
+// Where a person is sent to do what the app does not: lumvika.com, or their own server.
+export const webHost = onCustomServer ? new URL(environment.apiUrl).host : 'lumvika.com'

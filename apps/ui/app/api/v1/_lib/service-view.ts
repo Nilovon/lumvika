@@ -4,7 +4,7 @@ import { getCatalogServicesBySlugs, getServiceDetails } from '@/app/api/_service
 import { appOrigin } from '@/lib/managed/oauth'
 import { mintConnectTicket } from '@/lib/oauth/mobile-ticket'
 import type { InstallResult, ServiceDetails, ServiceSearchResult } from '@/lib/services/types'
-import { type InstallResultView, type PendingAuth, type ResolvedService, type ServiceSearchResultView, parseServiceRegistryKey } from '@rerun/contracts'
+import { type InstallResultView, type PendingAuth, type ResolvedService, type ServiceSearchResultView, parseServiceRegistryKey } from '@lumvika/contracts'
 
 // The app never holds a sign-in target: it gets which flow is waiting, and the hub reads the target
 // back from the registry when the flow starts.

@@ -4,7 +4,7 @@ import { createServiceRoleClient } from '../supabase/serviceRole'
 import { selectSingle } from '../supabase/supabase-helpers'
 
 // One-shot: opens attachment files to the email-imap-smtp service, rooted in the coworker workspace.
-// Needs an engine that resolves ${RERUN_WORKSPACE} in a server config: on an older one the root is "".
+// Needs an engine that resolves ${LUMVIKA_WORKSPACE} in a server config: on an older one the root is "".
 //
 //   ../engine/node_modules/.bin/tsx --env-file=.env scripts/email-imap-attachments.ts [--write]
 //
@@ -28,7 +28,7 @@ async function main() {
     const raw = structuredClone(data.manifest) as unknown as RawManifest
     const server = raw.mcpServers.find(s => s.name === 'email')
     if (!server) throw new Error('no "email" server in the manifest')
-    server.env.MAIL_ALLOWED_ROOTS = '${RERUN_WORKSPACE}'
+    server.env.MAIL_ALLOWED_ROOTS = '${LUMVIKA_WORKSPACE}'
     const skill = raw.skills.find(s => s.body.includes(OLD_SENTENCE) || s.body.includes(NEW_SENTENCE))
     if (!skill) throw new Error('usage skill sentence not found')
     skill.body = skill.body.replace(OLD_SENTENCE, NEW_SENTENCE)

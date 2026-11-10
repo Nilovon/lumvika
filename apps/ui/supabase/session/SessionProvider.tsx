@@ -3,21 +3,21 @@
 import { isAdminEmail } from '@/lib/auth/admin-emails'
 import { Database } from '@/app/api/database.types'
 import { routes } from '@/lib/routes'
-import { parsePriceArm, PRICE_EXPERIMENT_KEY, PRICE_PROPERTY, isSubscriptionEntitled, TRIAL_CARD_PROPERTY, trialArm } from '@rerun/cloud/billing'
+import { parsePriceArm, PRICE_EXPERIMENT_KEY, PRICE_PROPERTY, isSubscriptionEntitled, TRIAL_CARD_PROPERTY, trialArm } from '@lumvika/cloud/billing'
 import { createClient } from '@/supabase/client'
 import { useBoardStore } from '@/stores/board.store'
-import { useForemanStore } from '@/stores/foreman.store'
+import { useStewardStore } from '@/stores/steward.store'
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat'
 import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
 import { enterActiveWorkspace, isWorkspaceSwitchInFlight } from '@/lib/workspace/workspace-switch'
 import { clearTabWorkspace, installWorkspaceHeader, pinTabWorkspace, readTabWorkspace, readUrlWorkspace } from '@/lib/workspace/tab-workspace'
-import { PHONE_STATUS_COLUMNS, phoneStatusOf, type PhoneStatus } from '@rerun/cloud/phone'
+import { PHONE_STATUS_COLUMNS, phoneStatusOf, type PhoneStatus } from '@lumvika/cloud/phone'
 import { awaitSignupStamp } from '@/supabase/session/signup-stamp'
 import { Session } from '@supabase/supabase-js'
-import { track, readAttribution, getCookie, identifyPerson, setSharedCookie, deleteSharedCookie } from '@rerun/analytics/client'
-import { experimentProperties, readExperimentCookie, STALE_EXPERIMENT_PROPERTIES, writeExperimentVariants } from '@rerun/analytics/experiments'
-import { SIGNUP_INTENT_COOKIE, type SignupMethod } from '@rerun/analytics'
-import { clearSessionHintCookie, readConsentCookie, reportAffiliateSignup } from '@rerun/contracts'
+import { track, readAttribution, getCookie, identifyPerson, setSharedCookie, deleteSharedCookie } from '@lumvika/analytics/client'
+import { experimentProperties, readExperimentCookie, STALE_EXPERIMENT_PROPERTIES, writeExperimentVariants } from '@lumvika/analytics/experiments'
+import { SIGNUP_INTENT_COOKIE, type SignupMethod } from '@lumvika/analytics'
+import { clearSessionHintCookie, readConsentCookie, reportAffiliateSignup } from '@lumvika/contracts'
 import posthog from 'posthog-js'
 import { useRouter } from 'next/navigation'
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useRef, useState } from 'react'
@@ -37,11 +37,11 @@ type Workspace = Pick<
     | 'subscription_status'
     | 'current_period_end'
     | 'trial_ends_at'
-    | 'rerun_used_micros'
-    | 'rerun_budget_micros'
-    | 'rerun_topup_micros'
-    | 'rerun_period_anchor'
-    | 'rerun_credit_paused_at'
+    | 'lumvika_used_micros'
+    | 'lumvika_budget_micros'
+    | 'lumvika_topup_micros'
+    | 'lumvika_period_anchor'
+    | 'lumvika_credit_paused_at'
     | 'is_sandbox'
     | 'onboarded_at'
     | 'boxes_archived_at'
@@ -61,11 +61,11 @@ const FRESH_SIGNUP_MS = 60 * 60 * 1000
 
 installWorkspaceHeader()
 
-const WORKSPACE_COLUMNS = ['id', 'name', 'icon_url', 'created_at', 'plan', 'stripe_customer_id', 'max_agents', 'max_seats', 'model_access', 'custom_integrations', 'subscription_status', 'current_period_end', 'trial_ends_at', 'rerun_used_micros', 'rerun_budget_micros', 'rerun_topup_micros', 'rerun_period_anchor', 'rerun_credit_paused_at', 'is_sandbox', 'boxes_disabled_at', 'boxes_archived_at', 'onboarded_at', 'price_arm', 'locale'] as const
+const WORKSPACE_COLUMNS = ['id', 'name', 'icon_url', 'created_at', 'plan', 'stripe_customer_id', 'max_agents', 'max_seats', 'model_access', 'custom_integrations', 'subscription_status', 'current_period_end', 'trial_ends_at', 'lumvika_used_micros', 'lumvika_budget_micros', 'lumvika_topup_micros', 'lumvika_period_anchor', 'lumvika_credit_paused_at', 'is_sandbox', 'boxes_disabled_at', 'boxes_archived_at', 'onboarded_at', 'price_arm', 'locale'] as const
 
 // Whether a verified phone number stands between this account and the app. `unknown` is the gap
 // between an account being born and its signup reaching this tab: nothing may start on its own
-// until it is settled, or the foreman would open the conversation under the wall about to rise.
+// until it is settled, or the steward would open the conversation under the wall about to rise.
 export type PhoneStep = 'unknown' | 'pending' | 'clear'
 
 export type SessionContextValue = {
@@ -139,7 +139,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
                 setWorkspace(null)
                 setWorkspaceLoading(true)
                 useBoardStore.getState().reset()
-                useForemanStore.getState().reset()
+                useStewardStore.getState().reset()
                 clearTabWorkspace()
                 // Every event until the new workspace loads would otherwise carry the one left behind.
                 posthog.unregister('workspace_id')
@@ -243,8 +243,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
         if (workspace?.id) posthog.register({ workspace_id: workspace.id })
     }, [workspace?.id])
 
-    // Le bras du test A/B est tiré sur la landing et vit dans le cookie `rerun-ab`, posé sur
-    // `.rerun.build` : le relire ici est ce qui fait porter le bras aux events de l'app, du signup
+    // Le bras du test A/B est tiré sur la landing et vit dans le cookie `lumvika-ab`, posé sur
+    // `.lumvika.com` : le relire ici est ce qui fait porter le bras aux events de l'app, du signup
     // jusqu'à l'activation. S'en remettre à la propagation des super-properties de PostHog ne
     // suffirait pas, sa persistance est `localStorage+cookie` et le localStorage ne traverse pas les
     // sous-domaines. Rejoué à chaque changement d'identité, parce que `posthog.reset()` les efface.
@@ -308,7 +308,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     // An anonymous visitor who just signed up keeps their id: the row in hand is theirs, read before
     // the server stamped it. The stamp normally comes back through realtime, or through the signup
     // form's own refresh; this keeps asking in case neither arrives, which a mobile webview whose
-    // socket had just reconnected once managed, leaving the tab without a wall nor a foreman.
+    // socket had just reconnected once managed, leaving the tab without a wall nor a steward.
     useEffect(() => {
         if (!accountId || user?.id !== accountId || user.signed_up_at) return
         const controller = new AbortController()
@@ -460,7 +460,7 @@ export function useSession() {
     return context
 }
 
-// An admin of the tab's workspace, as opposed to `useIsAdmin`, which is Rerun staff. False while the
+// An admin of the tab's workspace, as opposed to `useIsAdmin`, which is Lumvika staff. False while the
 // role is still loading, so an admin-only control starts disabled rather than flashing open.
 export function useIsWorkspaceAdmin(): boolean {
     return useSession().role === 'admin'

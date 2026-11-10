@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-sqlstore-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-sqlstore-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it } = await import('vitest')
 const { openStore, listTables, readTableRows, groupTableRows, deleteTableRows, dropTable, executeStore, queryStore, assertNoAttach, assertNoSqlFileAccess, assertReadOnlySql, withBusyRetry } = await import('./sqlStore.js')

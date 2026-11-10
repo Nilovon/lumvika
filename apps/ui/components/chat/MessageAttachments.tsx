@@ -13,7 +13,7 @@ type MessageAttachmentsProps = {
     /** Absent on read-only transcripts rendered outside a Box: tiles then stay inert. */
     agentId?: string
     paths: readonly string[]
-    /** Where the bytes come from when they are not a Box's: the foreman's bucket, the design lab. */
+    /** Where the bytes come from when they are not a Box's: the steward's bucket, the design lab. */
     rawUrlFor?: RawUrlFor
     readFile?: ReadChatFile
     align?: 'start' | 'end'

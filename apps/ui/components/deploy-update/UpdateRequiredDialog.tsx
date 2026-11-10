@@ -3,7 +3,7 @@
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Icon } from '@/components/ui/icon'
 import { RocketIcon } from '@/lib/icons'
-import { Stripes } from '@rerun/ui/primitives'
+import { Stripes } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 
 // Controlled without onOpenChange: Escape and outside clicks cannot close it, Reload is the only way out.

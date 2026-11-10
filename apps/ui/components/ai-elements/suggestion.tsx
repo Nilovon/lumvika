@@ -1,2 +1,2 @@
-export { Suggestion, Suggestions } from '@rerun/ui/chat'
-export type { SuggestionProps, SuggestionsProps } from '@rerun/ui/chat'
+export { Suggestion, Suggestions } from '@lumvika/ui/chat'
+export type { SuggestionProps, SuggestionsProps } from '@lumvika/ui/chat'

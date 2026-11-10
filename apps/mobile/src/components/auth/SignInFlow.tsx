@@ -1,4 +1,4 @@
-import type { PhoneChannel } from '@rerun/contracts'
+import type { PhoneChannel } from '@lumvika/contracts'
 import type { CountryCode } from 'libphonenumber-js/min'
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
@@ -25,7 +25,7 @@ type SignInFlow = {
     direction: 'forward' | 'back'
     goTo: (step: SignInStep) => void
     back: () => void
-    // Something is on its way to the hub: the Foreman thinks while it is.
+    // Something is on its way to the hub: the Steward thinks while it is.
     thinking: boolean
     setThinking: (thinking: boolean) => void
 }

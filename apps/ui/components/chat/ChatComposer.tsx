@@ -1,6 +1,6 @@
 'use client'
 
-import { MAX_UPLOAD_FILE_BYTES } from '@rerun/contracts'
+import { MAX_UPLOAD_FILE_BYTES } from '@lumvika/contracts'
 import type { ChatStatus, FileUIPart } from 'ai'
 import { AnimatePresence, motion } from 'motion/react'
 import { type ReactNode, type Ref, type RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import { deleteFileAction } from '@/app/api/_actions/file.actions'
-import { deleteForemanFileAction } from '@/app/api/_actions/foreman-file.actions'
+import { deleteStewardFileAction } from '@/app/api/_actions/steward-file.actions'
 import { PromptInput, PromptInputButton, PromptInputDropOverlay, PromptInputFooter, PromptInputSubmit, PromptInputTextarea, usePromptInputAttachments } from '@/components/ai-elements/prompt-input'
 import { AttachButton, ChatAttachments } from '@/components/chat/ChatAttachments'
 import { ComposerLinkMirror } from '@/components/chat/ComposerLinkMirror'
@@ -106,7 +106,7 @@ export type ChatComposerProps = {
  * The composer, shared by every chat surface: the draft, the attachments and their uploads, the
  * voice message, the full editor and the send/stop arbitration. What differs between two chats is
  * passed as slots — the model picker on the left, the gauge and the send button on the right — so
- * the agent sheet and the foreman cannot drift apart.
+ * the agent sheet and the steward cannot drift apart.
  */
 export function ChatComposer({
     uid,
@@ -243,7 +243,7 @@ export function ChatComposer({
     const deleteUploaded = useCallback(
         (path: string) => {
             if (uploadTarget.kind === 'agent') deleteFileAction(uploadTarget.agentId, path).catch(() => {})
-            else if (uploadTarget.kind === 'foreman') deleteForemanFileAction(uploadTarget.sessionId, path).catch(() => {})
+            else if (uploadTarget.kind === 'steward') deleteStewardFileAction(uploadTarget.sessionId, path).catch(() => {})
         },
         [uploadTarget]
     )

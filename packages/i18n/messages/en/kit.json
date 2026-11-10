@@ -24,13 +24,13 @@
         "experts.card.status": "Label on a holographic profile card, followed by the profile type (Studio, Freelancer).",
         "experts.availability.tooltip": "{label} is the availability (Available, Not available), {hint} its short explanation.",
         "experts.images.drop": "Overlay shown while a file is dragged over the upload tile.",
-        "foreman.tabs.assistant": "Tab of the Foreman chat where you ask it questions.",
-        "foreman.periods.running": "Heading of the routines that are running right now.",
-        "foreman.routines.runningMinutes": "A routine running for {minutes} minutes; m is the short unit for minutes.",
-        "foreman.routines.startsInMinutes": "A routine that starts in {minutes} minutes; m is the short unit for minutes.",
-        "foreman.routines.runningJustNow": "A routine that started less than a minute ago.",
-        "foreman.routines.pause": "Accessible label of the switch that pauses the routine {name}.",
-        "foreman.orbLabel": "Accessible label of the round button that opens the Foreman chat.",
+        "steward.tabs.assistant": "Tab of the Steward chat where you ask it questions.",
+        "steward.periods.running": "Heading of the routines that are running right now.",
+        "steward.routines.runningMinutes": "A routine running for {minutes} minutes; m is the short unit for minutes.",
+        "steward.routines.startsInMinutes": "A routine that starts in {minutes} minutes; m is the short unit for minutes.",
+        "steward.routines.runningJustNow": "A routine that started less than a minute ago.",
+        "steward.routines.pause": "Accessible label of the switch that pauses the routine {name}.",
+        "steward.orbLabel": "Accessible label of the round button that opens the Steward chat.",
         "forms.optional": "Shown next to the title of a form field that can be left empty.",
         "forms.select": "Placeholder of a dropdown with nothing picked yet.",
         "monitoring.live": "Small badge: the data updates in real time.",
@@ -65,9 +65,9 @@
         "primitives.carousel.goTo": "Accessible label of a pagination dot. {label} names what the carousel holds (Coworkers), {index} the card number.",
         "primitives.carousel.previous": "{label} names what the carousel holds, such as Coworkers.",
         "forms.remove": "Accessible label of the cross that removes {item} from a multiple choice.",
-        "foreman.agentPicker.openTab": "{tab} is the name of a coworker panel tab (Skills, Schedules), {name} the coworker's name.",
+        "steward.agentPicker.openTab": "{tab} is the name of a coworker panel tab (Skills, Schedules), {name} the coworker's name.",
         "experts.card.namePlaceholder": "Shown on a profile card before a name is typed.",
-        "experts.card.rolePlaceholder": "Shown on a profile card before a role is typed. Rerun is the brand.",
+        "experts.card.rolePlaceholder": "Shown on a profile card before a role is typed. Lumvika is the brand.",
         "isoGrid.countdown.minutes": "Very short countdown to a coworker's next run, on a tiny badge: keep the one-letter unit (m for minutes).",
         "isoGrid.status.paused": "Status of a coworker whose workspace is paused (unsubscribed): its machine is archived.",
         "isoGrid.status.restoring": "Status of a coworker while its paused workspace is being brought back.",
@@ -177,7 +177,7 @@
         "region": "Cookie consent",
         "title": "Cookies",
         "short": "We use analytics cookies. <policy>Cookie policy</policy>",
-        "long": "We use analytics cookies to understand how Rerun is used. Cookies needed to sign you in, run the support chat and remember your preferences are always on. <policy>Cookie policy</policy>"
+        "long": "We use analytics cookies to understand how Lumvika is used. Cookies needed to sign you in, run the support chat and remember your preferences are always on. <policy>Cookie policy</policy>"
     },
     "experts": {
         "wizard": {
@@ -207,7 +207,7 @@
             "name": "Name",
             "namePlaceholder": "e.g. Mira Labs",
             "email": "Email",
-            "emailHelper": "Private. Only the Rerun team can see it.",
+            "emailHelper": "Private. Only the Lumvika team can see it.",
             "type": "Type",
             "location": "Location",
             "locationPlaceholder": "e.g. Paris",
@@ -281,17 +281,17 @@
             "status": "Status",
             "links": "Links",
             "namePlaceholder": "Your name",
-            "rolePlaceholder": "Rerun Expert"
+            "rolePlaceholder": "Lumvika Expert"
         },
         "preview": {
             "hire": "Hire"
         }
     },
-    "foreman": {
-        "orbLabel": "Ask Rerun",
+    "steward": {
+        "orbLabel": "Ask Lumvika",
         "empty": {
             "title": "Ask anything about your workspace",
-            "description": "Rerun builds and runs your coworkers with you"
+            "description": "Lumvika builds and runs your coworkers with you"
         },
         "header": {
             "closeChat": "Close the chat",

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-status-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-status-'))
 
 type Probe = { ok: boolean; transport: 'stdio' | 'sse' | 'http'; toolNames: string[]; error?: string }
 
@@ -32,7 +32,7 @@ beforeEach(async () => {
     mocks.probes.clear()
     mocks.probed.length = 0
     await mkdir(agentDir(id), { recursive: true })
-    await writeAgentConfig(id, agentConfigSchema.parse({ name: 'status', mcpServers: [http('linear'), http('notion'), http('down'), http('rerun')] }))
+    await writeAgentConfig(id, agentConfigSchema.parse({ name: 'status', mcpServers: [http('linear'), http('notion'), http('down'), http('lumvika')] }))
 })
 
 describe('GET /agents/:id/mcp-servers/status', () => {
@@ -51,7 +51,7 @@ describe('GET /agents/:id/mcp-servers/status', () => {
                 { name: 'down', status: 'error', transport: 'sse', toolCount: 0, error: 'ECONNREFUSED' },
             ],
         })
-        expect(mocks.probed).not.toContain('rerun')
+        expect(mocks.probed).not.toContain('lumvika')
     })
 
     it('only dials the servers it is asked for', async () => {

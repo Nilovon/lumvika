@@ -1,4 +1,4 @@
-import { FOREMAN_AGENT_ID } from '@rerun/contracts'
+import { STEWARD_AGENT_ID } from '@lumvika/contracts'
 import { router, useGlobalSearchParams, usePathname, type Href } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
@@ -10,16 +10,16 @@ import { useAuth } from '@/auth/AuthProvider'
 import { coworkerEndpoints } from '@/chat/endpoints'
 import { lineOf, minutesSince, moodStatus, recentCoworkers, sectionsByBox, withPinned, type HomeCoworker } from '@/components/home/board'
 import { SkeletonFade, useBootFill } from '@/components/home/BootFill'
-import { LAST_CONVERSATION } from '@/components/chat/ForemanChat'
+import { LAST_CONVERSATION } from '@/components/chat/StewardChat'
 import { CoworkerRow, HOME_GUTTER } from '@/components/home/CoworkerRow'
-import { ForemanRow } from '@/components/home/ForemanRow'
+import { StewardRow } from '@/components/home/StewardRow'
 import { HomeBottomBar } from '@/components/home/HomeBottomBar'
 import { HomeHeader } from '@/components/home/HomeHeader'
 import { HomeSkeleton } from '@/components/home/HomeSkeleton'
 import { PinnedAvatar, PinnedGrid, usePinnedCell } from '@/components/home/PinnedGrid'
 import { SectionHeader } from '@/components/home/SectionHeader'
 import { SortableGrid } from '@/components/home/SortableGrid'
-import { useForemanLast } from '@/components/home/useForemanLast'
+import { useStewardLast } from '@/components/home/useStewardLast'
 import { useGroupMode } from '@/components/home/useGroupMode'
 import { usePinnedAgents } from '@/components/home/usePinnedAgents'
 import { usePaneInsets } from '@/components/layout/PaneSize'
@@ -52,16 +52,16 @@ export function HomeScreen({ sidebar = false }: { sidebar?: boolean }) {
 
     const pathname = usePathname()
     const { to } = useGlobalSearchParams<{ to?: string }>()
-    const openAgentId = sidebar && pathname.startsWith('/chat/') ? (to ?? FOREMAN_AGENT_ID) : null
+    const openAgentId = sidebar && pathname.startsWith('/chat/') ? (to ?? STEWARD_AGENT_ID) : null
     const go = (href: Href) => {
         if (!sidebar) return router.push(href)
         if (router.canDismiss()) router.dismissAll()
         router.replace(href)
     }
 
-    const openForeman = () => go({ pathname: '/chat/[id]', params: { id: LAST_CONVERSATION } })
+    const openSteward = () => go({ pathname: '/chat/[id]', params: { id: LAST_CONVERSATION } })
 
-    const foreman = useForemanLast()
+    const steward = useStewardLast()
     const pins = usePinnedAgents()
     const cell = usePinnedCell()
     const [reordering, setReordering] = useState(false)
@@ -108,7 +108,7 @@ export function HomeScreen({ sidebar = false }: { sidebar?: boolean }) {
                 <View>
                     {board.state === 'ready' && (
                         <Animated.View entering={fill.playing ? fill.rowEntering(0) : undefined} style={{ marginBottom: spacing.lg }}>
-                            <ForemanRow last={foreman} selected={openAgentId === FOREMAN_AGENT_ID} onPress={openForeman} />
+                            <StewardRow last={steward} selected={openAgentId === STEWARD_AGENT_ID} onPress={openSteward} />
                         </Animated.View>
                     )}
 

@@ -1,4 +1,4 @@
-// `@rerun/ui` ships without @types/node; the URL relies on Next inlining the literal
+// `@lumvika/ui` ships without @types/node; the URL relies on Next inlining the literal
 // `process.env.NEXT_PUBLIC_SUPABASE_URL` at build time in each consuming app.
 declare const process: { env: Record<string, string | undefined> }
 

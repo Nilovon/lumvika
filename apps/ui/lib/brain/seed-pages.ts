@@ -1,14 +1,14 @@
-import type { BrainPageType, BrainSeedPage } from '@rerun/contracts'
+import type { BrainPageType, BrainSeedPage } from '@lumvika/contracts'
 
 import type { CatalogFindings, CatalogProduct } from '@/lib/company/explore/catalog-collector'
 import type { BusinessCard } from '@/lib/company/explore/synthesize'
-import { describeNeed } from '@/lib/foreman/needs'
-import { foremanUseCases, type ForemanProfile } from '@/lib/foreman/phase'
+import { describeNeed } from '@/lib/steward/needs'
+import { stewardUseCases, type StewardProfile } from '@/lib/steward/phase'
 
 export type SeedPagesInput = {
     card: BusinessCard
     brief: string
-    foreman?: ForemanProfile | null
+    steward?: StewardProfile | null
     catalog?: CatalogFindings | null
 }
 
@@ -232,11 +232,11 @@ function catalogProductPage(entity: CatalogEntity, companyName: string): DraftPa
     }
 }
 
-function priorityLines(foreman: ForemanProfile | null | undefined): { useCases: string[]; needs: string[] } {
-    if (!foreman) return { useCases: [], needs: [] }
-    const needs = (foreman.needs ?? []).filter(need => clean(need.job) && clean(need.pain)).map(describeNeed)
-    const legacyPains = cleanList(foreman.pains)
-    return { useCases: cleanList(foremanUseCases(foreman)), needs: needs.length ? needs : legacyPains }
+function priorityLines(steward: StewardProfile | null | undefined): { useCases: string[]; needs: string[] } {
+    if (!steward) return { useCases: [], needs: [] }
+    const needs = (steward.needs ?? []).filter(need => clean(need.job) && clean(need.pain)).map(describeNeed)
+    const legacyPains = cleanList(steward.pains)
+    return { useCases: cleanList(stewardUseCases(steward)), needs: needs.length ? needs : legacyPains }
 }
 
 // What the seed is about to write, short enough for a card: the identity pages by name, the entity
@@ -252,7 +252,7 @@ export function seedPagesOutline(pages: BrainSeedPage[]): { topics: string[]; pr
 // The identity card the company brain starts from: one page per facet of the business card, the
 // matching part of the sourced brief appended where it says more, and one page per product and
 // competitor so agents can link to them.
-export function buildSeedPages({ card, brief, foreman, catalog }: SeedPagesInput): BrainSeedPage[] {
+export function buildSeedPages({ card, brief, steward, catalog }: SeedPagesInput): BrainSeedPage[] {
     const sections = briefSections(brief)
     const companyName = clean(card.company.name)
     const taken = new Set<string>(CARD_SLUGS)
@@ -374,7 +374,7 @@ export function buildSeedPages({ card, brief, foreman, catalog }: SeedPagesInput
         sources: unknowns.length ? [] : sourceTags(sections.questions ?? ''),
     }
 
-    const { useCases, needs } = priorityLines(foreman)
+    const { useCases, needs } = priorityLines(steward)
     drafts.priorities = {
         slug: 'priorities',
         title: 'Priorities',

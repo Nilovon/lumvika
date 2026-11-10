@@ -5,7 +5,7 @@ jest.mock('@/data/useWorkspaceAgents', () => ({ useWorkspaceAgents: () => null }
 jest.mock('@/components/buddy/AgentBuddy', () => ({ AgentBuddy: () => null }))
 
 describe('readAgentPicks', () => {
-    it('reads the coworkers the Foreman points at, with the tab each one opens on', () => {
+    it('reads the coworkers the Steward points at, with the tab each one opens on', () => {
         expect(readAgentPicks('show_agents', { agents: [{ agentId: 'a1' }, { agentId: 'a2', tab: 'Files', conversationId: 's9' }] })).toEqual([
             { agentId: 'a1', tab: null, conversationId: null },
             { agentId: 'a2', tab: 'files', conversationId: 's9' },

@@ -20,7 +20,7 @@ type AttachmentLightboxProps = {
     names?: readonly string[]
     index: number
     rawUrlFor?: RawUrlFor
-    /** Reads the text of a file that does not live on a Box (the foreman's bucket). */
+    /** Reads the text of a file that does not live on a Box (the steward's bucket). */
     readFile?: ReadChatFile
     onIndexChange: (index: number) => void
     onClose: () => void

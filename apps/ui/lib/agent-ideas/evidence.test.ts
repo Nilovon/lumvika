@@ -1,4 +1,4 @@
-import type { BrainPage } from '@rerun/contracts'
+import type { BrainPage } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
 import type { CompanyFindingsRow } from '@/lib/company/explore/findings'
@@ -65,7 +65,7 @@ describe('answersEvidence', () => {
         company_description: 'Roasts specialty coffee',
         industry: 'ecommerce' as const,
         tools: ['shopify', 'gmail'],
-        foreman: { useCases: ['answer order emails'], needs: [{ job: 'answer order emails', pain: 'replies take two days', today: 'done by the founder at night' }] },
+        steward: { useCases: ['answer order emails'], needs: [{ job: 'answer order emails', pain: 'replies take two days', today: 'done by the founder at night' }] },
     }
 
     it('carries what the person said in the interview', () => {

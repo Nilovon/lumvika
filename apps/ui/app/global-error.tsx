@@ -2,12 +2,12 @@
 
 import './globals.css'
 import { CrashScreen } from '@/components/layout/CrashScreen'
-import { DEFAULT_LOCALE, matchLocale, type Locale } from '@rerun/i18n'
-import germanCommon from '@rerun/i18n/messages/de/common.json'
-import englishCommon from '@rerun/i18n/messages/en/common.json'
-import spanishCommon from '@rerun/i18n/messages/es/common.json'
-import frenchCommon from '@rerun/i18n/messages/fr/common.json'
-import portugueseCommon from '@rerun/i18n/messages/pt/common.json'
+import { DEFAULT_LOCALE, matchLocale, type Locale } from '@lumvika/i18n'
+import germanCommon from '@lumvika/i18n/messages/de/common.json'
+import englishCommon from '@lumvika/i18n/messages/en/common.json'
+import spanishCommon from '@lumvika/i18n/messages/es/common.json'
+import frenchCommon from '@lumvika/i18n/messages/fr/common.json'
+import portugueseCommon from '@lumvika/i18n/messages/pt/common.json'
 import { NextIntlClientProvider } from 'next-intl'
 
 // This replaces the root layout and its intl provider, so the crash screen brings its own small pack,

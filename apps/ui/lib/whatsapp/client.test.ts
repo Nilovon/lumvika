@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sendWhatsAppTemplate, whatsappDestination, type SendWhatsAppInput } from './client'
 
-// The sender a deployment ships with: Rerun Cloud's own number, none on a self-hosted install.
+// The sender a deployment ships with: Lumvika Cloud's own number, none on a self-hosted install.
 const senders = vi.hoisted(() => ({ DEFAULT_WHATSAPP_FROM: '+15550100000' as string | null }))
-vi.mock('@rerun/cloud/senders', () => senders)
+vi.mock('@lumvika/cloud/senders', () => senders)
 
 const fetchMock = vi.fn()
 
@@ -17,7 +17,7 @@ const lastCall = () => {
 const COMPONENTS: SendWhatsAppInput['components'] = [{ type: 'button', parameters: [{ type: 'text', text: 'w/acme' }] }]
 
 function input(overrides: Partial<SendWhatsAppInput> = {}): SendWhatsAppInput {
-    return { to: '+32492000000', slug: 'rerun_access_ends_help', language: 'fr', components: COMPONENTS, idempotencyKey: 'whatsapp:row-1', ...overrides }
+    return { to: '+32492000000', slug: 'lumvika_access_ends_help', language: 'fr', components: COMPONENTS, idempotencyKey: 'whatsapp:row-1', ...overrides }
 }
 
 beforeEach(() => {
@@ -46,13 +46,13 @@ describe('whatsappDestination', () => {
 
     it('sends everything to the redirect number when one is set', () => {
         vi.stubEnv('WHATSAPP_REDIRECT_TO', '+352691000000')
-        vi.stubEnv('EMAIL_REDIRECT_TO', 'staging@rerun.build')
+        vi.stubEnv('EMAIL_REDIRECT_TO', 'staging@lumvika.com')
 
         expect(whatsappDestination('+32492000000')).toBe('+352691000000')
     })
 
     it('sends nothing from a clone of production that has no redirect number', () => {
-        vi.stubEnv('EMAIL_REDIRECT_TO', 'staging@rerun.build')
+        vi.stubEnv('EMAIL_REDIRECT_TO', 'staging@lumvika.com')
 
         expect(whatsappDestination('+32492000000')).toBeNull()
     })
@@ -76,7 +76,7 @@ describe('sendWhatsAppTemplate', () => {
             body: {
                 to: '+32492000000',
                 from: '+15550100000',
-                template: { slug: 'rerun_access_ends_help', language: 'fr', components: COMPONENTS },
+                template: { slug: 'lumvika_access_ends_help', language: 'fr', components: COMPONENTS },
                 tags: [{ name: 'template', value: 'access_ends_help' }],
                 metadata: { message_id: 'row-1' },
             },

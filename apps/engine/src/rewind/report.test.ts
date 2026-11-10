@@ -37,7 +37,7 @@ function input(partial: Partial<RewindReportInput>): RewindReportInput {
 }
 
 describe('connectorOfTool', () => {
-    const servers = ['google', 'google-drive', 'rerun']
+    const servers = ['google', 'google-drive', 'lumvika']
 
     it('reads both the native and the CLI naming', () => {
         expect(connectorOfTool('google-drive_search', servers)).toBe('google-drive')
@@ -45,9 +45,9 @@ describe('connectorOfTool', () => {
         expect(connectorOfTool('google_gmail_send', servers)).toBe('google')
     })
 
-    it('never counts a builtin or the rerun bridge as a connector', () => {
+    it('never counts a builtin or the lumvika bridge as a connector', () => {
         expect(connectorOfTool('web_search', servers)).toBeNull()
-        expect(connectorOfTool('mcp__rerun__notify_user', servers)).toBeNull()
+        expect(connectorOfTool('mcp__lumvika__notify_user', servers)).toBeNull()
     })
 })
 
@@ -94,7 +94,7 @@ describe('buildAgentReport', () => {
                 tools: [
                     { toolName: 'notion_search', calls: 4, errors: 1 },
                     { toolName: 'mcp__notion__create_page', calls: 2, errors: 0 },
-                    { toolName: 'mcp__rerun__web_search', calls: 3, errors: 0 },
+                    { toolName: 'mcp__lumvika__web_search', calls: 3, errors: 0 },
                     { toolName: 'web_search', calls: 1, errors: 0 },
                     { toolName: 'gmail-oauth_send', calls: 2, errors: 0 },
                 ],

@@ -1,4 +1,4 @@
-import { pendingHitlLabel, type HitlCueCopy, type HitlKind } from '@rerun/contracts'
+import { pendingHitlLabel, type HitlCueCopy, type HitlKind } from '@lumvika/contracts'
 import { LockIcon, MessageCircleQuestionIcon, MonitorIcon, PlugIcon, PlugSparkleIcon, ShieldAlertIcon, type LucideIcon } from '@/lib/icons'
 
 export type PendingHitlSummary = {
@@ -25,4 +25,4 @@ export function summarizePendingHitl(kind: HitlKind, input: Record<string, unkno
     return { ...ICONS[kind], label: pendingHitlLabel(kind, input, t) }
 }
 
-export { scrollCueOf, type ScrollCue } from '@rerun/contracts'
+export { scrollCueOf, type ScrollCue } from '@lumvika/contracts'

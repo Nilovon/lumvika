@@ -2,13 +2,13 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-factory-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-factory-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { existsSync } = await import('node:fs')
 const { readFile, stat } = await import('node:fs/promises')
-const { RERUN_MODEL } = await import('@rerun/contracts')
+const { LUMVIKA_MODEL } = await import('@lumvika/contracts')
 const { migrate } = await import('../db/migrate.js')
 const { getAgentIndex } = await import('../db/repos/agents.js')
 const { agentDir, agentEnvPath, configPath, installPath, skillsDir, soulPath, workspaceDir } = await import('../config/paths.js')
@@ -32,12 +32,12 @@ describe('createAgent', () => {
         expect(existsSync(installPath(agent.id))).toBe(false)
         expect(agent.install).toBe('')
         expect(agent.env).toEqual({})
-        expect(agent.resolved).toEqual({ connection: null, provider: 'rerun', model: RERUN_MODEL })
+        expect(agent.resolved).toEqual({ connection: null, provider: 'lumvika', model: LUMVIKA_MODEL })
         expect(await getAgentIndex(agent.id)).toMatchObject({ id: agent.id, name: 'Scout', status: 'idle' })
     })
 
     it('always writes a user agent, whatever kind it was handed', async () => {
-        const agent = await createAgent({ config: { name: 'Sneaky', kind: 'foreman' } })
+        const agent = await createAgent({ config: { name: 'Sneaky', kind: 'steward' } })
         expect(agent.config.kind).toBe('user')
         expect(JSON.parse(await readFile(configPath(agent.id), 'utf8')).kind).toBe('user')
     })

@@ -1,4 +1,4 @@
-import { type TemplateCategory } from '@rerun/contracts'
+import { type TemplateCategory } from '@lumvika/contracts'
 
 import { isTemplateCategory } from '@/lib/onboarding/industries'
 import { INDUSTRY_GLOSS } from './industry'
@@ -12,7 +12,7 @@ import { INDUSTRY_GLOSS } from './industry'
 // rather than prose, reads the address alone, and answers in 400 to 700ms.
 //
 // It does not replace `analyzeCompanyProfile`, which is the only thing that writes what the company
-// sells and to whom, and that is what the foreman designs agents from. It runs in front of it.
+// sells and to whom, and that is what the steward designs agents from. It runs in front of it.
 //
 // OpenRouter serves this through its own alpha endpoint rather than /chat/completions, so it is a
 // hand-written fetch: `@ai-sdk/openai-compatible` has no idea this endpoint exists. Alpha also means
@@ -20,7 +20,7 @@ import { INDUSTRY_GLOSS } from './industry'
 // back to the universal divisions and then to the full analysis.
 
 const DECISION_URL = 'https://openrouter.ai/api/alpha/decisions'
-const DECISION_MODEL = process.env.RERUN_DECISION_MODEL ?? 'typesafe/jev-1.13'
+const DECISION_MODEL = process.env.LUMVIKA_DECISION_MODEL ?? 'typesafe/jev-1.13'
 
 // Past this the board would be drawing the divisions of a business this person does not run. The
 // model abstains honestly (an invented domain comes back as "other" around 0.5), so the floor is

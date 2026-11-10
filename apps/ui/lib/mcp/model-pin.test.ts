@@ -10,7 +10,7 @@ function connection(id: string, name: string, provider: BoxConnection['provider'
 
 const CODEX = connection('codex-clem', 'Codex Clem', 'codex', ['gpt-6-sol'])
 const CLAUDE_OLD = connection('claude-clem', 'Claude Clem', 'claude', ['claude-opus-5-5', 'claude-sonnet-5-5'])
-const CLAUDE_NEW = connection('claude-rerun', 'Rerun (person@example.com)', 'claude', ['claude-opus-5-5'])
+const CLAUDE_NEW = connection('claude-lumvika', 'Lumvika (person@example.com)', 'claude', ['claude-opus-5-5'])
 const WORKSPACE = [CODEX, CLAUDE_OLD, CLAUDE_NEW]
 
 describe('readModelPin', () => {
@@ -19,11 +19,11 @@ describe('readModelPin', () => {
     })
 
     it('pins the named connection and aligns the provider on it', () => {
-        expect(readModelPin({ connectionId: 'claude-rerun', model: 'claude-opus-5-5' }, WORKSPACE)).toEqual({ connectionId: 'claude-rerun', provider: 'claude', model: 'claude-opus-5-5' })
+        expect(readModelPin({ connectionId: 'claude-lumvika', model: 'claude-opus-5-5' }, WORKSPACE)).toEqual({ connectionId: 'claude-lumvika', provider: 'claude', model: 'claude-opus-5-5' })
     })
 
     it('refuses to pick one of several connections of a provider in silence', () => {
-        expect(() => readModelPin({ provider: 'claude', model: 'claude-opus-5-5' }, WORKSPACE)).toThrow(/several claude connections.*claude-clem.*claude-rerun/)
+        expect(() => readModelPin({ provider: 'claude', model: 'claude-opus-5-5' }, WORKSPACE)).toThrow(/several claude connections.*claude-clem.*claude-lumvika/)
     })
 
     it('resolves a bare provider onto its only connection, whatever the coworker was pinned to', () => {
@@ -45,7 +45,7 @@ describe('readModelPin', () => {
 
     it('drops the whole pin on model null', () => {
         expect(readModelPin({ model: null }, WORKSPACE)).toEqual({ connectionId: null, provider: null, model: null })
-        expect(readModelPin({ connectionId: 'claude-rerun', model: null }, WORKSPACE)).toEqual({ connectionId: null, provider: null, model: null })
+        expect(readModelPin({ connectionId: 'claude-lumvika', model: null }, WORKSPACE)).toEqual({ connectionId: null, provider: null, model: null })
     })
 
     it('falls back to the first model of the connection when none is named', () => {
@@ -53,7 +53,7 @@ describe('readModelPin', () => {
     })
 
     it('keeps the connection in use for a model alone when it serves it', () => {
-        expect(readModelPin({ model: 'claude-opus-5-5' }, WORKSPACE, 'claude-rerun')).toMatchObject({ connectionId: 'claude-rerun' })
+        expect(readModelPin({ model: 'claude-opus-5-5' }, WORKSPACE, 'claude-lumvika')).toMatchObject({ connectionId: 'claude-lumvika' })
     })
 
     it('resolves a model alone onto the single connection that serves it, and refuses when several do', () => {
@@ -63,7 +63,7 @@ describe('readModelPin', () => {
     })
 
     it('writes a renamed model under the spelling the connection still lists', () => {
-        const legacy = connection('rerun', 'Rerun', 'rerun', ['qwen/qwen3.7-max'])
-        expect(readModelPin({ connectionId: 'rerun', model: 'rerun-max' }, [legacy])).toMatchObject({ model: 'qwen/qwen3.7-max' })
+        const legacy = connection('lumvika', 'Lumvika', 'lumvika', ['qwen/qwen3.7-max'])
+        expect(readModelPin({ connectionId: 'lumvika', model: 'lumvika-max' }, [legacy])).toMatchObject({ model: 'qwen/qwen3.7-max' })
     })
 })

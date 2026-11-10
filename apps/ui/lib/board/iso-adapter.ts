@@ -2,9 +2,9 @@
 // les types génériques de l'isogrid (Tile/Container/TileLink). Le package ne connaît que tiles &
 // containers ; toute la sémantique « agent » vit ici.
 
-import { SPACE_COLOR, agentTileStyle, disabledAgentTileStyle } from '@rerun/ui/iso-grid'
-import { englishKitTranslator, type KitTranslator } from '@rerun/ui/locale'
-import type { Container, Tile, TileCountdown, TileLink, TileResults, TileStyle } from '@rerun/ui/iso-grid'
+import { SPACE_COLOR, agentTileStyle, disabledAgentTileStyle } from '@lumvika/ui/iso-grid'
+import { englishKitTranslator, type KitTranslator } from '@lumvika/ui/locale'
+import type { Container, Tile, TileCountdown, TileLink, TileResults, TileStyle } from '@lumvika/ui/iso-grid'
 import type { WorkspaceAccess } from '@/hooks/useWorkspaceAccess'
 import { type AgentLink, type IsoAgent, type SessionEntry, type SpacePublic } from './types'
 import { isPlaced } from './iso'

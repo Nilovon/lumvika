@@ -17,7 +17,7 @@ describe('turnRanOutOfPaidCredit', () => {
     })
 
     it('reads a bridged call and a stored output envelope', () => {
-        const bridged = { type: 'dynamic-tool', toolName: 'mcp__rerun__paid_data', output: { type: 'json', value: refused.output } }
+        const bridged = { type: 'dynamic-tool', toolName: 'mcp__lumvika__paid_data', output: { type: 'json', value: refused.output } }
         expect(turnRanOutOfPaidCredit([{ role: 'assistant', parts: [bridged] }])).toBe(true)
     })
 

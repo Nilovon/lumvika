@@ -1,4 +1,4 @@
-import type { CliModels } from '@rerun/contracts'
+import type { CliModels } from '@lumvika/contracts'
 import { clearAgentCache } from '../agents/registry.js'
 
 // In memory, like the plan limits: a reading is only as good as the binary and the account it was

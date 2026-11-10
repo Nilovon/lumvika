@@ -1,5 +1,5 @@
-import type { Messages } from '@rerun/i18n/messages'
-import { ENGLISH_MESSAGES } from '@rerun/i18n/messages/en'
+import type { Messages } from '@lumvika/i18n/messages'
+import { ENGLISH_MESSAGES } from '@lumvika/i18n/messages/en'
 import { createTranslator, type NamespaceKeys, type NestedKeyOf } from 'use-intl'
 
 // The English pack as a translator, for a helper called where no reader is known (tests, logs, the

@@ -31,15 +31,7 @@
     }
   },
   "submit": {
-    "staging": {
-      "ios": {
-        "ascAppId": "6825274993"
-      }
-    },
-    "production": {
-      "ios": {
-        "ascAppId": "6825274993"
-      }
-    }
+    "staging": {},
+    "production": {}
   }
 }

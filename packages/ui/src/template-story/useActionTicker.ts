@@ -1,6 +1,6 @@
 'use client'
 
-import { STORY_ACTION_MS, STORY_CARD_ENTER_MS } from '@rerun/contracts'
+import { STORY_ACTION_MS, STORY_CARD_ENTER_MS } from '@lumvika/contracts'
 import { useEffect, useRef, useState } from 'react'
 
 // Which of a step's actions the card is telling: 0 to count - 1 while they tick by, count once they

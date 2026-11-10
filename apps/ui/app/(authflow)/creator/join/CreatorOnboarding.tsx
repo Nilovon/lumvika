@@ -4,7 +4,7 @@ import { useErrorText } from '@/hooks/useErrorText'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState, useTransition } from 'react'
-import { StepTransition, StepperBar, useStepper } from '@rerun/ui/steps'
+import { StepTransition, StepperBar, useStepper } from '@lumvika/ui/steps'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -63,7 +63,7 @@ function WelcomeStep({ firstName, onContinue }: { firstName: string; onContinue:
     return (
         <>
             <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Rerun Creators</p>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Lumvika Creators</p>
                 <h1 className="text-xl font-semibold tracking-tight">{t('welcome.title', { name: firstName })}</h1>
                 <p className="text-sm text-muted-foreground">
                     {t('welcome.message')}

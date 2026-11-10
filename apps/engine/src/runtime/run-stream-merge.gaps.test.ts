@@ -60,13 +60,13 @@ afterEach(() => {
 })
 
 describe('mergeRunStream', () => {
-    // Claude prefixes the bridged tools with mcp__rerun__, Codex with rerun__ on some builds: the
+    // Claude prefixes the bridged tools with mcp__lumvika__, Codex with lumvika__ on some builds: the
     // dashboard only renders a HITL card for the bare name.
     it('hands the dashboard the bare HITL tool names whatever the CLI prefixed them with', async () => {
         const { run, writer, merged } = fakeRun([
-            { type: 'tool-input-start', toolCallId: 'c1', toolName: 'mcp__rerun__ask_user' },
-            { type: 'tool-input-available', toolCallId: 'c1', toolName: 'mcp__rerun__ask_user', input: { questions: [] } },
-            { type: 'tool-input-start', toolCallId: 'c2', toolName: 'rerun__request_approval' },
+            { type: 'tool-input-start', toolCallId: 'c1', toolName: 'mcp__lumvika__ask_user' },
+            { type: 'tool-input-available', toolCallId: 'c1', toolName: 'mcp__lumvika__ask_user', input: { questions: [] } },
+            { type: 'tool-input-start', toolCallId: 'c2', toolName: 'lumvika__request_approval' },
             { type: 'tool-input-start', toolCallId: 'c3', toolName: 'mcp__files__read' },
             { type: 'tool-output-available', toolCallId: 'c1', output: { status: 'delivered' } },
         ])
@@ -84,7 +84,7 @@ describe('mergeRunStream', () => {
         const described = { questions: [{ question: 'Format?', header: 'Format', options: [{ label: 'One-pager', description: 'One page' }, 'Deck'] }] }
         const plain = { questions: [{ question: 'Format?', header: 'Format', options: ['One-pager', 'Deck'] }] }
         const { run, writer, merged } = fakeRun([
-            { type: 'tool-input-available', toolCallId: 'c1', toolName: 'mcp__rerun__ask_user', input: described },
+            { type: 'tool-input-available', toolCallId: 'c1', toolName: 'mcp__lumvika__ask_user', input: described },
             { type: 'tool-input-available', toolCallId: 'c2', toolName: 'ask_user', input: plain },
         ])
 
@@ -97,13 +97,13 @@ describe('mergeRunStream', () => {
 
     it('stamps each finished step with the provider, the model and its usage', () => {
         const { run, writer, captured } = fakeRun([])
-        mergeRunStream(writer, run, { provider: 'rerun', model: 'rerun-max' })
+        mergeRunStream(writer, run, { provider: 'lumvika', model: 'lumvika-max' })
 
         const metadata = captured.messageMetadata!({ part: { type: 'finish-step', usage: { inputTokens: 120, outputTokens: 30, totalTokens: 150 } } })
 
         expect(metadata).toEqual({
-            provider: 'rerun',
-            model: 'rerun-max',
+            provider: 'lumvika',
+            model: 'lumvika-max',
             usage: { inputTokens: 120, outputTokens: 30, totalTokens: 150, reasoningTokens: undefined, cachedInputTokens: undefined },
         })
     })
@@ -129,7 +129,7 @@ describe('mergeRunStream', () => {
 
     it('attaches no metadata to any other part', () => {
         const { run, writer, captured } = fakeRun([])
-        mergeRunStream(writer, run, { provider: 'rerun', model: 'rerun-max' })
+        mergeRunStream(writer, run, { provider: 'lumvika', model: 'lumvika-max' })
 
         expect(captured.messageMetadata!({ part: { type: 'text-delta', text: 'hi' } })).toBeUndefined()
         expect(captured.messageMetadata!({ part: { type: 'finish', totalUsage: {} } })).toBeUndefined()

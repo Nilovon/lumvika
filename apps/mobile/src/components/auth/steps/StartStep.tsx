@@ -105,8 +105,8 @@ function Choices() {
     )
 }
 
-// A server of the person's own signs in by email code only: phone codes go out through Rerun Cloud,
-// and Apple and Google answer for Rerun's app, not for that server.
+// A server of the person's own signs in by email code only: phone codes go out through Lumvika Cloud,
+// and Apple and Google answer for Lumvika's app, not for that server.
 function OwnServer() {
     const t = useTranslations('mobileAuth')
     const { goTo } = useSignInFlow()

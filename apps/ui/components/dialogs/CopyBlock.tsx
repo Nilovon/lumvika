@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { CheckIcon, CopyIcon } from '@/lib/icons'
 import { useCopy } from '@/lib/use-copy'
 import { cn } from '@/lib/utils'
-import { ScrollFade } from '@rerun/ui/primitives'
+import { ScrollFade } from '@lumvika/ui/primitives'
 
 // The CopyLine of multi-line values: a config someone pastes into a file keeps its indentation, so
 // it gets a block with the button in the corner rather than a row. `wrap` is for prose, a prompt,

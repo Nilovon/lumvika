@@ -1,4 +1,4 @@
-import { MAX_STARTER_PICKS, type TemplateCategory } from '@rerun/contracts'
+import { MAX_STARTER_PICKS, type TemplateCategory } from '@lumvika/contracts'
 
 // What a new account is offered right after the welcome card, instead of an interview and a
 // coworker designed on the spot: the starter pack of the industry the card already settled.

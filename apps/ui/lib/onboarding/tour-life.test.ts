@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { TOUR_AGENT_IDS } from '@rerun/ui/tour/board'
-import { TOUR_LIFE_BEATS, TOUR_LIFE_START, TOUR_LIFE_STILL, type TourLifeStatus, tourLifeAt } from '@rerun/ui/tour/life'
+import { TOUR_AGENT_IDS } from '@lumvika/ui/tour/board'
+import { TOUR_LIFE_BEATS, TOUR_LIFE_START, TOUR_LIFE_STILL, type TourLifeStatus, tourLifeAt } from '@lumvika/ui/tour/life'
 
 // What the score has to hold for the board to read as calm. None of it is visible by rereading the
 // beats: it is all about how they stack up over the cycle.

@@ -1,6 +1,6 @@
 # Database
 
-The schema of Rerun lives in `migrations/`, and every change to it goes through a migration file.
+The schema of Lumvika lives in `migrations/`, and every change to it goes through a migration file.
 The Supabase CLI owns this directory and runs from the repository root.
 
 Not to be confused with `apps/ui/supabase/`, which holds the application clients and query helpers.
@@ -31,7 +31,7 @@ and `authenticated`. A new column that must be readable publicly is granted in i
 `20260921120000_realtime_publication.sql` lists the tables the `supabase_realtime` publication
 streams. A table a component subscribes to through `useRealtimeSubscription` has to be added there.
 
-Some tables stay empty in a self-hosted install, because the code that fills them belongs to Rerun
+Some tables stay empty in a self-hosted install, because the code that fills them belongs to Lumvika
 Cloud: billing, paid apps, paid data, the machine pool and its hosts, workspace archives. They are
 part of the schema all the same, so both run on the same migrations.
 

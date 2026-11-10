@@ -1,4 +1,4 @@
-import { addableProviderSchema } from '@rerun/contracts'
+import { addableProviderSchema } from '@lumvika/contracts'
 import { useLocalSearchParams } from 'expo-router'
 
 import { useIsWorkspaceAdmin } from '@/auth/AuthProvider'

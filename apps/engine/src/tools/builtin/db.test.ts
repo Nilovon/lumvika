@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-db-tool-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-db-tool-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { dbTools } = await import('./db.js')

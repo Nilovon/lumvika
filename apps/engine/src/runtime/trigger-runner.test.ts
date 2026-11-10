@@ -3,15 +3,15 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-trigger-runner-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-trigger-runner-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
 
 type Outcome = { kind: 'done' | 'error' | 'cancelled'; error?: string }
 
 const state = vi.hoisted(() => ({
     agents: {} as Record<string, { id: string; config: { enabled: boolean } }>,
-    provider: 'rerun' as string,
+    provider: 'lumvika' as string,
     sent: [] as Array<Record<string, unknown>>,
     sessions: [] as Array<{ agentId: string; title: string; source: string }>,
     runs: [] as Array<{ agentId: string; sessionId: string; message: string; override: unknown; trigger: unknown; runId: string; finish: (o: Outcome) => void }>,
@@ -61,7 +61,7 @@ const flush = async () => {
 
 beforeEach(() => {
     state.agents = { on: { id: 'on', config: { enabled: true } }, off: { id: 'off', config: { enabled: false } } }
-    state.provider = 'rerun'
+    state.provider = 'lumvika'
 })
 
 afterEach(() => {
@@ -104,7 +104,7 @@ describe('fireTrigger', () => {
             { event: 'agent.session.created', kind: 'info', agentId: 'on', sessionId: started.sessionId, runId: null, message: 'Triggered run: Inbound mail', title: 'Inbound mail', source: 'trigger' },
         ])
         expect(state.markFired).toHaveBeenCalledWith('on', 'inbound', expect.any(String))
-        expect(state.runs[0]).toMatchObject({ sessionId: started.sessionId, message: 'payload: {"id":1}', override: { provider: 'rerun', model: 'm' }, trigger: { source: 'trigger', slug: 'inbound', name: 'Inbound mail' } })
+        expect(state.runs[0]).toMatchObject({ sessionId: started.sessionId, message: 'payload: {"id":1}', override: { provider: 'lumvika', model: 'm' }, trigger: { source: 'trigger', slug: 'inbound', name: 'Inbound mail' } })
         expect(started.runId).toBe(state.runs[0].runId)
     })
 

@@ -1,5 +1,5 @@
-import type { RoutineView } from '@rerun/contracts'
-import { fullDateTime } from '@rerun/i18n/format'
+import type { RoutineView } from '@lumvika/contracts'
+import { fullDateTime } from '@lumvika/i18n/format'
 import { Fragment } from 'react'
 import { Switch, View } from 'react-native'
 import { useTranslations } from 'use-intl'

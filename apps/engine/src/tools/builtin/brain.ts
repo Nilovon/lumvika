@@ -1,6 +1,6 @@
 import { tool, type ToolSet } from 'ai'
 import { z } from 'zod'
-import { brainProposalInputSchema, FOREMAN_AGENT_ID } from '@rerun/contracts'
+import { brainProposalInputSchema, STEWARD_AGENT_ID } from '@lumvika/contracts'
 import { deletePage, getPage, listPages, listRevisions, pageHash, readPageFile, writePage } from '../../brain/pages.js'
 import { searchBrain } from '../../brain/search.js'
 import { acceptProposal, dismissProposal, findProposalByFingerprint, getProposal, insertProposal, listProposals, openProposalFor, proposalFingerprint, replaceOpenProposal } from '../../brain/proposals.js'
@@ -21,9 +21,9 @@ function proposalResult(status: 'proposed' | 'updated', proposalId: string, slug
 
 const excerpt = (text: string, max = EXCERPT_CHARS) => (text.length > max ? `${text.slice(0, max - 3)}...` : text)
 
-// The foreman writes the brain as itself, on behalf of the person it is talking to: the engine has
+// The steward writes the brain as itself, on behalf of the person it is talking to: the engine has
 // no notion of users, and the person already said yes in the conversation.
-export const FOREMAN_BRAIN_AUTHOR = `agent:${FOREMAN_AGENT_ID}`
+export const STEWARD_BRAIN_AUTHOR = `agent:${STEWARD_AGENT_ID}`
 
 const PROPOSAL_EXCERPT_CHARS = 1500
 
@@ -180,13 +180,13 @@ function writeTool(author: string, description: string, refusal: () => string | 
 
 const NO_PERSON_HERE = 'No person is in this conversation, so nobody told you this fact: use brain_propose so a person reviews it.'
 
-// The foreman keeps the brain with the person rather than proposing to them: it writes, removes,
+// The steward keeps the brain with the person rather than proposing to them: it writes, removes,
 // and settles what the agents proposed, each time because the person asked for it in the chat.
-export function foremanBrainTools(): ToolSet {
+export function stewardBrainTools(): ToolSet {
     return {
         ...readTools(),
         brain_write: writeTool(
-            FOREMAN_BRAIN_AUTHOR,
+            STEWARD_BRAIN_AUTHOR,
             `Write a page of the company brain directly: it is saved at once and every coworker reads it from its next run. Only for a change the user asked for or confirmed in this conversation; a fact you found on your own goes to ask_user first. ${WRITE_PAGE_HOW}`
         ),
         brain_delete: tool({
@@ -237,7 +237,7 @@ export function foremanBrainTools(): ToolSet {
                     if (!row) return `No proposal "${proposalId}". brain_proposals lists the ones waiting.`
                     if (row.status !== 'proposed') return `This change was already ${row.status}. Nothing done.`
                     const decided =
-                        decision === 'accept' ? await acceptProposal(proposalId, FOREMAN_BRAIN_AUTHOR, content ? { content } : {}) : await dismissProposal(proposalId, FOREMAN_BRAIN_AUTHOR)
+                        decision === 'accept' ? await acceptProposal(proposalId, STEWARD_BRAIN_AUTHOR, content ? { content } : {}) : await dismissProposal(proposalId, STEWARD_BRAIN_AUTHOR)
                     if (decided.status === 'proposed') return 'Nothing changed.'
                     return changeResult(decided.status, decided.slug, decided.title, { agentName: decided.agentName })
                 }),

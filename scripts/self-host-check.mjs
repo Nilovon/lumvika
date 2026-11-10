@@ -9,7 +9,7 @@ import { randomBytes } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
 const FILE = '.env'
-const GENERATED = ['RERUN_ENGINE_API_KEY', 'FOREMAN_HUB_TOKEN_SECRET', 'BOARD_IMAGE_SECRET']
+const GENERATED = ['LUMVIKA_ENGINE_API_KEY', 'STEWARD_HUB_TOKEN_SECRET', 'BOARD_IMAGE_SECRET']
 const REQUIRED = {
     NEXT_PUBLIC_APP_URL: 'the address people open, e.g. http://localhost:3000',
     NEXT_PUBLIC_SUPABASE_URL: 'Supabase > Project settings > API > Project URL, or `npx supabase status` (API URL)',
@@ -42,7 +42,7 @@ const appUrl = valueOf('NEXT_PUBLIC_APP_URL')
 if (appUrl && (!/^https?:\/\//.test(appUrl) || appUrl.endsWith('/'))) problems.push('NEXT_PUBLIC_APP_URL must start with http:// or https:// and end without a slash')
 const supabaseUrl = valueOf('NEXT_PUBLIC_SUPABASE_URL')
 if (supabaseUrl && /127\.0\.0\.1|localhost/.test(supabaseUrl) && !/:54421\b/.test(supabaseUrl)) problems.push('A local Supabase answers on port 54421 here: use http://localhost:54421')
-if (!valueOf('OPENROUTER_API_KEY')) console.warn('! OPENROUTER_API_KEY is empty: the Foreman skips the guided onboarding. It and your coworkers run on the AI you connect in the app.')
+if (!valueOf('OPENROUTER_API_KEY')) console.warn('! OPENROUTER_API_KEY is empty: the Steward skips the guided onboarding. It and your coworkers run on the AI you connect in the app.')
 
 if (generated.length) console.log(`Generated ${generated.join(', ')} in .env`)
 if (problems.length) {
@@ -69,7 +69,7 @@ async function askSupabase(url, secretKey) {
         response = await fetch(`${url}/rest/v1/rpc/check_email_exists`, {
             method: 'POST',
             headers: { apikey: secretKey, Authorization: `Bearer ${secretKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'check@rerun.build' }),
+            body: JSON.stringify({ email: 'check@lumvika.com' }),
             signal: AbortSignal.timeout(10_000),
         })
     } catch {
@@ -77,7 +77,7 @@ async function askSupabase(url, secretKey) {
     }
     if (response.ok) return null
     const body = await response.json().catch(() => ({}))
-    if (body.code === 'PGRST202') return `The database has no Rerun schema yet. Apply it, then run this check again:\n  ${schemaCommand(url)}`
+    if (body.code === 'PGRST202') return `The database has no Lumvika schema yet. Apply it, then run this check again:\n  ${schemaCommand(url)}`
     const notThisProject = 'SUPABASE_SECRET_KEY is not a key of this Supabase project: copy the secret (service_role) key from Supabase > Project settings > API keys'
     // An unknown `sb_secret_` key is served as anon by some gateways, so it is refused like the anon key.
     if (body.code === '42501') return secretKey.startsWith('sb_secret_') ? notThisProject : 'SUPABASE_SECRET_KEY holds the publishable (anon) key: put the secret (service_role) key there, from Supabase > Project settings > API keys'
@@ -89,5 +89,5 @@ function schemaCommand(url) {
     if (/:54421\b/.test(url)) return 'npx supabase db reset   (erases the data of the local stack)'
     const projectRef = url.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1]
     if (projectRef) return `npx supabase link --project-ref ${projectRef} && npx supabase db push --include-seed`
-    return 'npx supabase db push --include-seed --yes --db-url "postgresql://postgres.rerun:<POSTGRES_PASSWORD>@127.0.0.1:5432/postgres?sslmode=disable"'
+    return 'npx supabase db push --include-seed --yes --db-url "postgresql://postgres.lumvika:<POSTGRES_PASSWORD>@127.0.0.1:5432/postgres?sslmode=disable"'
 }

@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cx-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cx-'))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { ensureCodexAuth, syncCodexAuth, jwtExpiresAt } = await import('./codex-auth.js')

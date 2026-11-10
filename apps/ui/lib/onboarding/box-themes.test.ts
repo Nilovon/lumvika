@@ -1,5 +1,5 @@
-import frBuilder from '@rerun/i18n/messages/fr/builder.json'
-import { SUGGESTION_CARDS } from '@rerun/ui/new-agent'
+import frBuilder from '@lumvika/i18n/messages/fr/builder.json'
+import { SUGGESTION_CARDS } from '@lumvika/ui/new-agent'
 import { createTranslator } from 'use-intl'
 import { describe, expect, it } from 'vitest'
 

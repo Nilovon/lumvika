@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics'
-import { ROUTE_ID_PATTERN } from '@rerun/contracts'
+import { ROUTE_ID_PATTERN } from '@lumvika/contracts'
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { SymbolView } from 'expo-symbols'
 import { useCallback, useEffect, useRef, useState } from 'react'

@@ -13,20 +13,20 @@ import { PhoneStep } from '@/components/auth/steps/PhoneStep'
 import { ServerStep } from '@/components/auth/steps/ServerStep'
 import { StartStep, type StartLayout } from '@/components/auth/steps/StartStep'
 import { FORM_COLUMN_MAX_WIDTH } from '@/components/layout/split'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import { GlassButton } from '@/components/ui/GlassButton'
 import { EASE_OUT, MOTION } from '@/theme/motion'
 import { useTheme } from '@/theme/theme'
 import { radius, spacing } from '@/theme/tokens'
 
-const FOREMAN_SIZE = 72
+const STEWARD_SIZE = 72
 // The sheet runs this far below the screen, so lifting it over the keyboard never uncovers a gap
 // under its bottom edge.
 const SHEET_RUNOFF = 400
 const STEP_ENTER_MS = 260
 const STEP_EXIT_MS = 140
 
-function Foreman({ thinking }: { thinking: boolean }) {
+function Steward({ thinking }: { thinking: boolean }) {
     const bounce = useSharedValue(1)
     const bounceStyle = useAnimatedStyle(() => ({ transform: [{ scale: bounce.get() }] }))
     const poke = () => {
@@ -34,15 +34,15 @@ function Foreman({ thinking }: { thinking: boolean }) {
         bounce.set(withSequence(withTiming(0.92, { duration: 90 }), withTiming(1, { duration: MOTION.fast, easing: EASE_OUT })))
     }
     return (
-        <Pressable onPress={poke} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" hitSlop={8} style={{ position: 'absolute', top: -FOREMAN_SIZE / 2 - spacing.sm, alignSelf: 'center' }}>
+        <Pressable onPress={poke} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" hitSlop={8} style={{ position: 'absolute', top: -STEWARD_SIZE / 2 - spacing.sm, alignSelf: 'center' }}>
             <Animated.View style={bounceStyle}>
-                <ForemanOrb size={FOREMAN_SIZE} state={thinking ? 'thinking' : 'idle'} />
+                <StewardOrb size={STEWARD_SIZE} state={thinking ? 'thinking' : 'idle'} />
             </Animated.View>
         </Pressable>
     )
 }
 
-// The sign-in screen: the board of coworkers at work fills the top, the Foreman sits on the edge of a
+// The sign-in screen: the board of coworkers at work fills the top, the Steward sits on the edge of a
 // sheet that holds every step. The sheet is the screen, so it never closes: it grows and shrinks to
 // the step it shows and rides over the keyboard.
 export function SignInSheet({ startLayout = 'phone-first' }: { startLayout?: StartLayout }) {
@@ -53,9 +53,9 @@ export function SignInSheet({ startLayout = 'phone-first' }: { startLayout?: Sta
     const keyboard = useAnimatedKeyboard()
     const t = useTranslations('mobileAuth')
 
-    const paddingTop = FOREMAN_SIZE / 2 + spacing.lg
+    const paddingTop = STEWARD_SIZE / 2 + spacing.lg
     const paddingBottom = insets.bottom + spacing.lg
-    const topRoom = insets.top + FOREMAN_SIZE
+    const topRoom = insets.top + STEWARD_SIZE
 
     const [restingContent, setRestingContent] = useState(windowHeight / 3)
     const contentHeight = useSharedValue(windowHeight / 3)
@@ -97,7 +97,7 @@ export function SignInSheet({ startLayout = 'phone-first' }: { startLayout?: Sta
                     lift,
                 ]}
             >
-                <Foreman thinking={thinking} />
+                <Steward thinking={thinking} />
                 {step.name !== 'start' && (
                     <View style={{ position: 'absolute', top: spacing.lg, left: spacing.lg, zIndex: 1 }}>
                         <GlassButton symbol="chevron.left" label={t('back')} onPress={back} />

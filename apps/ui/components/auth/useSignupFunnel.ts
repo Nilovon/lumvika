@@ -2,8 +2,8 @@
 
 import { detectInAppBrowser } from '@/lib/in-app-browser'
 import { abandonTrigger, createLeaveWatcher, type SignupLeaveEvent } from '@/lib/auth/signup-abandon'
-import { track } from '@rerun/analytics/client'
-import type { SignupStep, SignupSurface } from '@rerun/analytics'
+import { track } from '@lumvika/analytics/client'
+import type { SignupStep, SignupSurface } from '@lumvika/analytics'
 import { useCallback, useEffect, useRef } from 'react'
 
 // Opens and closes the signup the funnel counts, wherever the form is drawn. `active` is whether the

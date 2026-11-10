@@ -50,8 +50,8 @@
             "tools": "Auf welche Tools hast du Zugriff?"
         },
         "team": {
-            "greeting": "Hallo, ich bin Rerun",
-            "greetingNamed": "Hallo {firstName}, ich bin Rerun",
+            "greeting": "Hallo, ich bin Lumvika",
+            "greetingNamed": "Hallo {firstName}, ich bin Lumvika",
             "greetingWithTeam": "{greeting}. Hier ist dein Team.",
             "emptySubtitle": "Du hast noch keine Coworker. Nenn mir eine Aufgabe, die du abgeben würdest, und ich baue den ersten.",
             "buildPrompt": "Bau mir einen Coworker, der ",
@@ -67,7 +67,7 @@
             "guide": {
                 "title": "Wie funktioniert das?",
                 "description": "Coworker, Boxes, Routinen, in zwei Minuten",
-                "send": "Wie funktioniert Rerun?"
+                "send": "Wie funktioniert Lumvika?"
             },
             "checkWorking": {
                 "title": "Was macht {name}?",
@@ -93,8 +93,8 @@
     "error": {
         "connectChatGpt": "ChatGPT verbinden",
         "connectClaude": "Claude verbinden",
-        "creditsBody": "Du hast dein Rerun-Guthaben für diesen Zeitraum aufgebraucht. Zahlst du schon für Claude oder ChatGPT? Lass deine Coworker mit diesem Plan laufen, ohne Zusatzkosten hier.",
-        "creditsTitle": "Rerun-Guthaben",
+        "creditsBody": "Du hast dein Lumvika-Guthaben für diesen Zeitraum aufgebraucht. Zahlst du schon für Claude oder ChatGPT? Lass deine Coworker mit diesem Plan laufen, ohne Zusatzkosten hier.",
+        "creditsTitle": "Lumvika-Guthaben",
         "fallbackTitle": "Etwas ist schiefgelaufen",
         "reconnect": "Neu verbinden",
         "switchModel": "Modell wechseln",
@@ -114,7 +114,7 @@
             "wrong_tool": "Falsches Tool oder falsche App genutzt"
         },
         "categoryLabel": "Welche Art von Problem möchtest du melden?",
-        "disclaimer": "Mit dieser Meldung teilst du diese Unterhaltung mit dem Rerun-Team, damit wir deine Coworker verbessern können.",
+        "disclaimer": "Mit dieser Meldung teilst du diese Unterhaltung mit dem Lumvika-Team, damit wir deine Coworker verbessern können.",
         "negativePlaceholder": "Was war an dieser Antwort unbefriedigend?",
         "negativeTitle": "Negatives Feedback geben",
         "positivePlaceholder": "Was war an dieser Antwort gut?",
@@ -123,21 +123,21 @@
         "skip": "Überspringen",
         "submit": "Senden"
     },
-    "foreman": {
+    "steward": {
         "away": {
             "none": {
                 "body": "Dieser Workspace hat gerade keine Maschine. Sieh auf {host} nach.",
-                "title": "Rerun läuft nicht"
+                "title": "Lumvika läuft nicht"
             },
             "onboarding": {
                 "body": "Schließe die Einrichtung auf {host} ab.",
-                "title": "Rerun richtet deinen Workspace ein"
+                "title": "Lumvika richtet deinen Workspace ein"
             }
         },
         "retry": "Erneut versuchen",
         "role": "Dein Workspace-Assistent",
         "unreachableBody": "Prüfe deine Verbindung und versuch es erneut.",
-        "unreachableTitle": "Rerun ist nicht erreichbar"
+        "unreachableTitle": "Lumvika ist nicht erreichbar"
     },
     "header": {
         "back": "Zurück",
@@ -166,7 +166,7 @@
         "image": "Bild"
     },
     "messages": {
-        "askRerun": "Rerun fragen",
+        "askLumvika": "Lumvika fragen",
         "badResponse": "Schlechte Antwort",
         "compacting": "Verdichte",
         "copy": "Kopieren",
@@ -212,7 +212,7 @@
         "answerPlaceholder": "{name} antworten",
         "attachFailed": "Die Dateien konnten nicht angehängt werden",
         "defaultModel": "Standard · {model}",
-        "foremanPlaceholder": "Frag Rerun irgendetwas",
+        "stewardPlaceholder": "Frag Lumvika irgendetwas",
         "loadFailed": "Diese Unterhaltung konnte nicht geladen werden.",
         "loading": "Unterhaltung wird geladen",
         "messagePlaceholder": "Nachricht an {name}",

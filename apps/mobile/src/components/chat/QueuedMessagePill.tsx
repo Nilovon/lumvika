@@ -1,6 +1,6 @@
 import { Button, Host, Image } from '@expo/ui/swift-ui'
 import { accessibilityLabel, buttonStyle, disabled as disabledModifier, font, frame } from '@expo/ui/swift-ui/modifiers'
-import { queuedPreview } from '@rerun/contracts'
+import { queuedPreview } from '@lumvika/contracts'
 import { GlassView } from 'expo-glass-effect'
 import { SymbolView } from 'expo-symbols'
 import { StyleSheet, View } from 'react-native'

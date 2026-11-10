@@ -1,4 +1,4 @@
-import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE, SESSION_HINT_VALUE } from '@rerun/contracts'
+import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE, SESSION_HINT_VALUE } from '@lumvika/contracts'
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -54,7 +54,7 @@ describe('updateSession', () => {
         it('asks the auth server on a page load, where a revoked session has to be caught', async () => {
             mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1', is_anonymous: false } } })
 
-            await updateSession(new NextRequest('https://app.rerun.build/board', { headers: { ...DOCUMENT, cookie: 'rerun-provisioned=user-1.1' } }))
+            await updateSession(new NextRequest('https://app.lumvika.com/board', { headers: { ...DOCUMENT, cookie: 'lumvika-provisioned=user-1.1' } }))
 
             expect(mocks.getUser).toHaveBeenCalledTimes(1)
             expect(getClaims).not.toHaveBeenCalled()
@@ -63,7 +63,7 @@ describe('updateSession', () => {
         it('reads the JWT locally on anything else, and asks nothing more of a provisioned account', async () => {
             mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1', is_anonymous: false } } })
 
-            await updateSession(new NextRequest('https://app.rerun.build/board', { method: 'POST', headers: { cookie: 'rerun-provisioned=user-1.1' } }))
+            await updateSession(new NextRequest('https://app.lumvika.com/board', { method: 'POST', headers: { cookie: 'lumvika-provisioned=user-1.1' } }))
 
             expect(getClaims).toHaveBeenCalledTimes(1)
             expect(mocks.getUser).toHaveBeenCalledTimes(1)
@@ -75,11 +75,11 @@ describe('updateSession', () => {
         it('provisions an account it has no cookie for, then remembers it', async () => {
             mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1', is_anonymous: false } } })
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/board', { method: 'POST' }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/board', { method: 'POST' }))
 
             expect(mocks.selectMaybeSingle).toHaveBeenCalledTimes(1)
-            expect(response.cookies.get('rerun-provisioned')?.value).toBe('user-1.1')
-            expect(response.cookies.get('rerun-provisioned')?.httpOnly).toBe(true)
+            expect(response.cookies.get('lumvika-provisioned')?.value).toBe('user-1.1')
+            expect(response.cookies.get('lumvika-provisioned')?.httpOnly).toBe(true)
         })
 
         it('leaves no cookie when the provisioning read failed, so the next request tries again', async () => {
@@ -87,16 +87,16 @@ describe('updateSession', () => {
             mocks.selectMaybeSingle.mockResolvedValue({ data: null, error: { message: 'boom' } })
             vi.spyOn(console, 'error').mockImplementation(() => {})
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/board', { method: 'POST' }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/board', { method: 'POST' }))
 
-            expect(response.cookies.get('rerun-provisioned')).toBeUndefined()
+            expect(response.cookies.get('lumvika-provisioned')).toBeUndefined()
         })
     })
 
     it('keeps the cookie options supabase asked for, so a refreshed token is not downgraded to a session cookie', async () => {
         mocks.getUser.mockImplementation(signedInUserRefreshing([{ name: AUTH_COOKIE, value: 'refreshed', options: SET_OPTIONS }]))
 
-        const response = await updateSession(new NextRequest('https://app.rerun.build/board'))
+        const response = await updateSession(new NextRequest('https://app.lumvika.com/board'))
 
         expect(response.cookies.get(AUTH_COOKIE)?.maxAge).toBe(SET_OPTIONS.maxAge)
     })
@@ -104,7 +104,7 @@ describe('updateSession', () => {
     it('expires a chunk supabase asked to remove instead of leaving an empty cookie behind', async () => {
         mocks.getUser.mockImplementation(signedInUserRefreshing([{ name: `${AUTH_COOKIE}.1`, value: '', options: { ...SET_OPTIONS, maxAge: 0 } }]))
 
-        const response = await updateSession(new NextRequest('https://app.rerun.build/board'))
+        const response = await updateSession(new NextRequest('https://app.lumvika.com/board'))
 
         expect(response.cookies.get(`${AUTH_COOKIE}.1`)?.maxAge).toBe(0)
     })
@@ -112,9 +112,9 @@ describe('updateSession', () => {
     it('carries the refreshed cookies over to the redirect that bounces a signed-in user off /auth', async () => {
         mocks.getUser.mockImplementation(signedInUserRefreshing([{ name: AUTH_COOKIE, value: 'refreshed', options: SET_OPTIONS }]))
 
-        const response = await updateSession(new NextRequest('https://app.rerun.build/auth'))
+        const response = await updateSession(new NextRequest('https://app.lumvika.com/auth'))
 
-        expect(response.headers.get('location')).toBe('https://app.rerun.build/')
+        expect(response.headers.get('location')).toBe('https://app.lumvika.com/')
         expect(response.cookies.get(AUTH_COOKIE)?.value).toBe('refreshed')
         expect(response.cookies.get(AUTH_COOKIE)?.maxAge).toBe(SET_OPTIONS.maxAge)
     })
@@ -122,7 +122,7 @@ describe('updateSession', () => {
     it('lets a signed-in user reach the callback, where connecting Google ends', async () => {
         mocks.getUser.mockImplementation(signedInUserRefreshing([]))
 
-        const response = await updateSession(new NextRequest('https://app.rerun.build/auth/callback?code=abc'))
+        const response = await updateSession(new NextRequest('https://app.lumvika.com/auth/callback?code=abc'))
 
         expect(response.headers.get('location')).toBeNull()
     })
@@ -131,17 +131,17 @@ describe('updateSession', () => {
         it('tells the landing a real user is signed in, on the parent domain', async () => {
             mocks.getUser.mockImplementation(signedInUserRefreshing([{ name: AUTH_COOKIE, value: 'refreshed', options: SET_OPTIONS }]))
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/board', { headers: DOCUMENT }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/board', { headers: DOCUMENT }))
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)?.value).toBe(SESSION_HINT_VALUE)
-            expect(response.cookies.get(SESSION_HINT_COOKIE)?.domain).toBe('.rerun.build')
+            expect(response.cookies.get(SESSION_HINT_COOKIE)?.domain).toBe('.lumvika.com')
             expect(response.cookies.get(SESSION_HINT_COOKIE)?.maxAge).toBe(SESSION_HINT_MAX_AGE)
         })
 
         it('says nothing about an anonymous visitor, who never signed up', async () => {
             mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1', is_anonymous: true } } })
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/board', { headers: DOCUMENT }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/board', { headers: DOCUMENT }))
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)).toBeUndefined()
         })
@@ -150,17 +150,17 @@ describe('updateSession', () => {
             mocks.getUser.mockResolvedValue({ data: { user: null } })
 
             const response = await updateSession(
-                new NextRequest('https://app.rerun.build/auth', { headers: { ...DOCUMENT, cookie: `${SESSION_HINT_COOKIE}=${SESSION_HINT_VALUE}` } }),
+                new NextRequest('https://app.lumvika.com/auth', { headers: { ...DOCUMENT, cookie: `${SESSION_HINT_COOKIE}=${SESSION_HINT_VALUE}` } }),
             )
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)?.maxAge).toBe(0)
-            expect(response.cookies.get(SESSION_HINT_COOKIE)?.domain).toBe('.rerun.build')
+            expect(response.cookies.get(SESSION_HINT_COOKIE)?.domain).toBe('.lumvika.com')
         })
 
         it('leaves a visitor who never had a hint alone', async () => {
             mocks.getUser.mockResolvedValue({ data: { user: null } })
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/auth', { headers: DOCUMENT }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/auth', { headers: DOCUMENT }))
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)).toBeUndefined()
         })
@@ -168,10 +168,10 @@ describe('updateSession', () => {
         it('survives the redirect that bounces a signed-in user off /auth', async () => {
             mocks.getUser.mockImplementation(signedInUserRefreshing([{ name: AUTH_COOKIE, value: 'refreshed', options: SET_OPTIONS }]))
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/auth', { headers: DOCUMENT }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/auth', { headers: DOCUMENT }))
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)?.value).toBe(SESSION_HINT_VALUE)
-            expect(response.cookies.get(SESSION_HINT_COOKIE)?.domain).toBe('.rerun.build')
+            expect(response.cookies.get(SESSION_HINT_COOKIE)?.domain).toBe('.lumvika.com')
         })
 
         it('stays host-only in local development, where there is no parent domain to share', async () => {
@@ -187,7 +187,7 @@ describe('updateSession', () => {
             mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1', is_anonymous: false } } })
 
             const response = await updateSession(
-                new NextRequest('https://app.rerun.build/', { method: 'POST', headers: { 'next-action': 'abc123', cookie: 'rerun-provisioned=user-1.1' } }),
+                new NextRequest('https://app.lumvika.com/', { method: 'POST', headers: { 'next-action': 'abc123', cookie: 'lumvika-provisioned=user-1.1' } }),
             )
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)).toBeUndefined()
@@ -197,7 +197,7 @@ describe('updateSession', () => {
             mocks.getUser.mockResolvedValue({ data: { user: null } })
 
             const response = await updateSession(
-                new NextRequest('https://app.rerun.build/', { method: 'POST', headers: { 'next-action': 'abc123', cookie: `${SESSION_HINT_COOKIE}=${SESSION_HINT_VALUE}` } }),
+                new NextRequest('https://app.lumvika.com/', { method: 'POST', headers: { 'next-action': 'abc123', cookie: `${SESSION_HINT_COOKIE}=${SESSION_HINT_VALUE}` } }),
             )
 
             expect(response.cookies.get(SESSION_HINT_COOKIE)).toBeUndefined()
@@ -211,28 +211,28 @@ describe('updateSession', () => {
         })
 
         it('starts one for a top-level navigation to a page', async () => {
-            const response = await updateSession(new NextRequest('https://app.rerun.build/board', { headers: DOCUMENT }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/board', { headers: DOCUMENT }))
 
             expect(mocks.signInAnonymously).toHaveBeenCalledTimes(1)
             expect(response.headers.get('location')).toBeNull()
         })
 
         it('starts none for a prefetch, an RSC fetch or an asset', async () => {
-            await updateSession(new NextRequest('https://app.rerun.build/board'))
-            await updateSession(new NextRequest('https://app.rerun.build/board', { headers: { 'sec-fetch-dest': 'empty' } }))
+            await updateSession(new NextRequest('https://app.lumvika.com/board'))
+            await updateSession(new NextRequest('https://app.lumvika.com/board', { headers: { 'sec-fetch-dest': 'empty' } }))
 
             expect(mocks.signInAnonymously).not.toHaveBeenCalled()
         })
 
         it('starts none for anything but a GET', async () => {
-            await updateSession(new NextRequest('https://app.rerun.build/board', { method: 'POST', headers: DOCUMENT }))
+            await updateSession(new NextRequest('https://app.lumvika.com/board', { method: 'POST', headers: DOCUMENT }))
 
             expect(mocks.signInAnonymously).not.toHaveBeenCalled()
         })
 
         it('starts none on the auth pages, where the visitor is about to sign in', async () => {
-            await updateSession(new NextRequest('https://app.rerun.build/auth', { headers: DOCUMENT }))
-            await updateSession(new NextRequest('https://app.rerun.build/auth/callback', { headers: DOCUMENT }))
+            await updateSession(new NextRequest('https://app.lumvika.com/auth', { headers: DOCUMENT }))
+            await updateSession(new NextRequest('https://app.lumvika.com/auth/callback', { headers: DOCUMENT }))
 
             expect(mocks.signInAnonymously).not.toHaveBeenCalled()
         })
@@ -240,7 +240,7 @@ describe('updateSession', () => {
         it('lets an anonymous visitor stay on /auth to sign in', async () => {
             mocks.getUser.mockResolvedValue({ data: { user: { id: 'anon-1', is_anonymous: true } } })
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/auth'))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/auth'))
 
             expect(response.headers.get('location')).toBeNull()
         })
@@ -253,19 +253,19 @@ describe('updateSession', () => {
             mocks.signInAnonymously.mockResolvedValue({ data: { user: null }, error: { message: 'Anonymous sign-ins are disabled' } })
             vi.spyOn(console, 'error').mockImplementation(() => {})
 
-            const response = await updateSession(new NextRequest('https://app.rerun.build/', { headers: { 'sec-fetch-dest': 'document' } }))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/', { headers: { 'sec-fetch-dest': 'document' } }))
 
-            expect(response.headers.get('location')).toBe('https://app.rerun.build/auth')
+            expect(response.headers.get('location')).toBe('https://app.lumvika.com/auth')
         })
 
         it('is sent to /auth from the home page on a request that may not start a session', async () => {
-            const response = await updateSession(new NextRequest('https://app.rerun.build/'))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/'))
 
-            expect(response.headers.get('location')).toBe('https://app.rerun.build/auth')
+            expect(response.headers.get('location')).toBe('https://app.lumvika.com/auth')
         })
 
         it('is let through on any other page', async () => {
-            const response = await updateSession(new NextRequest('https://app.rerun.build/templates/crm'))
+            const response = await updateSession(new NextRequest('https://app.lumvika.com/templates/crm'))
 
             expect(response.headers.get('location')).toBeNull()
         })
@@ -293,7 +293,7 @@ describe('provisioningNeeded', () => {
 })
 
 describe('arrivesByInvite', () => {
-    const request = (path: string, cookie?: string) => new NextRequest(`https://app.rerun.build${path}`, { headers: cookie ? { cookie } : undefined })
+    const request = (path: string, cookie?: string) => new NextRequest(`https://app.lumvika.com${path}`, { headers: cookie ? { cookie } : undefined })
 
     it('recognises the invite cookie on its way through /auth', () => {
         expect(arrivesByInvite(request('/', 'pending_invite=/invite/abc'))).toBe(true)

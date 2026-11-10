@@ -11,7 +11,7 @@ import { mix } from '@/theme/tokens'
 // gradient is drawn once and only its rotation runs, on the native driver: Reanimated commits the shadow
 // tree every frame and cost ~4% CPU per card, the native driver touches the view alone.
 const BEAM_COLORS = {
-    brand: '#b7a8ff',
+    brand: '#7fdccb',
     orange: '#f97316',
 } as const
 

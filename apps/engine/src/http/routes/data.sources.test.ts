@@ -2,12 +2,12 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-data-sources-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-data-sources-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { mkdir } = await import('node:fs/promises')
-const { TABLE_SOURCES_MAX_ROWS } = await import('@rerun/contracts')
+const { TABLE_SOURCES_MAX_ROWS } = await import('@lumvika/contracts')
 const { createServer } = await import('../server.js')
 const { agentConfigSchema } = await import('../../agents/types.js')
 const { writeAgentConfig } = await import('../../agents/config-write.js')

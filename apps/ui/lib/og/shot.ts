@@ -1,13 +1,13 @@
 import { site } from '@/lib/site'
 
-// Rerun Shot: our own URL-in / image-out service (Fastify + Playwright). Anything satori cannot
+// Lumvika Shot: our own URL-in / image-out service (Fastify + Playwright). Anything satori cannot
 // draw - the isogrid board above all - is captured from a real browser instead of redrawn.
 const DEV = process.env.NODE_ENV === 'development'
 
 // The hosted service cannot reach a laptop, so in dev the default is a local instance
-// (`pnpm dev` in ~/Documents/Dev/rerun-shot), which is allowed to capture localhost.
-const SHOT_URL = process.env.RERUN_SHOT_URL ?? (DEV ? 'http://localhost:4600' : 'https://shot.rerun.build')
-const SHOT_API_KEY = process.env.RERUN_SHOT_API_KEY
+// (`pnpm dev` in ~/Documents/Dev/lumvika-shot), which is allowed to capture localhost.
+const SHOT_URL = process.env.LUMVIKA_SHOT_URL ?? (DEV ? 'http://localhost:4600' : 'https://shot.lumvika.com')
+const SHOT_API_KEY = process.env.LUMVIKA_SHOT_API_KEY
 
 export const OG_READY_SELECTOR = '[data-og-ready="true"]'
 
@@ -48,7 +48,7 @@ export async function capturePage(
     })
 
     if (!res.ok) {
-        throw new Error(`rerun-shot responded ${res.status}: ${await res.text()}`)
+        throw new Error(`lumvika-shot responded ${res.status}: ${await res.text()}`)
     }
 
     return {

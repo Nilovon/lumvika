@@ -80,7 +80,7 @@
         "boxLabel": "Box",
         "submit": "Créer",
         "pausedTitle": "{name} est en pause",
-        "pausedMessage": "Votre forfait n'a plus de place libre pour un coworker. Passez à Pro sur rerun.build pour des coworkers illimités.",
+        "pausedMessage": "Votre forfait n'a plus de place libre pour un coworker. Passez à Pro sur lumvika.com pour des coworkers illimités.",
         "failed": "Impossible de créer le coworker"
     }
 }

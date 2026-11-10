@@ -1,4 +1,4 @@
-import { RerunWordmark } from '@/components/brand/RerunWordmark'
+import { LumvikaWordmark } from '@/components/brand/LumvikaWordmark'
 import type { ChangelogOgEntry } from '@/lib/changelog/og'
 import { OG_HEIGHT, OG_WIDTH } from '@/lib/og/size'
 
@@ -29,14 +29,14 @@ export function ChangelogOgStage({ entries }: { entries: ChangelogOgEntry[] }) {
     return (
         <div className="dark relative overflow-hidden bg-[#0a0a0a] text-white" style={{ width: OG_WIDTH, height: OG_HEIGHT }}>
             <div className="absolute left-16 top-14 z-20">
-                <RerunWordmark />
+                <LumvikaWordmark />
             </div>
 
             <div className="absolute inset-y-0 left-16 z-20 flex max-w-[440px] flex-col justify-center gap-5">
                 <h2 className="bg-radial-[at_35%_30%] from-white from-15% via-[#b4b4be] via-55% to-[#6f6f7d] to-95% bg-clip-text text-[4.5rem] font-semibold leading-[1.05] tracking-[-0.035em] text-transparent">
                     What&apos;s new
                 </h2>
-                <p className="text-2xl leading-snug text-muted-foreground">Every change we ship to Rerun, newest first.</p>
+                <p className="text-2xl leading-snug text-muted-foreground">Every change we ship to Lumvika, newest first.</p>
             </div>
 
             <div className="absolute top-14 right-16 flex w-[556px] flex-col gap-9">

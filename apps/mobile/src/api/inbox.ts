@@ -1,4 +1,4 @@
-import { inboxSchema, type Inbox } from '@rerun/contracts'
+import { inboxSchema, type Inbox } from '@lumvika/contracts'
 
 import { api } from '@/api/client'
 

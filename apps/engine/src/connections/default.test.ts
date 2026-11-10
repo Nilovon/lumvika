@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-boxdefault-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-boxdefault-'))
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { mkdir, rm, writeFile } = await import('node:fs/promises')

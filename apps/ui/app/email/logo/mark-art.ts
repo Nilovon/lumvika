@@ -1,9 +1,9 @@
-// The `<Logo>` of @rerun/ui, flattened to a still: the framed R over its square grid, the centred
+// The `<Logo>` of @lumvika/ui, flattened to a still: the framed R over its square grid, the centred
 // glint, and the shimmer ring that stands in for the border. None of what draws that ring in the
 // app survives an inbox (conic gradient, mask compositing, CSS variables), so every layer is
 // resolved here and baked into a PNG over the page background.
 
-import { R_PATH } from '@rerun/ui/logo'
+import { MARK_PATH } from '@lumvika/ui/logo'
 
 /** Rendered at 4x the size the header displays it at, for retina inboxes. */
 export const MARK_SIZE = 128
@@ -74,7 +74,7 @@ export function buildMarkSvg(): string {
   </g>
   <rect x="${RING_STROKE / 2}" y="${RING_STROKE / 2}" width="${MARK_SIZE - RING_STROKE}" height="${MARK_SIZE - RING_STROKE}" rx="${RADIUS - RING_STROKE / 2}" fill="none" stroke="url(#ring)" stroke-width="${RING_STROKE}"/>
   <g transform="translate(${rOffset} ${rOffset}) scale(${R_SIZE / R_VIEWBOX})">
-    <path fill-rule="evenodd" fill="${FOREGROUND}" d="${R_PATH}"/>
+    <path fill-rule="evenodd" fill="${FOREGROUND}" d="${MARK_PATH}"/>
   </g>
 </svg>`
 }

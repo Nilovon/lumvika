@@ -16,8 +16,8 @@ const linkedinManifest = {
                 {
                     name: 'linkedin',
                     transport: 'http',
-                    url: '${RERUN_HUB_BASE_URL}/api/mcp/composio/linkedin',
-                    headers: { 'x-rerun-key': '${RERUN_API_KEY}', 'x-rerun-agent': '${agent.id}' },
+                    url: '${LUMVIKA_HUB_BASE_URL}/api/mcp/composio/linkedin',
+                    headers: { 'x-lumvika-key': '${LUMVIKA_API_KEY}', 'x-lumvika-agent': '${agent.id}' },
                 },
             ],
         },

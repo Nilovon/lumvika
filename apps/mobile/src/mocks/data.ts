@@ -9,7 +9,7 @@ export type RunPhase = 'waking' | 'thinking' | 'working'
 
 export type Coworker = {
     id: string
-    kind: 'foreman' | 'coworker'
+    kind: 'steward' | 'coworker'
     name: string
     role: string
     status: CoworkerStatus
@@ -32,25 +32,25 @@ export type Session = {
     run?: { phase: RunPhase; startedAt: number }
 }
 
-export const FOREMAN_ID = 'foreman'
+export const STEWARD_ID = 'steward'
 
 export const coworkers: Coworker[] = [
     {
-        id: FOREMAN_ID,
-        kind: 'foreman',
-        name: 'Rerun',
+        id: STEWARD_ID,
+        kind: 'steward',
+        name: 'Lumvika',
         role: 'Your workspace assistant',
         status: 'idle',
         unread: false,
         updatedMinutesAgo: 35,
-        modelId: 'rerun-max',
+        modelId: 'lumvika-max',
         suggestions: ['What needs me today?', 'Summarize this week', 'Create a new coworker'],
     },
-    { id: 'agent-scout', kind: 'coworker', name: 'Scout', role: 'Lead finder', status: 'waiting_human', unread: true, updatedMinutesAgo: 2, modelId: 'rerun-max', suggestions: ['Find leads like my best customer', 'Who opened my last email?', 'Clean up my lead lists'] },
+    { id: 'agent-scout', kind: 'coworker', name: 'Scout', role: 'Lead finder', status: 'waiting_human', unread: true, updatedMinutesAgo: 2, modelId: 'lumvika-max', suggestions: ['Find leads like my best customer', 'Who opened my last email?', 'Clean up my lead lists'] },
     { id: 'agent-pulse', kind: 'coworker', name: 'Pulse', role: 'Social media', status: 'working', unread: false, updatedMinutesAgo: 1, modelId: 'claude-opus-5-5', suggestions: ['Draft a post about our launch', 'What did best last month?', 'Plan next week'] },
-    { id: 'agent-ledger', kind: 'coworker', name: 'Ledger', role: 'Invoices and payments', status: 'error', unread: true, updatedMinutesAgo: 48, modelId: 'rerun-smart', suggestions: ['Who has not paid yet?', 'Send the October invoices', 'Revenue this month'] },
-    { id: 'agent-inbox', kind: 'coworker', name: 'Inbox Zero', role: 'Email triage', status: 'idle', unread: false, updatedMinutesAgo: 180, modelId: 'rerun-fast', suggestions: ['Anything urgent?', 'Draft a reply to Marie', 'Unsubscribe me from the noise'] },
-    { id: 'agent-recap', kind: 'coworker', name: 'Recap', role: 'Weekly report', status: 'offline', unread: false, updatedMinutesAgo: 60 * 26, modelId: 'rerun-max', suggestions: ['Write this week’s recap', 'Compare with last week', 'Send it to the team'] },
+    { id: 'agent-ledger', kind: 'coworker', name: 'Ledger', role: 'Invoices and payments', status: 'error', unread: true, updatedMinutesAgo: 48, modelId: 'lumvika-smart', suggestions: ['Who has not paid yet?', 'Send the October invoices', 'Revenue this month'] },
+    { id: 'agent-inbox', kind: 'coworker', name: 'Inbox Zero', role: 'Email triage', status: 'idle', unread: false, updatedMinutesAgo: 180, modelId: 'lumvika-fast', suggestions: ['Anything urgent?', 'Draft a reply to Marie', 'Unsubscribe me from the noise'] },
+    { id: 'agent-recap', kind: 'coworker', name: 'Recap', role: 'Weekly report', status: 'offline', unread: false, updatedMinutesAgo: 60 * 26, modelId: 'lumvika-max', suggestions: ['Write this week’s recap', 'Compare with last week', 'Send it to the team'] },
     { id: 'cw-inbox', kind: 'coworker', name: 'Echo', role: 'Customer support', status: 'idle', unread: false, updatedMinutesAgo: 60 * 50, modelId: 'gpt-6-sol', suggestions: ['Answer the open tickets', 'What are customers asking about?', 'Draft a help article'] },
 ]
 
@@ -58,8 +58,8 @@ const PULSE_STARTED_SECONDS_AGO = 42
 
 export const sessions: Session[] = [
     {
-        id: 'foreman-1',
-        coworkerId: FOREMAN_ID,
+        id: 'steward-1',
+        coworkerId: STEWARD_ID,
         title: 'Overnight catch-up',
         updatedMinutesAgo: 35,
         messages: [
@@ -72,8 +72,8 @@ export const sessions: Session[] = [
         ],
     },
     {
-        id: 'foreman-0',
-        coworkerId: FOREMAN_ID,
+        id: 'steward-0',
+        coworkerId: STEWARD_ID,
         title: 'New coworker for support',
         updatedMinutesAgo: 60 * 30,
         messages: [
@@ -140,11 +140,11 @@ export const sessions: Session[] = [
 
 const STATUS_RANK: Record<CoworkerStatus, number> = { waiting_human: 0, error: 1, working: 2, idle: 3, offline: 4 }
 
-// The Foreman first, then whoever needs you, then by recency.
+// The Steward first, then whoever needs you, then by recency.
 export function orderCoworkers(list: Coworker[]): Coworker[] {
-    const foreman = list.filter(coworker => coworker.kind === 'foreman')
+    const steward = list.filter(coworker => coworker.kind === 'steward')
     const others = list.filter(coworker => coworker.kind === 'coworker').sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.updatedMinutesAgo - b.updatedMinutesAgo)
-    return [...foreman, ...others]
+    return [...steward, ...others]
 }
 
 export const CANNED_REPLIES = ['On it. I will come back to you here as soon as it is done.', 'Got it. I updated the list and kept a copy of the old one, just in case.', 'Done. Anything else you want me to look at?']

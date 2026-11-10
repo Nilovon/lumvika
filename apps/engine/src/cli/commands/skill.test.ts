@@ -28,7 +28,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('rerun skill list', () => {
+describe('lumvika skill list', () => {
     it('prints each skill slug and name', async () => {
         state.skills = [
             { slug: 'research', name: 'Research' },
@@ -40,11 +40,11 @@ describe('rerun skill list', () => {
     })
 
     it('asks for the agent id', async () => {
-        await expect(skillCommand(['list'])).rejects.toThrow('Usage: rerun skill list <agentId>')
+        await expect(skillCommand(['list'])).rejects.toThrow('Usage: lumvika skill list <agentId>')
     })
 
     it('prints the usage for anything else', async () => {
-        await expect(skillCommand([])).rejects.toThrow('Usage: rerun skill <list>')
-        await expect(skillCommand(['delete', 'agent1'])).rejects.toThrow('Usage: rerun skill <list>')
+        await expect(skillCommand([])).rejects.toThrow('Usage: lumvika skill <list>')
+        await expect(skillCommand(['delete', 'agent1'])).rejects.toThrow('Usage: lumvika skill <list>')
     })
 })

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { injectPreviewMeta } from './meta'
 
-const META = { title: 'Q3 "proposal"', description: 'Published by Ana at Acme', image: 'https://x.rerun.site/__rerun/og.png', url: 'https://x.rerun.site/' }
+const META = { title: 'Q3 "proposal"', description: 'Published by Ana at Acme', image: 'https://x.lumvika.site/__lumvika/og.png', url: 'https://x.lumvika.site/' }
 
 describe('injectPreviewMeta', () => {
     it('adds the tags before the end of the head, escaped', () => {
         const html = injectPreviewMeta('<html><head><title>x</title></head><body></body></html>', META)
         expect(html).toContain('<meta property="og:title" content="Q3 &quot;proposal&quot;">')
-        expect(html).toContain('<meta name="twitter:image" content="https://x.rerun.site/__rerun/og.png"></head>')
+        expect(html).toContain('<meta name="twitter:image" content="https://x.lumvika.site/__lumvika/og.png"></head>')
     })
 
     it('keeps a page that sets its own image untouched', () => {

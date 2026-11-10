@@ -37,7 +37,7 @@ afterEach(() => {
 
 describe('facebook provider oauth', () => {
     it('asks Facebook Login for Business for its configuration instead of scopes', () => {
-        const ctx = { verifier: 'v', agentId: 'a', key: 'facebook', provider: 'facebook', serverName: 'facebook', redirectUri: 'https://app.rerun.build/api/oauth/managed/facebook/callback' }
+        const ctx = { verifier: 'v', agentId: 'a', key: 'facebook', provider: 'facebook', serverName: 'facebook', redirectUri: 'https://app.lumvika.com/api/oauth/managed/facebook/callback' }
         const url = new URL(buildManagedAuthorizeUrl(facebookProvider.oauth, 'app-id', ctx, 'chal', 'st'))
         expect(url.hostname).toBe('www.facebook.com')
         expect(url.searchParams.has('scope')).toBe(false)
@@ -46,8 +46,8 @@ describe('facebook provider oauth', () => {
     })
 
     it('labels the connection with the shared Pages', async () => {
-        stubGraph(() => ({ data: [{ name: 'Rerun AI' }, { name: 'Atelier Nord' }] }))
-        await expect(facebookProvider.oauth.accountEmail?.('business-token')).resolves.toBe('Rerun AI, Atelier Nord')
+        stubGraph(() => ({ data: [{ name: 'Lumvika AI' }, { name: 'Atelier Nord' }] }))
+        await expect(facebookProvider.oauth.accountEmail?.('business-token')).resolves.toBe('Lumvika AI, Atelier Nord')
     })
 })
 

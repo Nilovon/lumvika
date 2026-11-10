@@ -1,4 +1,4 @@
-import type { AgentModels, AgentView, Conversation } from '@rerun/contracts'
+import type { AgentModels, AgentView, Conversation } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useId, useState } from 'react'

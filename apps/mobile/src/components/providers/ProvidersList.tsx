@@ -1,4 +1,4 @@
-import type { AddableProvider, AiConnectionKind, AiConnectionView, AiConnectionsView } from '@rerun/contracts'
+import type { AddableProvider, AiConnectionKind, AiConnectionView, AiConnectionsView } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { Fragment } from 'react'
 import { Pressable, View } from 'react-native'
@@ -30,7 +30,7 @@ type ProvidersListProps = {
     readOnlyReason?: AccessReason | null
 }
 
-// The web's AI providers panel: the default model, what comes with Rerun, then the user's own plans
+// The web's AI providers panel: the default model, what comes with Lumvika, then the user's own plans
 // and keys. An empty group offers its providers in place, a full one ends on its Add row.
 export function ProvidersList({ view, failed, onClose, onOpen, onAdd, onAddKind, onChangeDefault, readOnlyReason }: ProvidersListProps) {
     const t = useTranslations('mobileProviders.list')
@@ -81,7 +81,7 @@ function DefaultCard({ view, readOnly, onChange, onFix }: { view: AiConnectionsV
     const canChange = view.connections.some(connection => connection.status === 'connected')
     const t = useTranslations('mobileProviders.list')
     const subtitle = !broken
-        ? t('via', { name: source?.name ?? 'Rerun' })
+        ? t('via', { name: source?.name ?? 'Lumvika' })
         : creditGone
           ? canChange
               ? t('creditsUsedUpPickModel', { backOn: view.credit.backOn })
@@ -90,7 +90,7 @@ function DefaultCard({ view, readOnly, onChange, onFix }: { view: AiConnectionsV
 
     return (
         <Card>
-            <ProviderRow id="provider-default" provider={source?.provider ?? 'rerun'} title={view.default.label} subtitle={subtitle} subtitleLines={broken ? 0 : 2} onPress={canChange ? onChange : undefined} disabled={readOnly} />
+            <ProviderRow id="provider-default" provider={source?.provider ?? 'lumvika'} title={view.default.label} subtitle={subtitle} subtitleLines={broken ? 0 : 2} onPress={canChange ? onChange : undefined} disabled={readOnly} />
             {broken && !creditGone && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }}>
                     <Button label={signsIn(source.provider) ? t('signInAgain') : t('addKey')} size="sm" disabled={readOnly} onPress={() => onFix(source.id)} />

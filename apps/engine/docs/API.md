@@ -1,16 +1,16 @@
-# rerun-engine — API
+# lumvika-engine — API
 
-Base URL: `http://localhost:3000` (configurable via `RERUN_PORT` / `RERUN_HOST`).
+Base URL: `http://localhost:3000` (configurable via `LUMVIKA_PORT` / `LUMVIKA_HOST`).
 
 ## Authentication
 
-If `RERUN_API_KEY` is set, every route except `GET /health` requires:
+If `LUMVIKA_API_KEY` is set, every route except `GET /health` requires:
 
 ```
-Authorization: Bearer <RERUN_API_KEY>
+Authorization: Bearer <LUMVIKA_API_KEY>
 ```
 
-If `RERUN_API_KEY` is unset, the API is open (dev mode).
+If `LUMVIKA_API_KEY` is unset, the API is open (dev mode).
 
 ## Conventions
 
@@ -110,7 +110,7 @@ Closes that browser and returns the page it was on.
 
 The VNC stream of one agent's screen, as a WebSocket a noVNC client speaks to directly. It is the only route
 meant to be reached from a browser, so it does not take the bearer key: the ticket is
-`base64url(JSON { "exp": <ms epoch>, "agent": "<agent id>", "mode": "watch" | "drive" }) + "." + base64url(HMAC-SHA256(payload, RERUN_API_KEY))`,
+`base64url(JSON { "exp": <ms epoch>, "agent": "<agent id>", "mode": "watch" | "drive" }) + "." + base64url(HMAC-SHA256(payload, LUMVIKA_API_KEY))`,
 minted by the hub for one minute. The agent in the ticket is the screen that opens, so a ticket for
 one agent never shows another. A `drive` connection keeps the agent's own `computer` tools off the
 screen until it closes or sends no mouse or key event for two minutes; a `watch` connection does
@@ -140,7 +140,7 @@ Credentials live in `data/connections/<id>/.env` (chmod 600) and are **never ret
 endpoint. A Codex connection also owns `data/connections/<id>/.codex/`, so the agents sharing a
 ChatGPT plan share one refresh lineage instead of racing to rotate their own copies.
 
-The box always carries a connection with id `rerun`: the keyless free tier, proxied by the hub. It
+The box always carries a connection with id `lumvika`: the keyless free tier, proxied by the hub. It
 cannot be renamed or deleted, only re-curated.
 
 ### `GET /connections`
@@ -165,7 +165,7 @@ box, stored in `data/connections/default.json`.
 ```
 
 `404` when the connection is unknown, `400` when it does not offer that model. `DELETE
-/connections/default` clears it, and resolution falls back to the keyless `rerun` connection until
+/connections/default` clears it, and resolution falls back to the keyless `lumvika` connection until
 a connection adopts the default again (see `POST /connections`).
 
 ### `POST /connections`
@@ -183,9 +183,9 @@ a connection adopts the default again (see `POST /connections`).
 automation is checked against before it runs. Response `201`, same shape as the list entries.
 
 The first connected connection on a box adopts the box default, on its first curated model: with
-no default written, every agent that named no model of its own stays on `rerun`, so plugging in a
+no default written, every agent that named no model of its own stays on `lumvika`, so plugging in a
 credential would otherwise change nothing until someone set the default by hand. It only fires
-while no other connection outside `rerun` holds a credential, and `PATCH /connections/:id/keys`
+while no other connection outside `lumvika` holds a credential, and `PATCH /connections/:id/keys`
 does the same when the credential arrives after the connection.
 
 ### `PATCH /connections/:id`
@@ -215,7 +215,7 @@ served on (Anthropic messages, OpenAI responses, OpenAI chat, Google). Every req
 
 - The catalog is read live from `https://opencode.ai/inference/{go/,}v1/models` (public, no key):
   at boot, on `GET /connections` when older than 30 minutes, before a new connection adopts the
-  default, and after a `400 Model is unavailable`. The snapshot built into `@rerun/contracts` stands
+  default, and after a `400 Model is unavailable`. The snapshot built into `@lumvika/contracts` stands
   in until it answers. `providerModels` on the summary lists what the catalog reaches today.
 - `planLimits` reads `https://opencode.ai/zen/go/v1/usage`: the five-hour `session`, `weekly` and
   `monthly` windows of the Go plan, for the whole account.
@@ -276,7 +276,7 @@ answer in `detail`. Advertised by the `connections.custom` capability on `GET /h
 { "set": { "ANTHROPIC_API_KEY": "sk-ant-..." }, "remove": ["OPENAI_API_KEY"] }
 ```
 
-Returns the resulting key names. `400` on the keyless `rerun` connection.
+Returns the resulting key names. `400` on the keyless `lumvika` connection.
 
 ### `GET /connections/:id/usage`
 
@@ -293,7 +293,7 @@ sitting next to `"model": null` is a leftover, and that agent already follows th
 
 Never refuses over usage. Every agent, schedule and trigger pointing at the connection is released
 first — `connectionId`, `provider` and `model` back to `null`, which means "run whatever the box
-runs" — and the box default is cleared if this connection held it. `400` for `rerun`.
+runs" — and the box default is cleared if this connection held it. `400` for `lumvika`.
 
 ```json
 { "deleted": "abc...", "released": { "agents": [ { "id": "abc...", "name": "Scout" } ], "automations": [], "isBoxDefault": true } }
@@ -385,7 +385,7 @@ Returns the updated `{ id, config, soul, install, resolvedConnectionId, resolved
 
 `model: null` is the switch between "this agent picked a model" and "it runs whatever the box does". A null model follows the box default and moves with it, whatever `connectionId` or `provider` is still sitting next to it. Sending `null` for the three is how a pinned agent goes back to that.
 
-`connectionId` is the box connection a pinned agent draws its credentials from. `null` means it has none of its own, and the engine resolves one at load time: the oldest connection matching `provider`, then the box default, then the keyless `rerun` one. That fallback is what makes an imported template runnable — a connection id from another box means nothing here, so an archive carries `provider` and drops `connectionId`.
+`connectionId` is the box connection a pinned agent draws its credentials from. `null` means it has none of its own, and the engine resolves one at load time: the oldest connection matching `provider`, then the box default, then the keyless `lumvika` one. That fallback is what makes an imported template runnable — a connection id from another box means nothing here, so an archive carries `provider` and drops `connectionId`.
 
 ```json
 { "connectionId": "abc...", "provider": "claude", "model": "opus" }
@@ -681,7 +681,7 @@ Update a schedule. Body: any subset of `{ "description"?, "body"?, "cron"?, "run
 
 `model: null` means "whatever the agent runs", which is itself the box default when the agent picked nothing: the routine follows instead of freezing today's pair. It is what a schedule created without a model gets.
 
-An automation that does pin a pair keeps it. When that pair stops being runnable — the credential was removed, or the model was switched off on the connection — the engine falls back rather than failing: the agent's own model, then the box default, then the keyless `rerun` connection, then the first connection on the box that can serve something. The substitution is logged as a warning, because it changes both the bill and the answer.
+An automation that does pin a pair keeps it. When that pair stops being runnable — the credential was removed, or the model was switched off on the connection — the engine falls back rather than failing: the agent's own model, then the box default, then the keyless `lumvika` connection, then the first connection on the box that can serve something. The substitution is logged as a warning, because it changes both the bill and the answer.
 
 ### `DELETE /agents/:id/schedules/:slug`
 
@@ -697,7 +697,7 @@ Agents can also manage their own schedules at runtime with the `schedule_create`
 
 Triggers are the event-driven counterpart of schedules: markdown files (`data/agents/<id>/triggers/<slug>.md`) that expose a public URL. When an external service calls it, the engine starts a fresh session and runs the trigger `body` with the caller's payload attached below it.
 
-The URL is served by the Rerun app, not by the engine: `https://app.rerun.build/api/t/<rerunAgentId>/<slug>/<token>`. It resolves the agent and forwards the payload to `POST /agents/:id/triggers/:slug/fire` with the space key. So a self-hosted engine with no hub can define triggers, but only the hub can hand out their URLs.
+The URL is served by the Lumvika app, not by the engine: `https://app.lumvika.com/api/t/<lumvikaAgentId>/<slug>/<token>`. It resolves the agent and forwards the payload to `POST /agents/:id/triggers/:slug/fire` with the space key. So a self-hosted engine with no hub can define triggers, but only the hub can hand out their URLs.
 
 `triggers/` is **not** part of an agent archive: each file holds the secret of a live URL, which must not be copied into every install of a published template.
 
@@ -727,7 +727,7 @@ Issue a new token, which changes the public URL. Every service still calling the
 
 ### `POST /agents/:id/triggers/:slug/fire`
 
-Called by the Rerun app on behalf of an anonymous caller, never by a user directly.
+Called by the Lumvika app on behalf of an anonymous caller, never by a user directly.
 
 ```json
 { "token": "...", "method": "POST", "query": "source=zapier", "contentType": "application/json", "body": "{\"ref\":\"refs/heads/main\"}", "bodyBytes": 25 }
@@ -769,7 +769,7 @@ To see the full transcript (tool calls included) of a scheduled run, use the run
 
 ## Notifications
 
-The engine pushes lifecycle events to the hub it is linked to, at `POST $RERUN_HUB_BASE_URL/api/webhooks/engine`, authenticated with its own `RERUN_API_KEY`. There is no per-schedule webhook URL: everything goes to the hub, which decides what to email or show.
+The engine pushes lifecycle events to the hub it is linked to, at `POST $LUMVIKA_HUB_BASE_URL/api/webhooks/engine`, authenticated with its own `LUMVIKA_API_KEY`. There is no per-schedule webhook URL: everything goes to the hub, which decides what to email or show.
 
 Events:
 
@@ -804,10 +804,10 @@ An agent can notify its user out-of-band by calling the `notify_user` tool (the 
 
 Delivery is configured per engine instance (one engine = one space) via two env vars:
 
-- `RERUN_HUB_BASE_URL` — the UI base URL; the engine delivers to its `POST /api/webhooks/engine` endpoint.
-- `RERUN_API_KEY` — the per-space bearer token; the receiver maps it to the space.
+- `LUMVIKA_HUB_BASE_URL` — the UI base URL; the engine delivers to its `POST /api/webhooks/engine` endpoint.
+- `LUMVIKA_API_KEY` — the per-space bearer token; the receiver maps it to the space.
 
-If either is unset the tool is a no-op (it tells the agent the notification wasn't delivered, nothing is sent). When set, the engine `POST`s to `${RERUN_HUB_BASE_URL}/api/webhooks/engine` with header `Authorization: Bearer <RERUN_API_KEY>` and payload:
+If either is unset the tool is a no-op (it tells the agent the notification wasn't delivered, nothing is sent). When set, the engine `POST`s to `${LUMVIKA_HUB_BASE_URL}/api/webhooks/engine` with header `Authorization: Bearer <LUMVIKA_API_KEY>` and payload:
 
 ```json
 {

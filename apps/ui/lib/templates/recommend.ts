@@ -4,7 +4,7 @@
 import { generateObject } from 'ai'
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { TemplateCategory } from '@rerun/contracts'
+import type { TemplateCategory } from '@lumvika/contracts'
 import type { Database } from '@/app/api/database.types'
 import type { OnboardingAnswers } from '@/app/actions/onboarding'
 import { hasOpenRouterKey, openrouter } from '@/lib/ai/openrouter'
@@ -14,7 +14,7 @@ import { agentsFromRow, connectorsFromRow } from './document'
 import { templateCardStamp, templateEmailCardUrl } from './email-card'
 import { VOICE, clean } from './voice'
 
-const RECOMMEND_MODEL = process.env.RERUN_RECOMMEND_MODEL ?? 'anthropic/claude-haiku-4.5'
+const RECOMMEND_MODEL = process.env.LUMVIKA_RECOMMEND_MODEL ?? 'anthropic/claude-haiku-4.5'
 
 const LINE_LIMIT = 90
 const SHORTLIST_SIZE = 8

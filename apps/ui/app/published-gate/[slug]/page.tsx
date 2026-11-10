@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { Logo } from '@/components/layout/Logo'
 import { GateCodeField } from '@/components/published/GateCodeField'
-import { GateMessage, GateScreen, RerunTile, type GateBrand } from '@/components/published/GateScreen'
+import { GateMessage, GateScreen, LumvikaTile, type GateBrand } from '@/components/published/GateScreen'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { GateInput } from '@/components/published/GateInput'
@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
 type Params = { slug: string }
 type Search = Record<string, string | string[] | undefined>
 
-const RERUN_BRAND: GateBrand = { name: 'Rerun', iconUrl: null }
+const LUMVIKA_BRAND: GateBrand = { name: 'Lumvika', iconUrl: null }
 
 function param(search: Search, key: string): string | undefined {
     const value = search[key]
@@ -32,7 +32,7 @@ async function onOwnHost(slug: string): Promise<boolean> {
 
 async function gateContext(slug: string): Promise<{ entry: PublishedEntry | null; brand: GateBrand }> {
     const entry = await loadPublished(slug)
-    return { entry, brand: entry ? await loadWorkspaceBrand(entry.workspace_id) : RERUN_BRAND }
+    return { entry, brand: entry ? await loadWorkspaceBrand(entry.workspace_id) : LUMVIKA_BRAND }
 }
 
 // A crawler unfurling the link is no one in particular: whatever it reads, anyone the link is
@@ -44,13 +44,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     const t = await getTranslations('publicPages')
     const title = entry ? t('publishedView.protectedTitle') : t('linkOff.title')
     const description = entry ? t('publishedView.protectedDescription', { workspace: brand.name }) : t('linkOff.subtitle')
-    const images = entry ? ['/__rerun/og.png'] : undefined
+    const images = entry ? ['/__lumvika/og.png'] : undefined
     return {
         title: { absolute: title },
         description,
         robots: { index: false, follow: false },
         ...(origin ? { metadataBase: new URL(origin) } : {}),
-        openGraph: { title, description, images, siteName: 'Rerun' },
+        openGraph: { title, description, images, siteName: 'Lumvika' },
         twitter: { card: 'summary_large_image', title, description, images },
     }
 }
@@ -90,7 +90,7 @@ export default async function PublishedGatePage({ params, searchParams }: { para
     const t = await getTranslations('publicPages.gate')
 
     if (!entry || param(search, 'gate') === 'gone') {
-        return <GateScreen brand={brand} lock={null} mark={<RerunTile />} title={tPages('linkOff.title')} subtitle={tPages('linkOff.subtitle')} />
+        return <GateScreen brand={brand} lock={null} mark={<LumvikaTile />} title={tPages('linkOff.title')} subtitle={tPages('linkOff.subtitle')} />
     }
 
     const title = entry.title ?? tPages('publishedView.protectedTitle')
@@ -99,7 +99,7 @@ export default async function PublishedGatePage({ params, searchParams }: { para
         const message = errorText(error, 'password', t)
         return (
             <GateScreen brand={brand} lock={<Icon icon={KeyIcon} size="lg" />} title={title} subtitle={t('password.subtitle', { workspace: brand.name })}>
-                <form method="post" action="/__rerun/password" className="flex flex-col gap-2.5">
+                <form method="post" action="/__lumvika/password" className="flex flex-col gap-2.5">
                     <input type="hidden" name="next" value={next} />
                     <GateInput type="password" name="password" placeholder={t('password.placeholder')} autoComplete="current-password" autoFocus required aria-invalid={!!message || undefined} />
                     {message && <GateMessage>{message}</GateMessage>}
@@ -115,7 +115,7 @@ export default async function PublishedGatePage({ params, searchParams }: { para
         const message = errorText(error, 'code', t)
         return (
             <GateScreen brand={brand} lock={<Icon icon={MailIcon} size="lg" />} title={t('code.title')} subtitle={t('code.subtitle', { email })}>
-                <form method="post" action="/__rerun/code/verify" className="flex flex-col gap-2.5">
+                <form method="post" action="/__lumvika/code/verify" className="flex flex-col gap-2.5">
                     <input type="hidden" name="email" value={email} />
                     <input type="hidden" name="next" value={next} />
                     <GateCodeField invalid={!!message} />
@@ -135,7 +135,7 @@ export default async function PublishedGatePage({ params, searchParams }: { para
         const message = errorText(error, 'email', t)
         return (
             <GateScreen brand={brand} lock={<Icon icon={MailIcon} size="lg" />} title={title} subtitle={t('email.subtitle')}>
-                <form method="post" action="/__rerun/code/send" className="flex flex-col gap-2.5">
+                <form method="post" action="/__lumvika/code/send" className="flex flex-col gap-2.5">
                     <input type="hidden" name="next" value={next} />
                     <GateInput type="email" name="email" placeholder="you@company.com" autoComplete="email" autoFocus required aria-invalid={!!message || undefined} />
                     {message && <GateMessage>{message}</GateMessage>}

@@ -30,8 +30,8 @@ export function repairNullToolInput(inputText: string): string | null {
 const CLI_MCP_TOOL_NAME = /^mcp__(.+?)__(.+)$/
 
 // A conversation that ran on Claude or Codex holds their names for the same tools
-// (`mcp__rerun__schedule_list`, `mcp__github__pull_request_read`), and a model taking over the
-// conversation in Rerun's own loop sometimes copies them.
+// (`mcp__lumvika__schedule_list`, `mcp__github__pull_request_read`), and a model taking over the
+// conversation in Lumvika's own loop sometimes copies them.
 export function loopToolNameFor(toolName: string, tools: ToolSet): string | null {
     const bridged = canonicalBridgeName(toolName)
     const connector = CLI_MCP_TOOL_NAME.exec(toolName)

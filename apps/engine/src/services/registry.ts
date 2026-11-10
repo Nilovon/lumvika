@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { parseServiceRegistryKey } from '@rerun/contracts'
+import { parseServiceRegistryKey } from '@lumvika/contracts'
 import { workspaceDir } from '../config/paths.js'
 
 // The per-agent "installed connectors" registry is written by the UI into the agent's own
@@ -24,7 +24,7 @@ export type RegistryEntry = {
 
 export type ServiceRegistry = { services?: Record<string, RegistryEntry> }
 
-export const REGISTRY_WORKSPACE_PATH = '.rerun/services.json'
+export const REGISTRY_WORKSPACE_PATH = '.lumvika/services.json'
 
 export async function readRegistry(id: string): Promise<ServiceRegistry | null> {
     const path = resolve(workspaceDir(id), REGISTRY_WORKSPACE_PATH)

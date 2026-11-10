@@ -3,14 +3,14 @@ import { readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-fstools-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-fstools-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { z } = await import('zod')
 const { makeFsTools } = await import('./fsTools.js')
 
-const root = mkdtempSync(resolve(tmpdir(), 'rerun-fstools-root-'))
+const root = mkdtempSync(resolve(tmpdir(), 'lumvika-fstools-root-'))
 mkdirSync(resolve(root, 'empty'))
 mkdirSync(resolve(root, 'nested/deeper'), { recursive: true })
 writeFileSync(resolve(root, 'nested/a.txt'), 'alpha\n')
@@ -75,7 +75,7 @@ describe('makeFsTools', () => {
 })
 
 describe('makeFsTools with a root chosen per call', () => {
-    const roots: Record<string, string> = { one: mkdtempSync(resolve(tmpdir(), 'rerun-fs-one-')), two: mkdtempSync(resolve(tmpdir(), 'rerun-fs-two-')) }
+    const roots: Record<string, string> = { one: mkdtempSync(resolve(tmpdir(), 'lumvika-fs-one-')), two: mkdtempSync(resolve(tmpdir(), 'lumvika-fs-two-')) }
     const seen: Record<string, unknown>[] = []
     const scoped = makeFsTools({
         prefix: 'pick',

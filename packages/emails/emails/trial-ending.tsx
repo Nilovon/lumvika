@@ -79,8 +79,8 @@ TrialEnding.PreviewProps = {
   trialEndsLabel: "12 March",
   daysLeft: 1,
   keptUntilLabel: "10 June",
-  billingUrl: "https://app.rerun.build/?billing=1",
-  appUrl: "https://app.rerun.build",
+  billingUrl: "https://app.lumvika.com/?billing=1",
+  appUrl: "https://app.lumvika.com",
 } satisfies TrialEndingProps;
 
 const meta: React.CSSProperties = {

@@ -6,7 +6,7 @@ description: "Start a coworker run from any service that can send an HTTP reques
 A trigger gives a coworker a public URL. Call that URL and the coworker starts working. There is no SDK, no key exchange and no handshake: anything that can send an HTTP request can fire a coworker.
 
 ```
-https://app.rerun.build/api/t/{agentId}/{slug}/{token}
+https://app.lumvika.com/api/t/{agentId}/{slug}/{token}
 ```
 
 Create a trigger in the app under the coworker **Triggers** tab, or with [`upsert_trigger`](/api/tools/triggers#upsert-trigger). Both give you the full URL.
@@ -19,7 +19,7 @@ There is no signature, no secret header and no allowlist. Whoever holds the URL 
   Treat every trigger URL like a password. Do not paste it into a shared document, a ticket or a public repository. If one leaks, rotate it with [`rotate_trigger_token`](/api/tools/triggers#rotate-trigger-token) or from the **Triggers** tab, and update every service configured with it.
 </Warning>
 
-Because the URL is the whole authentication, Rerun cannot validate a third-party signature header today. Caller headers are never forwarded to the coworker: they carry credentials and are trivially spoofed.
+Because the URL is the whole authentication, Lumvika cannot validate a third-party signature header today. Caller headers are never forwarded to the coworker: they carry credentials and are trivially spoofed.
 
 ## Methods
 
@@ -28,7 +28,7 @@ A trigger declares which HTTP methods it accepts. The default is `POST` alone.
 `GET`, `POST`, `PUT`, `PATCH` and `DELETE` all reach the same handler. `HEAD` and `OPTIONS` never start a run.
 
 <Note>
-  Accepting `GET` means a link preview, a prefetch or a crawler could fire your coworker by touching the URL. Rerun filters the known ones, but keep `POST` unless the calling service cannot send it.
+  Accepting `GET` means a link preview, a prefetch or a crawler could fire your coworker by touching the URL. Lumvika filters the known ones, but keep `POST` unless the calling service cannot send it.
 </Note>
 
 ## What the coworker receives
@@ -67,7 +67,7 @@ That last row is deliberate. A malformed slug, a missing token, an unknown cowor
 
 ## Passive visits
 
-Link unfurlers, prefetchers and clipboard managers touch URLs without anyone clicking them. Rerun answers those with `204` and never starts a run. The filter covers Slack, Discord, Twitter, WhatsApp, Raycast and other known coworkers, plus any request carrying a prefetch or preview intent header.
+Link unfurlers, prefetchers and clipboard managers touch URLs without anyone clicking them. Lumvika answers those with `204` and never starts a run. The filter covers Slack, Discord, Twitter, WhatsApp, Raycast and other known coworkers, plus any request carrying a prefetch or preview intent header.
 
 Pasting a trigger URL into a chat is still a leak, but it will not fire your coworker by itself.
 
@@ -85,7 +85,7 @@ Pasting a trigger URL into a chat is still a leak, but it will not fire your cow
 Fire it yourself with `curl`:
 
 ```bash
-curl -i -X POST "https://app.rerun.build/api/t/AGENT_ID/SLUG/TOKEN" \
+curl -i -X POST "https://app.lumvika.com/api/t/AGENT_ID/SLUG/TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"event":"test"}'
 ```

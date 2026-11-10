@@ -2,27 +2,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { extractPublishedSlug, isValidSlugLabel, publishedSiteOrigin, rendersAsPage, suffixedSlug } from './host'
 
 describe('publish host', () => {
-    beforeEach(() => vi.stubEnv('PUBLISH_HOST', 'rerun.site'))
+    beforeEach(() => vi.stubEnv('PUBLISH_HOST', 'lumvika.site'))
     afterEach(() => vi.unstubAllEnvs())
 
     it('reads the slug of a single-level subdomain', () => {
-        expect(extractPublishedSlug('copilote-seo-kit-fr.rerun.site')).toBe('copilote-seo-kit-fr')
-        expect(extractPublishedSlug('AbC123.rerun.site:443')).toBe('abc123')
+        expect(extractPublishedSlug('copilote-seo-kit-fr.lumvika.site')).toBe('copilote-seo-kit-fr')
+        expect(extractPublishedSlug('AbC123.lumvika.site:443')).toBe('abc123')
     })
 
     it('rejects the app, nested and reserved hosts', () => {
-        expect(extractPublishedSlug('app.rerun.build')).toBeNull()
-        expect(extractPublishedSlug('rerun.site')).toBeNull()
-        expect(extractPublishedSlug('a.b.rerun.site')).toBeNull()
-        expect(extractPublishedSlug('www.rerun.site')).toBeNull()
-        expect(extractPublishedSlug('welcome.rerun.site')).toBeNull()
-        expect(extractPublishedSlug('evil.rerun.site.attacker.com')).toBeNull()
+        expect(extractPublishedSlug('app.lumvika.com')).toBeNull()
+        expect(extractPublishedSlug('lumvika.site')).toBeNull()
+        expect(extractPublishedSlug('a.b.lumvika.site')).toBeNull()
+        expect(extractPublishedSlug('www.lumvika.site')).toBeNull()
+        expect(extractPublishedSlug('welcome.lumvika.site')).toBeNull()
+        expect(extractPublishedSlug('evil.lumvika.site.attacker.com')).toBeNull()
         expect(extractPublishedSlug(null)).toBeNull()
     })
 
     it('is off when no publish host is configured', () => {
         vi.stubEnv('PUBLISH_HOST', '')
-        expect(extractPublishedSlug('abc.rerun.site')).toBeNull()
+        expect(extractPublishedSlug('abc.lumvika.site')).toBeNull()
         expect(publishedSiteOrigin('abc')).toBeNull()
     })
 
@@ -33,7 +33,7 @@ describe('publish host', () => {
     })
 
     it('builds the https origin of a slug', () => {
-        expect(publishedSiteOrigin('demo')).toBe('https://demo.rerun.site')
+        expect(publishedSiteOrigin('demo')).toBe('https://demo.lumvika.site')
     })
 })
 

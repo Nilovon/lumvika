@@ -13,10 +13,11 @@
         "whatsNew": "Novidades",
         "gettingStarted": "Primeiros passos",
         "docs": "Documentação",
-        "community": "Comunidade",
         "shortcuts": "Atalhos",
         "installApp": "Instalar o app",
-        "hireExpert": "Contratar um expert"
+        "hireExpert": "Contratar um expert",
+        "about": "Sobre",
+        "source": "Código-fonte"
     },
     "power": {
         "menuItem": "Reiniciar a máquina",
@@ -122,18 +123,18 @@
         "reload": "Recarregar",
         "available": {
             "title": "Nova versão disponível",
-            "description": "Recarregue para ter o Rerun mais recente."
+            "description": "Recarregue para ter o Lumvika mais recente."
         },
         "required": {
-            "title": "O Rerun foi atualizado",
+            "title": "O Lumvika foi atualizado",
             "description": "Uma nova versão está no ar. Recarregue para continuar."
         }
     },
     "controlCenter": {
         "title": "Central de controle",
-        "description": "Vá direto para um agente, uma configuração ou uma conversa, ou pergunte ao Rerun.",
+        "description": "Vá direto para um agente, uma configuração ou uma conversa, ou pergunte ao Lumvika.",
         "back": "Voltar",
-        "askRerun": "Perguntar ao Rerun",
+        "askLumvika": "Perguntar ao Lumvika",
         "quotedQuery": "“{query}”",
         "unnamedBox": "Box sem nome",
         "pro": "Pro",
@@ -166,7 +167,7 @@
             "notificationsDetail": "Quando este agente fala com você"
         },
         "placeholder": {
-            "rootAssistant": "Busque ou pergunte ao Rerun…",
+            "rootAssistant": "Busque ou pergunte ao Lumvika…",
             "root": "Buscar agentes, configurações, conversas…",
             "agent": "Buscar em {name}…",
             "agentUnknown": "Buscar neste agente…",
@@ -207,6 +208,6 @@
     "boxNameSuggestions": "Ou escolha um nome",
     "dashboard": {
         "metaTitle": "Painel",
-        "metaDescription": "Suas Boxes e coworkers no Rerun."
+        "metaDescription": "Suas Boxes e coworkers no Lumvika."
     }
 }

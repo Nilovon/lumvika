@@ -76,11 +76,11 @@ import type { TableListResult } from '@/lib/data/source'
 import { transformEngineMessages } from '@/lib/chat/engine-history'
 import { findPendingHitl, pendingSecrets } from '@/lib/chat-hitl'
 import type { EngineConnection, EngineAgentConfigPatch, EngineAgentDetail, EngineMcpServer, EngineDbRows, EngineMemory, EngineRun, EngineRunDetail, EngineRunStep, EngineSchedule, EngineTrigger, EngineSkill, EngineSkillFilePayload, EngineSkillSummary, EngineSkillWithSource, EngineToolCall, EngineToolFamily, EngineUsageBucket, EngineStatsPoint } from '@/lib/engine/types'
-import type { StatsQuery, UsageTimeRange } from '@rerun/contracts'
-import { FOREMAN_AGENT_ID, statsQuerySchema } from '@rerun/contracts'
+import type { StatsQuery, UsageTimeRange } from '@lumvika/contracts'
+import { STEWARD_AGENT_ID, statsQuerySchema } from '@lumvika/contracts'
 import { sealAgentDetail, sealSchedule, sealSkill, sealSkillFile, sealTrigger } from '@/app/api/_services/agent-content.service'
 import { connectorMcpServerNames, connectorSkillOwners, connectorSkillSlugs, readRegistry } from '@/lib/services/registry'
-import { TEXT_FILE_PAGE_CHARS } from '@rerun/contracts'
+import { TEXT_FILE_PAGE_CHARS } from '@lumvika/contracts'
 import { failureOf, refusal, refusalOf, type ActionFailure, type ActionRefusal, type ErrorCode, type SuccessResult } from '@/lib/i18n/action-error'
 import { nextRunAt } from '@/lib/schedules/cron'
 import { latestOutcomes, type TaskOutcome } from '@/lib/schedules/outcomes'
@@ -228,7 +228,7 @@ export type AgentSetupInfo = { required: boolean | null; completedAt: string | n
 
 // What a conversation needs about the agent itself, from the one read of it both the in-chat
 // ModelSelector and the setup gate draw on. The connections are a machine-level fetch (see
-// listBoxConnectionsAction) shared by every agent of the workspace. The foreman has no setup.
+// listBoxConnectionsAction) shared by every agent of the workspace. The steward has no setup.
 export type AgentContext = { model: ModelSelectorContext; setup: AgentSetupInfo | null }
 
 export async function getAgentContextAction(agentId: string): Promise<AgentContext> {
@@ -245,7 +245,7 @@ export async function getAgentContextAction(agentId: string): Promise<AgentConte
                 loaded: true,
             },
             setup:
-                agentId === FOREMAN_AGENT_ID
+                agentId === STEWARD_AGENT_ID
                     ? null
                     : {
                           required: detail.config.setup.required,
@@ -558,7 +558,7 @@ export async function clearMemoriesAction(agentId: string): Promise<SuccessResul
 }
 
 // --- Scheduled tasks tab (cron / one-shot) ---
-// rerun-engine exposes schedule CRUD under /agents/:id/schedules. Per-fire run
+// lumvika-engine exposes schedule CRUD under /agents/:id/schedules. Per-fire run
 // history is read via the /runs endpoints (see listRunsAction /
 // listScheduleRunsAction below).
 
@@ -697,7 +697,7 @@ export async function deleteScheduleAction(agentId: string, slug: string): Promi
 }
 
 // --- Triggers tab (public webhook URLs) ---
-// rerun-engine owns the trigger definitions under /agents/:id/triggers, exactly like schedules.
+// lumvika-engine owns the trigger definitions under /agents/:id/triggers, exactly like schedules.
 // Firing one is not here: that happens on the public /api/t/... route, with no session at all.
 
 export async function listTriggersAction(agentId: string): Promise<EngineTrigger[]> {

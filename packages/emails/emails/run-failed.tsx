@@ -59,7 +59,7 @@ export default function RunFailed({
       </Section>
       <Section style={cta}>
         <Button href={conversationUrl ?? appUrl}>
-          {conversationUrl ? t("common.openConversation") : t("common.openRerun")}
+          {conversationUrl ? t("common.openConversation") : t("common.openLumvika")}
         </Button>
       </Section>
     </Layout>
@@ -71,8 +71,8 @@ RunFailed.PreviewProps = {
   runId: "run_4f2a9c",
   errorMessage: "Tool call timed out after 900s while waiting for the engine.",
   reason: "You follow Atlas's scheduled tasks.",
-  appUrl: "https://app.rerun.build",
-  conversationUrl: "https://app.rerun.build/?notification=preview",
+  appUrl: "https://app.lumvika.com",
+  conversationUrl: "https://app.lumvika.com/?notification=preview",
 } satisfies RunFailedProps;
 
 const reasonLine: React.CSSProperties = {

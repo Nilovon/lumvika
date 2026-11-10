@@ -1,4 +1,4 @@
-import { pendingApprovals, serializeApprovalDecisions, type ApprovalDecision } from '@rerun/contracts'
+import { pendingApprovals, serializeApprovalDecisions, type ApprovalDecision } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { useRef, useState } from 'react'
 import { ScrollView } from 'react-native'

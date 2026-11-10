@@ -14,7 +14,7 @@ import {
     type AgentArchivePlan,
     type AgentArchiveRedaction,
     type McpServer,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { agentDir, mcpDir } from '../config/paths.js'
 import type { AgentConfig, LoadedAgent } from './types.js'
 import { getAgent } from './registry.js'
@@ -41,21 +41,21 @@ const SKIP_DIRS = new Set(['node_modules', '.git', '__pycache__', '.venv', 'venv
 // Archived memories are the ones the decay sweep already retired; `listMemoryFiles` hides them
 // from the agent too. Paid answers are data the workspace bought (emails, phones), and saved pages
 // what it read, not behaviour.
-const SKIP_PATHS = new Set(['memory/archive', 'workspace/.rerun/paid-data', 'workspace/.rerun/pages'])
+const SKIP_PATHS = new Set(['memory/archive', 'workspace/.lumvika/paid-data', 'workspace/.lumvika/pages'])
 
 const ENV_PATH = '.env'
 const CONFIG_PATH = 'config.json'
 const INSTALL_PATH = 'INSTALL.md'
 const TRIGGERS_PREFIX = 'triggers/'
-const REGISTRY_PATH = 'workspace/.rerun/services.json'
+const REGISTRY_PATH = 'workspace/.lumvika/services.json'
 const AGENT_DB_PATH = 'data/agent.db'
-export const MANIFEST_PATH = '.rerun-capture.json'
+export const MANIFEST_PATH = '.lumvika-capture.json'
 
 // Re-provisioned by the engine that receives the copy. An empty value would be worse than an
 // absent one: `claude-token.ts` reads these back and would try to refresh a blank token. The
 // provider credentials moved to box connections, so an agent should no longer carry them at all —
 // they stay listed for an archive taken from a box that has not migrated yet.
-const ENGINE_MANAGED_KEYS = new Set<string>([...CONNECTION_ENV_KEYS, 'RERUN_API_KEY', 'RERUN_HUB_BASE_URL'])
+const ENGINE_MANAGED_KEYS = new Set<string>([...CONNECTION_ENV_KEYS, 'LUMVIKA_API_KEY', 'LUMVIKA_HUB_BASE_URL'])
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024
 const MAX_TOTAL_BYTES = 150 * 1024 * 1024
@@ -119,7 +119,7 @@ function sanitizeVar(value: string): string {
 // `mcp_register` and PATCH /agents/:id/mcp-servers both accept a literal value where the UI
 // compiler would have written a `${VAR}` reference, so config.json has to be treated as
 // secret-bearing rather than trusted. What it must NOT do is break a value that only references:
-// `Bearer ${RERUN_SVC_X_KEY}` is the shape the compiler emits and the shape the engine's resolver
+// `Bearer ${LUMVIKA_SVC_X_KEY}` is the shape the compiler emits and the shape the engine's resolver
 // expects, so the judgement is made on the residue once every `${...}` is out.
 export function scrubConfig(config: AgentConfig, agentId?: string): { config: AgentConfig; strippedKeys: string[] } {
     const strippedKeys: string[] = []
@@ -133,7 +133,7 @@ export function scrubConfig(config: AgentConfig, agentId?: string): { config: Ag
         const residue = rewritten.replace(PLACEHOLDER, '').trim()
         if (!residue || (!LONG_TOKEN.test(residue) && scanTextForSecrets(residue).length === 0)) return rewritten
         strippedKeys.push(`${server.name}.${field}.${key}`)
-        return `\${RERUN_SVC_${sanitizeVar(server.name)}_${sanitizeVar(key)}}`
+        return `\${LUMVIKA_SVC_${sanitizeVar(server.name)}_${sanitizeVar(key)}}`
     }
 
     const scrubRecord = (server: McpServer, field: 'env' | 'headers', record: Record<string, string>) => {
@@ -373,7 +373,7 @@ async function stageArchive(id: string, agent: LoadedAgent, exclude: string[]): 
         for (let i = 1; i < parts.length; i++) keepDirs.add(parts.slice(0, i).join('/'))
     }
 
-    const staging = await mkdtemp(resolve(tmpdir(), 'rerun-archive-'))
+    const staging = await mkdtemp(resolve(tmpdir(), 'lumvika-archive-'))
     await cp(root, staging, {
         recursive: true,
         filter: source => {

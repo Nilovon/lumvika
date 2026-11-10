@@ -28,7 +28,7 @@ export function openCrisp(email?: string | null) {
 // Sent rather than left in the composer: the team is told the moment they asked, whether or not
 // they stay on the chat that opens.
 export function sendToCrisp({ email, workspaceId, text }: { email: string | null | undefined; workspaceId: number | string | null | undefined; text: string }) {
-    identify(email, workspaceId != null ? { workspace_id: String(workspaceId), source: 'foreman' } : { source: 'foreman' })
+    identify(email, workspaceId != null ? { workspace_id: String(workspaceId), source: 'steward' } : { source: 'steward' })
     crisp()?.push(['do', 'message:send', ['text', text]])
     openCrisp()
 }

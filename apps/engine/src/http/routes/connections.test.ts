@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cxroutes-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cxroutes-'))
 
 const { beforeEach, describe, expect, it, vi } = await import('vitest')
 
@@ -35,12 +35,12 @@ vi.mock('../../connections/opencode-catalog.js', async importOriginal => {
 })
 vi.mock('../../connections/opencode-plan-limits.js', () => ({ refreshOpencodePlanLimits: async () => {}, refreshStaleOpencodePlanLimits: () => {}, forgetOpencodePlanLimitsAttempt: () => {}, pendingOpencodePlanLimits: () => undefined }))
 const { mkdir, readFile, rm, writeFile } = await import('node:fs/promises')
-const { DEFAULT_CONNECTION_MODELS, RERUN_CONNECTION_ID } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID } = await import('@lumvika/contracts')
 const { connectionRoutes } = await import('./connections.js')
 const { createServer } = await import('../server.js')
 const { agentDir, agentsDir, boxDefaultPath, configPath, connectionConfigPath, connectionEnvPath, connectionsDir, scheduleFile, schedulesDir } = await import('../../config/paths.js')
 const { readEnvFile } = await import('../../lib/env-file.js')
-const { ensureRerunConnection } = await import('../../connections/store.js')
+const { ensureLumvikaConnection } = await import('../../connections/store.js')
 const { unloadConnection } = await import('../../connections/registry.js')
 const { clearBoxDefault, readBoxDefault } = await import('../../connections/default.js')
 const { readSchedule } = await import('../../schedules/loader.js')
@@ -85,11 +85,11 @@ beforeEach(async () => {
     codexCli.models = []
     opencodeLive.models = null
     opencodeLive.refreshed = 0
-    unloadConnection(RERUN_CONNECTION_ID)
+    unloadConnection(LUMVIKA_CONNECTION_ID)
     await clearBoxDefault()
     await rm(connectionsDir(), { recursive: true, force: true })
     await rm(agentsDir(), { recursive: true, force: true })
-    await ensureRerunConnection()
+    await ensureLumvikaConnection()
 })
 
 describe('connections API', () => {
@@ -170,24 +170,24 @@ describe('connections API', () => {
         expect(connections.map(c => c.id)).not.toContain(created.id)
     })
 
-    // The keyless Rerun connection is the last-resort fallback for every agent on the box, so it is
+    // The keyless Lumvika connection is the last-resort fallback for every agent on the box, so it is
     // not something a user can rename away or remove. Routed through the full server: the refusal
     // is an HttpError, and only the app-level handler turns it into a 400.
-    it('protects the Rerun connection', async () => {
+    it('protects the Lumvika connection', async () => {
         const app = createServer()
         const json = { 'content-type': 'application/json' }
-        expect((await app.request(`/connections/${RERUN_CONNECTION_ID}`, { method: 'DELETE' })).status).toBe(400)
-        expect((await app.request(`/connections/${RERUN_CONNECTION_ID}`, { method: 'PATCH', headers: json, body: JSON.stringify({ name: 'Free stuff' }) })).status).toBe(400)
-        expect((await app.request(`/connections/${RERUN_CONNECTION_ID}`, { method: 'PATCH', headers: json, body: JSON.stringify({ models: ['rerun-max'] }) })).status).toBe(200)
-        expect((await app.request(`/connections/${RERUN_CONNECTION_ID}`, { method: 'PATCH', headers: json, body: JSON.stringify({ models: [] }) })).status).toBe(400)
+        expect((await app.request(`/connections/${LUMVIKA_CONNECTION_ID}`, { method: 'DELETE' })).status).toBe(400)
+        expect((await app.request(`/connections/${LUMVIKA_CONNECTION_ID}`, { method: 'PATCH', headers: json, body: JSON.stringify({ name: 'Free stuff' }) })).status).toBe(400)
+        expect((await app.request(`/connections/${LUMVIKA_CONNECTION_ID}`, { method: 'PATCH', headers: json, body: JSON.stringify({ models: ['lumvika-max'] }) })).status).toBe(200)
+        expect((await app.request(`/connections/${LUMVIKA_CONNECTION_ID}`, { method: 'PATCH', headers: json, body: JSON.stringify({ models: [] }) })).status).toBe(400)
     })
 
-    it('switches the Rerun models back on at boot on a box where they were off', async () => {
-        await writeFile(connectionConfigPath(RERUN_CONNECTION_ID), JSON.stringify({ name: 'Rerun', provider: 'rerun', models: [], extraModels: [], createdAt: new Date().toISOString() }), 'utf8')
-        unloadConnection(RERUN_CONNECTION_ID)
-        await ensureRerunConnection()
+    it('switches the Lumvika models back on at boot on a box where they were off', async () => {
+        await writeFile(connectionConfigPath(LUMVIKA_CONNECTION_ID), JSON.stringify({ name: 'Lumvika', provider: 'lumvika', models: [], extraModels: [], createdAt: new Date().toISOString() }), 'utf8')
+        unloadConnection(LUMVIKA_CONNECTION_ID)
+        await ensureLumvikaConnection()
         const { connections } = (await (await connectionRoutes.request('/')).json()) as { connections: Summary[] }
-        expect(connections.find(c => c.id === RERUN_CONNECTION_ID)?.models).toEqual(['rerun-max', 'rerun-fast', 'rerun-smart'])
+        expect(connections.find(c => c.id === LUMVIKA_CONNECTION_ID)?.models).toEqual(['lumvika-max', 'lumvika-fast', 'lumvika-smart'])
     })
 })
 
@@ -224,7 +224,7 @@ describe('box default model', () => {
     })
 
     // Switching the model off in the Connections tab is the one write that can see the default go
-    // stale, so it repairs it rather than leaving every box-default agent to drop to Rerun.
+    // stale, so it repairs it rather than leaving every box-default agent to drop to Lumvika.
     it('repairs the default when its model is switched off', async () => {
         const created = await createClaude()
         await put('/default', { connectionId: created.id, model: 'opus' })
@@ -233,7 +233,7 @@ describe('box default model', () => {
     })
 
     // Plugging the first credential is the whole setup: without this it would land on a box that
-    // keeps every agent on Rerun until someone finds the star.
+    // keeps every agent on Lumvika until someone finds the star.
     it('adopts the first connected connection', async () => {
         const created = await createClaude()
         expect(await readBoxDefault()).toEqual({ connectionId: created.id, model: 'opus' })

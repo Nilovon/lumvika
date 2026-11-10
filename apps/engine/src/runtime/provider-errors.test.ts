@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { APICallError, LoadAPIKeyError, RetryError } from 'ai'
 import { classifyFinishReason, classifyProviderError, errorMessageOf, isFailedFinish, ProviderRefusedError, refusalReason, RUN_ERROR_CODES, STREAM_CUT_RAW_REASON, unreachableEndpointError, upstreamReason } from './provider-errors.js'
-import { RERUN_BUDGET_ERROR_CODE } from './budget-latch.js'
+import { LUMVIKA_BUDGET_ERROR_CODE } from './budget-latch.js'
 
 const apiError = (init: { statusCode?: number; message?: string; data?: unknown; isRetryable?: boolean; responseBody?: string }) =>
     new APICallError({
@@ -108,9 +108,9 @@ describe('classifyProviderError', () => {
     })
 
     it('delegates the managed budget to the budget latch', () => {
-        expect(classifyProviderError('rerun', new Error(`AI_APICallError: ${RERUN_BUDGET_ERROR_CODE}`))).toBe(RERUN_BUDGET_ERROR_CODE)
+        expect(classifyProviderError('lumvika', new Error(`AI_APICallError: ${LUMVIKA_BUDGET_ERROR_CODE}`))).toBe(LUMVIKA_BUDGET_ERROR_CODE)
         // Only the managed provider bills the workspace budget.
-        expect(classifyProviderError('openai', new Error(`AI_APICallError: ${RERUN_BUDGET_ERROR_CODE}`))).toBeNull()
+        expect(classifyProviderError('openai', new Error(`AI_APICallError: ${LUMVIKA_BUDGET_ERROR_CODE}`))).toBeNull()
     })
 
     it('reads an overloaded provider through the retries the AI SDK gave up on', () => {
@@ -127,9 +127,9 @@ describe('classifyProviderError', () => {
     })
 
     it('reads a 400 as a refusal, unless its reason says otherwise', () => {
-        expect(classifyProviderError('rerun', openRouterRefusal(JSON.stringify({ message: SCHEMA_REFUSAL })))).toBe(RUN_ERROR_CODES.refused)
+        expect(classifyProviderError('lumvika', openRouterRefusal(JSON.stringify({ message: SCHEMA_REFUSAL })))).toBe(RUN_ERROR_CODES.refused)
         expect(classifyProviderError('openai', apiError({ statusCode: 400 }))).toBe(RUN_ERROR_CODES.refused)
-        expect(classifyProviderError('rerun', openRouterRefusal(JSON.stringify({ message: 'prompt is too long: 210000 tokens > 200000 maximum' })))).toBe(RUN_ERROR_CODES.contextWindow)
+        expect(classifyProviderError('lumvika', openRouterRefusal(JSON.stringify({ message: 'prompt is too long: 210000 tokens > 200000 maximum' })))).toBe(RUN_ERROR_CODES.contextWindow)
         expect(classifyProviderError('google', apiError({ statusCode: 400, message: 'Invalid API key' }))).toBe(RUN_ERROR_CODES.unauthorized)
     })
 

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
 import { z } from 'zod'
-import { MAX_UPLOAD_FILE_BYTES, writeFileSchema } from '@rerun/contracts'
+import { MAX_UPLOAD_FILE_BYTES, writeFileSchema } from '@lumvika/contracts'
 import { badRequest } from '../../lib/errors.js'
 import * as store from '../../files/store.js'
 
@@ -61,7 +61,7 @@ export function createFilesRouter(getRoot: (c: Context) => string): Hono {
     const router = new Hono()
 
     // Asking for a file that is not there is an answer, not a failure: an agent that installed no
-    // connector has no .rerun/services.json, and the UI asks for it on every load. Left to reach
+    // connector has no .lumvika/services.json, and the UI asks for it on every load. Left to reach
     // the app-wide handler it came back 500 and logged an unhandled error for the most ordinary
     // state there is. Scoped to this router so an ENOENT raised anywhere else still surfaces.
     router.onError((err, c) => {

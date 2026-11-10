@@ -5,7 +5,7 @@ import { vi } from 'vitest'
 // mocks next-intl itself.
 vi.mock('next-intl', async () => {
     const { createTranslator } = await import('use-intl')
-    const { ENGLISH_MESSAGES } = await import('@rerun/i18n/messages/en')
+    const { ENGLISH_MESSAGES } = await import('@lumvika/i18n/messages/en')
     // One translator per namespace, stable across renders as next-intl's own: a hook that lists `t`
     // in its dependencies would otherwise run again on every render.
     const translators = new Map<string | undefined, ReturnType<typeof createTranslator>>()
@@ -25,7 +25,7 @@ vi.mock('next-intl', async () => {
 
 vi.mock('next-intl/server', async () => {
     const { createTranslator } = await import('use-intl')
-    const { ENGLISH_MESSAGES } = await import('@rerun/i18n/messages/en')
+    const { ENGLISH_MESSAGES } = await import('@lumvika/i18n/messages/en')
     return {
         getTranslations: async (options?: string | { namespace?: string; locale?: string }) => {
             const namespace = typeof options === 'string' ? options : options?.namespace

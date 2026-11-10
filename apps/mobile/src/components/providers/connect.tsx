@@ -1,5 +1,5 @@
-import type { AiConnectionMethod } from '@rerun/analytics'
-import { claudeTokenIssue, type AddableProvider, type AiConnectionsView, type ClaudeSignInStart, type CodexSignInStart } from '@rerun/contracts'
+import type { AiConnectionMethod } from '@lumvika/analytics'
+import { claudeTokenIssue, type AddableProvider, type AiConnectionsView, type ClaudeSignInStart, type CodexSignInStart } from '@lumvika/contracts'
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import * as WebBrowser from 'expo-web-browser'

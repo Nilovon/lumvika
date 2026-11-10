@@ -1,4 +1,4 @@
-import { CONSENT_ATTRIBUTE, CONSENT_COOKIE, CONSENT_VERSION, EEA_UK_TIME_ZONES } from '@rerun/contracts'
+import { CONSENT_ATTRIBUTE, CONSENT_COOKIE, CONSENT_VERSION, EEA_UK_TIME_ZONES } from '@lumvika/contracts'
 
 // An inline script run before the first paint. It writes nothing, it only puts `data-consent` on
 // <html> so the scripts that follow it in document order,

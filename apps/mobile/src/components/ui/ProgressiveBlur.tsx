@@ -29,7 +29,7 @@ function Ramp({ id, color, height, stops }: { id: string; color: string; height:
 
 // Content scrolling under a bar at the bottom of the screen goes out of focus as it nears the bar,
 // instead of being cut at its edge: a blur faded in through a gradient mask, under a light veil of the
-// background that settles it. Over a screen already blurred (the Foreman's overlay) the veil stays off.
+// background that settles it. Over a screen already blurred (the Steward's overlay) the veil stays off.
 export function ProgressiveBlur({ height, veiled = true }: { height: number; veiled?: boolean }) {
     const theme = useTheme()
     // The pager keeps neighbouring conversations mounted: each blur names its own gradients.

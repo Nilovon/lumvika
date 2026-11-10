@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-// A published page lives on its own `<slug>.rerun.site` origin, which never sees the app's session.
+// A published page lives on its own `<slug>.lumvika.site` origin, which never sees the app's session.
 // Whoever passes its gate gets a signed grant instead: the app hands it over in a ticket (a minute,
 // in the URL), and the page's host trades the ticket for a cookie that only that host holds.
 // `v` is the access version of the link: changing who may open it bumps it, and every cookie

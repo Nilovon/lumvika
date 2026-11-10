@@ -1,8 +1,8 @@
-import type { AnalyticsEventMap, EventName } from '@rerun/analytics'
+import type { AnalyticsEventMap, EventName } from '@lumvika/analytics'
 import PostHog from 'posthog-react-native'
 
 import { environment } from '@/config/environment'
-import { POSTHOG_TOKEN } from '@rerun/cloud-mobile/environments'
+import { POSTHOG_TOKEN } from '@lumvika/cloud-mobile/environments'
 
 // The client refuses an empty key; a build without a project gets this one, and is disabled.
 const UNSET_TOKEN = 'phc_unset'

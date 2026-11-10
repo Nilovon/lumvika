@@ -27,7 +27,7 @@ describe('appearance', () => {
 
     it('applies the stored choice on launch', async () => {
         const setColorScheme = jest.spyOn(Appearance, 'setColorScheme').mockImplementation(() => {})
-        mockStore.set('rerun.appearance', 'dark')
+        mockStore.set('lumvika.appearance', 'dark')
         expect(await loadAppearance()).toBe('dark')
         expect(setColorScheme).toHaveBeenLastCalledWith('dark')
     })

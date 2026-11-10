@@ -15,7 +15,7 @@ export async function fireTrigger(agentId: string, trigger: Trigger, message: st
     const agent = await getAgent(agentId)
     if (!agent.config.enabled) throw agentDisabled()
     const override = await automationModel(agent, trigger, 'trigger')
-    if (override.provider === 'rerun' && isBudgetLatched()) throw budgetExhausted()
+    if (override.provider === 'lumvika' && isBudgetLatched()) throw budgetExhausted()
     const session = await createSession(agentId, `trigger: ${trigger.slug}`, undefined, 'trigger')
     await sendNotification({
         event: 'agent.session.created',

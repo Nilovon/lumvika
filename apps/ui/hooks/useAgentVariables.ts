@@ -16,7 +16,7 @@ export type AgentVariables = {
 
 // The engine only ever hands back key names, never values (GET /agents/:id/keys), so a variable is
 // write-only from here: the UI can say whether one is set and replace it, never reveal it.
-// `engineKeys` are the RERUN_* names the engine resolves from its own process env: they count as
+// `engineKeys` are the LUMVIKA_* names the engine resolves from its own process env: they count as
 // defined too, and an agent-level save overrides them (the resolver reads the agent env first).
 export function useAgentVariables(agentId: string): AgentVariables {
     const errorText = useErrorText()

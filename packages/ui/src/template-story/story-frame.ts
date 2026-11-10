@@ -1,4 +1,4 @@
-import type { TemplateStoryArtifact, TemplateStoryStep } from '@rerun/contracts'
+import type { TemplateStoryArtifact, TemplateStoryStep } from '@lumvika/contracts'
 
 import { agentTileStyle } from '../iso-grid/presets'
 import { type buildTemplateBoard, templateLinkId } from '../iso-grid/template-board-geometry'

@@ -6,7 +6,7 @@
       "@/*": [
         "./src/*"
       ],
-      "@rerun/cloud-mobile/*": [
+      "@lumvika/cloud-mobile/*": [
         "../../cloud/apps/mobile/src/*",
         "./src/cloud-oss/*"
       ],

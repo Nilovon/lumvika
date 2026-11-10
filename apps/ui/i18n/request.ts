@@ -1,6 +1,6 @@
 import { requestLocale, requestTimeZone } from '@/lib/i18n/request-locale'
-import { cloudMessages } from '@rerun/cloud/messages'
-import { loadMessages } from '@rerun/i18n/messages'
+import { cloudMessages } from '@lumvika/cloud/messages'
+import { loadMessages } from '@lumvika/i18n/messages'
 import { getRequestConfig } from 'next-intl/server'
 
 // The packs of the other surfaces (the landing, the iOS app, the emails and the pushes the server

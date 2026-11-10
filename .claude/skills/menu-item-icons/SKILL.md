@@ -16,14 +16,14 @@ The label always stays. Never an item with an icon alone in a vertical menu.
 
 Add an icon **only if at least one** of these cases is true:
 
-| # | Case | Rerun examples |
+| # | Case | Lumvika examples |
 |---|---|---|
 | 1 | **Standard icon**, recognized in under a second by anyone | Settings (gear), Delete (trash), Download, Copy, Share, Search, Sign out, Info |
 | 2 | **Concrete object** that the item refers to | a folder, a file, a coworker (AgentBuddy), a connected app (its logo), a workspace |
 | 3 | **Visual action**, one that can be drawn | sort, rotate, align, enlarge, pin |
 | 4 | **Key action** of the surface, the most used in the menu, *and* a clear icon exists | New coworker, Invite |
 
-Otherwise: **no icon**. Typical examples without an icon: "Change wallpaper", "Edit widgets", "Clean up by…", "Move to another Box", "Mark all as read", any abstract or Rerun-specific label for which a metaphor would have to be invented.
+Otherwise: **no icon**. Typical examples without an icon: "Change wallpaper", "Edit widgets", "Clean up by…", "Move to another Box", "Mark all as read", any abstract or Lumvika-specific label for which a metaphor would have to be invented.
 
 Decision shortcut: **if you hesitate between two glyphs, or if you have to explain why this glyph, none is needed.**
 

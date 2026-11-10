@@ -1,5 +1,5 @@
 import type Stripe from 'stripe'
-import type { AddonKey, BillingInterval } from '@rerun/contracts'
+import type { AddonKey, BillingInterval } from '@lumvika/contracts'
 
 // This product sells nothing: no workspace carries a Stripe subscription, so the code paths that
 // read one stop at their `stripe_subscription_id` check. A call that gets past it is a bug.

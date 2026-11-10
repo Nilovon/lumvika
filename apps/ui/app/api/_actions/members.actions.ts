@@ -4,20 +4,20 @@ import { after } from 'next/server'
 import { requireAdminContext, requireWorkspaceContext, toBoxScope, type BoxScope, type WorkspaceRole } from '@/app/api/_auth/ownership'
 import type { Database } from '@/app/api/database.types'
 import { demoteKeepingAnAdmin, isLastAdmin, LAST_ADMIN, listMemberProfiles, resolveMemberIdentities, setMemberRole } from '@/app/api/_services/members.service'
-import { BANNER_WARM_BACKGROUND_MS, EMAIL_DELIVERY, emailBoardBanner, sendWorkspaceInviteEmail } from '@rerun/cloud/email'
+import { BANNER_WARM_BACKGROUND_MS, EMAIL_DELIVERY, emailBoardBanner, sendWorkspaceInviteEmail } from '@lumvika/cloud/email'
 import { workspaceLocale } from '@/lib/i18n/recipient-locale'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { emailTranslator } from '@rerun/emails/i18n'
+import { emailTranslator } from '@lumvika/emails/i18n'
 import { getServerSession } from '@/supabase/session/getServerSession'
 import { selectAll, selectCount, selectMaybeSingle } from '@/supabase/supabase-helpers'
-import type { MemberProfile } from '@rerun/contracts'
+import type { MemberProfile } from '@lumvika/contracts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { failure, failureOf, type ErrorCode } from '@/lib/i18n/action-error'
 import type { ActionResult } from './space.actions'
 import { randomUuid } from '@/lib/random-uuid'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.rerun.build'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.lumvika.com'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const MEMBERS_ADMIN_ONLY = 'adminOnlyMembers' satisfies ErrorCode

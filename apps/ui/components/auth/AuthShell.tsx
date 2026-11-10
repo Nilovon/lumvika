@@ -2,10 +2,10 @@
 
 import { landingUrl } from '@/lib/site'
 import { cn } from '@/lib/utils'
-import { Logo } from '@rerun/ui/logo'
+import { Logo } from '@lumvika/ui/logo'
 import type { ElementType, ReactNode } from 'react'
 import { AuthScene } from './AuthScene'
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { useTranslations } from 'next-intl'
 
 // Le cadre commun à toutes les entrées de compte : la scène iso occupe tout le fond, le
@@ -65,8 +65,8 @@ export function AuthShell({
 
 export function AuthTerms() {
     const t = useTranslations('auth')
-    // A self-hosted install has its own terms, if any: Rerun's do not bind its users.
-    if (!RERUN_CLOUD) return null
+    // A self-hosted install has its own terms, if any: Lumvika's do not bind its users.
+    if (!LUMVIKA_CLOUD) return null
     return t.rich('terms', {
         terms: chunks => (
             <a href={landingUrl('/terms')} target="_blank" rel="noreferrer" className="underline underline-offset-4 transition-colors hover:text-foreground">

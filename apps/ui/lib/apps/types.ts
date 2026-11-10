@@ -1,4 +1,4 @@
-import type { AddonKey } from '@rerun/contracts'
+import type { AddonKey } from '@lumvika/contracts'
 
 // Paid apps follow the workspace the way a Shopify app follows its store: frozen while the box is
 // archived, uninstalled once the box is gone for good.

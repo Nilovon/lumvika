@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AGENT_SHARE_INCLUDE_NONE, agentShareIncludeSchema, resolveShareInclude, shareContents, shareExcludePaths, type AgentArchivePlan } from '@rerun/contracts'
+import { AGENT_SHARE_INCLUDE_NONE, agentShareIncludeSchema, resolveShareInclude, shareContents, shareExcludePaths, type AgentArchivePlan } from '@lumvika/contracts'
 
 // The exclusion policy is the whole security argument of a share link: an agent leaves one person's
 // box for another's, and what the tarball carries is decided here and nowhere else.
@@ -20,7 +20,7 @@ const PLAN = {
         entry('memory/a2.md', { defaultExcluded: true, note: 'memory' }),
         entry('data/agent.db', { bytes: 4096, note: 'agent database' }),
         entry('workspace/report.md'),
-        entry('workspace/.rerun/services.json'),
+        entry('workspace/.lumvika/services.json'),
         entry('workspace/.env.backup', { flagged: ['sensitive path'], defaultExcluded: true }),
     ],
 } as unknown as AgentArchivePlan
@@ -42,8 +42,8 @@ describe('shareExcludePaths', () => {
     })
 
     it('always ships the connector registry, or the copy lands blind to what it needs', () => {
-        expect(shareExcludePaths(PLAN, ALL_OFF)).not.toContain('workspace/.rerun/services.json')
-        expect(shareExcludePaths(PLAN, ALL_ON)).not.toContain('workspace/.rerun/services.json')
+        expect(shareExcludePaths(PLAN, ALL_OFF)).not.toContain('workspace/.lumvika/services.json')
+        expect(shareExcludePaths(PLAN, ALL_ON)).not.toContain('workspace/.lumvika/services.json')
     })
 
     it('excludes nothing but the flagged file when everything is on', () => {

@@ -2,11 +2,11 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-health-'))
-process.env.RERUN_API_KEY = 'secret'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-health-'))
+process.env.LUMVIKA_API_KEY = 'secret'
 
 const { describe, expect, it } = await import('vitest')
-const { ENGINE_CAPABILITY_ARTIFACT_UPDATE, ENGINE_CAPABILITY_FILES_STREAM, ENGINE_CAPABILITY_FOREMAN_FILES, ENGINE_CAPABILITY_SCHEDULE_RENAME, ENGINE_CAPABILITY_OPENCODE } = await import('@rerun/contracts')
+const { ENGINE_CAPABILITY_ARTIFACT_UPDATE, ENGINE_CAPABILITY_FILES_STREAM, ENGINE_CAPABILITY_STEWARD_FILES, ENGINE_CAPABILITY_SCHEDULE_RENAME, ENGINE_CAPABILITY_OPENCODE } = await import('@lumvika/contracts')
 const { createServer } = await import('../server.js')
 const { claimSession, registerRunAbort, releaseSession, unregisterRunAbort } = await import('../../runtime/run-control.js')
 const { buildCommit, processStartedAt } = await import('../../runtime/build-info.js')
@@ -32,7 +32,7 @@ describe('GET /health', () => {
         const body = await health()
         expect(body).toMatchObject({ status: 'ok', activeAgents: 0, activeRuns: 0, claimedSessions: 0, commit: buildCommit(), startedAt: processStartedAt() })
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_FILES_STREAM)
-        expect(body.capabilities).toContain(ENGINE_CAPABILITY_FOREMAN_FILES)
+        expect(body.capabilities).toContain(ENGINE_CAPABILITY_STEWARD_FILES)
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_SCHEDULE_RENAME)
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_OPENCODE)
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_ARTIFACT_UPDATE)

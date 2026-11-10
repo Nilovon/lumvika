@@ -9,12 +9,12 @@ select plan(28);
 
 -- Fixtures: one workspace, an admin, a member scoped to `all`, a member scoped to `assigned`.
 insert into auth.users (id, email) values
-    ('00000000-0000-0000-0000-00000000a001', 'rls-admin@rerun.test'),
-    ('00000000-0000-0000-0000-00000000a002', 'rls-member@rerun.test'),
-    ('00000000-0000-0000-0000-00000000a003', 'rls-assigned@rerun.test');
+    ('00000000-0000-0000-0000-00000000a001', 'rls-admin@lumvika.test'),
+    ('00000000-0000-0000-0000-00000000a002', 'rls-member@lumvika.test'),
+    ('00000000-0000-0000-0000-00000000a003', 'rls-assigned@lumvika.test');
 insert into public.workspaces (id, icon_url, name) values (990001, '', 'RLS test');
 insert into public.users (id, workspace_id)
-select id, 990001 from auth.users where email like 'rls-%@rerun.test'
+select id, 990001 from auth.users where email like 'rls-%@lumvika.test'
 on conflict (id) do update set workspace_id = excluded.workspace_id;
 insert into public.workspace_members (user_id, workspace_id, role, box_scope) values
     ('00000000-0000-0000-0000-00000000a001', 990001, 'admin', 'all'),

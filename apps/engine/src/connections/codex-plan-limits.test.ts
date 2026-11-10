@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-const FAKE_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-fake-codex-'))
+const FAKE_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-fake-codex-'))
 const FAKE_CODEX = resolve(FAKE_DIR, 'codex.mjs')
 const MODEL_LIST = resolve(FAKE_DIR, 'model-list.json')
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-codex-session-'))
-process.env.RERUN_CODEX_PATH = FAKE_CODEX
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-codex-session-'))
+process.env.LUMVIKA_CODEX_PATH = FAKE_CODEX
 
 // The app-server's side of the session, answered from a file the test writes.
 writeFileSync(
@@ -17,7 +17,7 @@ import { createInterface } from 'node:readline'
 const send = message => process.stdout.write(JSON.stringify(message) + '\\n')
 createInterface({ input: process.stdin }).on('line', line => {
     const { id, method } = JSON.parse(line)
-    if (method === 'initialize') send({ id, result: { userAgent: 'rerun-engine/0.166.0 (Ubuntu 24.4.0; x86_64) unknown (rerun-engine; 1)' } })
+    if (method === 'initialize') send({ id, result: { userAgent: 'lumvika-engine/0.166.0 (Ubuntu 24.4.0; x86_64) unknown (lumvika-engine; 1)' } })
     if (method === 'account/rateLimits/read') send({ id, result: { rateLimits: { primary: { usedPercent: 12, resetsAt: null } } } })
     if (method === 'model/list') {
         const answer = JSON.parse(readFileSync(${JSON.stringify(MODEL_LIST)}, 'utf8'))

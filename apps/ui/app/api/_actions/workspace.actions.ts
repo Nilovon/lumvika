@@ -3,8 +3,8 @@
 import type { Database } from '@/app/api/database.types'
 import { AuthorizationError, requireAdminContext, requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { hasPendingCreatorTerms, isExpertAccount, requireSandboxWorkspaceId } from '@/app/api/_auth/expert'
-import { BASE_PLAN_SLUG, baseLimitsToColumns, SIGNUP_BUDGET_MICROS } from '@rerun/cloud/billing'
-import { grantRerunTopup } from '@rerun/cloud/billing.server'
+import { BASE_PLAN_SLUG, baseLimitsToColumns, SIGNUP_BUDGET_MICROS } from '@lumvika/cloud/billing'
+import { grantLumvikaTopup } from '@lumvika/cloud/billing.server'
 import { BLOB_ILLUSTRATIONS, getBlobByFile, randomBlob } from '@/lib/blobs/catalog'
 import { uploadPublicImage } from '@/lib/images/upload'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
@@ -17,7 +17,7 @@ import { getServerSession } from '@/supabase/session/getServerSession'
 import { selectSingle } from '@/supabase/supabase-helpers'
 
 import { applyCoworkerLanguage } from '@/app/api/_services/coworker-language.service'
-import { isStableLocale } from '@rerun/i18n'
+import { isStableLocale } from '@lumvika/i18n'
 import { failure } from '@/lib/i18n/action-error'
 import type { ActionResult } from './space.actions'
 
@@ -132,7 +132,7 @@ export async function createWorkspaceAction(name: string, iconUrl?: string): Pro
             ...baseLimitsToColumns(),
             // No subscription behind this workspace yet, so no monthly budget either: the plan's
             // budget lands when the plan does. It starts on the signup allowance, granted below.
-            rerun_budget_micros: 0,
+            lumvika_budget_micros: 0,
             // One person is quoted one price, whichever of their workspaces they stand in.
             price_arm: current?.price_arm ?? null,
         })
@@ -150,9 +150,9 @@ export async function createWorkspaceAction(name: string, iconUrl?: string): Pro
     })
     if (membershipError) return { ok: false, error: membershipError.message }
 
-    // Without it the workspace starts at zero and its trial adds nothing: every Rerun model answers
+    // Without it the workspace starts at zero and its trial adds nothing: every Lumvika model answers
     // "credits used up" on the first message, though none was ever used.
-    await grantRerunTopup(workspaceId, SIGNUP_BUDGET_MICROS)
+    await grantLumvikaTopup(workspaceId, SIGNUP_BUDGET_MICROS)
 
     const { error: switchError } = await supabase.from('users').update<Database['public']['Tables']['users']['Update']>({ workspace_id: workspaceId }).eq('id', userId)
     if (switchError) return { ok: false, error: switchError.message }

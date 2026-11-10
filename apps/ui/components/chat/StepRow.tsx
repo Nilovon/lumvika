@@ -1,7 +1,7 @@
 'use client'
 
-import { TextShimmer } from '@rerun/ui'
-import { brandIconFilter } from '@rerun/ui/brand-icon'
+import { TextShimmer } from '@lumvika/ui'
+import { brandIconFilter } from '@lumvika/ui/brand-icon'
 import { useState, type ReactNode } from 'react'
 
 import type { ToolIconProps } from '@/hooks/useToolDisplay'

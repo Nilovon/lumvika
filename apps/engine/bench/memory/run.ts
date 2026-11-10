@@ -11,14 +11,14 @@ const models = (args.get('models') ?? 'anthropic/claude-sonnet-5').split(',')
 const scaleSteps = (args.get('scale') ?? '100,1000,3000').split(',').map(Number)
 const outDir = resolve(args.get('out') ?? resolve(import.meta.dirname, '../../../../.context/memory-bench'))
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-memory-bench-'))
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-memory-bench-'))
 const hub = startStubHub({ openrouterKey: process.env.OPENROUTER_API_KEY, cachePath: resolve(outDir, 'embedding-cache.json') })
-process.env.RERUN_DATA_DIR = dataDir
-process.env.RERUN_API_KEY = 'bench'
-process.env.RERUN_LOG_LEVEL = 'fatal'
-process.env.RERUN_HUB_BASE_URL = await hub.listen()
+process.env.LUMVIKA_DATA_DIR = dataDir
+process.env.LUMVIKA_API_KEY = 'bench'
+process.env.LUMVIKA_LOG_LEVEL = 'fatal'
+process.env.LUMVIKA_HUB_BASE_URL = await hub.listen()
 
-const { agentConfigSchema } = await import('@rerun/contracts')
+const { agentConfigSchema } = await import('@lumvika/contracts')
 const { writeMemory, updateMemory, deleteMemory, deleteAllMemories, recallMemory, AUTO_RECALL_MIN_SIMILARITY } = await import('../../src/memory/store.js')
 const { reconcileWrite } = await import('../../src/memory/reconcile.js')
 const { listMemoryFiles, readMemoryFile } = await import('../../src/memory/files.js')

@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parseEnvFile, readEnvFile, serializeEnv, writeEnvFile } from './env-file.js'
 
-const scratch = () => mkdtempSync(resolve(tmpdir(), 'rerun-envfile-'))
+const scratch = () => mkdtempSync(resolve(tmpdir(), 'lumvika-envfile-'))
 
 describe('parseEnvFile', () => {
     it('skips blank lines, comments and lines without an equals sign', () => {

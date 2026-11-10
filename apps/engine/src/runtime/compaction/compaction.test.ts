@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ModelMessage } from 'ai'
-import { modelContextWindow } from '@rerun/contracts'
+import { modelContextWindow } from '@lumvika/contracts'
 import { COMPACTION_MAX_TRIGGER_TOKENS, COMPACTION_TRIGGER_RATIO } from './config.js'
 import { estimateTokens } from './estimate.js'
 import { tailStartIndex } from './split.js'
@@ -39,7 +39,7 @@ describe('estimateTokens', () => {
 
 describe('compactionThreshold', () => {
     it('caps an API model well under its window, and leaves a CLI on the ratio of its plan window', () => {
-        expect(compactionThreshold(922_000, 'rerun')).toBe(COMPACTION_MAX_TRIGGER_TOKENS)
+        expect(compactionThreshold(922_000, 'lumvika')).toBe(COMPACTION_MAX_TRIGGER_TOKENS)
         expect(compactionThreshold(1_000_000, 'anthropic')).toBe(COMPACTION_MAX_TRIGGER_TOKENS)
         expect(compactionThreshold(128_000, 'openai')).toBe(96_000)
         expect(compactionThreshold(272_000, 'codex')).toBe(204_000)
@@ -74,9 +74,9 @@ describe('pruneToolOutputs', () => {
     })
 
     it('keeps where a pruned paid answer is saved, whether the result came as JSON or as text', () => {
-        const saved = '.rerun/paid-data/tiktok.video.detail-2026-10-15-call_1.json'
+        const saved = '.lumvika/paid-data/tiktok.video.detail-2026-10-15-call_1.json'
         const result = { saved, status: 'found', result: { output: { video: { desc: 'y'.repeat(5000) } } } }
-        const messages = [assistantCall('a', 'paid_data'), toolResult('a', result, 'paid_data'), assistantCall('b', 'mcp__rerun__paid_data'), { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'b', toolName: 'mcp__rerun__paid_data', output: { type: 'text', value: JSON.stringify(result) } }] } as ModelMessage, userText('recent')]
+        const messages = [assistantCall('a', 'paid_data'), toolResult('a', result, 'paid_data'), assistantCall('b', 'mcp__lumvika__paid_data'), { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'b', toolName: 'mcp__lumvika__paid_data', output: { type: 'text', value: JSON.stringify(result) } }] } as ModelMessage, userText('recent')]
 
         const { messages: out } = pruneToolOutputs(messages, 4)
 
@@ -84,7 +84,7 @@ describe('pruneToolOutputs', () => {
     })
 
     it('keeps where a pruned page read is saved', () => {
-        const saved = '.rerun/pages/acme.com/es.served.html'
+        const saved = '.lumvika/pages/acme.com/es.served.html'
         const result = `[200] https://acme.com/es\nSaved whole: ${saved} (read or grep it for anything this result leaves out)\n\n${'y'.repeat(5000)}`
         const messages = [assistantCall('a', 'web_fetch'), toolResult('a', result, 'web_fetch'), userText('recent')]
 

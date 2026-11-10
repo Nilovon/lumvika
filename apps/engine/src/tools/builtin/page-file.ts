@@ -6,7 +6,7 @@ import { resolveInWorkspace } from '../sandbox.js'
 // Every page a coworker reads is kept whole in its workspace, next to the other reads of the same
 // URL: what a tool result leaves out stays one grep away, and served and rendered HTML can be
 // diffed. Kept out of any capture or share of the agent, like the paid answers.
-export const PAGES_DIR = '.rerun/pages'
+export const PAGES_DIR = '.lumvika/pages'
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 const MAX_TOTAL_BYTES = 200 * 1024 * 1024
 const MAX_SEGMENT_CHARS = 80

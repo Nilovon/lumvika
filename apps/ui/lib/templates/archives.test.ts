@@ -1,4 +1,4 @@
-import { type AgentArchivePlan, type TemplateAgent, agentArchivePlanSchema } from '@rerun/contracts'
+import { type AgentArchivePlan, type TemplateAgent, agentArchivePlanSchema } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 import { agentKeyFromName, archiveAgentNames, archivePath, archivesFromRow, projectAgent } from './archives'
 
@@ -58,7 +58,7 @@ describe('archivePath', () => {
 
 function plan(overrides: Partial<AgentArchivePlan> = {}): AgentArchivePlan {
     return {
-        ...agentArchivePlanSchema.parse({ agentId: 'a1', name: 'scout', provider: 'rerun', model: 'm', totalBytes: 0 }),
+        ...agentArchivePlanSchema.parse({ agentId: 'a1', name: 'scout', provider: 'lumvika', model: 'm', totalBytes: 0 }),
         ...overrides,
     }
 }

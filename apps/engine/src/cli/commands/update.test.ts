@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cli-update-'))
-process.env.RERUN_API_KEY = ''
-process.env.RERUN_CODEX_PATH = '/usr/bin/codex'
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cli-update-'))
+process.env.LUMVIKA_API_KEY = ''
+process.env.LUMVIKA_CODEX_PATH = '/usr/bin/codex'
 
-const FAKE_HOME = mkdtempSync(resolve(tmpdir(), 'rerun-cli-update-home-'))
-const RELEASE_ROOT = mkdtempSync(resolve(tmpdir(), 'rerun-cli-update-root-'))
+const FAKE_HOME = mkdtempSync(resolve(tmpdir(), 'lumvika-cli-update-home-'))
+const RELEASE_ROOT = mkdtempSync(resolve(tmpdir(), 'lumvika-cli-update-root-'))
 
 const DROP_CACHES = '/proc/sys/vm/drop_caches'
 const CHROMIUM = '/fake/ms-playwright/chromium/chrome'
@@ -188,7 +188,7 @@ beforeEach(() => {
         out += String(chunk)
         return true
     })
-    vi.stubEnv('RERUN_SERVICE', undefined)
+    vi.stubEnv('LUMVIKA_SERVICE', undefined)
     asUser(1000)
 })
 
@@ -203,19 +203,19 @@ describe('updateCommand from a git checkout', () => {
 
         expect(state.calls).toEqual([
             'git pull --ff-only',
-            'pnpm --filter rerun-engine... install --prod=false --frozen-lockfile',
-            'pnpm --filter rerun-engine... build',
+            'pnpm --filter lumvika-engine... install --prod=false --frozen-lockfile',
+            'pnpm --filter lumvika-engine... build',
             INSTALL_BROWSER,
             UPDATE_CLI_TOOLS,
             INSTALL_DESKTOP,
             '<prepareDataDir>',
             'command -v systemctl',
             'command -v sudo',
-            'sudo systemctl restart rerun',
+            'sudo systemctl restart lumvika',
         ])
         expect(state.cwds.slice(0, 5)).toEqual([ROOT, ROOT, ROOT, ROOT, ROOT])
         expect(out).toContain('migrated data dir')
-        expect(out).toContain('restarted rerun')
+        expect(out).toContain('restarted lumvika')
         expect(out).toContain('\n$ git pull --ff-only\n')
         expect(readLastUpdate()).toBeNull()
     })
@@ -227,7 +227,7 @@ describe('updateCommand from a git checkout', () => {
     })
 
     it('stops when the build fails, before touching the database', async () => {
-        state.failing = ['pnpm --filter rerun-engine... build']
+        state.failing = ['pnpm --filter lumvika-engine... build']
         await expect(updateCommand([])).rejects.toThrow()
         expect(state.calls).not.toContain('<prepareDataDir>')
     })
@@ -263,20 +263,20 @@ describe('updateCommand from a git checkout', () => {
         await updateCommand([])
         expect(state.calls).not.toContain('sudo -n true')
         expect(state.calls).not.toContain('command -v sudo')
-        expect(state.calls.at(-1)).toBe('systemctl restart rerun')
+        expect(state.calls.at(-1)).toBe('systemctl restart lumvika')
     })
 
     it('restarts directly when sudo is not installed', async () => {
         state.failing = ['command -v sudo', 'sudo -n true']
         await updateCommand([])
-        expect(state.calls.at(-1)).toBe('systemctl restart rerun')
+        expect(state.calls.at(-1)).toBe('systemctl restart lumvika')
     })
 
-    it('restarts the service named by RERUN_SERVICE', async () => {
-        vi.stubEnv('RERUN_SERVICE', 'rerun-staging')
+    it('restarts the service named by LUMVIKA_SERVICE', async () => {
+        vi.stubEnv('LUMVIKA_SERVICE', 'lumvika-staging')
         await updateCommand([])
-        expect(state.calls.at(-1)).toBe('sudo systemctl restart rerun-staging')
-        expect(out).toContain('restarted rerun-staging')
+        expect(state.calls.at(-1)).toBe('sudo systemctl restart lumvika-staging')
+        expect(out).toContain('restarted lumvika-staging')
     })
 
     it('carries on when the browser install fails', async () => {
@@ -291,7 +291,7 @@ describe('updateCommand from a git checkout', () => {
         await updateCommand([])
         const i = state.calls.indexOf(`sudo -n sh -c ${RETURN_MEMORY}`)
         expect(i).toBeGreaterThan(state.calls.indexOf('<prepareDataDir>'))
-        expect(i).toBeLessThan(state.calls.indexOf('sudo systemctl restart rerun'))
+        expect(i).toBeLessThan(state.calls.indexOf('sudo systemctl restart lumvika'))
     })
 })
 
@@ -317,17 +317,17 @@ describe('updateCommand from an artifact', () => {
     it('downloads, verifies, migrates and installs with the new release, swaps current, then restarts', async () => {
         state.layout = RELEASE_LAYOUT
         state.previousTarget = resolve(RELEASES, 'old0000')
-        state.layoutWritten = ['/usr/local/bin/rerun']
+        state.layoutWritten = ['/usr/local/bin/lumvika']
         state.pruned = ['ancient']
         await updateCommand(ARTIFACT_ARGS)
 
-        expect(state.calls).toEqual([...happyPath, 'command -v systemctl', 'command -v sudo', 'sudo systemctl restart rerun'])
+        expect(state.calls).toEqual([...happyPath, 'command -v systemctl', 'command -v sudo', 'sudo systemctl restart lumvika'])
         expect(existsSync(TARGET)).toBe(true)
         expect(existsSync(TMP)).toBe(false)
         expect(readLastUpdate()).toMatchObject({ status: 'restarting', commit: COMMIT })
         expect(out).toContain('downloaded 42 bytes, checksum ok')
         expect(out).toContain(`current -> releases/${COMMIT} (previous: old0000)`)
-        expect(out).toContain('wrote /usr/local/bin/rerun')
+        expect(out).toContain('wrote /usr/local/bin/lumvika')
         expect(out).toContain('removed release ancient')
         expect(state.calls).not.toContain('<prepareDataDir>')
         expect(state.calls).not.toContain(INSTALL_BROWSER)
@@ -348,7 +348,7 @@ describe('updateCommand from an artifact', () => {
         expect(out).toContain('removed cache /root/.local/share/pnpm\nremoved cache /root/.npm\nremoved cache /root/.cache/node\n')
         expect(out).toContain('trimmed /\n')
         expect(out.indexOf('trimmed /')).toBeGreaterThan(out.indexOf('removed cache /root/.cache/node'))
-        expect(out.indexOf('trimmed /')).toBeLessThan(out.indexOf('restarted rerun'))
+        expect(out.indexOf('trimmed /')).toBeLessThan(out.indexOf('restarted lumvika'))
     })
 
     it('still switches and restarts on the new release when the cache sweep and the trim both fail', async () => {
@@ -356,7 +356,7 @@ describe('updateCommand from an artifact', () => {
         state.failing = ['sudo -n rm -rf /root/', 'sudo -n fstrim']
         await updateCommand(ARTIFACT_ARGS)
 
-        expect(state.calls).toEqual([...happyPath, 'command -v systemctl', 'command -v sudo', 'sudo systemctl restart rerun'])
+        expect(state.calls).toEqual([...happyPath, 'command -v systemctl', 'command -v sudo', 'sudo systemctl restart lumvika'])
         expect(existsSync(TARGET)).toBe(true)
         expect(readLastUpdate()).toMatchObject({ status: 'restarting', commit: COMMIT })
         expect(out).toContain('root cache sweep failed (continuing): sudo exited with 1')
@@ -483,7 +483,7 @@ describe('rollbackCommand and installLayoutCommand', () => {
     it('rolls back to the previous release and restarts', () => {
         state.layout = RELEASE_LAYOUT
         rollbackCommand()
-        expect(state.calls).toEqual([`<rollback ${RELEASE_ROOT}>`, 'command -v systemctl', 'command -v sudo', 'sudo systemctl restart rerun'])
+        expect(state.calls).toEqual([`<rollback ${RELEASE_ROOT}>`, 'command -v systemctl', 'command -v sudo', 'sudo systemctl restart lumvika'])
         expect(out).toContain('current -> releases/previous-commit')
         expect(readLastUpdate()).toMatchObject({ status: 'restarting', commit: 'previous-commit' })
     })
@@ -496,10 +496,10 @@ describe('rollbackCommand and installLayoutCommand', () => {
 
     it('points current at the release it runs from when none does, then writes the layout files', () => {
         state.layout = RELEASE_LAYOUT
-        state.layoutWritten = ['/etc/systemd/system/rerun.service']
+        state.layoutWritten = ['/etc/systemd/system/lumvika.service']
         installLayoutCommand()
         expect(state.calls).toEqual([`<switchCurrent ${RELEASE_ROOT} ${RELEASE_LAYOUT.packageDir}>`, `<installLayout ${RELEASE_ROOT}>`])
-        expect(out).toContain('wrote /etc/systemd/system/rerun.service')
+        expect(out).toContain('wrote /etc/systemd/system/lumvika.service')
     })
 
     it('leaves an existing current link alone', () => {
@@ -546,13 +546,13 @@ describe('returning memory to the host', () => {
         state.failing = ['sudo -n sh -c']
         await updateCommand([])
         expect(out).toContain('memory return failed (continuing): sudo exited with 1')
-        expect(state.calls.at(-1)).toBe('sudo systemctl restart rerun')
+        expect(state.calls.at(-1)).toBe('sudo systemctl restart lumvika')
     })
 })
 
 describe('installBrowser', () => {
-    const DEPS = 'pnpm --filter rerun-engine exec patchright install-deps chromium'
-    const INSTALL = 'pnpm --filter rerun-engine exec patchright install --no-shell chromium'
+    const DEPS = 'pnpm --filter lumvika-engine exec patchright install-deps chromium'
+    const INSTALL = 'pnpm --filter lumvika-engine exec patchright install --no-shell chromium'
     const REPO: FakeLayout = { kind: 'monorepo', root: '/repo', packageDir: '/repo/apps/engine' }
 
     it('does nothing when chromium is already on disk', async () => {
@@ -586,10 +586,10 @@ describe('installBrowser', () => {
     it("drives patchright from the package's own node_modules in a release or an image", async () => {
         asUser(0)
         state.chromium = 'missing'
-        const cli = `${process.execPath} /opt/rerun/releases/abc1234/node_modules/patchright/cli.js`
-        await installBrowser({ kind: 'release', root: '/opt/rerun', packageDir: '/opt/rerun/releases/abc1234' })
+        const cli = `${process.execPath} /opt/lumvika/releases/abc1234/node_modules/patchright/cli.js`
+        await installBrowser({ kind: 'release', root: '/opt/lumvika', packageDir: '/opt/lumvika/releases/abc1234' })
         expect(state.calls).toEqual([`${cli} install-deps chromium`, `${cli} install --no-shell chromium`])
-        expect(state.cwds).toEqual(['/opt/rerun/releases/abc1234', '/opt/rerun/releases/abc1234'])
+        expect(state.cwds).toEqual(['/opt/lumvika/releases/abc1234', '/opt/lumvika/releases/abc1234'])
     })
 
     it('runs from the detected layout as a command', async () => {

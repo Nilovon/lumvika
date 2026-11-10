@@ -52,7 +52,7 @@ const SERVICE_MARKS: readonly { id: string; icon: string; color: string; pad?: n
 // of the package, in the same shape the CDN serves (one square viewBox, one path, no alpha), so it is
 // taken from there and tinted here rather than going through the catalogue pipeline
 // (lib/services/brand-icon.ts), which returns a filled blue tile with nothing for the background
-// removal to strip. Rerun already ships LinkedIn's mark in the service catalogue, so this is the
+// removal to strip. Lumvika already ships LinkedIn's mark in the service catalogue, so this is the
 // same asset the product renders elsewhere, not a new call.
 const PINNED_SIMPLE_ICONS = 'https://unpkg.com/simple-icons@11/icons'
 const LEGACY_MARKS: readonly { id: string; icon: string; color: string; pad?: number }[] = [{ id: 'linkedin', icon: 'linkedin', color: '#0A66C2', pad: 0.72 }]

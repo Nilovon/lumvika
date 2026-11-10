@@ -8,7 +8,7 @@ import { cn } from '../cn'
 import { BorderBeam } from '../BorderBeam'
 import { TextShimmer } from '../TextShimmer'
 import { Badge } from '../primitives/badge'
-import { R_PATH } from '../logo'
+import { MARK_PATH } from '../logo'
 import { SOCIAL_LINK_REL } from './expert-profile-parts'
 import { useKitTranslations } from '../locale'
 
@@ -282,7 +282,7 @@ export function HoloExpertCard({ data, className, revealed = true }: { data: Hol
                         duration={3}
                         className="font-mono text-[11px] font-semibold tracking-[0.3em] uppercase [--shimmer-base:var(--color-brand)] [--shimmer-highlight:#dbd5ff]"
                     >
-                        Rerun Experts
+                        Lumvika Experts
                     </TextShimmer>
                     <span className="font-mono text-[10px] tracking-widest text-white/25">◆ ◇ ◆</span>
                 </motion.div>
@@ -370,10 +370,10 @@ export function HoloExpertCard({ data, className, revealed = true }: { data: Hol
                 <div className="mx-6 mt-6 border-t border-dashed border-white/10" />
 
                 <motion.div className="flex items-center justify-between px-6 py-5 font-mono text-[10px] tracking-widest text-white/30 uppercase" {...item}>
-                    <span>Rerun.build</span>
+                    <span>lumvika.com</span>
                     <span className="relative inline-flex size-4 items-center justify-center text-white/70">
                         <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden className="size-full drop-shadow-[0_0_6px_rgba(183,168,255,0.85)]">
-                            <path fillRule="evenodd" d={R_PATH} />
+                            <path fillRule="evenodd" d={MARK_PATH} />
                         </svg>
                     </span>
                 </motion.div>

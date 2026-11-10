@@ -1,4 +1,4 @@
-import type { AiConnectionsView } from '@rerun/contracts'
+import type { AiConnectionsView } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'

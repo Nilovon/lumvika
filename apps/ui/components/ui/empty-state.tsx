@@ -1,1 +1,1 @@
-export { EmptyState } from '@rerun/ui/primitives'
+export { EmptyState } from '@lumvika/ui/primitives'

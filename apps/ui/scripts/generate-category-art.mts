@@ -1,5 +1,5 @@
 // Renders the 3D-glass illustration behind each category tile of the template library, straight
-// into public/categories. The prompts follow the `rerun-image-glass` skill: the grammar below is
+// into public/categories. The prompts follow the `lumvika-image-glass` skill: the grammar below is
 // identical on every category so the ten tiles read as one family, and only the hero pictogram, the
 // satellites and the tilt change. Adding a category to TEMPLATE_CATEGORIES means adding a row here.
 //
@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { fal } from '@fal-ai/client'
 import sharp from 'sharp'
-import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@rerun/contracts'
+import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@lumvika/contracts'
 
 const MODEL = 'openai/gpt-image-2'
 // The tile is 208px wide, so 480 covers it at 2x. Anything larger is bytes nobody sees.

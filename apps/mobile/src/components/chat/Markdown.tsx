@@ -1,4 +1,4 @@
-import { agentImageRef, agentWorkspacePathFromHref } from '@rerun/contracts'
+import { agentImageRef, agentWorkspacePathFromHref } from '@lumvika/contracts'
 import { SymbolView } from 'expo-symbols'
 import { Lexer, type Token, type Tokens } from 'marked'
 import { createContext, use, useMemo, type ReactNode } from 'react'

@@ -1,4 +1,4 @@
-import type { AgentConversationsOverview, AgentStatus, BoardAgent, Box } from '@rerun/contracts'
+import type { AgentConversationsOverview, AgentStatus, BoardAgent, Box } from '@lumvika/contracts'
 
 import type { StatusLine } from '@/components/ui/status'
 import { translatorFor } from '@/i18n/translator'

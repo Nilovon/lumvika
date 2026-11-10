@@ -5,7 +5,7 @@ export async function scheduleCommand(args: string[]): Promise<void> {
     const sub = args[0]
     if (sub === 'list') {
         const id = args[1]
-        if (!id) throw new Error('Usage: rerun schedule list <agentId>')
+        if (!id) throw new Error('Usage: lumvika schedule list <agentId>')
         const now = new Date()
         const schedules = await listSchedules(id)
         for (const s of schedules) {
@@ -15,5 +15,5 @@ export async function scheduleCommand(args: string[]): Promise<void> {
         }
         return
     }
-    throw new Error('Usage: rerun schedule <list>')
+    throw new Error('Usage: lumvika schedule <list>')
 }

@@ -7,7 +7,7 @@ import { hasOpenRouterKey, openrouter } from '@/lib/ai/openrouter'
 // null means the source does not hold one worth sending, and the message stays home: a vague or
 // invented line under the coworker's name is worse than no message.
 
-const PHRASE_MODEL = process.env.RERUN_WHATSAPP_PHRASE_MODEL ?? 'anthropic/claude-haiku-4.5'
+const PHRASE_MODEL = process.env.LUMVIKA_WHATSAPP_PHRASE_MODEL ?? 'anthropic/claude-haiku-4.5'
 const TIMEOUT_MS = 20_000
 const SOURCE_LIMIT = 6000
 const PHRASE_LIMIT = 90

@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { agentConfigSchema, agentDetailSchema, agentModelsSchema, agentViewSchema, aiConnectionsViewSchema, type AgentModels, type AgentView, type AiConnectionsView } from '@rerun/contracts'
+import { agentConfigSchema, agentDetailSchema, agentModelsSchema, agentViewSchema, aiConnectionsViewSchema, type AgentModels, type AgentView, type AiConnectionsView } from '@lumvika/contracts'
 import { agentModelsForClient, agentViewForClient, aiConnectionsForClient, clientKnowsProvider } from './legacy-client'
 
 // The provider list as the iOS builds already shipped parse it.
-const legacyProvider = z.enum(['rerun', 'anthropic', 'claude', 'codex', 'openai', 'google', 'openrouter'])
+const legacyProvider = z.enum(['lumvika', 'anthropic', 'claude', 'codex', 'openai', 'google', 'openrouter'])
 const legacyConnectionsView = aiConnectionsViewSchema.extend({
     connections: z.array(aiConnectionsViewSchema.shape.connections.element.extend({ provider: legacyProvider })),
-    addable: z.array(aiConnectionsViewSchema.shape.addable.element.extend({ provider: legacyProvider.exclude(['rerun']) })),
+    addable: z.array(aiConnectionsViewSchema.shape.addable.element.extend({ provider: legacyProvider.exclude(['lumvika']) })),
 })
 const legacyModels = agentModelsSchema.extend({ groups: z.array(agentModelsSchema.shape.groups.element.extend({ provider: legacyProvider })) })
 const legacyAgentView = agentViewSchema.extend({
@@ -16,11 +16,11 @@ const legacyAgentView = agentViewSchema.extend({
         .nullable(),
 })
 
-const request = (client?: string) => new Request('https://app.rerun.build/api/v1/agents/a1', { headers: client ? { 'x-rerun-client': client } : {} })
+const request = (client?: string) => new Request('https://app.lumvika.com/api/v1/agents/a1', { headers: client ? { 'x-lumvika-client': client } : {} })
 
 const view: AiConnectionsView = {
     connections: [
-        { id: 'rerun', name: 'Rerun', provider: 'rerun', kind: 'included', status: 'connected', credentialOnFile: true, summary: '', isDefault: false, models: [], baseUrl: '', extraModels: [], planWindows: [] },
+        { id: 'lumvika', name: 'Lumvika', provider: 'lumvika', kind: 'included', status: 'connected', credentialOnFile: true, summary: '', isDefault: false, models: [], baseUrl: '', extraModels: [], planWindows: [] },
         { id: 'cnx-oc', name: 'OpenCode', provider: 'opencode', kind: 'plan', status: 'connected', credentialOnFile: true, summary: '', isDefault: true, models: [], baseUrl: '', extraModels: [], planWindows: [] },
     ],
     default: { connectionId: 'cnx-oc', model: 'go/deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
@@ -33,7 +33,7 @@ const view: AiConnectionsView = {
 
 const models: AgentModels = {
     groups: [
-        { connectionId: 'rerun', label: 'Rerun', provider: 'rerun', models: [{ id: 'rerun-max', label: 'Rerun' }], defaultModel: 'rerun-max' },
+        { connectionId: 'lumvika', label: 'Lumvika', provider: 'lumvika', models: [{ id: 'lumvika-max', label: 'Lumvika' }], defaultModel: 'lumvika-max' },
         { connectionId: 'cnx-oc', label: 'OpenCode', provider: 'opencode', models: [{ id: 'go/deepseek-v4-pro', label: 'DeepSeek V4 Pro' }], defaultModel: 'go/deepseek-v4-pro' },
     ],
     pinned: null,
@@ -101,9 +101,9 @@ describe('responses for an older build', () => {
     })
 
     it('leaves everything else as it was', () => {
-        expect(aiConnectionsForClient(old, view).connections.map(c => c.id)).toEqual(['rerun'])
+        expect(aiConnectionsForClient(old, view).connections.map(c => c.id)).toEqual(['lumvika'])
         expect(aiConnectionsForClient(old, view).addable.map(a => a.provider)).toEqual(['claude'])
-        expect(agentModelsForClient(old, models).groups.map(g => g.connectionId)).toEqual(['rerun'])
+        expect(agentModelsForClient(old, models).groups.map(g => g.connectionId)).toEqual(['lumvika'])
     })
 
     it('hands a build that knows every provider the response untouched', () => {

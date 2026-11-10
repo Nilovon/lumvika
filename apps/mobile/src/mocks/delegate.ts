@@ -1,4 +1,4 @@
-import type { SubRunCall, SubRunTask } from '@rerun/contracts'
+import type { SubRunCall, SubRunTask } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 
 // The web's sub-run labs (apps/ui/app/render/lab/sub-runs, delegate-tree), for the iOS one.
@@ -28,7 +28,7 @@ export function cliDelegateMessage(id: string, tasks: SubRunTask[]): UIMessage {
         id,
         role: 'assistant',
         parts: [
-            { type: 'dynamic-tool', toolName: 'mcp__rerun__delegate_tasks', toolCallId: `toolu_${id}`, state: 'input-available', input: { tasks: tasks.map(t => ({ title: t.title })) } },
+            { type: 'dynamic-tool', toolName: 'mcp__lumvika__delegate_tasks', toolCallId: `toolu_${id}`, state: 'input-available', input: { tasks: tasks.map(t => ({ title: t.title })) } },
             { type: 'data-delegate', id: '7', data: { tasks } },
         ],
     } as UIMessage

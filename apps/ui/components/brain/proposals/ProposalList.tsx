@@ -1,6 +1,6 @@
 'use client'
 
-import type { BrainProposal } from '@rerun/contracts'
+import type { BrainProposal } from '@lumvika/contracts'
 import { AnimatePresence, motion } from 'motion/react'
 
 import { AllCaughtUp, ProposalCardSkeleton } from './parts'

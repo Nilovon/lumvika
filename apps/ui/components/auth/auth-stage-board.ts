@@ -1,5 +1,5 @@
-import { AGENT_SPAN, GRID_SIZE, TILE_H, TILE_W, agentTileStyle, connectorTileStyle, hashUnit } from '@rerun/ui/iso-grid'
-import type { Container, GridPosition, Tile, TileLink } from '@rerun/ui/iso-grid'
+import { AGENT_SPAN, GRID_SIZE, TILE_H, TILE_W, agentTileStyle, connectorTileStyle, hashUnit } from '@lumvika/ui/iso-grid'
+import type { Container, GridPosition, Tile, TileLink } from '@lumvika/ui/iso-grid'
 
 import { containerFromSpace } from '@/lib/board/iso-adapter'
 import { CABLE_DRAW_MS, routeBetween, routeHitsBox, routesCross, tileAxisBox } from '@/lib/board/iso-route'

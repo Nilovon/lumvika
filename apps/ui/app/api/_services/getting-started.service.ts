@@ -1,15 +1,15 @@
 import 'server-only'
 
-import { captureServer, deterministicUuid } from '@rerun/analytics/server'
-import { RERUN_CONNECTION_ID } from '@rerun/contracts'
+import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
+import { LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
 
 import type { Database } from '@/app/api/database.types'
-import { isSubscriptionEntitled } from '@rerun/cloud/billing'
-import { extendTrial, subscriptionHasCard } from '@rerun/cloud/billing.server'
+import { isSubscriptionEntitled } from '@lumvika/cloud/billing'
+import { extendTrial, subscriptionHasCard } from '@lumvika/cloud/billing.server'
 import { listConnections, listSchedules } from '@/lib/engine/client'
 import { GETTING_STARTED_EVENT_STEP, type EngineConnection, type EngineCreatedEvent } from '@/lib/engine/types'
 import { GETTING_STARTED_REWARD_DAYS, GETTING_STARTED_STEPS, isComplete, progressOf, type GettingStartedItem } from '@/lib/onboarding/getting-started'
-import { PHONE_STATUS_COLUMNS, phoneStatusOf, type PhoneStatus } from '@rerun/cloud/phone'
+import { PHONE_STATUS_COLUMNS, phoneStatusOf, type PhoneStatus } from '@lumvika/cloud/phone'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMany, selectMaybeSingle, selectSingle } from '@/supabase/supabase-helpers'
 import { resolveWorkspaceOwner } from './workspace-owner.service'
@@ -82,7 +82,7 @@ async function readPhoneStatus(supabase: ServiceRoleClient, userId: string): Pro
     return phoneStatusOf(data)
 }
 
-/** The engine webhook's side: `token` is the box's RERUN_API_KEY, which names its workspace. */
+/** The engine webhook's side: `token` is the box's LUMVIKA_API_KEY, which names its workspace. */
 export async function recordGettingStartedEvent(workspaceId: number, event: EngineCreatedEvent['event']): Promise<void> {
     const step = GETTING_STARTED_EVENT_STEP[event]
     if (step) await markGettingStarted(createServiceRoleClient(), workspaceId, [step])
@@ -99,7 +99,7 @@ export async function markPaymentMethodAdded(workspaceId: number): Promise<void>
 
 async function hasOwnProvider(conn: EngineConnection): Promise<boolean> {
     const { connections } = await listConnections(conn, { signal: AbortSignal.timeout(ENGINE_CHECK_TIMEOUT_MS) })
-    return connections.some(connection => connection.id !== RERUN_CONNECTION_ID && connection.connected)
+    return connections.some(connection => connection.id !== LUMVIKA_CONNECTION_ID && connection.connected)
 }
 
 async function hasSchedule(supabase: ServiceRoleClient, conn: EngineConnection, workspaceId: number): Promise<boolean> {

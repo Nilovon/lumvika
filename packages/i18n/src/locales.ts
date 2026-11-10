@@ -22,7 +22,7 @@ export const PSEUDO_LOCALE = 'en-XA'
 
 export type AppLocale = Locale | typeof PSEUDO_LOCALE
 
-// Shared by the app and the landing (set on `.rerun.build`), so a visitor who picks a language on the
+// Shared by the app and the landing (set on `.lumvika.com`), so a visitor who picks a language on the
 // landing signs up in it.
 export const LOCALE_COOKIE = 'NEXT_LOCALE'
 

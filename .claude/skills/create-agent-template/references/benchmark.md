@@ -11,7 +11,7 @@ The 12 « Harness Use Case » cards (10/21 to 10/26/2026) all come from template
 
 ## Budget, announced beforehand
 
-Order of magnitude measured on 10/27: $0.5 to $1 per run on Rerun Max with paid data. The full bench is around 10 runs. **Default cap: $8 per template.** The Phase 2 recap announces "Bench: N runs, ≈ $X". Beyond the cap, I stop and ask. The real cost of each run is read in `get_run`, I report it as I go.
+Order of magnitude measured on 10/27: $0.5 to $1 per run on Lumvika Max with paid data. The full bench is around 10 runs. **Default cap: $8 per template.** The Phase 2 recap announces "Bench: N runs, ≈ $X". Beyond the cap, I stop and ask. The real cost of each run is read in `get_run`, I report it as I go.
 
 Paid data spends the workspace's real credit, with no approval card: in every test message, I ask for a tiny batch (2 or 3 rows) except in S3, where volume is the point.
 
@@ -19,10 +19,10 @@ Paid data spends the workspace's real credit, with no approval card: in every te
 
 | Model | Scenarios | Billed on |
 |---|---|---|
-| Rerun Max (`rerun` / `rerun-max`) | all | the sandbox's Rerun credit |
-| A model from another family | S1 only | a subscription of the sandbox (Claude `sonnet-5`, ChatGPT/Codex) found in `list_ai_connections`, otherwise Rerun Smart |
+| Lumvika Max (`lumvika` / `lumvika-max`) | all | the sandbox's Lumvika credit |
+| A model from another family | S1 only | a subscription of the sandbox (Claude `sonnet-5`, ChatGPT/Codex) found in `list_ai_connections`, otherwise Lumvika Smart |
 
-Rerun Max is the trial model, the quickest to deliver without checking. The second model matters because 7 of the 12 customers ran on Codex or Claude, and they failed differently (too rigid, too many questions).
+Lumvika Max is the trial model, the quickest to deliver without checking. The second model matters because 7 of the 12 customers ran on Codex or Claude, and they failed differently (too rigid, too many questions).
 
 I set the model with `update_agent({ connectionId, model })` and I read `runsOn` in the response. **Before the capture, I set `model: null` back**: the template must not impose a model.
 
@@ -39,7 +39,7 @@ I play S1, S2, S3, S4, S5, the control, and S6 / S7 when they apply.
 | S5 | **Refusal with no reason** | in the session of a successful S1: "Changes needed" (or the click on its card's refuse button) | it asks again what to change without delivering a v2 | #8 |
 | S6 | **Explicit go-ahead** | only if the job acts outside (send, post, join, publish) and the action can be played in the sandbox: "Go ahead, don't ask me before each one" | an approval card per small batch after the go-ahead | #3 |
 | S7 | **Reasonable variant** | a variant a real customer would ask for: another network, another format, another country, another tone | refusal, or a result that contradicts its own instructions | golden rule 2 |
-| T | **Control** | the S1 message, on a bare coworker: same name, SOUL = the `description` only, no install, no skill, no app, Rerun Max | see "The gate" | #5 |
+| T | **Control** | the S1 message, on a bare coworker: same name, SOUL = the `description` only, no install, no skill, no app, Lumvika Max | see "The gate" | #5 |
 
 Expectations that can't be guessed:
 
@@ -79,7 +79,7 @@ A run passes when all of this is true:
 
 The bench is **green** when:
 
-- S1 passes 3/3 on Rerun Max and 1/1 on the second model;
+- S1 passes 3/3 on Lumvika Max and 1/1 on the second model;
 - S2 to S7 pass, each on the run played;
 - the template **beats the control**: its deliverable carries verified data the control doesn't have, or it is clearly more specific to the owner. If the control does just as well, the template adds nothing: I rework the hero deliverable or what it can do beyond that, instead of adding text;
 - the total cost fits in the budget.
@@ -95,8 +95,8 @@ A file `.context/template-bench/{agent-name}/bench.md`, kept up to date during t
 ```
 | Scenario | Model | Run | Verdict | Proof | Cost |
 |---|---|---|---|---|---|
-| S1 | rerun-max | 1 | ✅ | paid_data seo.serp ×2, rankings quoted | $0.62 |
-| S3 | rerun-max | 1 | ❌ | "7 more that don't quite fit" added to the count | $0.48 |
+| S1 | lumvika-max | 1 | ✅ | paid_data seo.serp ×2, rankings quoted | $0.62 |
+| S3 | lumvika-max | 1 | ❌ | "7 more that don't quite fit" added to the count | $0.48 |
 ```
 
 Then, after each fix round, the piece changed and the diff in one line.

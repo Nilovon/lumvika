@@ -28,8 +28,8 @@ export type EngineDoctor = z.infer<typeof engineDoctorSchema>
 
 export const ENGINE_CAPABILITY_FILES_STREAM = 'files.stream'
 
-// The foreman's own workspace takes the files of a chat message, and its runs can be read back.
-export const ENGINE_CAPABILITY_FOREMAN_FILES = 'foreman.files'
+// The steward's own workspace takes the files of a chat message, and its runs can be read back.
+export const ENGINE_CAPABILITY_STEWARD_FILES = 'steward.files'
 
 // The box has a window manager and a VNC server, so its screen can be watched and driven.
 export const ENGINE_CAPABILITY_DESKTOP = 'desktop'
@@ -46,7 +46,7 @@ export const ENGINE_CAPABILITY_OPENCODE = 'connections.opencode'
 // The engine runs custom OpenAI-compatible connections and answers `POST /connections/probe`.
 export const ENGINE_CAPABILITY_CUSTOM = 'connections.custom'
 
-// What the last `rerun update` on a box did, as `/health` reports it.
+// What the last `lumvika update` on a box did, as `/health` reports it.
 export const engineLastUpdateSchema = z.object({
     status: z.enum(['running', 'error', 'restarting', 'success']),
     commit: z.string().nullable(),

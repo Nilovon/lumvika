@@ -7,7 +7,7 @@
 type MaybeNode = { process?: { env?: Record<string, string | undefined> } };
 export const ASSET_ORIGIN =
   (globalThis as MaybeNode).process?.env?.EMAIL_ASSET_ORIGIN ??
-  "https://app.rerun.build";
+  "https://app.lumvika.com";
 
 /** Bumped whenever the artwork changes: both art routes are cached immutably. */
 export const ART_VERSION = "6";

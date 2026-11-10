@@ -15,7 +15,7 @@ describe('liveActivityLabel', () => {
 
     it('counts the sub-agents of a running delegation', () => {
         const message = assistant([
-            { type: 'dynamic-tool', toolName: 'mcp__rerun__delegate_tasks', toolCallId: 'call-1', state: 'input-available' },
+            { type: 'dynamic-tool', toolName: 'mcp__lumvika__delegate_tasks', toolCallId: 'call-1', state: 'input-available' },
             {
                 type: 'data-delegate',
                 id: 'call-1',
@@ -33,7 +33,7 @@ describe('liveActivityLabel', () => {
 
     it('reads a delegation whose id a CLI bridge rewrote', () => {
         const message = assistant([
-            { type: 'dynamic-tool', toolName: 'mcp__rerun__delegate_tasks', toolCallId: 'toolu_01', state: 'input-available' },
+            { type: 'dynamic-tool', toolName: 'mcp__lumvika__delegate_tasks', toolCallId: 'toolu_01', state: 'input-available' },
             { type: 'data-delegate', id: '7', data: { tasks: [{ title: 'A', status: 'running', steps: 1 }] } },
         ])
         expect(liveActivityLabel(message, copy)).toBe('Waiting on 1 sub-coworker · 0 done')
@@ -85,7 +85,7 @@ describe('liveActivityLabel', () => {
     })
 
     it('names the tool being run, without the bridge prefix', () => {
-        const message = assistant([{ type: 'dynamic-tool', toolName: 'mcp__rerun__web_search', toolCallId: 'call-3', state: 'input-streaming' }])
+        const message = assistant([{ type: 'dynamic-tool', toolName: 'mcp__lumvika__web_search', toolCallId: 'call-3', state: 'input-streaming' }])
         expect(liveActivityLabel(message, copy)).toBe('Running Web Search')
     })
 
@@ -103,7 +103,7 @@ describe('liveActivityLabel', () => {
 describe('stepGroupShowsActivity', () => {
     it('holds while the step group is thinking or running a tool', () => {
         expect(stepGroupShowsActivity(assistant([{ type: 'reasoning', state: 'streaming' }, { type: 'data-usage' }]))).toBe(true)
-        expect(stepGroupShowsActivity(assistant([{ type: 'dynamic-tool', toolName: 'mcp__rerun__web_search', toolCallId: 'call-1', state: 'input-available' }]))).toBe(true)
+        expect(stepGroupShowsActivity(assistant([{ type: 'dynamic-tool', toolName: 'mcp__lumvika__web_search', toolCallId: 'call-1', state: 'input-available' }]))).toBe(true)
     })
 
     it('leaves the loader when nothing in the group is live', () => {

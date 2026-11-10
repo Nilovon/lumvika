@@ -2,7 +2,7 @@ import { readFile, rename, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { z } from 'zod'
-import { DEFAULT_CONNECTION_MODELS, PROVIDER_LABELS, canonicalModelId, canonicalModelIds, type Provider } from '@rerun/contracts'
+import { DEFAULT_CONNECTION_MODELS, PROVIDER_LABELS, canonicalModelId, canonicalModelIds, type Provider } from '@lumvika/contracts'
 import { agentDir, agentEnvPath, configPath, connectionDir, connectionsDir, connectionsMigratedPath } from '../config/paths.js'
 import { listAgentIdsOnDisk } from '../agents/loader.js'
 import { agentConfigSchema } from '../agents/types.js'
@@ -11,7 +11,7 @@ import { logger } from '../lib/logger.js'
 import { nowIso } from '../lib/ids.js'
 import { readBoxDefault, writeBoxDefault } from './default.js'
 import { listConnectionIds, loadConnectionFromDisk } from './loader.js'
-import { createConnection, ensureRerunConnection, patchConnection } from './store.js'
+import { createConnection, ensureLumvikaConnection, patchConnection } from './store.js'
 import type { LoadedConnection } from './types.js'
 
 // The agent config as it was before connections existed: the two OpenRouter overrides moved onto
@@ -22,12 +22,12 @@ type LegacyAgentConfig = { name: string; provider: Provider; openrouterBaseUrl?:
 // data-dir ladder, so a data-dir restored long after must be folded exactly as it would have been
 // then: a provider added since (OpenCode) is neither folded into a connection nor stripped from an
 // agent's `.env`, where it can only be a shell variable of the user's.
-const FOLD_PROVIDERS = ['rerun', 'anthropic', 'claude', 'codex', 'openai', 'google', 'openrouter'] as const satisfies readonly Provider[]
+const FOLD_PROVIDERS = ['lumvika', 'anthropic', 'claude', 'codex', 'openai', 'google', 'openrouter'] as const satisfies readonly Provider[]
 type FoldProvider = (typeof FOLD_PROVIDERS)[number]
 const foldProviderSchema = z.enum(FOLD_PROVIDERS)
 
 const FOLD_TOKEN_KEY: Record<FoldProvider, string> = {
-    rerun: '',
+    lumvika: '',
     anthropic: 'ANTHROPIC_API_KEY',
     claude: 'CLAUDE_CODE_OAUTH_TOKEN',
     codex: 'CODEX_OAUTH_TOKEN',
@@ -37,7 +37,7 @@ const FOLD_TOKEN_KEY: Record<FoldProvider, string> = {
 }
 
 const FOLD_SATELLITE_KEYS: Record<FoldProvider, string[]> = {
-    rerun: [],
+    lumvika: [],
     anthropic: [],
     claude: ['CLAUDE_CODE_OAUTH_REFRESH_TOKEN', 'CLAUDE_CODE_OAUTH_EXPIRES_AT'],
     codex: ['CODEX_OAUTH_REFRESH_TOKEN', 'CODEX_OAUTH_ID_TOKEN', 'CODEX_OAUTH_ACCOUNT_ID', 'CODEX_OAUTH_EXPIRES_AT'],
@@ -80,7 +80,7 @@ async function moveCodexHome(agentId: string, connectionId: string): Promise<voi
     await rename(from, to).catch(err => logger.warn({ agent: agentId, connection: connectionId, err: String(err) }, 'codex home move failed'))
 }
 
-// Rerun Balanced is an alias now, and the id it used to be stays written in the connection of every box
+// Lumvika Balanced is an alias now, and the id it used to be stays written in the connection of every box
 // curated before it. Reading it under its current name is what keeps the model picker showing one
 // Max instead of two. Runs on every boot rather than as a ladder step: the fold is a one-off, a
 // rename is whatever the ids happen to be today.
@@ -105,7 +105,7 @@ async function renameAliasedModels(): Promise<void> {
 // these are not steps in the data-dir's history but whatever the current ids and rules happen to be.
 export async function reconcileConnections(): Promise<void> {
     await mkdir(connectionsDir(), { recursive: true })
-    await ensureRerunConnection()
+    await ensureLumvikaConnection()
     await renameAliasedModels()
 }
 
@@ -124,7 +124,7 @@ export async function foldAgentKeysIntoConnections(): Promise<void> {
     for (const agentId of agentIds) {
         const env = await readEnvFile(agentEnvPath(agentId))
         const raw = JSON.parse(await readFile(configPath(agentId), 'utf8')) as LegacyAgentConfig
-        const agentProvider = foldProviderSchema.catch('rerun').parse(raw.provider)
+        const agentProvider = foldProviderSchema.catch('lumvika').parse(raw.provider)
 
         for (const provider of KEYED_PROVIDERS) {
             const credential = credentialOf(env, provider)

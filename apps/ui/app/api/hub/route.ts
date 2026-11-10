@@ -1,19 +1,19 @@
 import { memberActor, workspaceActor, type Actor } from '@/app/api/_auth/access'
-import { FOREMAN_AGENT_ID, FOREMAN_HUB_TOKEN_HEADER } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, STEWARD_HUB_TOKEN_HEADER } from '@lumvika/contracts'
 
-import { dispatchForemanHubTool } from '@/app/api/_services/foreman-hub.service'
+import { dispatchStewardHubTool } from '@/app/api/_services/steward-hub.service'
 import { dispatchHubTool } from '@/app/api/_services/services.service'
 import { dispatchTeamHubTool, isTeamHubTool } from '@/app/api/_services/team-hub.service'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
-import { foremanHubTokenRequired, verifyForemanHubToken } from '@/lib/foreman/hub-token'
+import { stewardHubTokenRequired, verifyStewardHubToken } from '@/lib/steward/hub-token'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 
-// Rerun Hub REST endpoint. The engine's built-in `rerun_hub_*` tools call this over
-// the public internet, authenticated with its RERUN_API_KEY (same identity as the engine
-// webhooks), which names one workspace. The `x-rerun-agent` header carries the ENGINE agent
+// Lumvika Hub REST endpoint. The engine's built-in `lumvika_hub_*` tools call this over
+// the public internet, authenticated with its LUMVIKA_API_KEY (same identity as the engine
+// webhooks), which names one workspace. The `x-lumvika-agent` header carries the ENGINE agent
 // id, resolved here to the Supabase agent of that workspace. Every coworker of the box holds that
-// key, so `foreman` must also carry the token the hub signed into the foreman's brief.
+// key, so `steward` must also carry the token the hub signed into the steward's brief.
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
@@ -25,33 +25,33 @@ export async function POST(req: Request): Promise<Response> {
         return new Response('Unauthorized', { status: 401 })
     }
 
-    const engineAgentId = req.headers.get('x-rerun-agent') ?? ''
-    if (!engineAgentId) return new Response('Missing x-rerun-agent header', { status: 400 })
+    const engineAgentId = req.headers.get('x-lumvika-agent') ?? ''
+    if (!engineAgentId) return new Response('Missing x-lumvika-agent header', { status: 400 })
 
-    // The foreman has no agent row: it speaks for the whole workspace the engine key names.
-    const isForeman = engineAgentId === FOREMAN_AGENT_ID
-    // The person the foreman's turn speaks for, from its signed token: their access, not the
+    // The steward has no agent row: it speaks for the whole workspace the engine key names.
+    const isSteward = engineAgentId === STEWARD_AGENT_ID
+    // The person the steward's turn speaks for, from its signed token: their access, not the
     // workspace's. A token without one (minted before, or no token at all) acts as the workspace.
-    let foremanActor: Actor = workspaceActor(engine.workspaceId)
-    if (isForeman) {
-        const foremanToken = req.headers.get(FOREMAN_HUB_TOKEN_HEADER)
-        if (foremanToken) {
-            const claims = verifyForemanHubToken(foremanToken, engine.workspaceId)
-            if (!claims) return new Response('Invalid foreman token', { status: 403 })
+    let stewardActor: Actor = workspaceActor(engine.workspaceId)
+    if (isSteward) {
+        const stewardToken = req.headers.get(STEWARD_HUB_TOKEN_HEADER)
+        if (stewardToken) {
+            const claims = verifyStewardHubToken(stewardToken, engine.workspaceId)
+            if (!claims) return new Response('Invalid steward token', { status: 403 })
             if (claims.uid) {
                 const member = await memberActor(engine.workspaceId, claims.uid)
-                if (!member) return new Response('The member this foreman speaks for has left the workspace', { status: 403 })
-                foremanActor = member
+                if (!member) return new Response('The member this steward speaks for has left the workspace', { status: 403 })
+                stewardActor = member
             }
-        } else if (foremanHubTokenRequired()) {
-            return new Response('Missing foreman token', { status: 403 })
+        } else if (stewardHubTokenRequired()) {
+            return new Response('Missing steward token', { status: 403 })
         } else {
-            console.warn('[hub] foreman call without token (tolerated)', { workspaceId: engine.workspaceId })
+            console.warn('[hub] steward call without token (tolerated)', { workspaceId: engine.workspaceId })
         }
     }
     const supabase = createServiceRoleClient()
-    const { data: agent } = isForeman ? { data: null } : await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId })
-    if (!isForeman && !agent) return new Response('Coworker does not belong to the authenticated workspace', { status: 403 })
+    const { data: agent } = isSteward ? { data: null } : await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId })
+    if (!isSteward && !agent) return new Response('Coworker does not belong to the authenticated workspace', { status: 403 })
 
     let body: { tool?: string; args?: Record<string, unknown> }
     try {
@@ -66,7 +66,7 @@ export async function POST(req: Request): Promise<Response> {
 
     try {
         const out = !agent
-            ? await dispatchForemanHubTool(foremanActor, tool, args)
+            ? await dispatchStewardHubTool(stewardActor, tool, args)
             : isTeamHubTool(tool)
               ? await dispatchTeamHubTool(agent.id, engine.workspaceId, tool, args)
               : await dispatchHubTool(agent.id, tool, args, engine.workspaceId)

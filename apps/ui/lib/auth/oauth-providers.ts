@@ -1,4 +1,4 @@
-import { RERUN_CLOUD } from '@rerun/cloud/edition'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 
 export const OAUTH_PROVIDERS = ['google', 'apple'] as const
 
@@ -17,11 +17,11 @@ export const OAUTH_PROVIDER_CONFIG: Record<OAuthProvider, OAuthProviderConfig> =
 }
 
 // The providers offered on the sign-in page: NEXT_PUBLIC_OAUTH_PROVIDERS (comma-separated) once
-// configured on the Supabase project, else both on Rerun Cloud and none on a self-hosted install.
+// configured on the Supabase project, else both on Lumvika Cloud and none on a self-hosted install.
 const CONFIGURED_OAUTH_PROVIDERS = process.env.NEXT_PUBLIC_OAUTH_PROVIDERS
 
 export const ENABLED_OAUTH_PROVIDERS: readonly OAuthProvider[] =
-    CONFIGURED_OAUTH_PROVIDERS === undefined ? (RERUN_CLOUD ? OAUTH_PROVIDERS : []) : OAUTH_PROVIDERS.filter(provider => CONFIGURED_OAUTH_PROVIDERS.split(',').map(entry => entry.trim()).includes(provider))
+    CONFIGURED_OAUTH_PROVIDERS === undefined ? (LUMVIKA_CLOUD ? OAUTH_PROVIDERS : []) : OAUTH_PROVIDERS.filter(provider => CONFIGURED_OAUTH_PROVIDERS.split(',').map(entry => entry.trim()).includes(provider))
 
 export function isOAuthProvider(value: unknown): value is OAuthProvider {
     return typeof value === 'string' && (OAUTH_PROVIDERS as readonly string[]).includes(value)

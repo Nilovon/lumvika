@@ -1,7 +1,7 @@
-import { REWIND_HOURS_PER_WEEK } from '@rerun/contracts'
-import { formatDayRange, weekdayNames } from '@rerun/i18n/format'
+import { REWIND_HOURS_PER_WEEK } from '@lumvika/contracts'
+import { formatDayRange, weekdayNames } from '@lumvika/i18n/format'
 
-export { formatDuration } from '@rerun/i18n/format'
+export { formatDuration } from '@lumvika/i18n/format'
 
 const HOUR_MS = 60 * 60 * 1000
 const WORKDAY_HOURS = 8

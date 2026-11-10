@@ -1,12 +1,12 @@
 'use server'
 
 import { after } from 'next/server'
-import { listExpertBannerUrls, uploadExpertImage, type ExpertImageFolder } from '@rerun/db'
-import { captureServer, deterministicUuid } from '@rerun/analytics/server'
-import { expertDistinctId } from '@rerun/analytics'
-import { editExpertSchema, type EditExpertValues } from '@rerun/ui/experts/schema'
-import { badgeFromType, type ExpertStatus } from '@rerun/ui/experts/options'
-import { initialsFromName, type OwnerExpert } from '@rerun/ui/experts/types'
+import { listExpertBannerUrls, uploadExpertImage, type ExpertImageFolder } from '@lumvika/db'
+import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
+import { expertDistinctId } from '@lumvika/analytics'
+import { editExpertSchema, type EditExpertValues } from '@lumvika/ui/experts/schema'
+import { badgeFromType, type ExpertStatus } from '@lumvika/ui/experts/options'
+import { initialsFromName, type OwnerExpert } from '@lumvika/ui/experts/types'
 
 import type { Database } from '@/app/api/database.types'
 import { AuthorizationError } from '@/app/api/_auth/ownership'

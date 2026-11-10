@@ -1,9 +1,9 @@
-/* CSS partagé du package @rerun/ui.
-   Importer une fois par app : @import "@rerun/ui/styles.css"; */
+/* CSS partagé du package @lumvika/ui.
+   Importer une fois par app : @import "@lumvika/ui/styles.css"; */
 
 @import "./theme.css";
 @import "./iso-grid/styles.css";
-@import "./foreman/styles.css";
+@import "./steward/styles.css";
 
 /* Logos de marque et reflets de la boîte <Icon>. Les couleurs source sont le rendu par défaut.
    Seuls les assets classés trop sombres utilisent --dark-brand-icon-filter sur une surface sombre,
@@ -101,7 +101,7 @@
 
 /* Couleurs : --beam-1 = teinte claire (celle qui "glow"), --beam-2 = base.
    Couplées forme×ton pour reproduire à l'identique les variantes d'origine. */
-.border-beam--ring.border-beam--brand { --beam-1: #b7a8ff; --beam-2: var(--color-brand, #4d34f7); }
+.border-beam--ring.border-beam--brand { --beam-1: #7fdccb; --beam-2: var(--color-brand, #0b6e63); }
 .border-beam--ring.border-beam--white { --beam-1: rgba(255, 255, 255, 0.55); --beam-2: #fff; }
 .border-beam--ring.border-beam--neutral { --beam-1: rgba(0, 0, 0, 0.06); --beam-2: rgba(0, 0, 0, 0.18); }
 .dark .border-beam--ring.border-beam--neutral { --beam-1: rgba(255, 255, 255, 0.08); --beam-2: rgba(255, 255, 255, 0.35); }
@@ -112,7 +112,7 @@
 .border-beam--ring.border-beam--yellow { --beam-1: rgba(250, 204, 21, 0.6); --beam-2: #facc15; }
 html:not(.dark) .border-beam--ring.border-beam--yellow { --beam-1: rgba(202, 138, 4, 0.45); --beam-2: #ca8a04; }
 
-.border-beam--arcs.border-beam--brand { --beam-1: #b7a8ff; --beam-2: color-mix(in oklab, #b7a8ff 20%, transparent); }
+.border-beam--arcs.border-beam--brand { --beam-1: #7fdccb; --beam-2: color-mix(in oklab, #7fdccb 20%, transparent); }
 .border-beam--arcs.border-beam--white { --beam-1: rgba(255, 255, 255, 1); --beam-2: rgba(255, 255, 255, 0.16); }
 html:not(.dark) .border-beam--arcs.border-beam--white { --beam-1: rgba(0, 0, 0, 0.9); --beam-2: rgba(0, 0, 0, 0.12); }
 .border-beam--arcs.border-beam--neutral { --beam-1: rgba(0, 0, 0, 0.4); --beam-2: rgba(0, 0, 0, 0.08); }
@@ -126,8 +126,8 @@ html:not(.dark) .border-beam--arcs.border-beam--white { --beam-1: rgba(0, 0, 0, 
 /* Badge (composant Badge) : couleur du texte (--badge-fg) + fond soft (--badge-soft)
    par ton, alignés sur les couleurs du BorderBeam. */
 .badge-beam { color: var(--badge-fg, currentColor); }
-.badge-beam--brand { --badge-fg: var(--color-brand, #4d34f7); --badge-soft: color-mix(in oklab, var(--color-brand, #4d34f7) 10%, transparent); }
-.dark .badge-beam--brand { --badge-fg: #b7a8ff; }
+.badge-beam--brand { --badge-fg: var(--color-brand, #0b6e63); --badge-soft: color-mix(in oklab, var(--color-brand, #0b6e63) 10%, transparent); }
+.dark .badge-beam--brand { --badge-fg: #7fdccb; }
 .badge-beam--white { --badge-fg: #fff; --badge-soft: rgba(255, 255, 255, 0.08); }
 html:not(.dark) .badge-beam--white { --badge-fg: #111; --badge-soft: rgba(0, 0, 0, 0.05); }
 .badge-beam--neutral { --badge-fg: rgba(0, 0, 0, 0.7); --badge-soft: rgba(0, 0, 0, 0.05); }
@@ -149,7 +149,7 @@ html:not(.dark) .badge-beam--yellow { --badge-fg: #a16207; --badge-soft: color-m
     filter: drop-shadow(0 0 2px var(--beam-1));
 }
 
-/* Carte holographique Expert (composant @rerun/ui/experts HoloExpertCard).
+/* Carte holographique Expert (composant @lumvika/ui/experts HoloExpertCard).
    Les couches (matrix/foil/glare/cross-field/scrim/halo) réagissent au pointeur
    via les variables --mx/--my/--holo-* posées inline par le composant. */
 .holo-card {
@@ -173,7 +173,7 @@ html:not(.dark) .badge-beam--yellow { --badge-fg: #a16207; --badge-soft: color-m
 }
 
 .holo-matrix {
-  background: #b7a8ff;
+  background: #7fdccb;
   -webkit-mask-image: var(--holo-logo), radial-gradient(125% 125% at 50% 38%, black 55%, transparent 100%);
   -webkit-mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%;
   -webkit-mask-repeat: repeat, no-repeat;

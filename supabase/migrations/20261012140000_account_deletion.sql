@@ -1,5 +1,5 @@
 -- A user who deletes their account is anonymized, not deleted: `public.users` cascades from
--- `auth.users`, and deleting the auth row would take with it the memberships and the foreman
+-- `auth.users`, and deleting the auth row would take with it the memberships and the steward
 -- conversations that are kept to trace a bug back.
 alter table "public"."users" add column "deleted_at" timestamptz;
 

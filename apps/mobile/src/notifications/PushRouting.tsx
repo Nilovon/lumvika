@@ -1,4 +1,4 @@
-import { FOREMAN_AGENT_ID } from '@rerun/contracts'
+import { STEWARD_AGENT_ID } from '@lumvika/contracts'
 import * as Notifications from 'expo-notifications'
 import { router } from 'expo-router'
 import { useEffect, useRef } from 'react'
@@ -16,7 +16,7 @@ export function PushRouting() {
         handled.current = identifier
         const data = pushDataOf(response.notification)
         if (!data?.agentId) return
-        if (data.agentId === FOREMAN_AGENT_ID) router.push({ pathname: '/chat/[id]', params: { id: data.conversationId ?? 'last' } })
+        if (data.agentId === STEWARD_AGENT_ID) router.push({ pathname: '/chat/[id]', params: { id: data.conversationId ?? 'last' } })
         else router.push({ pathname: '/chat/[id]', params: { id: data.conversationId ?? 'new', to: data.agentId } })
     }, [response])
     return null

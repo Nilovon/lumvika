@@ -3,8 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-mcp-index-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-mcp-index-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { describe, expect, it } = await import('vitest')
 const { buildMcpIndex, describeConnectorState } = await import('./mcp-index.js')
@@ -18,11 +18,11 @@ function agentWith(id: string, servers: Array<Partial<Server> & { name: string }
 }
 
 async function writeRegistry(id: string, services: Record<string, unknown>): Promise<void> {
-    await mkdir(resolve(workspaceDir(id), '.rerun'), { recursive: true })
-    await writeFile(resolve(workspaceDir(id), '.rerun/services.json'), JSON.stringify({ services }), 'utf8')
+    await mkdir(resolve(workspaceDir(id), '.lumvika'), { recursive: true })
+    await writeFile(resolve(workspaceDir(id), '.lumvika/services.json'), JSON.stringify({ services }), 'utf8')
 }
 
-const HUB_HEADERS = { 'x-rerun-key': '${RERUN_API_KEY}', 'x-rerun-agent': 'agent' }
+const HUB_HEADERS = { 'x-lumvika-key': '${LUMVIKA_API_KEY}', 'x-lumvika-agent': 'agent' }
 
 describe('buildMcpIndex', () => {
     it('is empty for an agent without MCP servers', async () => {
@@ -51,7 +51,7 @@ describe('buildMcpIndex', () => {
         const agent = agentWith('idx-format', [{ name: 'local', command: 'npx' }])
         expect(await buildMcpIndex(agent, 'claude')).toContain('Their tools are loaded as `mcp__<name>__<tool>`.')
         expect(await buildMcpIndex(agent, 'codex')).toContain('Their tools are loaded as `mcp__<name>__<tool>`.')
-        expect(await buildMcpIndex(agent, 'rerun')).toContain('Their tools are loaded as `<name>_<tool>`.')
+        expect(await buildMcpIndex(agent, 'lumvika')).toContain('Their tools are loaded as `<name>_<tool>`.')
     })
 
     it('treats an unreadable token or an unusable server name as not authenticated', async () => {

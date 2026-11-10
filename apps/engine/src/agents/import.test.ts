@@ -1,16 +1,16 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { McpServer } from '@rerun/contracts'
+import type { McpServer } from '@lumvika/contracts'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-im-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-im-'))
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { ARCHIVE_LIMITS, buildArchive } = await import('./archive.js')
 const { importAgent } = await import('./import.js')
 const { agentConfigSchema } = await import('./types.js')
 const { loadAgentFromDisk } = await import('./loader.js')
-const { RERUN_MODEL } = await import('@rerun/contracts')
+const { LUMVIKA_MODEL } = await import('@lumvika/contracts')
 const { listAgentIndex } = await import('../db/repos/agents.js')
 const { migrate } = await import('../db/migrate.js')
 const { createReadStream } = await import('node:fs')
@@ -45,7 +45,7 @@ const config = agentConfigSchema.parse({
     provider: 'anthropic',
     model: SOURCE_MODEL,
     setup: { required: true, completedAt: '2026-01-01T00:00:00.000Z', sessionId: 'author-install' },
-    mcpServers: [srv('fal', { FAL_KEY: '${RERUN_SVC_FAL_FAL_KEY}' }, { 'x-rerun-agent': SOURCE_ID })],
+    mcpServers: [srv('fal', { FAL_KEY: '${LUMVIKA_SVC_FAL_FAL_KEY}' }, { 'x-lumvika-agent': SOURCE_ID })],
 })
 
 // `importAgent` reads the body as a web stream, the shape Hono hands it.
@@ -56,7 +56,7 @@ function bodyOf(path: string): ReadableStream<Uint8Array> {
 // A tarball assembled from literal entries, for the cases that are about what the archive says
 // rather than about what a real capture produces.
 async function tarballOf(files: Record<string, string>): Promise<string> {
-    const scratch = mkdtempSync(resolve(tmpdir(), 'rerun-imt-'))
+    const scratch = mkdtempSync(resolve(tmpdir(), 'lumvika-imt-'))
     const staging = resolve(scratch, 'payload')
     for (const [path, content] of Object.entries(files)) {
         const target = resolve(staging, path)
@@ -70,7 +70,7 @@ async function tarballOf(files: Record<string, string>): Promise<string> {
 
 async function archiveOfSource(): Promise<string> {
     const { stream } = await buildArchive(SOURCE_ID)
-    const path = resolve(mkdtempSync(resolve(tmpdir(), 'rerun-imf-')), 'source.tar.gz')
+    const path = resolve(mkdtempSync(resolve(tmpdir(), 'lumvika-imf-')), 'source.tar.gz')
     await pipeline(stream, createWriteStream(path))
     return path
 }
@@ -78,7 +78,7 @@ async function archiveOfSource(): Promise<string> {
 beforeAll(async () => {
     await migrate()
     const root = agentDir(SOURCE_ID)
-    await mkdir(resolve(root, 'workspace/.rerun'), { recursive: true })
+    await mkdir(resolve(root, 'workspace/.lumvika'), { recursive: true })
     await mkdir(resolve(root, 'skills/research'), { recursive: true })
     await mkdir(resolve(root, 'schedules'), { recursive: true })
     await mkdir(resolve(root, 'triggers'), { recursive: true })
@@ -88,7 +88,7 @@ beforeAll(async () => {
     await writeFile(resolve(root, 'config.json'), JSON.stringify(config, null, 2))
     await writeFile(resolve(root, 'SOUL.md'), 'You are the source agent.')
     await writeFile(resolve(root, 'INSTALL.md'), 'Connect the fal connector, then generate one test image.')
-    await writeFile(resolve(root, '.env'), 'RERUN_SVC_FAL_FAL_KEY=fal-AAAAAAAAAAAAAAAAAAAA\nCLAUDE_CODE_OAUTH_TOKEN=sk-ant-CCCCCCCCCCCCCCCCCCCCCC\n')
+    await writeFile(resolve(root, '.env'), 'LUMVIKA_SVC_FAL_FAL_KEY=fal-AAAAAAAAAAAAAAAAAAAA\nCLAUDE_CODE_OAUTH_TOKEN=sk-ant-CCCCCCCCCCCCCCCCCCCCCC\n')
     await writeFile(resolve(root, 'mcp/fal.json'), JSON.stringify({ accessToken: 'secret-token' }))
     await writeFile(resolve(root, 'skills/research/SKILL.md'), '---\nname: Research\ndescription: Looks things up\n---\n\nDo research.')
     await writeFile(resolve(root, 'schedules/daily.md'), `---\nname: Daily\ncron: 0 9 * * *\nenabled: true\nconnection: ${SOURCE_CONNECTION_ID}\nprovider: anthropic\nmodel: ${SOURCE_MODEL}\n---\n\nReport.`)
@@ -97,10 +97,10 @@ beforeAll(async () => {
     await writeFile(resolve(root, 'workspace/brief.md'), 'A reference brief.')
     await writeFile(resolve(root, 'memory/mem1.md'), '---\nid: mem1\nkind: note\ntags: []\ncreatedAt: 2026-01-01T00:00:00.000Z\n---\n\nThe client prefers short answers.')
     await writeFile(
-        resolve(root, 'workspace/.rerun/services.json'),
+        resolve(root, 'workspace/.lumvika/services.json'),
         JSON.stringify({
             services: {
-                fal: { status: 'active', envKeys: ['RERUN_SVC_FAL_FAL_KEY'], mcpServers: ['fal'] },
+                fal: { status: 'active', envKeys: ['LUMVIKA_SVC_FAL_FAL_KEY'], mcpServers: ['fal'] },
                 gmail: { status: 'active', mcpServers: ['gmail'], composio: { serverName: 'gmail' } },
                 'gmail@k3x9ab': { status: 'active', instanceId: 'k3x9ab', label: 'support@acme.com', mcpServers: ['gmail-k3x9ab'], composio: { serverName: 'gmail-k3x9ab', accountLabel: 'support@acme.com' } },
             },
@@ -129,8 +129,8 @@ describe('importAgent', () => {
         const result = await importAgent({ body: bodyOf(await archiveOfSource()), name: 'source_3' })
         const imported = agentConfigSchema.parse(JSON.parse(await readFile(resolve(agentDir(result.id), 'config.json'), 'utf8')))
 
-        expect(imported.mcpServers[0].headers['x-rerun-agent']).toBe(result.id)
-        expect(imported.mcpServers[0].env.FAL_KEY).toBe('${RERUN_SVC_FAL_FAL_KEY}')
+        expect(imported.mcpServers[0].headers['x-lumvika-agent']).toBe(result.id)
+        expect(imported.mcpServers[0].env.FAL_KEY).toBe('${LUMVIKA_SVC_FAL_FAL_KEY}')
     })
 
     // The author marked their own agent as set up without ever installing it. A copy has its own
@@ -148,8 +148,8 @@ describe('importAgent', () => {
     it('keeps the env key names, no value, and the 0600 a fresh agent gets', async () => {
         const result = await importAgent({ body: bodyOf(await archiveOfSource()), name: 'source_4' })
 
-        expect(await readFile(resolve(agentDir(result.id), '.env'), 'utf8')).toBe('RERUN_SVC_FAL_FAL_KEY=')
-        expect(result.envKeys).toEqual(['RERUN_SVC_FAL_FAL_KEY'])
+        expect(await readFile(resolve(agentDir(result.id), '.env'), 'utf8')).toBe('LUMVIKA_SVC_FAL_FAL_KEY=')
+        expect(result.envKeys).toEqual(['LUMVIKA_SVC_FAL_FAL_KEY'])
         expect((await stat(resolve(agentDir(result.id), '.env'))).mode & 0o777).toBe(0o600)
     })
 
@@ -162,7 +162,7 @@ describe('importAgent', () => {
         expect(config).toMatchObject({ connectionId: null, provider: null, model: null })
         // The point of the three nulls: what the copy actually runs comes off the box's own ladder.
         // This box has no connection at all, which is its last rung.
-        expect((await loadAgentFromDisk(result.id)).resolved).toMatchObject({ provider: 'rerun', model: RERUN_MODEL })
+        expect((await loadAgentFromDisk(result.id)).resolved).toMatchObject({ provider: 'lumvika', model: LUMVIKA_MODEL })
     })
 
     // A hand-made tarball is the case the capture's own scrub cannot cover, exactly as it is for a
@@ -220,7 +220,7 @@ describe('importAgent', () => {
 
     it('keeps every account of an app apart in the copy, without the labels naming them', async () => {
         const result = await importAgent({ body: bodyOf(await archiveOfSource()), name: 'source_6b' })
-        const registry = JSON.parse(await readFile(resolve(workspaceDir(result.id), '.rerun/services.json'), 'utf8'))
+        const registry = JSON.parse(await readFile(resolve(workspaceDir(result.id), '.lumvika/services.json'), 'utf8'))
         expect(Object.keys(registry.services).sort()).toEqual(['fal', 'gmail', 'gmail@k3x9ab'])
         expect(registry.services['gmail@k3x9ab']).toEqual({ status: 'active', instanceId: 'k3x9ab', mcpServers: ['gmail-k3x9ab'], composio: { serverName: 'gmail-k3x9ab' } })
     })
@@ -304,7 +304,7 @@ describe('importAgent', () => {
     // node-tar calls the filter synchronously from its own header parser, so a throw would escape
     // the request and take the engine process with it.
     it('answers 400 rather than dying when the archive unpacks past the ceiling', async () => {
-        const scratch = mkdtempSync(resolve(tmpdir(), 'rerun-imz-'))
+        const scratch = mkdtempSync(resolve(tmpdir(), 'lumvika-imz-'))
         const staging = resolve(scratch, 'payload')
         await mkdir(resolve(staging, 'workspace'), { recursive: true })
         await writeFile(resolve(staging, 'config.json'), JSON.stringify(config))
@@ -323,7 +323,7 @@ describe('importAgent', () => {
     // Every root is matched the same way, so a prefix test alone would let `data/agent.db/x`
     // through and leave the copy with a directory where its database has to be a file.
     it('refuses a directory planted where a file root belongs', async () => {
-        const scratch = mkdtempSync(resolve(tmpdir(), 'rerun-imd-'))
+        const scratch = mkdtempSync(resolve(tmpdir(), 'lumvika-imd-'))
         const staging = resolve(scratch, 'payload')
         await mkdir(resolve(staging, 'data/agent.db'), { recursive: true })
         await mkdir(resolve(staging, '.env'), { recursive: true })
@@ -340,7 +340,7 @@ describe('importAgent', () => {
     })
 
     it('refuses an archive that is not an agent folder', async () => {
-        const staging = mkdtempSync(resolve(tmpdir(), 'rerun-imx-'))
+        const staging = mkdtempSync(resolve(tmpdir(), 'lumvika-imx-'))
         await writeFile(resolve(staging, 'SOUL.md'), 'no config here')
         const tarball = resolve(staging, '..', 'nonagent.tar.gz')
         await create({ gzip: true, cwd: staging, file: tarball }, ['.'])
@@ -351,7 +351,7 @@ describe('importAgent', () => {
     // A tarball travels through a bucket and arrives over HTTP: extraction re-applies the
     // capture's allowlist rather than trusting what the entries claim to be.
     it('drops a link, an unlisted root and a path that climbs out', async () => {
-        const scratch = mkdtempSync(resolve(tmpdir(), 'rerun-imh-'))
+        const scratch = mkdtempSync(resolve(tmpdir(), 'lumvika-imh-'))
         const staging = resolve(scratch, 'payload')
         await mkdir(resolve(staging, 'mcp'), { recursive: true })
         await mkdir(resolve(staging, 'data'), { recursive: true })

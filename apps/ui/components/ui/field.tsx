@@ -1,2 +1,2 @@
-export { Field } from '@rerun/ui/forms'
-export type { FieldProps } from '@rerun/ui/forms'
+export { Field } from '@lumvika/ui/forms'
+export type { FieldProps } from '@lumvika/ui/forms'

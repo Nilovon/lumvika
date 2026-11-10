@@ -6,7 +6,7 @@ index 45ed4bd9287395a0a4e35f2f4a1f66da88341516..bfd497d4b52e8e73a1ef56fc3b38b155
    if (type === "websearch") {
      return { toolName: "web_search", dynamic: true };
    }
-+  // rerun patch: the image_gen tool of a ChatGPT plan ends as an imageGeneration item. Named, it
++  // lumvika patch: the image_gen tool of a ChatGPT plan ends as an imageGeneration item. Named, it
 +  // reaches the stream as a tool call; the engine turns its result into a file card.
 +  if (type === "imagegeneration") {
 +    return { toolName: "image_generation", dynamic: true };
@@ -23,7 +23,7 @@ index 45ed4bd9287395a0a4e35f2f4a1f66da88341516..bfd497d4b52e8e73a1ef56fc3b38b155
        const last = event.tokenUsage?.last;
        if (!last) return;
 +      const total = event.tokenUsage?.total;
-+      // rerun patch: a turn makes one model call per tool round and `last` is only the latest one.
++      // lumvika patch: a turn makes one model call per tool round and `last` is only the latest one.
 +      // The thread total, less what the thread held before the turn, counts the whole turn.
 +      if (total && !usageBeforeTurn) {
 +        usageBeforeTurn = {
@@ -76,7 +76,7 @@ index 45ed4bd9287395a0a4e35f2f4a1f66da88341516..bfd497d4b52e8e73a1ef56fc3b38b155
 -  enteredReviewModeItemSchema,
 -  exitedReviewModeItemSchema,
 -  contextCompactionItemSchema
-+// rerun patch: Codex 0.166 emits imageGeneration items (image_gen on a ChatGPT plan). An item type
++// lumvika patch: Codex 0.166 emits imageGeneration items (image_gen on a ChatGPT plan). An item type
 +// the union does not list fails the whole notification, so item/started, item/completed and even
 +// turn/completed are dropped and the run hangs: unknown items are kept, mapTool leaves them alone.
 +var imageGenerationItemSchema = zod.z.object({
@@ -114,7 +114,7 @@ index 45ed4bd9287395a0a4e35f2f4a1f66da88341516..bfd497d4b52e8e73a1ef56fc3b38b155
    zod.z.object({ responseStreamDisconnected: codexHttpStatusCodeSchema }).passthrough(),
 -  zod.z.object({ responseTooManyFailedAttempts: codexHttpStatusCodeSchema }).passthrough()
 +  zod.z.object({ responseTooManyFailedAttempts: codexHttpStatusCodeSchema }).passthrough(),
-+  // rerun patch: Codex adds kinds with its releases (0.166 reports model_not_found). An unknown kind must
++  // lumvika patch: Codex adds kinds with its releases (0.166 reports model_not_found). An unknown kind must
 +  // not fail the whole notification, or the error and turn/completed are dropped and the run hangs.
 +  zod.z.string(),
 +  zod.z.object({}).passthrough()
@@ -129,7 +129,7 @@ index 0e2c370883354cd782ab878f645170a87081c8a2..532e3cf401448c77c6af488325b198dd
    if (type === "websearch") {
      return { toolName: "web_search", dynamic: true };
    }
-+  // rerun patch: the image_gen tool of a ChatGPT plan ends as an imageGeneration item. Named, it
++  // lumvika patch: the image_gen tool of a ChatGPT plan ends as an imageGeneration item. Named, it
 +  // reaches the stream as a tool call; the engine turns its result into a file card.
 +  if (type === "imagegeneration") {
 +    return { toolName: "image_generation", dynamic: true };
@@ -146,7 +146,7 @@ index 0e2c370883354cd782ab878f645170a87081c8a2..532e3cf401448c77c6af488325b198dd
        const last = event.tokenUsage?.last;
        if (!last) return;
 +      const total = event.tokenUsage?.total;
-+      // rerun patch: a turn makes one model call per tool round and `last` is only the latest one.
++      // lumvika patch: a turn makes one model call per tool round and `last` is only the latest one.
 +      // The thread total, less what the thread held before the turn, counts the whole turn.
 +      if (total && !usageBeforeTurn) {
 +        usageBeforeTurn = {
@@ -199,7 +199,7 @@ index 0e2c370883354cd782ab878f645170a87081c8a2..532e3cf401448c77c6af488325b198dd
 -  enteredReviewModeItemSchema,
 -  exitedReviewModeItemSchema,
 -  contextCompactionItemSchema
-+// rerun patch: Codex 0.166 emits imageGeneration items (image_gen on a ChatGPT plan). An item type
++// lumvika patch: Codex 0.166 emits imageGeneration items (image_gen on a ChatGPT plan). An item type
 +// the union does not list fails the whole notification, so item/started, item/completed and even
 +// turn/completed are dropped and the run hangs: unknown items are kept, mapTool leaves them alone.
 +var imageGenerationItemSchema = z.object({
@@ -237,7 +237,7 @@ index 0e2c370883354cd782ab878f645170a87081c8a2..532e3cf401448c77c6af488325b198dd
    z.object({ responseStreamDisconnected: codexHttpStatusCodeSchema }).passthrough(),
 -  z.object({ responseTooManyFailedAttempts: codexHttpStatusCodeSchema }).passthrough()
 +  z.object({ responseTooManyFailedAttempts: codexHttpStatusCodeSchema }).passthrough(),
-+  // rerun patch: Codex adds kinds with its releases (0.166 reports model_not_found). An unknown kind must
++  // lumvika patch: Codex adds kinds with its releases (0.166 reports model_not_found). An unknown kind must
 +  // not fail the whole notification, or the error and turn/completed are dropped and the run hangs.
 +  z.string(),
 +  z.object({}).passthrough()

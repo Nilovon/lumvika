@@ -204,9 +204,9 @@ values (
         'inputs', '[]'::jsonb,
         'envKeys', '[]'::jsonb,
         'mcpServers', jsonb_build_array(jsonb_build_object(
-          'name', 'linkedin_pro', 'transport', 'http', 'url', '${RERUN_HUB_BASE_URL}/api/mcp/apps/linkedin',
+          'name', 'linkedin_pro', 'transport', 'http', 'url', '${LUMVIKA_HUB_BASE_URL}/api/mcp/apps/linkedin',
           'args', '[]'::jsonb, 'env', '{}'::jsonb,
-          'headers', jsonb_build_object('x-rerun-key', '${RERUN_API_KEY}', 'x-rerun-agent', '${agent.id}')
+          'headers', jsonb_build_object('x-lumvika-key', '${LUMVIKA_API_KEY}', 'x-lumvika-agent', '${agent.id}')
         ))
       )
     ),

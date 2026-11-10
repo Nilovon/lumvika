@@ -2,7 +2,7 @@
 import type { Database } from '@/app/api/database.types'
 import { I18N_RELEASED } from '@/lib/features'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { DEFAULT_LOCALE, isStableLocale, type Locale } from '@rerun/i18n'
+import { DEFAULT_LOCALE, isStableLocale, type Locale } from '@lumvika/i18n'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // The language a push, an email or a message sent to someone is written in, outside any request of

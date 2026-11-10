@@ -21,7 +21,7 @@ export type DeliverWhatsAppResult = { sent: true; id: string } | { sent: false; 
 export const MESSAGE_ID_METADATA = 'message_id'
 
 /**
- * The one way a WhatsApp message leaves Rerun. A `sent` answer means Bird accepted it, nothing
+ * The one way a WhatsApp message leaves Lumvika. A `sent` answer means Bird accepted it, nothing
  * more: whether it reached the phone is written on the row later, by the webhook.
  */
 export async function deliverWhatsApp(supabase: SupabaseClient<Database>, input: DeliverWhatsAppInput): Promise<DeliverWhatsAppResult> {

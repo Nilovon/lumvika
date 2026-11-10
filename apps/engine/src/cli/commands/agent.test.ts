@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-cli-agent-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-cli-agent-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({
     events: [] as unknown[][],
@@ -53,7 +53,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('rerun agent create', () => {
+describe('lumvika agent create', () => {
     it('creates an agent from its flags and reports it', async () => {
         await agentCommand(['create', '--name', 'Scout', '--provider', 'anthropic', '--model', 'claude-opus-4-8', '--key', 'ANTHROPIC_API_KEY=sk=with=equals'])
 
@@ -68,7 +68,7 @@ describe('rerun agent create', () => {
     })
 
     it('refuses a create without a name, after migrating', async () => {
-        await expect(agentCommand(['create', '--model', 'x'])).rejects.toThrow('Usage: rerun agent create --name <name>')
+        await expect(agentCommand(['create', '--model', 'x'])).rejects.toThrow('Usage: lumvika agent create --name <name>')
         expect(state.events).toEqual([['prepareDataDir']])
     })
 
@@ -89,7 +89,7 @@ describe('rerun agent create', () => {
     })
 })
 
-describe('rerun agent list', () => {
+describe('lumvika agent list', () => {
     it('prints one tab-separated line per indexed agent', async () => {
         state.index = [
             { id: 'a1', status: 'idle', name: 'Scout' },
@@ -105,7 +105,7 @@ describe('rerun agent list', () => {
     })
 })
 
-describe('rerun agent delete', () => {
+describe('lumvika agent delete', () => {
     it('unloads, unindexes and removes the folder', async () => {
         state.existing.add('doomed')
         await mkdir(agentDir('doomed'), { recursive: true })
@@ -122,21 +122,21 @@ describe('rerun agent delete', () => {
     })
 
     it('refuses a missing or unknown id', async () => {
-        await expect(agentCommand(['delete'])).rejects.toThrow('Usage: rerun agent delete <id>')
-        await expect(agentCommand(['delete', 'ghost'])).rejects.toThrow('Usage: rerun agent delete <id>')
+        await expect(agentCommand(['delete'])).rejects.toThrow('Usage: lumvika agent delete <id>')
+        await expect(agentCommand(['delete', 'ghost'])).rejects.toThrow('Usage: lumvika agent delete <id>')
         expect(state.events.some(([name]) => name === 'deleteAgentIndex')).toBe(false)
     })
 
-    it('refuses to delete the foreman', async () => {
-        state.existing.add('foreman')
-        await expect(agentCommand(['delete', 'foreman'])).rejects.toThrow('The foreman is managed by the engine and cannot be deleted')
+    it('refuses to delete the steward', async () => {
+        state.existing.add('steward')
+        await expect(agentCommand(['delete', 'steward'])).rejects.toThrow('The steward is managed by the engine and cannot be deleted')
         expect(state.events.some(([name]) => name === 'unloadAgent')).toBe(false)
     })
 })
 
-describe('rerun agent', () => {
+describe('lumvika agent', () => {
     it('prints the usage for an unknown or missing subcommand', async () => {
-        await expect(agentCommand([])).rejects.toThrow('Usage: rerun agent <create|list|delete>')
-        await expect(agentCommand(['rename'])).rejects.toThrow('Usage: rerun agent <create|list|delete>')
+        await expect(agentCommand([])).rejects.toThrow('Usage: lumvika agent <create|list|delete>')
+        await expect(agentCommand(['rename'])).rejects.toThrow('Usage: lumvika agent <create|list|delete>')
     })
 })

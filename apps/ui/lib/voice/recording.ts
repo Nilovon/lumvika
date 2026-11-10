@@ -1,5 +1,5 @@
 // The cap is shared with the iOS recorder, so it lives in contracts.
-export { MAX_RECORDING_MS } from '@rerun/contracts'
+export { MAX_RECORDING_MS } from '@lumvika/contracts'
 
 // 32 kbps is plenty for speech in AAC or Opus and keeps 5 minutes around 1.2 MB, well under the
 // 10 MB the middleware truncates request bodies at (see proxy.ts).
@@ -28,7 +28,7 @@ export const TRANSCRIPTION_FORMATS = new Set(CANDIDATES.map(c => c.transcription
 
 // Arc (Chromium 155) answers yes to AAC in isTypeSupported, then fails every recording with
 // `EncodingError: Internal Error`. A format seen failing is remembered so this browser stops trying it.
-const BROKEN_FORMATS_KEY = 'rerun:voice:broken-formats'
+const BROKEN_FORMATS_KEY = 'lumvika:voice:broken-formats'
 
 function readBrokenFormats(): string[] {
     try {

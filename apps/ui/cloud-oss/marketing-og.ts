@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-// Rerun's marketing cards are Rerun Cloud's: a self-hosted install has none to serve.
+// Lumvika's marketing cards are Lumvika Cloud's: a self-hosted install has none to serve.
 const missing = async (): Promise<Response> => new Response(null, { status: 404 })
 
 export const brandOgRoute = missing

@@ -1,5 +1,5 @@
 import type { LanguageModelMiddleware } from 'ai'
-import { HITL_TOOL_NAMES } from '@rerun/contracts'
+import { HITL_TOOL_NAMES } from '@lumvika/contracts'
 import { logger } from '../lib/logger.js'
 
 // A model that closes its message with a <quick_replies> block learns that a tag in its text turns
@@ -7,9 +7,9 @@ import { logger } from '../lib/logger.js'
 // The prompt forbids it and Opus writes it anyway, so the tag is cut out of the text on its way.
 export const CARD_TAG_NAMES = Object.keys(HITL_TOOL_NAMES)
 
-const BRIDGE_PREFIXES = ['', 'rerun__', 'mcp__rerun__']
+const BRIDGE_PREFIXES = ['', 'lumvika__', 'mcp__lumvika__']
 const TAG_BODIES = BRIDGE_PREFIXES.flatMap(prefix => CARD_TAG_NAMES.map(name => `${prefix}${name}`))
-const CARD_TAG = new RegExp(`<\\/?(?:mcp__rerun__|rerun__)?(${CARD_TAG_NAMES.join('|')})(?:\\s[^>]*)?\\/?>`, 'g')
+const CARD_TAG = new RegExp(`<\\/?(?:mcp__lumvika__|lumvika__)?(${CARD_TAG_NAMES.join('|')})(?:\\s[^>]*)?\\/?>`, 'g')
 
 const FENCE = /^\s*```/
 

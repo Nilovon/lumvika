@@ -2,7 +2,7 @@
 
 import { Icon } from '@/components/ui/icon'
 import type { TemplateStep } from '@/lib/templates/useTemplateCta'
-import { Stripes } from '@rerun/ui/primitives'
+import { Stripes } from '@lumvika/ui/primitives'
 
 // Ce qui va se passer, dans l'ordre, quand le bouton ne fait pas tout d'un coup : payer un plan,
 // payer la template, poser les agents. Le libellé du bouton ne dit que l'étape suivante, cette

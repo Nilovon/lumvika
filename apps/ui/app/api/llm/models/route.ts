@@ -1,6 +1,6 @@
-import { rerunModels } from '@rerun/cloud/llm'
+import { lumvikaModels } from '@lumvika/cloud/llm'
 
-// What each `rerun` alias runs, for the boxes that show it.
+// What each `lumvika` alias runs, for the boxes that show it.
 export async function GET(req: Request) {
-    return rerunModels(req)
+    return lumvikaModels(req)
 }

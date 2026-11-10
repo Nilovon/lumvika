@@ -14,7 +14,7 @@
 // a hub on production provisions a real user and a real workspace on every page load, and the
 // production profile carries the live Stripe keys. The script checks both before the first request.
 //
-// It signs in as a throwaway account of its own, `verify-<workspace>@rerun.local`, created on the
+// It signs in as a throwaway account of its own, `verify-<workspace>@lumvika.local`, created on the
 // local stack through the admin API and opened through the app's own magic link page.
 //
 // Its workspace is linked to an engine on CONDUCTOR_PORT + 1, through a pool row of the local stack:
@@ -107,7 +107,7 @@ function assertMigrated() {
 
 function assertLocalProfile(stack) {
     const dotenv = existsSync(join(UI_DIR, '.env')) ? readFileSync(join(UI_DIR, '.env'), 'utf8') : ''
-    const profile = dotenv.match(/^# >>> rerun env profile: (\S+)/m)?.[1]
+    const profile = dotenv.match(/^# >>> lumvika env profile: (\S+)/m)?.[1]
     if (profile !== 'local') fail(`apps/ui/.env is on the "${profile ?? 'unknown'}" profile. Run \`pnpm cloud env:local\` first, never test against production.`)
     const configured = dotenv.match(/^NEXT_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim()
     if (configured !== stack.url) fail(`apps/ui/.env points at ${configured}, the running stack is ${stack.url}. Run \`pnpm cloud env:local\` again.`)
@@ -193,15 +193,15 @@ async function markOnboarded(admin, workspaceId) {
 async function startEngine(base, apiKey, outDir) {
     if (listeningPid(ENGINE_PORT)) fail(`Port ${ENGINE_PORT} is already taken, the local engine needs it.`)
     log(`Starting the engine on port ${ENGINE_PORT}.`)
-    const env = { ...process.env, RERUN_PORT: String(ENGINE_PORT), RERUN_HOST: '127.0.0.1', RERUN_API_KEY: apiKey, RERUN_HUB_BASE_URL: base, RERUN_DATA_DIR: join(REPO_ROOT, '.context/verify/engine-data') }
-    const engine = spawnLogged('pnpm', ['--filter', 'rerun-engine', 'dev'], { cwd: REPO_ROOT, env }, join(outDir, 'engine.log'))
+    const env = { ...process.env, LUMVIKA_PORT: String(ENGINE_PORT), LUMVIKA_HOST: '127.0.0.1', LUMVIKA_API_KEY: apiKey, LUMVIKA_HUB_BASE_URL: base, LUMVIKA_DATA_DIR: join(REPO_ROOT, '.context/verify/engine-data') }
+    const engine = spawnLogged('pnpm', ['--filter', 'lumvika-engine', 'dev'], { cwd: REPO_ROOT, env }, join(outDir, 'engine.log'))
     await waitFor(`http://127.0.0.1:${ENGINE_PORT}/health`)
     return engine
 }
 
 async function testAccount(stack, { fresh }) {
     const admin = createClient(stack.url, stack.secretKey, { auth: { persistSession: false } })
-    const email = `verify-${WORKSPACE_NAME}@rerun.local`
+    const email = `verify-${WORKSPACE_NAME}@lumvika.local`
     if (fresh) await deleteTestAccount(admin, email)
     const created = await admin.auth.admin.createUser({ email, email_confirm: true })
     if (created.error && !/already/i.test(created.error.message)) fail(`Could not create ${email}: ${created.error.message}`)
@@ -375,10 +375,10 @@ const server = await ensureServer(base, outDir)
 // (127.0.0.1:54421) and the dev server's HMR socket behind a permission prompt nobody answers.
 const browser = await chromium.launch({ headless: !options.headed, args: ['--disable-features=LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests'] })
 // A language pack is picked by the cookie the Account dialog writes, and the browser asks for it too.
-// The test accounts (`@rerun.local`) are in the early access of the language packs.
+// The test accounts (`@lumvika.local`) are in the early access of the language packs.
 const context = await browser.newContext(options.locale ? { locale: options.locale } : {})
 await context.addCookies([
-    { name: 'rerun-consent', value: `v1:denied:${Date.now()}`, url: base },
+    { name: 'lumvika-consent', value: `v1:denied:${Date.now()}`, url: base },
     ...(options.locale ? [{ name: 'NEXT_LOCALE', value: options.locale, url: base }] : []),
 ])
 let failed = false

@@ -1,4 +1,4 @@
-import { DEFAULT_SPAN, TILE_H, TILE_W } from '@rerun/ui/iso-grid/iso'
+import { DEFAULT_SPAN, TILE_H, TILE_W } from '@lumvika/ui/iso-grid/iso'
 
 // Le tracé des liens, et les prédicats qui permettent de savoir ce qu'un tracé rencontre : de quoi
 // choisir où poser une tuile en connaissant à l'avance le câble qu'elle va tirer.

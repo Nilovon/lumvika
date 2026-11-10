@@ -3,7 +3,7 @@ title: "Administration"
 description: "Admins, the data in Supabase Studio, invitations, background jobs and logs."
 ---
 
-A self-hosted Rerun has no back office. You administer it with one variable, Supabase Studio, and the Docker logs.
+A self-hosted Lumvika has no back office. You administer it with one variable, Supabase Studio, and the Docker logs.
 
 ## Admins
 
@@ -37,7 +37,7 @@ The tables that matter:
 
 The `agents` table is only an index. What a coworker knows and does lives on its server, in the data-dir. See [What is stored where](/self-host/overview#what-is-stored-where).
 
-Some tables stay empty on your install, because what fills them belongs to Rerun Cloud: billing, paid apps, paid data, the machine pool and its hosts. They are part of the schema all the same.
+Some tables stay empty on your install, because what fills them belongs to Lumvika Cloud: billing, paid apps, paid data, the machine pool and its hosts. They are part of the schema all the same.
 
 ### Common tasks
 
@@ -69,11 +69,11 @@ update services set enabled = false where slug = 'stripe';
 
 ## Invitations
 
-Members invite people from the workspace menu, as on Rerun Cloud. See [Teams](/teams).
+Members invite people from the workspace menu, as on Lumvika Cloud. See [Teams](/teams).
 
 This build sends no invitation email. Send the link yourself: it is `NEXT_PUBLIC_APP_URL/invite/<token>`, with the `token` of the invitation in `workspace_invitations`. The person opens it and signs in with their email code.
 
-Sign-in codes are the one email Rerun relies on, and Supabase sends them. See [Set up Supabase](/self-host/install#2-set-up-supabase).
+Sign-in codes are the one email Lumvika relies on, and Supabase sends them. See [Set up Supabase](/self-host/install#2-set-up-supabase).
 
 ## Background jobs
 
@@ -92,10 +92,10 @@ The times follow the clock of the app container, UTC unless you set `TZ`. A rest
 ```bash
 docker compose logs -f app engine        # follow both
 docker compose logs --since 1h app       # the last hour of the app
-docker logs -f rerun-engine              # a paired server
+docker logs -f lumvika-engine              # a paired server
 ```
 
-The app tags its lines: `[task]` for background jobs, `[llm]` for the Rerun models, `[servers]` for pairing, `[email]` for the emails this build skips. For more detail from an engine, set `RERUN_LOG_LEVEL=debug` and run `docker compose up -d`.
+The app tags its lines: `[task]` for background jobs, `[llm]` for the Lumvika models, `[servers]` for pairing, `[email]` for the emails this build skips. For more detail from an engine, set `LUMVIKA_LOG_LEVEL=debug` and run `docker compose up -d`.
 
 To check an engine's data-dir without changing it:
 

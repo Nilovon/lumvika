@@ -10,7 +10,7 @@ import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
 import { ClipboardPasteIcon } from '@/lib/icons'
 
-import { ForemanTrack, type TrackStep } from './ForemanTrack'
+import { StewardTrack, type TrackStep } from './StewardTrack'
 import { StepError } from './step-bits'
 
 export function ClaudePlanSteps({ oauth, lastStep }: { oauth: ClaudeOAuth; lastStep: (linked: boolean) => TrackStep }) {
@@ -22,7 +22,7 @@ export function ClaudePlanSteps({ oauth, lastStep }: { oauth: ClaudeOAuth; lastS
     const last = lastStep(linked)
 
     return (
-        <ForemanTrack
+        <StewardTrack
             at={linked ? 2 : opened ? 1 : 0}
             done={linked ? 3 : opened ? 1 : 0}
             orb={busy ? 'thinking' : linked ? 'speaking' : 'listening'}

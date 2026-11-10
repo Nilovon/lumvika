@@ -53,7 +53,7 @@ export async function removeCards(supabase: SupabaseClient<Database>, urls: (str
 }
 
 // The job runs outside any request (a write fires it and returns), so there is no incoming URL to
-// derive the origin from: rerun-shot is pointed at the configured public app.
+// derive the origin from: lumvika-shot is pointed at the configured public app.
 function appOrigin(): string {
     return process.env.NEXT_PUBLIC_APP_URL ?? site.url
 }
@@ -65,7 +65,7 @@ async function captureTheme(supabase: SupabaseClient<Database>, slug: string, th
         height: CARD_HEIGHT,
         scale: CARD_SCALE,
         format: 'png',
-        // Regenerating is a deliberate gesture, so rerun-shot's disk cache is bypassed rather than
+        // Regenerating is a deliberate gesture, so lumvika-shot's disk cache is bypassed rather than
         // versioned: nothing has to travel in the URL to make a capture fresh.
         fresh: true,
     })

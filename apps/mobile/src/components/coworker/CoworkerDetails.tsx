@@ -1,6 +1,6 @@
 import { Button as MenuButton } from '@expo/ui/swift-ui'
 import { disabled } from '@expo/ui/swift-ui/modifiers'
-import type { CoworkerFiles, InstalledServiceView, RoutineView } from '@rerun/contracts'
+import type { CoworkerFiles, InstalledServiceView, RoutineView } from '@lumvika/contracts'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslations } from 'use-intl'

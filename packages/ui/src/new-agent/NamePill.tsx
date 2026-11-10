@@ -9,7 +9,7 @@ import { useKitTranslations } from '../locale'
 import { AgentTile } from './marks'
 import { AGENT_NAME_MAX } from './reading'
 
-// The agent's name rides in the field. Empty it says where the name goes; once Rerun reads a name in
+// The agent's name rides in the field. Empty it says where the name goes; once Lumvika reads a name in
 // the description, or a suggestion brings its own, the tile lights and the pencil says it can be
 // changed. A click turns the pill into a field of the same size; Enter keeps the name, Escape drops
 // the edit, and an emptied name gives the naming back to the description.

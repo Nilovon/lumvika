@@ -2,8 +2,8 @@ import { mkdtempSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const dataDir = mkdtempSync(resolve(tmpdir(), 'rerun-skill-propose-'))
-process.env.RERUN_DATA_DIR = dataDir
+const dataDir = mkdtempSync(resolve(tmpdir(), 'lumvika-skill-propose-'))
+process.env.LUMVIKA_DATA_DIR = dataDir
 
 const { describe, expect, it, beforeAll } = await import('vitest')
 const { z } = await import('zod')
@@ -13,7 +13,7 @@ const { writeSkill } = await import('../../skills/loader.js')
 const { skillsDir } = await import('../../config/paths.js')
 const { listSessionSkillProposals, transitionSkillProposal } = await import('../../db/repos/skill-proposals.js')
 const { getSystemDb } = await import('../../db/systemDb.js')
-const { skillProposalInputSchema } = await import('@rerun/contracts')
+const { skillProposalInputSchema } = await import('@lumvika/contracts')
 
 const id = 'proposer'
 const announced: Array<{ proposalId: string; mode: string; title: string }> = []

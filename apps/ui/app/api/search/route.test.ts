@@ -15,13 +15,13 @@ vi.mock('@/lib/search/cache', async importOriginal => ({ ...(await importOrigina
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn(() => ({ from })) }))
 
 const WORKSPACE_ID = 7
-const RESULTS = [{ title: 'Rerun', url: 'https://rerun.build', snippet: 'Coworkers that run' }]
+const RESULTS = [{ title: 'Lumvika', url: 'https://lumvika.com', snippet: 'Coworkers that run' }]
 const PAGE = Array.from({ length: 20 }, (_, i) => ({ title: `Result ${i + 1}`, url: `https://example.com/${i + 1}`, snippet: '' }))
 
-function searchRequest({ token = 'engine-key', body = { query: 'rerun', maxResults: 3 } }: { token?: string | null; body?: unknown } = {}) {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-rerun-agent': 'surfer' }
+function searchRequest({ token = 'engine-key', body = { query: 'lumvika', maxResults: 3 } }: { token?: string | null; body?: unknown } = {}) {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-lumvika-agent': 'surfer' }
     if (token !== null) headers.authorization = `Bearer ${token}`
-    return new Request('https://rerun.test/api/search', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
+    return new Request('https://lumvika.test/api/search', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
 }
 
 describe('POST /api/search', () => {
@@ -52,7 +52,7 @@ describe('POST /api/search', () => {
     it('refuses a body that is not JSON, or carries no query', async () => {
         expect((await POST(searchRequest({ body: 'not json' }))).status).toBe(400)
         expect((await POST(searchRequest({ body: { query: '' } }))).status).toBe(400)
-        expect((await POST(searchRequest({ body: { query: 'rerun', maxResults: 21 } }))).status).toBe(400)
+        expect((await POST(searchRequest({ body: { query: 'lumvika', maxResults: 21 } }))).status).toBe(400)
         expect(searchBrave).not.toHaveBeenCalled()
     })
 
@@ -70,9 +70,9 @@ describe('POST /api/search', () => {
 
         expect(response.status).toBe(200)
         await expect(response.json()).resolves.toEqual({ results: RESULTS })
-        expect(searchBrave).toHaveBeenCalledWith('rerun', 20)
+        expect(searchBrave).toHaveBeenCalledWith('lumvika', 20)
         expect(from).toHaveBeenCalledWith('web_search_events')
-        expect(insert).toHaveBeenCalledWith(expect.objectContaining({ workspace_id: WORKSPACE_ID, engine_agent_id: 'surfer', query: 'rerun', outcome: 'ok', result_count: 1, provider_status: 200, cached: false }))
+        expect(insert).toHaveBeenCalledWith(expect.objectContaining({ workspace_id: WORKSPACE_ID, engine_agent_id: 'surfer', query: 'lumvika', outcome: 'ok', result_count: 1, provider_status: 200, cached: false }))
     })
 
     it('records a search that found nothing as empty', async () => {
@@ -107,18 +107,18 @@ describe('POST /api/search', () => {
     it('asks Brave for a full page, keeps it, and returns only what was asked', async () => {
         vi.mocked(searchBrave).mockResolvedValue({ status: 200, ok: true, results: PAGE })
 
-        const response = await POST(searchRequest({ body: { query: '  Rerun  AI ', maxResults: 3 } }))
+        const response = await POST(searchRequest({ body: { query: '  Lumvika  AI ', maxResults: 3 } }))
 
         await expect(response.json()).resolves.toEqual({ results: PAGE.slice(0, 3) })
-        expect(readCachedSearch).toHaveBeenCalledWith('rerun ai')
-        expect(storeSearch).toHaveBeenCalledWith('rerun ai', PAGE)
+        expect(readCachedSearch).toHaveBeenCalledWith('lumvika ai')
+        expect(storeSearch).toHaveBeenCalledWith('lumvika ai', PAGE)
         expect(insert).toHaveBeenCalledWith(expect.objectContaining({ result_count: 3, cached: false }))
     })
 
     it('answers a query already searched from the cache, without paying Brave', async () => {
         vi.mocked(readCachedSearch).mockResolvedValue(PAGE)
 
-        const response = await POST(searchRequest({ body: { query: 'rerun', maxResults: 5 } }))
+        const response = await POST(searchRequest({ body: { query: 'lumvika', maxResults: 5 } }))
 
         expect(response.status).toBe(200)
         await expect(response.json()).resolves.toEqual({ results: PAGE.slice(0, 5) })

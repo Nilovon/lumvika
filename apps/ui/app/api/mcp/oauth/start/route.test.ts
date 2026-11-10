@@ -18,7 +18,7 @@ const SESSION_WORKSPACE = 1
 
 const RESOURCE_METADATA_URL = 'https://mcp.acme.test/.well-known/oauth-protected-resource/mcp'
 const AUTH_SERVER_METADATA_URL = 'https://auth.acme.test/.well-known/oauth-authorization-server'
-const CLIENT_METADATA_DOCUMENT = 'https://rerun.test/api/mcp/oauth/client-metadata'
+const CLIENT_METADATA_DOCUMENT = 'https://lumvika.test/api/mcp/oauth/client-metadata'
 
 const AUTH_SERVER_METADATA = {
     authorization_endpoint: 'https://auth.acme.test/authorize',
@@ -37,9 +37,9 @@ const fetchMock = vi.fn(async (input: string | URL) => {
 
 function start(body: Record<string, unknown>) {
     return POST(
-        new Request('https://rerun.test/api/mcp/oauth/start', {
+        new Request('https://lumvika.test/api/mcp/oauth/start', {
             method: 'POST',
-            headers: { host: 'rerun.test', 'x-forwarded-proto': 'https' },
+            headers: { host: 'lumvika.test', 'x-forwarded-proto': 'https' },
             body: JSON.stringify({ agentId: 'agent-1', serverName: 'acme', mcpUrl: 'https://mcp.acme.test/mcp', ...body }),
         }),
     ) as Promise<NextResponse>
@@ -76,7 +76,7 @@ describe('POST /api/mcp/oauth/start', () => {
         const authorize = new URL(authorizationUrl)
         expect(authorize.origin + authorize.pathname).toBe('https://auth.acme.test/authorize')
         expect(authorize.searchParams.get('code_challenge_method')).toBe('S256')
-        expect(authorize.searchParams.get('redirect_uri')).toBe('https://rerun.test/api/mcp/oauth/callback')
+        expect(authorize.searchParams.get('redirect_uri')).toBe('https://lumvika.test/api/mcp/oauth/callback')
 
         const [cookie] = res.cookies.getAll()
         expect(cookie.name).toBe(`mcp_oauth_${authorize.searchParams.get('state')}`)

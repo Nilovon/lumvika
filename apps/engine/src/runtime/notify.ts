@@ -1,4 +1,4 @@
-import type { MessageAuthor } from '@rerun/contracts'
+import type { MessageAuthor } from '@lumvika/contracts'
 import { env } from '../config/env.js'
 import { nowIso } from '../lib/ids.js'
 import { logger } from '../lib/logger.js'
@@ -54,7 +54,7 @@ export function authorMetadata(author: MessageAuthor | undefined): { authorId?: 
 const TIMEOUT_MS = 5000
 
 export async function sendNotification(input: NotificationInput): Promise<{ delivered: boolean; reason?: string }> {
-    const { RERUN_HUB_BASE_URL: hub, RERUN_API_KEY: token } = env()
+    const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: token } = env()
     if (!hub || !token) {
         logger.debug({ agent: input.agentId }, 'notification skipped: webhook not configured')
         return { delivered: false, reason: 'webhook not configured' }

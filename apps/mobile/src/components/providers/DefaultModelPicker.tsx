@@ -1,4 +1,4 @@
-import type { AiConnectionsView, ModelChoice } from '@rerun/contracts'
+import type { AiConnectionsView, ModelChoice } from '@lumvika/contracts'
 import { Fragment } from 'react'
 import { View } from 'react-native'
 import { useTranslations } from 'use-intl'

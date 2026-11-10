@@ -10,7 +10,7 @@ const cache = new Map<string, { at: number; analysis: CompanyAnalysis }>()
 // is optional, the site may block crawlers, and the conversation carries on either way, so the
 // caller only ever needs to know whether a profile came back.
 //
-// Kept out of the server action so the foreman route can reach it: a route handler calling a
+// Kept out of the server action so the steward route can reach it: a route handler calling a
 // `'use server'` export would be invoking an action endpoint from inside the server.
 export async function analyzeCompanyProfile(input: string): Promise<{ ok: true; analysis: CompanyAnalysis } | { ok: false; error: string }> {
     const url = companySiteUrl(input)

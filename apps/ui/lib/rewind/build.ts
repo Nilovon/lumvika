@@ -1,6 +1,6 @@
 import { coworkerLanguageFor } from '@/app/api/_services/coworker-language.service'
-import { languageName } from '@rerun/i18n'
-import { rewindPayloadSchema, type RewindPayload } from '@rerun/contracts'
+import { languageName } from '@lumvika/i18n'
+import { rewindPayloadSchema, type RewindPayload } from '@lumvika/contracts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Json } from '@/app/api/database.types'
 import { findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'

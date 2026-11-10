@@ -1,4 +1,4 @@
-import type { SessionSource, SessionStatus } from '@rerun/contracts'
+import type { SessionSource, SessionStatus } from '@lumvika/contracts'
 
 // A coworker's conversations as the hub could hand them to the app: its status, where it came from,
 // and whether it finished after the person last opened it (`session_reads`).

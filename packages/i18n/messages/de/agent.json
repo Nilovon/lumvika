@@ -298,8 +298,8 @@
             },
             "paidData": {
                 "label": "Leads-, SEO- & Social-Daten",
-                "blurb": "Bezahlt aus deinem Rerun-Guthaben",
-                "help": "Erlaubt dem Coworker, Interessenten samt geschäftlicher E-Mail-Adressen, Telefonnummern und Firmendaten zu finden, Suchvolumen, Keyword-Ideen und Backlinks zu prüfen, Google-Ergebnisse und lokale Unternehmen zu lesen sowie öffentliche Profile und Beiträge auf LinkedIn, TikTok, Instagram, X, YouTube, Facebook und Reddit zu lesen, ohne Apollo-, Semrush- oder Scraping-Abo. Jeder Aufruf wird aus deinem Rerun-Guthaben bezahlt, das der Coworker ausgibt, wenn eine Aufgabe es erfordert."
+                "blurb": "Bezahlt aus deinem Lumvika-Guthaben",
+                "help": "Erlaubt dem Coworker, Interessenten samt geschäftlicher E-Mail-Adressen, Telefonnummern und Firmendaten zu finden, Suchvolumen, Keyword-Ideen und Backlinks zu prüfen, Google-Ergebnisse und lokale Unternehmen zu lesen sowie öffentliche Profile und Beiträge auf LinkedIn, TikTok, Instagram, X, YouTube, Facebook und Reddit zu lesen, ohne Apollo-, Semrush- oder Scraping-Abo. Jeder Aufruf wird aus deinem Lumvika-Guthaben bezahlt, das der Coworker ausgibt, wenn eine Aufgabe es erfordert."
             },
             "requestSecret": {
                 "label": "Nach Zugangsdaten fragen",
@@ -414,7 +414,7 @@
     },
     "modelsShared": {
         "boxManageReason": "Nur ein Admin oder Manager dieser Box kann das ändern",
-        "creditPaused": "Rerun-Guthaben ist pausiert"
+        "creditPaused": "Lumvika-Guthaben ist pausiert"
     },
     "modelSelector": {
         "setUp": "Modell einrichten",

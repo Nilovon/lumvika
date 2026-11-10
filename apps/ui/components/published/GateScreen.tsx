@@ -1,11 +1,11 @@
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
-import { R_PATH } from '@/components/layout/Logo'
+import { MARK_PATH } from '@/components/layout/Logo'
 import { Icon } from '@/components/ui/icon'
 import { LinkedPair } from '@/components/ui/linked-pair'
 import { PUBLISHED_PAGE_MARKER } from '@/lib/published/marker'
 
-const BADGE_URL = 'https://rerun.build/?utm_source=published&utm_medium=gate'
+const BADGE_URL = 'https://lumvika.com/?utm_source=published&utm_medium=gate'
 
 export type GateBrand = { name: string; iconUrl: string | null }
 
@@ -18,18 +18,18 @@ export function WorkspaceTile({ brand }: { brand: GateBrand }) {
     )
 }
 
-// The tile a link that no longer exists shows: no workspace is left to name it, so Rerun does.
-export function RerunTile() {
+// The tile a link that no longer exists shows: no workspace is left to name it, so Lumvika does.
+export function LumvikaTile() {
     return (
         <span aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-foreground">
             <svg viewBox="0 0 512 512" className="size-6">
-                <path d={R_PATH} fill="currentColor" />
+                <path d={MARK_PATH} fill="currentColor" />
             </svg>
         </span>
     )
 }
 
-function MadeWithRerun({ className }: { className?: string }) {
+function MadeWithLumvika({ className }: { className?: string }) {
     const t = useTranslations('published.gate')
     return (
         <a
@@ -39,7 +39,7 @@ function MadeWithRerun({ className }: { className?: string }) {
             className={`flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/12 bg-[#0b0b0c] px-3.5 py-2.5 text-xs font-medium text-[#fafafa] shadow-[0_8px_24px_rgba(0,0,0,.24)] ${className ?? ''}`}
         >
             <svg viewBox="0 0 512 512" aria-hidden className="size-3.5">
-                <path d={R_PATH} fill="currentColor" />
+                <path d={MARK_PATH} fill="currentColor" />
             </svg>
             {t('madeWith')}
         </a>
@@ -61,7 +61,7 @@ export function GateScreen({ brand, lock, mark, title, subtitle, children }: { b
                 </div>
                 {children && <div className="flex w-full flex-col gap-2.5">{children}</div>}
             </div>
-            <MadeWithRerun className="absolute right-4 bottom-4 max-md:right-1/2 max-md:translate-x-1/2" />
+            <MadeWithLumvika className="absolute right-4 bottom-4 max-md:right-1/2 max-md:translate-x-1/2" />
         </main>
     )
 }

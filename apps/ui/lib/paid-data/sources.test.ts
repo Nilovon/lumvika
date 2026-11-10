@@ -1,4 +1,4 @@
-import { paidCallReceipt, paidDataSourceOf, paidDataSourcesByTurn } from '@rerun/contracts'
+import { paidCallReceipt, paidDataSourceOf, paidDataSourcesByTurn } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
 import { toApiMessages, type HistoryMessage } from '@/lib/chat/engine-history'
@@ -79,7 +79,7 @@ describe('paidDataSourcesByTurn', () => {
     })
 
     it('keeps each turn apart and reads a call made through the bridge', () => {
-        const bridged = { ...paid('people.email.find', {}, found('hunter', { email: 'a@b.co' })), type: 'dynamic-tool', toolName: 'mcp__rerun__paid_data' }
+        const bridged = { ...paid('people.email.find', {}, found('hunter', { email: 'a@b.co' })), type: 'dynamic-tool', toolName: 'mcp__lumvika__paid_data' }
         const byTurn = paidDataSourcesByTurn([user('u1'), assistant('a1', [bridged]), user('u2'), assistant('a2', [{ type: 'text', text: 'Hi' }])])
         expect([...byTurn.keys()]).toEqual(['a1'])
     })

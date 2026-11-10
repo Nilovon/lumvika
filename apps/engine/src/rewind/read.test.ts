@@ -3,8 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-rewind-read-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-rewind-read-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { agentDir, workspaceDir } = await import('../config/paths.js')
@@ -31,9 +31,9 @@ beforeAll(async () => {
     await createAgent('busy', [{ name: 'gmail' }, { name: 'drive-server' }, { name: 'hs' }])
     await createAgent('quiet')
 
-    await mkdir(resolve(workspaceDir('busy'), '.rerun'), { recursive: true })
+    await mkdir(resolve(workspaceDir('busy'), '.lumvika'), { recursive: true })
     await writeFile(
-        resolve(workspaceDir('busy'), '.rerun/services.json'),
+        resolve(workspaceDir('busy'), '.lumvika/services.json'),
         JSON.stringify({ services: { 'google-drive': { oauth: { serverName: 'drive-server' } }, hubspot: { managed: { serverName: 'hs' } }, gmail: {} } }),
     )
 
@@ -56,7 +56,7 @@ INSERT INTO tool_calls (id, run_id, agent_id, session_id, step_number, tool_name
     ('t5', 'long', 'busy', 's', 0, 'hs_search', 0, '2026-09-08T00:00:00.000Z'),
     ('t6', 'long', 'busy', 's', 0, 'hs_search', 1, '2026-09-08T00:00:00.000Z'),
     ('t7', 'long', 'busy', 's', 0, 'hs_search', 0, '2026-09-08T00:00:00.000Z'),
-    ('t8', 'long', 'busy', 's', 0, 'mcp__rerun__notify_user', 0, '2026-09-08T00:00:00.000Z'),
+    ('t8', 'long', 'busy', 's', 0, 'mcp__lumvika__notify_user', 0, '2026-09-08T00:00:00.000Z'),
     ('t-before', 'long', 'busy', 's', 0, 'web_search', 1, '2026-09-06T23:59:59.999Z'),
     ('t-to', 'long', 'busy', 's', 0, 'web_search', 1, '2026-09-14T00:00:00.000Z'),
     ('t-foreign', 'long', 'other', 's', 0, 'web_search', 1, '2026-09-08T00:00:00.000Z');
@@ -146,9 +146,9 @@ describe('readAgentRewind', () => {
 
     it('counts every account of an app toward that app', async () => {
         await createAgent('multi', [{ name: 'gmail' }, { name: 'gmail-k3x9ab' }, { name: 'gmail-legacy' }, { name: 'gmail-auth' }])
-        await mkdir(resolve(workspaceDir('multi'), '.rerun'), { recursive: true })
+        await mkdir(resolve(workspaceDir('multi'), '.lumvika'), { recursive: true })
         await writeFile(
-            resolve(workspaceDir('multi'), '.rerun/services.json'),
+            resolve(workspaceDir('multi'), '.lumvika/services.json'),
             JSON.stringify({
                 services: {
                     gmail: { mcpServers: ['gmail'] },

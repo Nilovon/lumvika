@@ -1,7 +1,7 @@
-import { defaultExcludedPaths } from '@rerun/contracts'
+import { defaultExcludedPaths } from '@lumvika/contracts'
 import { z } from 'zod'
 import { requireSandboxAuthorKey, type TemplateAuthorScope } from '@/app/api/_auth/expert'
-import { isPayoutReady } from '@rerun/cloud/marketplace.server'
+import { isPayoutReady } from '@lumvika/cloud/marketplace.server'
 import { asString, asStringArray, requireConfirmation, requireString } from '@/lib/mcp/args'
 import {
     addAuthorTemplateImage,
@@ -185,7 +185,7 @@ async function runTemplateTool(workspaceId: number, name: string, args: Record<s
             return {
                 templateId,
                 status: 'in_review',
-                note: 'Handed to the Rerun team. It stays private and frozen until they publish it or send it back. withdraw_template takes it back to draft.',
+                note: 'Handed to the Lumvika team. It stays private and frozen until they publish it or send it back. withdraw_template takes it back to draft.',
             }
         }
 
@@ -263,7 +263,7 @@ async function runTemplateTool(workspaceId: number, name: string, args: Record<s
                 alt: asString(args.alt),
                 cover: args.cover === true,
             })
-            return { templateId, url, position, galleryCount, note: 'Stored in Rerun media, not hotlinked from the URL you passed.' }
+            return { templateId, url, position, galleryCount, note: 'Stored in Lumvika media, not hotlinked from the URL you passed.' }
         }
 
         default:

@@ -1,8 +1,8 @@
 'use client'
 
-import { ATTENTION_STATUS_META, AttentionBuddy, type InboxEntry } from '@rerun/ui/inbox'
-import { Button } from '@rerun/ui/primitives'
-import { shortRelativeTime } from '@rerun/ui/time'
+import { ATTENTION_STATUS_META, AttentionBuddy, type InboxEntry } from '@lumvika/ui/inbox'
+import { Button } from '@lumvika/ui/primitives'
+import { shortRelativeTime } from '@lumvika/ui/time'
 import { cjk } from '@streamdown/cjk'
 import { code } from '@streamdown/code'
 import { math } from '@streamdown/math'

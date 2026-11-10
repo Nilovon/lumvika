@@ -7,8 +7,8 @@
 
 import { execFileSync, spawnSync } from 'node:child_process'
 
-const PUBLIC_REPO = 'rerun-build/rerun'
-const PUBLIC_URL = /github\.com[:/]rerun-build\/rerun(\.git)?\/?$/i
+const PUBLIC_REPO = 'schnebel-technologie/lumvika'
+const PUBLIC_URL = /github\.com[:/]schnebel-technologie\/lumvika(\.git)?\/?$/i
 // Not a URL git can reach: a push to origin fails here, even with --no-verify.
 const BLOCKED_PUSH_URL = 'no-push://this-workspace-holds-a-vulnerability-fix-push-to-the-advisory-fork'
 const SEVERITIES = ['low', 'medium', 'high', 'critical']
@@ -70,7 +70,7 @@ function checkWorkspace() {
     const originUrl = gitValue('remote', 'get-url', 'origin')
     if (!PUBLIC_URL.test(originUrl)) fail(`origin is not ${PUBLIC_REPO} (${originUrl || 'no origin'}).`)
 
-    const existing = gitValue('config', '--get', 'rerun.securityAdvisory')
+    const existing = gitValue('config', '--get', 'lumvika.securityAdvisory')
     if (existing) fail(`This workspace already holds the fix of ${existing}. Start another one in a new workspace.`)
 
     const branch = git('branch', '--show-current')
@@ -86,7 +86,7 @@ function openAdvisory({ advisory, title, severity }) {
         summary: title,
         description: 'To be completed: what is affected, how it can be exploited, and how the fix closes it.',
         severity,
-        vulnerabilities: [{ package: { ecosystem: 'other', name: 'rerun' } }],
+        vulnerabilities: [{ package: { ecosystem: 'other', name: 'lumvika' } }],
     })
 }
 
@@ -130,7 +130,7 @@ function lockWorkspace(ghsaId, cloneUrl) {
     git('config', '--worktree', `remote.${remote}.fetch`, `+refs/heads/*:refs/remotes/${remote}/*`)
     git('config', '--worktree', 'remote.pushDefault', remote)
     git('config', '--worktree', 'remote.origin.pushurl', BLOCKED_PUSH_URL)
-    git('config', '--worktree', 'rerun.securityAdvisory', ghsaId)
+    git('config', '--worktree', 'lumvika.securityAdvisory', ghsaId)
     git('fetch', '--quiet', remote)
     return remote
 }
@@ -155,4 +155,4 @@ Next:
   1. Write the fix and run the tests locally: GitHub Actions does not run in an advisory fork.
   2. git push
   3. gh pr create --repo ${fork.full_name} --base dev
-  4. Once Rerun Cloud runs the fix, merge and publish from the advisory page.`)
+  4. Once Lumvika Cloud runs the fix, merge and publish from the advisory page.`)

@@ -2,14 +2,14 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-stats-'))
-process.env.RERUN_API_KEY = ''
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-stats-'))
+process.env.LUMVIKA_API_KEY = ''
 
 const { beforeAll, describe, expect, it } = await import('vitest')
 const { getSystemDb } = await import('../systemDb.js')
 const { aggregateStats } = await import('./stats.js')
 import type { StatsRepoQuery } from './stats.js'
-import type { StatsPoint } from '@rerun/contracts'
+import type { StatsPoint } from '@lumvika/contracts'
 
 const AGENT = 'stats'
 

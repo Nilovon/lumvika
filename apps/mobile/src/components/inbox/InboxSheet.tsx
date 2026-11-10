@@ -1,4 +1,4 @@
-import type { CoworkerRule, InboxItem } from '@rerun/contracts'
+import type { CoworkerRule, InboxItem } from '@lumvika/contracts'
 import { router } from 'expo-router'
 import { SymbolView } from 'expo-symbols'
 import { Alert, ScrollView, View } from 'react-native'

@@ -1,5 +1,5 @@
 import { PowerBars } from '@/components/ui/power-bars'
-import { Badge } from '@rerun/ui/primitives'
+import { Badge } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
@@ -12,7 +12,7 @@ type ModelTierRowProps = {
     trailing?: ReactNode
 }
 
-// The inside of a Rerun tier's row, and of any row the plan locks, shared by every model picker. The
+// The inside of a Lumvika tier's row, and of any row the plan locks, shared by every model picker. The
 // container (a CommandItem, a SelectItem) stays the picker's own, and so does the check that marks
 // the current pick.
 export function ModelTierRow({ label, description, power, locked, trailing }: ModelTierRowProps) {

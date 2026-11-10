@@ -1,4 +1,4 @@
-// The web Foreman's idle life (packages/ui/src/foreman/Orb.tsx, orb-tuning.ts, foreman-face.tsx),
+// The web Steward's idle life (packages/ui/src/steward/Orb.tsx, orb-tuning.ts, steward-face.tsx),
 // as worklets: the eyes drift, the whole ball turns as if looking around, a band of light crosses
 // the glass and, while it thinks, the ball spins on itself now and then.
 

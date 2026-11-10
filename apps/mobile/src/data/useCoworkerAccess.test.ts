@@ -1,4 +1,4 @@
-import { FOREMAN_AGENT_ID, type AgentView, type BoardAgent, type BoxAccessLevel } from '@rerun/contracts'
+import { STEWARD_AGENT_ID, type AgentView, type BoardAgent, type BoxAccessLevel } from '@lumvika/contracts'
 import { act, renderHook } from '@testing-library/react-native'
 
 import { UNKNOWN_ACCESS } from '@/auth/access'
@@ -66,8 +66,8 @@ describe('useCoworkerAccess', () => {
         expect(result.current).toEqual({ access: 'use', known: true })
     })
 
-    it('hands the Foreman to everyone without asking the hub', async () => {
-        const { result } = await renderHook(() => useCoworkerAccess(FOREMAN_AGENT_ID))
+    it('hands the Steward to everyone without asking the hub', async () => {
+        const { result } = await renderHook(() => useCoworkerAccess(STEWARD_AGENT_ID))
         await act(async () => {})
         expect(result.current).toEqual({ access: 'manage', known: true })
         expect(mockFetchAgentView).not.toHaveBeenCalled()

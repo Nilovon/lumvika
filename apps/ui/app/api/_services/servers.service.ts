@@ -11,7 +11,7 @@ import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { AppError, type ErrorCode, type ErrorParams } from '@/lib/i18n/action-error'
 
 // The servers of a self-hosted install: an engine somebody runs on a machine of their own, attached
-// to one workspace. The pool of Rerun Cloud never shows here (see SERVERS_ENABLED).
+// to one workspace. The pool of Lumvika Cloud never shows here (see SERVERS_ENABLED).
 
 export const PAIRING_TOKEN_PREFIX = 'rrn_pair_'
 const PAIRING_TTL_MS = 15 * 60_000
@@ -104,7 +104,7 @@ export async function attachServerManually(workspaceId: number, input: { url: st
 
 export type WorkspaceServer = {
     address: string
-    // False for a machine of Rerun Cloud's pool, which cannot be removed from here.
+    // False for a machine of Lumvika Cloud's pool, which cannot be removed from here.
     removable: boolean
     health: { reachable: true; commit: string | null; activeAgents: number; startedAt: string | null } | { reachable: false }
 }

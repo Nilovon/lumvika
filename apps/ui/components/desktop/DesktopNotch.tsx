@@ -1,6 +1,6 @@
 'use client'
 
-import type { DesktopApp } from '@rerun/contracts'
+import type { DesktopApp } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'

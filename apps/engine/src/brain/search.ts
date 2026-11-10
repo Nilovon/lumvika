@@ -1,4 +1,4 @@
-import type { BrainPageRef, BrainPageType } from '@rerun/contracts'
+import type { BrainPageRef, BrainPageType } from '@lumvika/contracts'
 import { getBrainDb } from '../db/brainDb.js'
 import { embedText } from '../memory/embed.js'
 

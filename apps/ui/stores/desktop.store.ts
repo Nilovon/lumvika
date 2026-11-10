@@ -1,4 +1,4 @@
-import type { TakeoverResult } from '@rerun/contracts'
+import type { TakeoverResult } from '@lumvika/contracts'
 import { create } from 'zustand'
 
 // The browser an agent asked a person to take over, and the chat card that asked for it.

@@ -3,7 +3,7 @@
 // handles and a complete folder, then deletes everything it created.
 //
 // Start an engine first:
-//   RERUN_DATA_DIR=/tmp/rerun-install-verify RERUN_PORT=3000 pnpm -C ../engine exec tsx src/cli/bin.ts run
+//   LUMVIKA_DATA_DIR=/tmp/lumvika-install-verify LUMVIKA_PORT=3000 pnpm -C ../engine exec tsx src/cli/bin.ts run
 // Then run: ../engine/node_modules/.bin/tsx --env-file=.env scripts/verify-template-install.mts
 
 import { getSpaceConnection } from '../app/api/_services/space.service'
@@ -11,7 +11,7 @@ import { deleteAgent as engineDeleteAgent, getAgent as engineGetAgent, listSkill
 import { installTemplate } from '../lib/templates/install'
 import { workspaceActor } from '../app/api/_auth/access'
 import { createServiceRoleClient } from '../supabase/serviceRole'
-import { selectMany } from '@rerun/db/helpers'
+import { selectMany } from '@lumvika/db/helpers'
 
 // Defaults to the local `dev` space, whose engine_host is 127.0.0.1, so the run stays on the
 // engine started above rather than on someone's real box.

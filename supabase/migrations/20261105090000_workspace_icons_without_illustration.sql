@@ -1,6 +1,6 @@
 -- A self-hosted install ships the `blob-illustrations` bucket empty, yet every workspace used to be
 -- given one of its files as a logo: the app showed a broken image in its place. A workspace may now
--- have no icon, and such a dead link is cleared so the app falls back on its default mark. On Rerun
+-- have no icon, and such a dead link is cleared so the app falls back on its default mark. On Lumvika
 -- Cloud every file is in the bucket and no row matches.
 alter table public.workspaces alter column icon_url drop not null;
 

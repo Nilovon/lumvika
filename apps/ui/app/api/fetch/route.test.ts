@@ -16,9 +16,9 @@ const WORKSPACE_ID = 7
 const PAGE_URL = 'https://www.g2.com/products/slack/reviews'
 
 function fetchRequest({ token = 'engine-key', body = { url: PAGE_URL, directStatus: 403 } }: { token?: string | null; body?: unknown } = {}) {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-rerun-agent': 'surfer' }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-lumvika-agent': 'surfer' }
     if (token !== null) headers.authorization = `Bearer ${token}`
-    return new Request('https://rerun.test/api/fetch', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
+    return new Request('https://lumvika.test/api/fetch', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
 }
 
 describe('POST /api/fetch', () => {

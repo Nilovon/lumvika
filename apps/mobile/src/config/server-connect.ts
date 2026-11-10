@@ -1,9 +1,9 @@
-import { clientConfigSchema } from '@rerun/contracts'
+import { clientConfigSchema } from '@lumvika/contracts'
 
 import { ApiError, clientHeader, createApiClient } from '@/api/client'
 import type { CustomServer } from '@/config/custom-server'
 
-export type ServerProblem = 'invalid' | 'insecure' | 'unreachable' | 'not-rerun' | 'outdated'
+export type ServerProblem = 'invalid' | 'insecure' | 'unreachable' | 'not-lumvika' | 'outdated'
 
 export type ServerOrigin = { ok: true; origin: string } | { ok: false; problem: ServerProblem }
 
@@ -54,7 +54,7 @@ function reachableOverHttp(url: string): boolean {
 
 type Request = (path: string, init: { signal: AbortSignal }) => Promise<unknown>
 
-// Asks a hub how a phone signs in to it. An address that answers but is not a Rerun hub, or is one
+// Asks a hub how a phone signs in to it. An address that answers but is not a Lumvika hub, or is one
 // from before the app could pick a server, is told apart from one that does not answer at all.
 export async function lookUpServer(origin: string, request: Request = createApiClient({ baseUrl: origin, clientHeader })): Promise<ServerLookup> {
     const controller = new AbortController()
@@ -63,13 +63,13 @@ export async function lookUpServer(origin: string, request: Request = createApiC
     try {
         payload = await request('/api/v1/client', { signal: controller.signal })
     } catch (error) {
-        return { ok: false, problem: error instanceof ApiError ? 'not-rerun' : 'unreachable' }
+        return { ok: false, problem: error instanceof ApiError ? 'not-lumvika' : 'unreachable' }
     } finally {
         clearTimeout(timer)
     }
 
     const config = clientConfigSchema.safeParse(payload)
-    if (!config.success) return { ok: false, problem: 'not-rerun' }
+    if (!config.success) return { ok: false, problem: 'not-lumvika' }
     if (!config.data.server) return { ok: false, problem: 'outdated' }
     if (!reachableOverHttp(config.data.server.supabaseUrl)) return { ok: false, problem: 'insecure' }
     return { ok: true, server: { apiUrl: origin, ...config.data.server } }

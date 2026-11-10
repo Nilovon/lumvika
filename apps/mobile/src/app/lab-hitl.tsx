@@ -13,7 +13,7 @@ import { ThemeScope, useColorSchemeName } from '@/theme/theme'
 import { palette, spacing, type ColorScheme } from '@/theme/tokens'
 
 // Dev only: every HITL widget and its receipts on the chat background, without the lab's animated
-// buddies. `rerun://lab-hitl?scheme=dark` forces a theme.
+// buddies. `lumvika://lab-hitl?scheme=dark` forces a theme.
 
 const noop = () => {}
 
@@ -45,7 +45,7 @@ const FREE_TEXT = { questions: [{ question: 'What should the subject line say?',
 const LINEAR = { name: 'linear', displayName: 'Linear', host: 'mcp.linear.app', icon: null, status: 'needs_auth' as const, canSignIn: true }
 const SECRET = { reason: 'I need your Pipedrive key to sync the deals.', secrets: [{ key: 'PIPEDRIVE_API_KEY', label: 'Pipedrive API key', docsUrl: 'https://pipedrive.readme.io/docs/how-to-find-the-api-token' }] }
 
-const hitlProps = (toolCallId: string, input: Record<string, unknown>, kind: 'question' | 'approval' | 'secret' | 'takeover' = 'question') => ({ pending: { kind, toolCallId, input, output: undefined }, agentId: 'agent-scout', coworkerName: 'Scout', webUrl: 'https://app.rerun.build', onAnswer: noop, onDismiss: noop })
+const hitlProps = (toolCallId: string, input: Record<string, unknown>, kind: 'question' | 'approval' | 'secret' | 'takeover' = 'question') => ({ pending: { kind, toolCallId, input, output: undefined }, agentId: 'agent-scout', coworkerName: 'Scout', webUrl: 'https://app.lumvika.com', onAnswer: noop, onDismiss: noop })
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
     return (
@@ -111,7 +111,7 @@ export default function LabHitl() {
                 </Group>
                 <Group title="What the app cannot draw">
                     <HitlBlock {...hitlProps('lab-f1', { ...QUESTION, v: 9 })} />
-                    <UnknownCallBlock call={{ toolCallId: 'lab-u1', toolName: 'request_signature', input: { reason: 'Sign the NDA with Acme before I send the proposal.' } }} coworkerName="Scout" webUrl="https://app.rerun.build" />
+                    <UnknownCallBlock call={{ toolCallId: 'lab-u1', toolName: 'request_signature', input: { reason: 'Sign the NDA with Acme before I send the proposal.' } }} coworkerName="Scout" webUrl="https://app.lumvika.com" />
                 </Group>
             </ScrollView>
         </ThemeScope>

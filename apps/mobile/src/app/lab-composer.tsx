@@ -51,7 +51,7 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 function LiveComposer() {
     const [value, setValue] = useState('')
     const [attachments, setAttachments] = useState<ComposerAttachment[]>([])
-    return <Composer value={value} onChangeText={setValue} attachments={attachments} onAttachmentsChange={setAttachments} skills={SKILLS} mentionAgents={AGENTS} onSend={() => setValue('')} onStop={noop} running={false} placeholder="Message Pulse" model={findModel('rerun-max')} onOpenModel={noop} />
+    return <Composer value={value} onChangeText={setValue} attachments={attachments} onAttachmentsChange={setAttachments} skills={SKILLS} mentionAgents={AGENTS} onSend={() => setValue('')} onStop={noop} running={false} placeholder="Message Pulse" model={findModel('lumvika-max')} onOpenModel={noop} />
 }
 
 function States({ scheme }: { scheme: ColorScheme }) {
@@ -59,7 +59,7 @@ function States({ scheme }: { scheme: ColorScheme }) {
         <ThemeScope scheme={scheme}>
             <View style={{ gap: spacing.lg, padding: spacing.md, borderRadius: 18, backgroundColor: palette[scheme].background, borderWidth: 1, borderColor: palette[scheme].border }}>
                 <Group title="Attachments">
-                    <Composer value="Summarise these for the board" onChangeText={noop} attachments={ATTACHMENTS} onSend={noop} onStop={noop} running={false} placeholder="Message Pulse" model={findModel('rerun-max')} onOpenModel={noop} />
+                    <Composer value="Summarise these for the board" onChangeText={noop} attachments={ATTACHMENTS} onSend={noop} onStop={noop} running={false} placeholder="Message Pulse" model={findModel('lumvika-max')} onOpenModel={noop} />
                 </Group>
                 <Group title="/ menu">
                     <MentionSuggestions trigger="/" items={SKILL_ITEMS} onPick={noop} />

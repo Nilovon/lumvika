@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardAction, CardContent, CardHeader, CardTitle, ScrollFade } from '@rerun/ui/primitives'
+import { Card, CardAction, CardContent, CardHeader, CardTitle, ScrollFade } from '@lumvika/ui/primitives'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // The placeholder for MyTemplateEditor, built on the same Cards and the same scroll container as the

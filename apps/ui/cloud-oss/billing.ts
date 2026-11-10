@@ -1,9 +1,9 @@
 // This build has no plans: every workspace is entitled to everything, without a limit on coworkers
 // or seats, and nothing is ever sold. The pricing figures still exist because the shared contracts
-// carry them for Rerun Cloud; nothing here quotes them.
-import type { PriceArm, TrialCopy } from '@rerun/contracts'
+// carry them for Lumvika Cloud; nothing here quotes them.
+import type { PriceArm, TrialCopy } from '@lumvika/contracts'
 
-export { PLAN_CURRENCY, TRIAL_ACTIVE_AGENTS, basePriceCents, parsePriceArm, type AddonKey, type PriceArm } from '@rerun/contracts'
+export { PLAN_CURRENCY, TRIAL_ACTIVE_AGENTS, basePriceCents, parsePriceArm, type AddonKey, type PriceArm } from '@lumvika/contracts'
 
 export const BILLING_ENABLED = false
 
@@ -15,7 +15,7 @@ export const isPaidSubscription = (_status: string | null | undefined): boolean 
 export const isWorkspaceApiEntitled = (_workspace: WorkspacePlan): boolean => true
 export const isPremiumModelEntitled = (_workspace: WorkspacePlan): boolean => true
 
-// A lifetime plan is sold through an AppSumo code, which only Rerun Cloud redeems.
+// A lifetime plan is sold through an AppSumo code, which only Lumvika Cloud redeems.
 export const isLifetimePlan = (_workspace: { plan: string | null } | null | undefined): boolean => false
 
 // null = unlimited. A number set by hand on the workspace row is still honoured.
@@ -32,16 +32,16 @@ export type WorkspaceLimitColumns = {
     max_seats: number | null
     model_access: ModelAccess
     custom_integrations: boolean
-    rerun_budget_micros: number
+    lumvika_budget_micros: number
 }
 
 export function baseLimitsToColumns(): WorkspaceLimitColumns {
-    return { max_agents: null, max_seats: null, model_access: 'best', custom_integrations: true, rerun_budget_micros: 0 }
+    return { max_agents: null, max_seats: null, model_access: 'best', custom_integrations: true, lumvika_budget_micros: 0 }
 }
 
-export type RerunCreditColumns = { rerun_budget_micros?: number | null; rerun_used_micros?: number | null; rerun_topup_micros?: number | null }
+export type LumvikaCreditColumns = { lumvika_budget_micros?: number | null; lumvika_used_micros?: number | null; lumvika_topup_micros?: number | null }
 
-export function rerunCreditTotalMicros(_workspace: RerunCreditColumns | null | undefined): number {
+export function lumvikaCreditTotalMicros(_workspace: LumvikaCreditColumns | null | undefined): number {
     return 0
 }
 

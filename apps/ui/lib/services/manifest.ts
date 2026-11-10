@@ -1,4 +1,4 @@
-import { inputDefSchema, mcpServerNameSchema, SERVICE_CATEGORIES, type InputDef } from '@rerun/contracts'
+import { inputDefSchema, mcpServerNameSchema, SERVICE_CATEGORIES, type InputDef } from '@lumvika/contracts'
 import { z } from 'zod'
 
 // A Service is a UI-only concept. Its manifest is the single source of truth for:
@@ -7,9 +7,9 @@ import { z } from 'zod'
 // The manifest is stored as JSONB in the `services.manifest` column and validated on read.
 // Secrets collected via `inputs` go to the engine .env / mcp config — never to Supabase.
 
-// The install-form field lives in @rerun/contracts so templates can describe the very
+// The install-form field lives in @lumvika/contracts so templates can describe the very
 // same "value the user must supply" without depending on apps/ui.
-export { inputDefSchema, inputOptionSchema, type InputDef, type InputOption } from '@rerun/contracts'
+export { inputDefSchema, inputOptionSchema, type InputDef, type InputOption } from '@lumvika/contracts'
 
 // Marks an mcp server that authenticates via browser OAuth (authorization-code + PKCE)
 // instead of a pasted credential. The user signs in through a popup; the resulting token
@@ -56,9 +56,9 @@ export const envKeyMappingSchema = z.object({
 })
 export type EnvKeyMapping = z.infer<typeof envKeyMappingSchema>
 
-// A managed service authenticates via Rerun's own OAuth client (one app for everyone) and
-// proxies its API calls through Rerun (/api/mcp/managed/<provider>). The user just signs in;
-// no developer console, no pasted credential. `provider` selects the Rerun-side provider
+// A managed service authenticates via Lumvika's own OAuth client (one app for everyone) and
+// proxies its API calls through Lumvika (/api/mcp/managed/<provider>). The user just signs in;
+// no developer console, no pasted credential. `provider` selects the Lumvika-side provider
 // (lib/managed/registry.ts) that owns the OAuth config + toolset.
 export const managedSchema = z.object({
     provider: z.string(),
@@ -66,7 +66,7 @@ export const managedSchema = z.object({
 export type Managed = z.infer<typeof managedSchema>
 
 // A composio service authenticates via Composio (which holds the third-party token) and
-// proxies its tool calls through Rerun (/api/mcp/composio/<slug>), scoped by a server-derived
+// proxies its tool calls through Lumvika (/api/mcp/composio/<slug>), scoped by a server-derived
 // per-agent user_id. `authConfigId` selects the Composio auth config (OAuth app + scopes) for
 // the toolkit; `allowedTools` optionally trims the toolkit's tool list.
 export const composioSchema = z.object({
@@ -76,9 +76,9 @@ export const composioSchema = z.object({
 })
 export type Composio = z.infer<typeof composioSchema>
 
-// A paid Rerun app (LinkedIn Pro first): the account belongs to the workspace and is billed by the
+// A paid Lumvika app (LinkedIn Pro first): the account belongs to the workspace and is billed by the
 // slot, the coworker picks which connected account it acts with, and its tool calls go through
-// Rerun (/api/mcp/apps/<appSlug>).
+// Lumvika (/api/mcp/apps/<appSlug>).
 export const appSchema = z.object({
     appSlug: z.string(),
 })
@@ -102,7 +102,7 @@ export const authMethodSchema = z.object({
 })
 export type AuthMethod = z.infer<typeof authMethodSchema>
 
-export { SERVICE_CATEGORIES, SERVICE_CATEGORY_LABELS, type ServiceCategory } from '@rerun/contracts'
+export { SERVICE_CATEGORIES, SERVICE_CATEGORY_LABELS, type ServiceCategory } from '@lumvika/contracts'
 
 // Infer the auth `kind` of a legacy flat manifest (or a method built from one) from its
 // shape — the same derivation the code used before auth methods existed.
@@ -194,20 +194,20 @@ export function predictInstall(manifest: ServiceManifest): { outcome: InstallOut
             outcome: 'needs_config',
             reason:
                 manifest.authMethods.length > 1
-                    ? 'Several ways to connect this one, so the account owner picks in the Rerun app.'
-                    : 'Waiting for a credential the account owner pastes in the Rerun app.',
+                    ? 'Several ways to connect this one, so the account owner picks in the Lumvika app.'
+                    : 'Waiting for a credential the account owner pastes in the Lumvika app.',
         }
     }
     if (appTarget(method)) {
         return { outcome: 'needs_auth', reason: 'Installed, but waiting for the account owner to pick which connected account the coworker acts with.' }
     }
     if (oauthServer(method) || managedTarget(method) || composioTarget(method)) {
-        return { outcome: 'needs_auth', reason: 'Installed, but waiting for the account owner to sign in from the Rerun app.' }
+        return { outcome: 'needs_auth', reason: 'Installed, but waiting for the account owner to sign in from the Lumvika app.' }
     }
     return { outcome: 'active', reason: 'Installs on its own, no credential and no sign-in.' }
 }
 
-// The managed connection a method sets up (Rerun-brokered OAuth + proxy), if any. The
+// The managed connection a method sets up (Lumvika-brokered OAuth + proxy), if any. The
 // serverName is the method's single mcp server — the engine token-store key the sign-in
 // writes to and that the proxy's Authorization header is injected from.
 export function managedTarget(method: AuthMethod): { provider: string; serverName: string } | null {
@@ -217,7 +217,7 @@ export function managedTarget(method: AuthMethod): { provider: string; serverNam
     return { provider: method.managed.provider, serverName }
 }
 
-// The Composio connection a method sets up (Composio-brokered OAuth + Rerun proxy), if any.
+// The Composio connection a method sets up (Composio-brokered OAuth + Lumvika proxy), if any.
 // No engine token here — Composio holds the credential; `serverName` is kept for parity with
 // the other targets and for tracing the mcp server the install compiled.
 export function composioTarget(method: AuthMethod): { toolkit: string; serverName: string } | null {

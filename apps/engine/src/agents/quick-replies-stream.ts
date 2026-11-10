@@ -1,5 +1,5 @@
 import type { LanguageModelMiddleware, ModelMessage } from 'ai'
-import { QUICK_REPLIES_MAX, QUICK_REPLIES_TOOL, QUICK_REPLY_MAX_LENGTH, parseQuickReplies, stripBridgePrefix, type AgentConfig } from '@rerun/contracts'
+import { QUICK_REPLIES_MAX, QUICK_REPLIES_TOOL, QUICK_REPLY_MAX_LENGTH, parseQuickReplies, stripBridgePrefix, type AgentConfig } from '@lumvika/contracts'
 import { newId } from '../lib/ids.js'
 
 export const QUICK_REPLIES_OPEN = '<quick_replies>'
@@ -9,9 +9,9 @@ export type QuickRepliesCapture = { toolCallId: string; replies: string[] }
 
 export type QuickRepliesCaptureHandle = { middleware: LanguageModelMiddleware; read: () => QuickRepliesCapture | undefined }
 
-// A sub-agent answers another agent, and the foreman hands over its own next steps.
+// A sub-agent answers another agent, and the steward hands over its own next steps.
 export function offersQuickReplies(config: AgentConfig): boolean {
-    return config.tools.quickReplies && !config.ephemeral && config.kind !== 'foreman'
+    return config.tools.quickReplies && !config.ephemeral && config.kind !== 'steward'
 }
 
 export function quickRepliesCall(capture: QuickRepliesCapture): { toolCallId: string; toolName: string; input: { replies: string[] } } {

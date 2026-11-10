@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { vi } from 'vitest'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-reconcile-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-reconcile-'))
 
 const { sent } = vi.hoisted(() => ({ sent: [] as Array<Record<string, unknown>> }))
 
@@ -28,8 +28,8 @@ const { insertAgentIndex } = await import('../db/repos/agents.js')
 const { createSession } = await import('../db/repos/sessions.js')
 const { getRun, startRun } = await import('../db/repos/runs.js')
 const { reconcileInterruptedRuns } = await import('./reconcile.js')
-const { ensureForeman } = await import('../agents/foreman.js')
-const { FOREMAN_AGENT_ID } = await import('@rerun/contracts')
+const { ensureSteward } = await import('../agents/steward.js')
+const { STEWARD_AGENT_ID } = await import('@lumvika/contracts')
 const { getSkillProposal, insertSkillProposal, transitionSkillProposal } = await import('../db/repos/skill-proposals.js')
 const { getSystemDb } = await import('../db/systemDb.js')
 const { runs } = await import('../db/schema.js')
@@ -87,16 +87,16 @@ describe('reconcileInterruptedRuns', () => {
         expect(sent).toHaveLength(0)
     })
 
-    // The foreman is not in the agent index, so it has to be named for its runs to be repaired.
-    it('fails the runs a restart caught on the foreman too', async () => {
-        await ensureForeman()
-        const session = await createSession(FOREMAN_AGENT_ID, 'foreman')
-        const run = await startRun(FOREMAN_AGENT_ID, session.id)
+    // The steward is not in the agent index, so it has to be named for its runs to be repaired.
+    it('fails the runs a restart caught on the steward too', async () => {
+        await ensureSteward()
+        const session = await createSession(STEWARD_AGENT_ID, 'steward')
+        const run = await startRun(STEWARD_AGENT_ID, session.id)
 
         const result = await reconcileInterruptedRuns()
 
         expect(result.runs).toBe(1)
-        expect((await getRun(FOREMAN_AGENT_ID, run.id))?.status).toBe('error')
+        expect((await getRun(STEWARD_AGENT_ID, run.id))?.status).toBe('error')
     })
 
     it('does nothing when no run was in flight', async () => {

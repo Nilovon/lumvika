@@ -1,6 +1,6 @@
-import type { Me } from '@rerun/contracts'
+import type { Me } from '@lumvika/contracts'
 import * as WebBrowser from 'expo-web-browser'
-import { Alert } from 'react-native'
+import { Alert, Linking } from 'react-native'
 
 import { deleteAccount, fetchDeletionBlockers } from '@/api/account'
 import { ApiError } from '@/api/client'
@@ -9,7 +9,7 @@ import { switchServer } from '@/config/custom-server'
 import { webHost } from '@/config/environment'
 
 // The web opens the same Crisp chat; the app has no widget of its own, so it opens the chat page.
-const CRISP_WEBSITE_ID = 'fa9be3a1-b3f1-4813-840f-d6e235a05179'
+const CRISP_WEBSITE_ID = process.env.EXPO_PUBLIC_CRISP_WEBSITE_ID
 
 export function initialsOf(user: Me['user'] | undefined): string | null {
     const words = user?.name?.trim().split(/\s+/).filter(Boolean) ?? []
@@ -18,7 +18,8 @@ export function initialsOf(user: Me['user'] | undefined): string | null {
 }
 
 export function contactSupport(user: Me['user'] | undefined) {
-    const email = user?.email && !user.email.endsWith('@phone.rerun.build') ? `&user_email=${encodeURIComponent(user.email)}` : ''
+    if (!CRISP_WEBSITE_ID) return Linking.openURL('mailto:help@lumvika.com')
+    const email = user?.email && !user.email.endsWith('@phone.lumvika.com') ? `&user_email=${encodeURIComponent(user.email)}` : ''
     return WebBrowser.openBrowserAsync(`https://go.crisp.chat/chat/embed/?website_id=${CRISP_WEBSITE_ID}${email}`)
 }
 

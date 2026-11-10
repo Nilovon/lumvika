@@ -19,7 +19,7 @@ vi.mock('@/lib/mcp-oauth', async importOriginal => ({
 
 const { GET } = await import('./route')
 
-const open = (ticket: string) => GET(new Request(`https://app.rerun.build/api/oauth/mobile/start?t=${encodeURIComponent(ticket)}`, { headers: { host: 'app.rerun.build', 'x-forwarded-proto': 'https' } }))
+const open = (ticket: string) => GET(new Request(`https://app.lumvika.com/api/oauth/mobile/start?t=${encodeURIComponent(ticket)}`, { headers: { host: 'app.lumvika.com', 'x-forwarded-proto': 'https' } }))
 const serverTicket = () => mintConnectTicket({ agentId: 'agent-1', server: 'linear', workspaceId: 7, userId: 'user-1' })
 
 beforeEach(() => {
@@ -48,7 +48,7 @@ describe('GET /api/oauth/mobile/start, for a server registered outside the catal
         openPendingGrant.mockRejectedValueOnce(new Error('This sign-in link was already used, please retry'))
         const res = await open(ticket)
         const location = new URL(res.headers.get('location')!)
-        expect(location.protocol).toBe('rerun:')
+        expect(location.protocol).toBe('lumvika:')
         expect(location.searchParams.get('status')).toBe('error')
         expect(location.searchParams.get('message')).toContain('already used')
         expect(getCustomMcpServer).toHaveBeenCalledTimes(1)
@@ -58,7 +58,7 @@ describe('GET /api/oauth/mobile/start, for a server registered outside the catal
         getCustomMcpServer.mockResolvedValue(null)
         const res = await open(serverTicket())
         const location = new URL(res.headers.get('location')!)
-        expect(`${location.protocol}//${location.host}${location.pathname}`).toBe('rerun://oauth/callback')
+        expect(`${location.protocol}//${location.host}${location.pathname}`).toBe('lumvika://oauth/callback')
         expect(location.searchParams.get('status')).toBe('error')
     })
 })

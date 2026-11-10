@@ -1,6 +1,6 @@
 import { AgentBuddy } from '@/components/buddy/AgentBuddy'
 import type { BuddyMood } from '@/components/buddy/look'
-import { ForemanOrb } from '@/components/orb/ForemanOrb'
+import { StewardOrb } from '@/components/orb/StewardOrb'
 import type { Coworker, CoworkerStatus } from '@/mocks/data'
 
 const MOOD: Record<CoworkerStatus, BuddyMood> = { idle: 'idle', working: 'working', error: 'error', waiting_human: 'waiting', offline: 'asleep' }
@@ -16,8 +16,8 @@ type CoworkerAvatarProps = {
     facing?: 'left' | 'right'
 }
 
-// The Foreman's orb, or the coworker's buddy in its current mood.
+// The Steward's orb, or the coworker's buddy in its current mood.
 export function CoworkerAvatar({ coworker, size, animated = true, facing = 'left' }: CoworkerAvatarProps) {
-    if (coworker.kind === 'foreman') return <ForemanOrb size={size * 0.86} state={coworker.status === 'working' ? 'thinking' : 'idle'} facing={facing} animated={animated} style={{ margin: size * 0.07 }} />
+    if (coworker.kind === 'steward') return <StewardOrb size={size * 0.86} state={coworker.status === 'working' ? 'thinking' : 'idle'} facing={facing} animated={animated} style={{ margin: size * 0.07 }} />
     return <AgentBuddy agentId={coworker.id} size={size} mood={moodOf(coworker.status)} animated={animated} facing={facing} />
 }

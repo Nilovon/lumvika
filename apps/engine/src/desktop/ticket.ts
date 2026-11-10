@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { desktopViewModeSchema, type DesktopViewMode } from '@rerun/contracts'
+import { desktopViewModeSchema, type DesktopViewMode } from '@lumvika/contracts'
 import { env } from '../config/env.js'
 
 function signedWith(key: string, payload: string, signature: string | undefined): boolean {
@@ -18,7 +18,7 @@ export type DesktopTicket = { agentId: string; mode: DesktopViewMode }
 export function verifyDesktopTicket(raw: string | null | undefined, now: number = Date.now()): DesktopTicket | null {
     const [payload, signature] = (raw ?? '').split('.')
     if (!payload) return null
-    const key = env().RERUN_API_KEY
+    const key = env().LUMVIKA_API_KEY
     if (key && !signedWith(key, payload, signature)) return null
     try {
         const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { exp?: unknown; agent?: unknown; mode?: unknown }

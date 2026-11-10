@@ -1,8 +1,8 @@
-# Install Rerun: a guide for AI assistants
+# Install Lumvika: a guide for AI assistants
 
-You are helping someone install Rerun, an open source app where AI coworkers do work for a team.
-This file tells you how to get them from nothing to the Foreman, Rerun's guide, answering in their
-browser. The full human guide is https://docs.rerun.build/self-host/install: read it when a step
+You are helping someone install Lumvika, an open source app where AI coworkers do work for a team.
+This file tells you how to get them from nothing to the Steward, Lumvika's guide, answering in their
+browser. The full human guide is https://docs.lumvika.com/self-host/install: read it when a step
 here is not enough.
 
 ## How to work
@@ -18,15 +18,15 @@ here is not enough.
 
 ## 1. Ask three questions first
 
-1. **Where should Rerun run?** On this computer, to try it alone, or on a server, for a team.
-2. **Which Supabase?** Rerun keeps its data in Supabase. Offer the one that fits:
+1. **Where should Lumvika run?** On this computer, to try it alone, or on a server, for a team.
+2. **Which Supabase?** Lumvika keeps its data in Supabase. Offer the one that fits:
    - *On this computer*: Supabase started by `npx supabase start`. Nothing to sign up for. The
      simplest path, recommended for a first try.
    - *A free project on supabase.com*: recommended on a server.
    - *Open source Supabase on their own server*: only if they ask for everything on their
      machines. Follow the "Open source Supabase on your server" tab of the human guide.
-3. **Do they have an OpenRouter key?** It runs the Foreman's guided onboarding. They get one at
-   https://openrouter.ai/keys. Without it the Foreman skips the onboarding and runs on the AI they
+3. **Do they have an OpenRouter key?** It runs the Steward's guided onboarding. They get one at
+   https://openrouter.ai/keys. Without it the Steward skips the onboarding and runs on the AI they
    connect in the app, their Claude or ChatGPT subscription included.
 
 ## 2. Check the machine
@@ -44,7 +44,7 @@ Help them install what is missing before going on. On macOS, Docker Desktop's me
 ## 3. Get the code
 
 ```bash
-git clone https://github.com/rerun-build/rerun.git && cd rerun
+git clone https://github.com/schnebel-technologie/lumvika.git && cd lumvika
 cp .env.example .env
 ```
 
@@ -89,7 +89,7 @@ one computer, never for a server reachable from the internet.
    to members of their Supabase organization.
 6. Once SMTP is saved, in **Authentication > Email Templates**, paste
    `supabase/templates/magic_link.html` into **Magic Link**, **Confirm signup** and **Change Email
-   Address**. Rerun signs in with a 6-digit code, and the default templates only carry a link. Set
+   Address**. Lumvika signs in with a 6-digit code, and the default templates only carry a link. Set
    **Email OTP Expiration** to `900`.
 7. In **Authentication > URL Configuration**, set the **Site URL** to `NEXT_PUBLIC_APP_URL`.
 
@@ -102,7 +102,7 @@ ADMIN_EMAILS=<their email>
 ```
 
 On a server, `NEXT_PUBLIC_APP_URL` is the https address the team opens, and
-`RERUN_ENGINE_BROWSER_URL` the https address of the engine, on a second domain. Both are baked in
+`LUMVIKA_ENGINE_BROWSER_URL` the https address of the engine, on a second domain. Both are baked in
 by the build, so set them now. See "On a server" in the human guide for the reverse proxy and the
 firewall: Docker publishes ports past `ufw`, so they must close 3000, 3001, 5432, 6543 and 8000
 at their provider.
@@ -133,12 +133,12 @@ docker compose exec engine curl -s http://localhost:3000/health
 ```
 
 `app` and `engine` are running, and both answer. If not, read `docker compose logs --tail 200 app
-engine`, fix what it says, and check https://docs.rerun.build/self-host/troubleshooting.
+engine`, fix what it says, and check https://docs.lumvika.com/self-host/troubleshooting.
 
 ## 8. Hand over
 
 Tell them to open `NEXT_PUBLIC_APP_URL`, sign in with their email and the 6-digit code, and say
-hi to the Foreman: it asks what they need done and builds the team. Their coworkers use the AI
+hi to the Steward: it asks what they need done and builds the team. Their coworkers use the AI
 they connect in the app: an Anthropic, OpenAI, Gemini or OpenRouter key, or their Claude or ChatGPT
 subscription.
 
@@ -152,5 +152,5 @@ and `npx supabase db push` (or `npx supabase migration up` for Supabase on this 
 release adds database migrations.
 
 Versions follow one rule: a patch (`v0.5.1`) only asks to pull, a minor (`v0.6.0`) has an
-`Upgrade` section in its [release notes](https://github.com/rerun-build/rerun/releases) to read
-first. The engine image `ghcr.io/rerun-build/rerun-engine:0.5` follows the patches of `0.5`.
+`Upgrade` section in its [release notes](https://github.com/schnebel-technologie/lumvika/releases) to read
+first. The engine image `ghcr.io/schnebel-technologie/lumvika-engine:0.5` follows the patches of `0.5`.

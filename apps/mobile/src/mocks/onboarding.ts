@@ -8,7 +8,7 @@ const user = (id: string, text: string): UIMessage => ({ id, role: 'user', parts
 const tool = (name: string, toolCallId: string, input: unknown, output?: unknown) => (output === undefined ? { type: `tool-${name}`, toolCallId, state: 'input-available', input } : { type: `tool-${name}`, toolCallId, state: 'output-available', input, output })
 const ask = (id: string, text: string, part: ReturnType<typeof tool>): UIMessage => ({ id, role: 'assistant', parts: [{ type: 'text', text }, part] } as UIMessage)
 
-const KICKOFF = user('k', '[[foreman:start]]')
+const KICKOFF = user('k', '[[steward:start]]')
 
 const PACK = {
     cards: [

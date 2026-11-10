@@ -7,14 +7,14 @@ import { TemplateLibraryDialog } from '@/components/templates/TemplateLibraryDia
 import { IsoBoard } from '@/components/builder/IsoBoard'
 import { BuilderToolbar } from '@/components/builder/BuilderToolbar'
 import { BoardCornerActions } from '@/components/layout/BoardCornerActions'
-import { Stripes } from '@rerun/ui/primitives'
+import { Stripes } from '@lumvika/ui/primitives'
 import { getSharedTemplateAction } from '@/app/api/_actions/template.actions'
 import { useLibraryViewerSignals } from '@/lib/templates/useLibraryViewerSignals'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { isAgentShareFlowBusy, useAgentShareStore } from '@/stores/agent-share.store'
 import { isTemplateFlowBusy, useTemplateFlowStore } from '@/stores/template-flow.store'
 import { useSession } from '@/supabase/session/SessionProvider'
-import { useForemanStore } from '@/stores/foreman.store'
+import { useStewardStore } from '@/stores/steward.store'
 import type { SpacePublic } from '@/lib/board/types'
 
 export function BuilderView({ initialSpaces = [] }: { initialSpaces?: SpacePublic[] }) {
@@ -26,12 +26,12 @@ export function BuilderView({ initialSpaces = [] }: { initialSpaces?: SpacePubli
     const [newAgentSpaceId, setNewAgentSpaceId] = useState<string | null>(null)
     const viewerSignals = useLibraryViewerSignals()
 
-    // Recruiting the first agent. A workspace that has never been onboarded is met by the foreman,
+    // Recruiting the first agent. A workspace that has never been onboarded is met by the steward,
     // which does the whole thing in conversation; everyone else goes straight to the library, on the
     // industry and the apps the workspace's profile already carries.
     const startRecruiting = useCallback(() => {
         if (!workspace?.onboarded_at) {
-            useForemanStore.getState().openForFunnel()
+            useStewardStore.getState().openForFunnel()
             return
         }
         setLibraryOpen(true)
@@ -43,7 +43,7 @@ export function BuilderView({ initialSpaces = [] }: { initialSpaces?: SpacePubli
     }, [])
 
     // Un lien de template sur un compte qui n'a jamais fait l'onboarding : la fiche ne s'ouvre pas
-    // d'elle-même, c'est le Foreman qui reprend le lien et en fait le début de la conversation. On
+    // d'elle-même, c'est le Steward qui reprend le lien et en fait le début de la conversation. On
     // précharge quand même, pour que la fiche s'ouvre sans son skeleton quand il y envoie.
     const pendingTemplateLink = useOnboardingStore(s => s.pendingTemplateLink)
     useEffect(() => {

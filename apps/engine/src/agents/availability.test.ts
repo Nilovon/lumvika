@@ -1,20 +1,20 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import type { LoadedAgent } from './types.js'
 
-process.env.RERUN_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'rerun-availability-'))
+process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-availability-'))
 // `env()` caches on first call, and the first call happens while the imports below run, so the hub
-// credentials the keyless Rerun connection is judged on have to be in place before them.
-process.env.RERUN_HUB_BASE_URL = 'https://hub.example.com'
-process.env.RERUN_API_KEY = 'hub-key'
+// credentials the keyless Lumvika connection is judged on have to be in place before them.
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example.com'
+process.env.LUMVIKA_API_KEY = 'hub-key'
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { rm } = await import('node:fs/promises')
-const { DEFAULT_CONNECTION_MODELS, RERUN_CONNECTION_ID, RERUN_MODEL, agentConfigSchema } = await import('@rerun/contracts')
+const { DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID, LUMVIKA_MODEL, agentConfigSchema } = await import('@lumvika/contracts')
 const { connectionsDir } = await import('../config/paths.js')
-const { createConnection, ensureRerunConnection } = await import('../connections/store.js')
+const { createConnection, ensureLumvikaConnection } = await import('../connections/store.js')
 const { getConnection } = await import('../connections/registry.js')
 const { clearAgentCache } = await import('./registry.js')
 const { clearBoxDefault, readBoxDefault, writeBoxDefault } = await import('../connections/default.js')
@@ -38,7 +38,7 @@ function boxDefaultAgent(): Promise<LoadedAgent> {
     return makeAgent(null, null, null)
 }
 
-// Each test starts from a bare box. `ensureRerunConnection` is called explicitly rather than here,
+// Each test starts from a bare box. `ensureLumvikaConnection` is called explicitly rather than here,
 // so a test can describe a box that has no keyless fallback at all.
 beforeEach(async () => {
     await clearBoxDefault()
@@ -62,13 +62,13 @@ describe('isUsable', () => {
         expect(isUsable(connection, 'acme/router-large')).toBe(true)
     })
 
-    it('reads the keyless Rerun connection off the hub configuration', async () => {
-        await ensureRerunConnection()
-        expect(isUsable(await getConnection(RERUN_CONNECTION_ID), RERUN_MODEL)).toBe(true)
+    it('reads the keyless Lumvika connection off the hub configuration', async () => {
+        await ensureLumvikaConnection()
+        expect(isUsable(await getConnection(LUMVIKA_CONNECTION_ID), LUMVIKA_MODEL)).toBe(true)
     })
 
     it('is false for an agent with no connection at all', () => {
-        expect(isUsable(null, RERUN_MODEL)).toBe(false)
+        expect(isUsable(null, LUMVIKA_MODEL)).toBe(false)
     })
 })
 
@@ -94,15 +94,15 @@ describe('resolveAutomationModel', () => {
         })
     })
 
-    it('falls back to Rerun before any other connection', async () => {
-        await ensureRerunConnection()
+    it('falls back to Lumvika before any other connection', async () => {
+        await ensureLumvikaConnection()
         await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
         const claude = await connect('claude', {})
         const agent = await makeAgent(claude.id, 'claude', 'opus')
-        expect(await resolveAutomationModel(agent, undefined)).toEqual({ connectionId: RERUN_CONNECTION_ID, provider: 'rerun', model: RERUN_MODEL })
+        expect(await resolveAutomationModel(agent, undefined)).toEqual({ connectionId: LUMVIKA_CONNECTION_ID, provider: 'lumvika', model: LUMVIKA_MODEL })
     })
 
-    it('falls back to any connected connection when the box has no Rerun one', async () => {
+    it('falls back to any connected connection when the box has no Lumvika one', async () => {
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
         const claude = await connect('claude', {})
         const agent = await makeAgent(claude.id, 'claude', 'opus')
@@ -132,46 +132,46 @@ describe('resolveAutomationModel', () => {
 
 describe('boxDefaultModel', () => {
     it('answers what the owner set', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
         await writeBoxDefault({ connectionId: anthropic.id, model: 'claude-opus-4-8' })
         expect(await boxDefaultModel()).toMatchObject({ provider: 'anthropic', model: 'claude-opus-4-8' })
     })
 
     it('skips a default whose credential is gone', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const claude = await connect('claude', {})
         await writeBoxDefault({ connectionId: claude.id, model: 'opus' })
-        expect(await boxDefaultModel()).toMatchObject({ provider: 'rerun', model: RERUN_MODEL })
+        expect(await boxDefaultModel()).toMatchObject({ provider: 'lumvika', model: LUMVIKA_MODEL })
     })
 
     it('skips a default naming a model the connection no longer offers', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' }, ['claude-sonnet-4-6'])
         await writeBoxDefault({ connectionId: anthropic.id, model: 'claude-opus-4-8' })
-        expect(await boxDefaultModel()).toMatchObject({ provider: 'rerun', model: RERUN_MODEL })
+        expect(await boxDefaultModel()).toMatchObject({ provider: 'lumvika', model: LUMVIKA_MODEL })
     })
 
-    it('falls back to Rerun when nothing was ever set', async () => {
-        await ensureRerunConnection()
-        expect(await boxDefaultModel()).toMatchObject({ provider: 'rerun', model: RERUN_MODEL })
+    it('falls back to Lumvika when nothing was ever set', async () => {
+        await ensureLumvikaConnection()
+        expect(await boxDefaultModel()).toMatchObject({ provider: 'lumvika', model: LUMVIKA_MODEL })
     })
 
     it('reads exactly like the old hardcoded defaults on a box with nothing plugged in', async () => {
-        expect(await boxDefaultModel()).toEqual({ connection: null, provider: 'rerun', model: RERUN_MODEL })
+        expect(await boxDefaultModel()).toEqual({ connection: null, provider: 'lumvika', model: LUMVIKA_MODEL })
     })
 })
 
 describe('resolveConfiguredModel', () => {
     it('follows the box default when the agent named no model', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
         await writeBoxDefault({ connectionId: anthropic.id, model: 'claude-opus-4-8' })
         expect(await resolveConfiguredModel((await boxDefaultAgent()).config)).toMatchObject({ provider: 'anthropic', model: 'claude-opus-4-8' })
     })
 
     it('ignores a leftover connectionId sitting next to a null model', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
         const stale = await connect('claude', { CLAUDE_CODE_OAUTH_TOKEN: 't' })
         await writeBoxDefault({ connectionId: anthropic.id, model: 'claude-opus-4-8' })
@@ -180,7 +180,7 @@ describe('resolveConfiguredModel', () => {
     })
 
     it('returns a pin as asked even when its credential was pulled, rather than swapping it', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const claude = await connect('claude', {})
         expect(await resolveConfiguredModel((await makeAgent(claude.id, 'claude', 'opus')).config)).toMatchObject({ connection: claude, provider: 'claude', model: 'opus' })
     })
@@ -195,7 +195,7 @@ describe('resolveConfiguredModel', () => {
 
 describe('resolveAutomationModel over a box-default agent', () => {
     it('runs the box default when the automation names no model of its own', async () => {
-        await ensureRerunConnection()
+        await ensureLumvikaConnection()
         const anthropic = await connect('anthropic', { ANTHROPIC_API_KEY: 'k' })
         await writeBoxDefault({ connectionId: anthropic.id, model: 'claude-opus-4-8' })
         expect(await resolveAutomationModel(await boxDefaultAgent(), undefined)).toEqual({ connectionId: anthropic.id, provider: 'anthropic', model: 'claude-opus-4-8' })
@@ -223,8 +223,8 @@ describe('a ChatGPT plan that leaves models out', () => {
         expect(isUsable(codex, 'gpt-6-luna')).toBe(true)
     })
 
-    it('runs a refused stored default on a served model of the same connection, not on Rerun', async () => {
-        await ensureRerunConnection()
+    it('runs a refused stored default on a served model of the same connection, not on Lumvika', async () => {
+        await ensureLumvikaConnection()
         const codex = await chatgpt()
         await writeBoxDefault({ connectionId: codex.id, model: 'gpt-6-sol' })
         expect(await boxDefaultModel()).toMatchObject({ connection: { id: codex.id }, provider: 'codex', model: 'gpt-6-luna' })

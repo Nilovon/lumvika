@@ -1,5 +1,5 @@
-process.env.RERUN_API_KEY = 'engine-secret'
-process.env.RERUN_HUB_BASE_URL = 'https://hub.example.test/'
+process.env.LUMVIKA_API_KEY = 'engine-secret'
+process.env.LUMVIKA_HUB_BASE_URL = 'https://hub.example.test/'
 
 const { afterEach, beforeEach, describe, expect, it, vi } = await import('vitest')
 const { forgetPriceMultiplier, hubPriceMultiplier, paidDataOffered, paidDataOfferedSoFar } = await import('./price.js')
@@ -16,7 +16,7 @@ function hubAnswers(status: number, body: unknown) {
 beforeEach(() => forgetPriceMultiplier())
 afterEach(() => {
     globalThis.fetch = originalFetch
-    setEnv({ RERUN_API_KEY: 'engine-secret', RERUN_HUB_BASE_URL: 'https://hub.example.test/' })
+    setEnv({ LUMVIKA_API_KEY: 'engine-secret', LUMVIKA_HUB_BASE_URL: 'https://hub.example.test/' })
 })
 
 describe('the paid data terms of the hub', () => {
@@ -40,7 +40,7 @@ describe('the paid data terms of the hub', () => {
     })
 
     it('offers none on an engine that is not linked to a hub, and asks nothing', async () => {
-        setEnv({ RERUN_API_KEY: '', RERUN_HUB_BASE_URL: '' })
+        setEnv({ LUMVIKA_API_KEY: '', LUMVIKA_HUB_BASE_URL: '' })
         const fetchMock = hubAnswers(200, { priceMultiplier: 1.5, enabled: true })
         expect(await paidDataOffered()).toBe(false)
         expect(paidDataOfferedSoFar()).toBe(false)

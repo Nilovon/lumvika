@@ -6,12 +6,12 @@ declare const require: (id: 'node:fs') => { existsSync(path: string): boolean; r
 declare const __dirname: string
 const { existsSync, readFileSync } = require('node:fs')
 
-// The EAS project the app builds and updates through. Rerun's sits in the private cloud/ folder; a
+// The EAS project the app builds and updates through. Lumvika's sits in the private cloud/ folder; a
 // fork names its own with EXPO_OWNER and EAS_PROJECT_ID, or runs without one in development.
-const RERUN_EAS = `${__dirname}/../../cloud/apps/mobile/expo.private.json`
+const LUMVIKA_EAS = `${__dirname}/../../cloud/apps/mobile/expo.private.json`
 
 function easProject(): { owner?: string; projectId?: string } {
-    if (existsSync(RERUN_EAS)) return JSON.parse(readFileSync(RERUN_EAS, 'utf8')) as { owner: string; projectId: string }
+    if (existsSync(LUMVIKA_EAS)) return JSON.parse(readFileSync(LUMVIKA_EAS, 'utf8')) as { owner: string; projectId: string }
     return { owner: process.env.EXPO_OWNER, projectId: process.env.EAS_PROJECT_ID }
 }
 
@@ -24,23 +24,23 @@ function withEasProject(config: ConfigContext['config']): ConfigContext['config'
 // The builder never receives cloud/, so a store build without it reads its hub from EXPO_PUBLIC_* (see
 // src/cloud-oss/environments.ts). Missing, the app ships pointing at localhost with an empty Supabase
 // key and crashes on launch: fail the build instead.
-const RERUN_CLOUD_SOURCE = `${__dirname}/../../cloud/apps/mobile/src/environments.ts`
+const LUMVIKA_CLOUD_SOURCE = `${__dirname}/../../cloud/apps/mobile/src/environments.ts`
 const STORE_PROFILES = ['production', 'staging']
 const REQUIRED_HUB_VARIABLES = ['EXPO_PUBLIC_API_URL', 'EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'] as const
 
 function assertStoreBuildHasHub(): void {
     if (process.env.EAS_BUILD !== 'true' || !STORE_PROFILES.includes(process.env.EAS_BUILD_PROFILE ?? '')) return
-    if (existsSync(RERUN_CLOUD_SOURCE)) return
+    if (existsSync(LUMVIKA_CLOUD_SOURCE)) return
     const missing = REQUIRED_HUB_VARIABLES.filter(name => !process.env[name])
     if (missing.length === 0) return
     throw new Error(`Store build "${process.env.EAS_BUILD_PROFILE}" has no hub to point at: set ${missing.join(', ')} in its EAS environment.`)
 }
 
 // A free Apple ID (personal team) cannot claim a bundle ID some other team may own. Local dev builds
-// set RERUN_PERSONAL_TEAM=1 so they install on a real iPhone without a paid Apple Developer account.
+// set LUMVIKA_PERSONAL_TEAM=1 so they install on a real iPhone without a paid Apple Developer account.
 // Store builds leave it unset. Such a team cannot sign the push capability either, so its builds leave
 // the notifications plugin out: the app runs, it just never gets a push token.
-const personalTeam = process.env.RERUN_PERSONAL_TEAM === '1'
+const personalTeam = process.env.LUMVIKA_PERSONAL_TEAM === '1'
 
 // The languages iOS offers in the app's own settings, and the permission prompts in each of them. The
 // English prompts of app.json stay the default for any other language.
@@ -66,7 +66,7 @@ export default ({ config: base }: ConfigContext): ExpoConfig => {
         plugins: config.plugins?.filter(plugin => plugin !== 'expo-notifications'),
         ios: {
             ...config.ios,
-            bundleIdentifier: process.env.RERUN_IOS_BUNDLE_ID ?? `${config.ios?.bundleIdentifier}.dev`,
+            bundleIdentifier: process.env.LUMVIKA_IOS_BUNDLE_ID ?? `${config.ios?.bundleIdentifier}.dev`,
         },
     }
 }

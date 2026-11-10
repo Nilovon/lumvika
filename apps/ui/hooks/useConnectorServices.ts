@@ -26,7 +26,7 @@ const snapshots = new Map<string, ConnectorServices>()
 const listeners = new Map<string, Set<() => void>>()
 const inflight = new Set<string>()
 // An invalidation asked while a read runs has to read again once it lands: the read may predate the change.
-const rerun = new Set<string>()
+const lumvika = new Set<string>()
 
 function emit(agentId: string) {
     for (const listener of listeners.get(agentId) ?? []) listener()
@@ -38,7 +38,7 @@ function emit(agentId: string) {
 // and would otherwise flash back to its generic icon on each refresh.
 async function load(agentId: string) {
     if (inflight.has(agentId)) {
-        rerun.add(agentId)
+        lumvika.add(agentId)
         return
     }
     inflight.add(agentId)
@@ -51,7 +51,7 @@ async function load(agentId: string) {
         inflight.delete(agentId)
     }
     emit(agentId)
-    if (rerun.delete(agentId)) void load(agentId)
+    if (lumvika.delete(agentId)) void load(agentId)
 }
 
 function subscribe(agentId: string, listener: () => void) {

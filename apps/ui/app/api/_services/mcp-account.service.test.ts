@@ -1,5 +1,5 @@
 import { workspaceActor } from '@/app/api/_auth/access'
-import { MAX_TEXT_WRITE_CHARS } from '@rerun/contracts'
+import { MAX_TEXT_WRITE_CHARS } from '@lumvika/contracts'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { agentFilesBase, chat as engineChat, createMemory, createSchedule, createTrigger, getAgent, importSkill, listConnections, listSchedules, listSkills, listTriggers, patchAgent, updateSchedule, updateTrigger, uploadFile, writeFileText } from '@/lib/engine/client'
@@ -35,7 +35,7 @@ vi.mock('./mcp-shares.service', () => ({ dispatchShareTool: vi.fn() }))
 
 const WORKSPACE_ID = 7
 const FOREIGN_WORKSPACE_ID = 99
-// The API key and the foreman act as the workspace itself, which reaches every Box.
+// The API key and the steward act as the workspace itself, which reaches every Box.
 const ACTOR = { kind: 'workspace', workspaceId: WORKSPACE_ID }
 
 const AGENTS: Record<string, Record<string, unknown>> = {

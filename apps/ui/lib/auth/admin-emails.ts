@@ -1,4 +1,4 @@
-import { DEFAULT_ADMIN_EMAILS } from '@rerun/cloud/admin'
+import { DEFAULT_ADMIN_EMAILS } from '@lumvika/cloud/admin'
 
 // Who may use the admin affordances: `ADMIN_EMAILS` (or `NEXT_PUBLIC_ADMIN_EMAILS`, the one the
 // browser bundle can read), comma-separated. Without either, the deployment's built-in list applies.

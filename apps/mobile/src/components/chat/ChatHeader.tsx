@@ -1,6 +1,6 @@
 import { Button, Image, Menu, Section, Text, Toggle } from '@expo/ui/swift-ui'
 import { disabled } from '@expo/ui/swift-ui/modifiers'
-import type { SessionKind, SessionStatus } from '@rerun/contracts'
+import type { SessionKind, SessionStatus } from '@lumvika/contracts'
 import { GlassView } from 'expo-glass-effect'
 import { SymbolView } from 'expo-symbols'
 import { View } from 'react-native'

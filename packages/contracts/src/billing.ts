@@ -1,13 +1,13 @@
 import { creditsFromUsd } from './credits.js'
 
-// The subscription plan Rerun sells: one base plan extended by add-on quantities carried as items
+// The subscription plan Lumvika sells: one base plan extended by add-on quantities carried as items
 // on the same Stripe subscription. Shared rather than app-local because the landing quotes the same
 // figures as the billing dialog, and two hand-typed copies of a price drift the day one changes.
 //
 // Amounts are in minor units, like everything that crosses the Stripe boundary. Render them with
 // `formatAmount(cents, PLAN_CURRENCY)`.
 
-// The one currency Rerun sells in, and the one every Stripe Price is minted in. Named rather than
+// The one currency Lumvika sells in, and the one every Stripe Price is minted in. Named rather than
 // left implicit because Checkout picks the buyer's currency from their IP unless it is passed.
 export const PLAN_CURRENCY = 'usd'
 
@@ -62,7 +62,7 @@ export type AddonKey = (typeof ADDON_KEYS)[number]
 
 // Every price, per billing interval. The credit pack carries no yearly discount, because model credit
 // is resold at cost and a discount on it is a loss on every pack. Nor does an app slot: each one is
-// an account Rerun pays for by the month.
+// an account Lumvika pays for by the month.
 export const PLAN_PRICES_CENTS: Record<BillingInterval, Record<'base' | AddonKey, number>> = {
     monthly: { base: 4900, credit_pack: 1000, linkedin_slot: 900, whatsapp_slot: 900 },
     yearly: { base: 46800, credit_pack: 12000, linkedin_slot: 10800, whatsapp_slot: 10800 },
@@ -105,7 +105,7 @@ export const BASE_PLAN = {
 export const BASE_PLAN_CREDITS = creditsFromUsd(BASE_PLAN.creditUsd)
 
 // A quantity of model spend rather than a discount, hence a whole-dollar figure and not cents:
-// the models are billed to Rerun in dollars and the credit is granted in the same unit.
+// the models are billed to Lumvika in dollars and the credit is granted in the same unit.
 export const CREDIT_USD_PER_PACK = 10
 
 export const CREDITS_PER_PACK = creditsFromUsd(CREDIT_USD_PER_PACK)

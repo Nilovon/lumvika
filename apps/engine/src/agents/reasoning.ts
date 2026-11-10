@@ -1,5 +1,5 @@
 import type { streamText } from 'ai'
-import type { Provider } from '@rerun/contracts'
+import type { Provider } from '@lumvika/contracts'
 import { opencodeModel } from '../connections/opencode-catalog.js'
 import { behaviourOf } from './opencode.js'
 
@@ -8,7 +8,7 @@ type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOpt
 // Every provider that can show its work is asked to show it, and the model decides when there is
 // anything to show: `adaptive` on Anthropic, and on the others a summary of reasoning the model
 // already produces and already bills for. `claude` and `codex` drive their CLI through
-// `defaultSettings` instead, and `rerun` / `openrouter` ask for it in the request body
+// `defaultSettings` instead, and `lumvika` / `openrouter` ask for it in the request body
 // (see openrouter-reasoning.ts) because the OpenAI chat wire format has no field for it.
 const REASONING_OPTIONS: Partial<Record<Provider, ProviderOptions>> = {
     anthropic: { anthropic: { thinking: { type: 'adaptive', display: 'summarized' } } },

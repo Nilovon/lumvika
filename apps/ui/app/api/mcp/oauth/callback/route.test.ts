@@ -33,7 +33,7 @@ const CONTEXT: OAuthContext = {
     mcpUrl: 'https://mcp.acme.test/mcp',
     tokenEndpoint: 'https://auth.acme.test/token',
     clientId: 'client-1',
-    redirectUri: 'https://rerun.test/api/mcp/oauth/callback',
+    redirectUri: 'https://lumvika.test/api/mcp/oauth/callback',
 }
 
 let agentWorkspace = SESSION_WORKSPACE
@@ -44,7 +44,7 @@ let jar: Record<string, string> = {}
 const GRANT = (patch: { agentId?: string } = {}) => mintCallbackGrant({ agentId: CONTEXT.agentId, workspaceId: SESSION_WORKSPACE, userId: 'user-1', jti: 'row-1', ...patch })
 
 function callback(params: Record<string, string>) {
-    return GET(new Request(`https://rerun.test/api/mcp/oauth/callback?${new URLSearchParams(params)}`))
+    return GET(new Request(`https://lumvika.test/api/mcp/oauth/callback?${new URLSearchParams(params)}`))
 }
 
 function withContext(ctx: OAuthContext) {
@@ -201,7 +201,7 @@ describe('GET /api/mcp/oauth/callback', () => {
 
         expect(res.status).toBe(302)
         const location = new URL(res.headers.get('location') ?? '')
-        expect(location.protocol).toBe('rerun:')
+        expect(location.protocol).toBe('lumvika:')
         expect(location.searchParams.get('status')).toBe('error')
         expect(location.searchParams.get('message')).toBe('Invalid sign-in grant')
         expect(exchangeCode).not.toHaveBeenCalled()
@@ -246,8 +246,8 @@ describe('GET /api/mcp/oauth/callback', () => {
         const ASANA: OAuthContext = { ...CONTEXT, serverName: 'asana', mcpUrl: 'https://mcp.asana.com/v2/mcp', clientId: 'asana-id' }
 
         beforeEach(() => {
-            vi.stubEnv('RERUN_ASANA_MCP_CLIENT_ID', 'asana-id')
-            vi.stubEnv('RERUN_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
+            vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_ID', 'asana-id')
+            vi.stubEnv('LUMVIKA_ASANA_MCP_CLIENT_SECRET', 'asana-secret')
         })
 
         it('hands the engine the secret on the web path', async () => {

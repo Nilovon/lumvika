@@ -27,7 +27,7 @@ Short, scannable, honest:
 
 ## What you need
 - {apps declared and what each unlocks; "nothing to start" when true}
-- {paid data: "Optional live data billed on your Rerun credit" — only if on}
+- {paid data: "Optional live data billed on your Lumvika credit" — only if on}
 
 ## How setup works
 {1–2 sentences: first result in the first minutes, then what it learns and connects.}
@@ -62,7 +62,7 @@ Example: install (1) + setup (2) + no app at the start = 3 → **3**.
 The questions as people type them into Google, answers of 1 to 3 sentences, true for what the agent carries:
 - "Can it post to TikTok automatically?"
 - "Do I need a Canva account?"
-- "How much does it cost to run?" Answer: runs consume Rerun credit; paid data, if on, consumes credit too: the agent says what each spend cost, and in chat it asks for approval before a large spend. I don't quote an amount and I never promise that every spend is approved.
+- "How much does it cost to run?" Answer: runs consume Lumvika credit; paid data, if on, consumes credit too: the agent says what each spend cost, and in chat it asks for approval before a large spend. I don't quote an amount and I never promise that every spend is approved.
 - "Can I use it for Instagram or LinkedIn too?" Shows the agent's openness.
 
 ## `metaDescription` (120 to 155 characters, required at submission)
@@ -79,4 +79,4 @@ One SEO sentence with the main keyword at the start. I count the characters befo
 
 ## Image
 
-I don't generate one here. Submission does not require an image (the cards draw the board of the captured agents), but a cover sells better: I list it in `humanFollowUp` as recommended and I propose `rerun-image-from-agent-task` (prompt) then `add_template_image` (https URL, `cover: true`).
+I don't generate one here. Submission does not require an image (the cards draw the board of the captured agents), but a cover sells better: I list it in `humanFollowUp` as recommended and I propose `lumvika-image-from-agent-task` (prompt) then `add_template_image` (https URL, `cover: true`).

@@ -12,13 +12,13 @@ export function sharedFileRawUrl(path: string): string {
     return withTabWorkspace(`/api/files/raw?scope=shared&path=${encodeURIComponent(path)}`)
 }
 
-/** The foreman's own files, which live in a hub bucket rather than on a box. */
-export function foremanFileRawUrl(sessionId: string, path: string): string {
-    return withTabWorkspace(`/api/foreman/files/raw?sessionId=${encodeURIComponent(sessionId)}&path=${encodeURIComponent(path)}`)
+/** The steward's own files, which live in a hub bucket rather than on a box. */
+export function stewardFileRawUrl(sessionId: string, path: string): string {
+    return withTabWorkspace(`/api/steward/files/raw?sessionId=${encodeURIComponent(sessionId)}&path=${encodeURIComponent(path)}`)
 }
 
 // `agentId` used to carry two meanings at once in the message components: which Box owns the file,
-// and whether the bytes are reachable at all. A read-only transcript has neither, the foreman has
+// and whether the bytes are reachable at all. A read-only transcript has neither, the steward has
 // the second without the first. Resolving it once here is what lets those components ask a single
 // question: is there a URL for this path, yes or no.
 export function rawUrlResolver(agentId?: string, override?: RawUrlFor): RawUrlFor | null {

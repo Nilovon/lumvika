@@ -1,4 +1,4 @@
-import { EMPTY_READING, MAX_READABLE_LENGTH, MIN_READABLE_LENGTH, type JobReading } from '@rerun/ui/new-agent/reading'
+import { EMPTY_READING, MAX_READABLE_LENGTH, MIN_READABLE_LENGTH, type JobReading } from '@lumvika/ui/new-agent/reading'
 
 import { readAgentJob } from '@/lib/ai/read-agent-job'
 import { createReadingLimiter } from '@/lib/new-agent/public-reading-limit'
@@ -11,7 +11,7 @@ import { readerCatalog } from '@/lib/new-agent/reader-catalog'
 // It never fails: a refused caller, a slow model or an unreadable reply all answer an empty reading,
 // since the composer sends its visitor to the app just as well with nothing read.
 
-const LANDING_ORIGIN = new URL(process.env.NEXT_PUBLIC_LANDING_URL ?? 'https://rerun.build').origin
+const LANDING_ORIGIN = new URL(process.env.NEXT_PUBLIC_LANDING_URL ?? 'https://lumvika.com').origin
 const LOCAL_ORIGIN = /^http:\/\/localhost:\d+$/
 
 const CACHE_MAX = 500

@@ -11,7 +11,7 @@ import {
     type DesktopStatus,
     type TakeoverResult,
     ENGINE_CAPABILITY_FILES_STREAM,
-    ENGINE_CAPABILITY_FOREMAN_FILES,
+    ENGINE_CAPABILITY_STEWARD_FILES,
     ENGINE_CAPABILITY_SCHEDULE_RENAME,
     engineDbGroupsSchema,
     engineRowUpdateResultSchema,
@@ -31,7 +31,7 @@ import {
     type BoxPlan,
     type AgentDuplicateResult,
     type AgentImportResult,
-    type ForemanBrief,
+    type StewardBrief,
     type MessageAuthor,
     brainPageResponseSchema,
     brainPagesListSchema,
@@ -49,7 +49,7 @@ import {
     type BrainRevision,
     type BrainSeedPage,
     type BrainSeedResult,
-} from '@rerun/contracts'
+} from '@lumvika/contracts'
 import { isNetworkFailure } from '@/lib/net/network-error'
 import {
     type EngineAgentConfigPatch,
@@ -186,7 +186,7 @@ export async function request<T>(conn: EngineConnection, path: string, init: Req
     const res = await fetchEngine(`${conn.baseUrl}${path}`, { ...init, signal, headers: { ...buildHeaders(conn), ...(init.headers ?? {}) } })
     if (!res.ok) {
         const body = await res.text().catch(() => 'Unknown error')
-        throw new EngineRequestError(`rerun-engine ${init.method ?? 'GET'} ${path} failed: ${res.status} ${body}`, res.status)
+        throw new EngineRequestError(`lumvika-engine ${init.method ?? 'GET'} ${path} failed: ${res.status} ${body}`, res.status)
     }
     if (res.status === 204) return parse(null)
     const text = await res.text()
@@ -264,7 +264,7 @@ export async function getAgent(conn: EngineConnection, id: string): Promise<Engi
 
 // API variables / secrets are stored in the agent's .env on the engine. Only key
 // names are ever returned (values stay server-side); updates merge set/remove.
-// `engineKeys` are the RERUN_* names the engine resolves from its own process env;
+// `engineKeys` are the LUMVIKA_* names the engine resolves from its own process env;
 // engines predating the field simply omit it.
 export async function getAgentKeys(conn: EngineConnection, id: string): Promise<{ keys: string[]; engineKeys: string[] }> {
     return request(conn, `/agents/${encodeURIComponent(id)}/keys`, { method: 'GET' }, d => {
@@ -459,7 +459,7 @@ export async function importAgentArchive(conn: EngineConnection, archive: Blob, 
     if (conn.apiKey) headers['Authorization'] = `Bearer ${conn.apiKey}`
     const query = new URLSearchParams({ name, displayName })
     const res = await fetchEngine(`${conn.baseUrl}/agents/import?${query}`, { method: 'POST', headers, body: archive, signal: AbortSignal.timeout(ARCHIVE_TIMEOUT_MS) })
-    if (!res.ok) throw new Error(`rerun-engine POST /agents/import failed: ${res.status} ${await res.text().catch(() => 'Unknown error')}`)
+    if (!res.ok) throw new Error(`lumvika-engine POST /agents/import failed: ${res.status} ${await res.text().catch(() => 'Unknown error')}`)
     return agentImportResultSchema.parse(await res.json())
 }
 
@@ -474,7 +474,7 @@ export async function deleteAgent(conn: EngineConnection, id: string): Promise<v
     const res = await fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(id)}`, { method: 'DELETE', headers: buildHeaders(conn) })
     if (!res.ok && res.status !== 404) {
         const body = await res.text().catch(() => 'Unknown error')
-        throw new Error(`rerun-engine DELETE /agents/${id} failed: ${res.status} ${body}`)
+        throw new Error(`lumvika-engine DELETE /agents/${id} failed: ${res.status} ${body}`)
     }
 }
 
@@ -489,7 +489,7 @@ export async function listSessions(conn: EngineConnection, agentId: string): Pro
 export async function getSession(conn: EngineConnection, agentId: string, sessionId: string): Promise<EngineSession | null> {
     const res = await fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(agentId)}/sessions/${encodeURIComponent(sessionId)}`, { headers: buildHeaders(conn), signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) })
     if (res.status === 404) return null
-    if (!res.ok) throw new Error(`rerun-engine GET /agents/${agentId}/sessions/${sessionId} failed: ${res.status}`)
+    if (!res.ok) throw new Error(`lumvika-engine GET /agents/${agentId}/sessions/${sessionId} failed: ${res.status}`)
     return engineSessionSchema.parse(await res.json())
 }
 
@@ -503,7 +503,7 @@ export async function getSessionMessages(conn: EngineConnection, agentId: string
 
 // Returns the raw fetch Response so the caller can read the `x-session-id`
 // header and pipe the SSE body straight through to the browser.
-export async function chat(conn: EngineConnection, agentId: string, params: { sessionId?: string; message: string; connectionId?: string; model?: string; source?: SessionSource; foreman?: ForemanBrief; author?: MessageAuthor; install?: boolean; userLanguage?: string; callableAgentIds?: string[] }): Promise<Response> {
+export async function chat(conn: EngineConnection, agentId: string, params: { sessionId?: string; message: string; connectionId?: string; model?: string; source?: SessionSource; steward?: StewardBrief; author?: MessageAuthor; install?: boolean; userLanguage?: string; callableAgentIds?: string[] }): Promise<Response> {
     return fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(agentId)}/chat`, {
         method: 'POST',
         headers: buildHeaders(conn),
@@ -572,7 +572,7 @@ export async function deleteFile(conn: EngineConnection, base: string, path: str
     const res = await fetchEngine(`${conn.baseUrl}${base}?path=${encodeURIComponent(path)}`, { method: 'DELETE', headers: buildHeaders(conn) })
     if (!res.ok && res.status !== 404) {
         const body = await res.text().catch(() => 'Unknown error')
-        throw new Error(`rerun-engine DELETE ${base} failed: ${res.status} ${body}`)
+        throw new Error(`lumvika-engine DELETE ${base} failed: ${res.status} ${body}`)
     }
 }
 
@@ -589,7 +589,7 @@ export async function uploadFile(conn: EngineConnection, base: string, file: Fil
     const res = await fetchEngine(`${conn.baseUrl}${base}/raw${qs}`, { method: 'POST', headers, body: form })
     if (!res.ok) {
         const body = await res.text().catch(() => 'Unknown error')
-        throw new Error(`rerun-engine POST ${base}/raw failed: ${res.status} ${body}`)
+        throw new Error(`lumvika-engine POST ${base}/raw failed: ${res.status} ${body}`)
     }
 }
 
@@ -630,7 +630,7 @@ export async function uploadFileStream(conn: EngineConnection, base: string, inp
 export class EngineUploadError extends Error {
     status: number
     constructor(status: number, body: string) {
-        super(parseEngineError(body) ?? `rerun-engine upload failed: ${status}`)
+        super(parseEngineError(body) ?? `lumvika-engine upload failed: ${status}`)
         this.status = status
         this.name = 'EngineUploadError'
     }
@@ -664,8 +664,8 @@ export async function supportsStreamedUploads(conn: EngineConnection): Promise<b
     return (await engineCapabilities(conn)).has(ENGINE_CAPABILITY_FILES_STREAM)
 }
 
-export async function supportsForemanFiles(conn: EngineConnection): Promise<boolean> {
-    return (await engineCapabilities(conn)).has(ENGINE_CAPABILITY_FOREMAN_FILES)
+export async function supportsStewardFiles(conn: EngineConnection): Promise<boolean> {
+    return (await engineCapabilities(conn)).has(ENGINE_CAPABILITY_STEWARD_FILES)
 }
 
 export async function supportsDesktop(conn: EngineConnection): Promise<boolean> {
@@ -811,7 +811,7 @@ export async function deleteSchedule(conn: EngineConnection, agentId: string, sl
     const res = await fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(agentId)}/schedules/${encodeURIComponent(slug)}`, { method: 'DELETE', headers: buildHeaders(conn) })
     if (!res.ok && res.status !== 404) {
         const body = await res.text().catch(() => 'Unknown error')
-        throw new Error(`rerun-engine DELETE /agents/${agentId}/schedules/${slug} failed: ${res.status} ${body}`)
+        throw new Error(`lumvika-engine DELETE /agents/${agentId}/schedules/${slug} failed: ${res.status} ${body}`)
     }
 }
 
@@ -846,7 +846,7 @@ export async function deleteTrigger(conn: EngineConnection, agentId: string, slu
     const res = await fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(agentId)}/triggers/${encodeURIComponent(slug)}`, { method: 'DELETE', headers: buildHeaders(conn) })
     if (!res.ok && res.status !== 404) {
         const body = await res.text().catch(() => 'Unknown error')
-        throw new Error(`rerun-engine DELETE /agents/${agentId}/triggers/${slug} failed: ${res.status} ${body}`)
+        throw new Error(`lumvika-engine DELETE /agents/${agentId}/triggers/${slug} failed: ${res.status} ${body}`)
     }
 }
 
@@ -873,7 +873,7 @@ export async function getEngineHealth(conn: EngineConnection): Promise<EngineHea
 export async function getEngineDoctor(conn: EngineConnection): Promise<EngineDoctor | null> {
     const res = await fetchEngine(`${conn.baseUrl}/doctor`, { headers: buildHeaders(conn), signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) })
     if (res.status === 404) return null
-    if (!res.ok) throw new Error(`rerun-engine GET /doctor failed: ${res.status}`)
+    if (!res.ok) throw new Error(`lumvika-engine GET /doctor failed: ${res.status}`)
     return engineDoctorSchema.parse(await res.json())
 }
 

@@ -4,8 +4,8 @@ import { countSubRuns, currentCall, isSubRunFailing, pairSubRuns, SUB_RUN_FAILUR
 
 const t = englishTranslator('subRuns')
 
-const delegateTool = (toolCallId: string) => ({ type: 'dynamic-tool', toolName: 'mcp__rerun__delegate_tasks', toolCallId, state: 'input-available' })
-const callAgentTool = (toolCallId: string) => ({ type: 'dynamic-tool', toolName: 'mcp__rerun__call_agent', toolCallId, state: 'input-available' })
+const delegateTool = (toolCallId: string) => ({ type: 'dynamic-tool', toolName: 'mcp__lumvika__delegate_tasks', toolCallId, state: 'input-available' })
+const callAgentTool = (toolCallId: string) => ({ type: 'dynamic-tool', toolName: 'mcp__lumvika__call_agent', toolCallId, state: 'input-available' })
 const delegateData = (id: string, title: string) => ({ type: 'data-delegate', id, data: { tasks: [{ title, status: 'running', steps: 1 }] } })
 const callAgentData = (id: string, agentName: string) => ({ type: 'data-call-agent', id, data: { agentName, status: 'running', steps: 1 } })
 

@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, isNotNull, sql, type SQL } from 'drizzle-orm'
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core'
-import type { StatsDataset, StatsGroupBy, StatsMetric, StatsPoint, StatsRunStatusFilter } from '@rerun/contracts'
+import type { StatsDataset, StatsGroupBy, StatsMetric, StatsPoint, StatsRunStatusFilter } from '@lumvika/contracts'
 import { getSystemDb } from '../systemDb.js'
 import { runs, runSteps, sessions, toolCalls } from '../schema.js'
 

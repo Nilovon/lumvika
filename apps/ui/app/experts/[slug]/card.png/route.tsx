@@ -2,14 +2,14 @@ import { readFile } from 'node:fs/promises'
 import { ImageResponse } from 'next/og'
 import type { ReactNode } from 'react'
 
-import { badgeFromType, markdownToPlainText } from '@rerun/ui/experts/options'
-import { R_PATH } from '@/components/layout/Logo'
+import { badgeFromType, markdownToPlainText } from '@lumvika/ui/experts/options'
+import { MARK_PATH } from '@/components/layout/Logo'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 export const runtime = 'nodejs'
 
-const BRAND = '#4d34f7'
+const BRAND = '#0b6e63'
 
 const BASE_W = 376
 const BASE_H = 600
@@ -263,7 +263,7 @@ function CardImage({ data, photoDataUrl, s }: { data: ExpertCard; photoDataUrl: 
                         color: 'transparent',
                     }}
                 >
-                    Rerun Experts
+                    Lumvika Experts
                 </span>
                 <HeaderMarks s={s} />
             </div>
@@ -303,7 +303,7 @@ function CardImage({ data, photoDataUrl, s }: { data: ExpertCard; photoDataUrl: 
                         lineHeight: 1,
                         letterSpacing: -0.5 * s,
                         textTransform: 'uppercase',
-                        backgroundImage: 'radial-gradient(120% 140% at 50% -40%, #ffffff 12%, #bab0ff 58%, #4d34f7 130%)',
+                        backgroundImage: 'radial-gradient(120% 140% at 50% -40%, #ffffff 12%, #bab0ff 58%, #0b6e63 130%)',
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         color: 'transparent',
@@ -393,7 +393,7 @@ function CardImage({ data, photoDataUrl, s }: { data: ExpertCard; photoDataUrl: 
                     color: 'rgba(255,255,255,0.3)',
                 }}
             >
-                <span>Rerun.build</span>
+                <span>lumvika.com</span>
                 <div style={{ position: 'relative', display: 'flex', width: 16 * s, height: 16 * s, alignItems: 'center', justifyContent: 'center' }}>
                     <div
                         aria-hidden
@@ -407,7 +407,7 @@ function CardImage({ data, photoDataUrl, s }: { data: ExpertCard; photoDataUrl: 
                         }}
                     />
                     <svg width={16 * s} height={16 * s} viewBox="0 0 512 512" fill="rgba(255,255,255,0.7)" style={{ position: 'relative' }}>
-                        <path fillRule="evenodd" d={R_PATH} />
+                        <path fillRule="evenodd" d={MARK_PATH} />
                     </svg>
                 </div>
             </div>
