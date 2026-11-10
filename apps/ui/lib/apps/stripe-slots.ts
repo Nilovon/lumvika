@@ -1,7 +1,7 @@
 // No 'server-only': the subscriber trial sweep converts trials from Trigger.dev.
 import type Stripe from 'stripe'
 import type { AddonKey } from '@rerun/contracts'
-import { addonForPriceId, intervalOfItems, priceIdForAddon, stripe } from '@/ee/lib/billing/stripe'
+import { addonForPriceId, intervalOfItems, priceIdForAddon, stripe } from '@/lib/billing/no-billing'
 
 export function slotItem(subscription: Stripe.Subscription, addonKey: AddonKey): Stripe.SubscriptionItem | undefined {
     return subscription.items.data.find(item => addonForPriceId(item.price?.id) === addonKey)

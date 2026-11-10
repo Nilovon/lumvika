@@ -9,7 +9,7 @@ import { appDefinition, linkupPlatforms } from '@/lib/apps/registry'
 import { slotQuantity } from '@/lib/apps/stripe-slots'
 import { sweepSubscriberTrials } from '@/lib/apps/trials'
 import { APP_SLUGS, SLOT_HOLDING_STATUSES, isAppSlug } from '@/lib/apps/types'
-import { stripe } from '@/ee/lib/billing/stripe'
+import { stripe } from '@/lib/billing/no-billing'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectAll, selectMany } from '@/supabase/supabase-helpers'
 

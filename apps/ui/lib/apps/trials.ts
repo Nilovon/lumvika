@@ -1,7 +1,7 @@
 // No 'server-only': swept hourly from Trigger.dev.
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/app/api/database.types'
-import { stripe } from '@/ee/lib/billing/stripe'
+import { stripe } from '@/lib/billing/no-billing'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { reportWorkspaceEvent } from './analytics'
 import { updateConnection } from './connections'
