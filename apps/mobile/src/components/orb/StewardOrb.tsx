@@ -1,16 +1,16 @@
 import { useEffect, useId, type ComponentType } from 'react'
 import { View, type StyleProp, type ViewStyle } from 'react-native'
 import Animated, { Easing, cancelAnimation, useAnimatedProps, useAnimatedStyle, useFrameCallback, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
-import Svg, { Circle, ClipPath, Defs, Ellipse, G, LinearGradient, RadialGradient, Rect, Stop, type GProps } from 'react-native-svg'
+import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop, type GProps } from 'react-native-svg'
 
 import { BUDDY_FACE_CENTER, BuddyFace } from '@/components/buddy/BuddyFace'
 import { BuddyMotionScope } from '@/components/buddy/motion'
-import { ORB_CENTER as CENTER, ORB_RADIUS as RADIUS, advance, restingPose, startClock, type Matrix } from '@/components/orb/orb-motion'
+import { ORB_BELLY as BELLY, ORB_CENTER as CENTER, ORB_RADIUS as RADIUS, advance, restingPose, startClock, type Matrix } from '@/components/orb/orb-motion'
 
-// Ported from packages/ui/src/steward (Orb, StewardBall, steward-face, the `glass` material): the
-// Steward is an indigo glass ball with two round eyes on a dark plate. Like on the web, its eyes
-// drift, the ball turns as if looking around, a band of light crosses the glass, and it bounces and
-// spins while it thinks.
+// Ported from packages/ui/src/steward (Orb, StewardBall, the `glass` material): the Steward is a
+// mint drop of light with two ink eyes set straight into it. Like on the web, its eyes drift, the
+// drop turns as if looking around, a band of light crosses it, and it bounces and spins while it
+// thinks.
 
 export type OrbState = 'idle' | 'thinking'
 
@@ -24,27 +24,33 @@ const VIEW_WIDTH = RADIUS * 2 + MARGIN * 2
 const VIEW_HEIGHT = RADIUS * 2 + MARGIN + BELOW_FLOOR
 
 const SMALL_BELOW = 40
-const FACE_SCALE = 1.4
-const SMALL_FACE_SCALE = 1.7
+const FACE_SCALE = 1.3
+const SMALL_FACE_SCALE = 1.6
 const EYE_Y = 10
 const FACE_EYE_SHARE = 0.45
-const PLATE = { width: 27, height: 14, radius: 6 }
 const SHEEN_WIDTH = 20
 
-const GLASS = {
+const LUMEN = {
     stops: [
-        [0, '#dcf7f0'],
-        [0.2, '#7fdccb'],
-        [0.5, '#0b6e63'],
-        [0.8, '#0a4f48'],
-        [1, '#06302c'],
+        [0, '#fbfffd'],
+        [0.35, '#c9f0e6'],
+        [0.7, '#7fdccb'],
+        [1, '#0b6e63'],
     ] as const,
-    bounce: '#66cdb9',
-    plate: ['#06302c', '#021512'] as const,
-    eyeTint: '#9fe8d8',
-    eyeLight: '#dcf7f0',
-    topGloss: 0.6,
+    outline: '#0b6e63',
+    aura: '#7fdccb',
+    eyeTint: '#10201d',
+    eyeLight: '#f7f4ec',
 }
+
+const TIP = CENTER.y - RADIUS
+const DROP_PATH = (() => {
+    const reach = Math.acos(BELLY.r / (BELLY.y - TIP))
+    const dx = BELLY.r * Math.sin(reach)
+    const y = BELLY.y - BELLY.r * Math.cos(reach)
+    const f = (n: number) => n.toFixed(2)
+    return `M${f(CENTER.x)} ${f(TIP)} C${f(CENTER.x + 6)} ${f(TIP + 14)} ${f(CENTER.x + dx)} ${f(y - 6)} ${f(CENTER.x + dx)} ${f(y)} A${BELLY.r} ${BELLY.r} 0 1 1 ${f(CENTER.x - dx)} ${f(y)} C${f(CENTER.x - dx)} ${f(y - 6)} ${f(CENTER.x - 6)} ${f(TIP + 14)} ${f(CENTER.x)} ${f(TIP)} Z`
+})()
 
 const MOTION: Record<OrbState, { amp: number; period: number }> = {
     idle: { amp: 0, period: 0 },
@@ -128,9 +134,6 @@ export function StewardOrb({ size, state = 'idle', facing = 'left', animated = t
 
     const inset = (size * MARGIN) / (RADIUS * 2)
     const viewBox = `${CENTER.x - VIEW_WIDTH / 2} ${CENTER.y - RADIUS - MARGIN} ${VIEW_WIDTH} ${VIEW_HEIGHT}`
-    const sphere = { cx: CENTER.x, cy: CENTER.y, r: RADIUS }
-    const plateX = BUDDY_FACE_CENTER - PLATE.width / 2
-    const plateTop = EYE_Y - PLATE.height / 2
     const fromFloor: ViewStyle = { position: 'absolute', left: -inset, top: -inset, width, height, transformOrigin: ['50%', `${((FLOOR - (CENTER.y - RADIUS - MARGIN)) / VIEW_HEIGHT) * 100}%`, 0] }
 
     return (
@@ -138,47 +141,39 @@ export function StewardOrb({ size, state = 'idle', facing = 'left', animated = t
             <Animated.View style={[fromFloor, shadow]}>
                 <Svg viewBox={viewBox} width={width} height={height}>
                     <Defs>
+                        <RadialGradient id={`${uid}-aura`}>
+                            <Stop offset="0" stopColor={LUMEN.aura} stopOpacity={0.5} />
+                            <Stop offset="1" stopColor={LUMEN.aura} stopOpacity={0} />
+                        </RadialGradient>
                         <RadialGradient id={`${uid}-shadow`}>
                             <Stop offset="0" stopColor="#000" stopOpacity={0.45} />
                             <Stop offset="1" stopColor="#000" stopOpacity={0} />
                         </RadialGradient>
                     </Defs>
-                    <Ellipse cx={CENTER.x} cy={FLOOR} rx={RADIUS * 0.72} ry={BELOW_FLOOR - 1} fill={`url(#${uid}-shadow)`} />
+                    <Ellipse cx={CENTER.x} cy={FLOOR - 1} rx={BELLY.r * 1.25} ry={BELLY.r * 0.32} fill={`url(#${uid}-aura)`} />
+                    <Ellipse cx={CENTER.x} cy={FLOOR} rx={BELLY.r * 0.72} ry={BELOW_FLOOR - 1} fill={`url(#${uid}-shadow)`} />
                 </Svg>
             </Animated.View>
             <Animated.View style={[fromFloor, bounce]}>
                 <Svg viewBox={viewBox} width={width} height={height}>
                     <Defs>
-                        <RadialGradient id={`${uid}-body`} cx={CENTER.x - 12} cy={CENTER.y - 16} r={RADIUS * 1.55} gradientUnits="userSpaceOnUse">
-                            {GLASS.stops.map(([offset, color]) => (
+                        <RadialGradient id={`${uid}-body`} cx={BELLY.x - 12} cy={BELLY.y - 14} r={BELLY.r * 1.7} gradientUnits="userSpaceOnUse">
+                            {LUMEN.stops.map(([offset, color]) => (
                                 <Stop key={offset} offset={offset} stopColor={color} />
                             ))}
                         </RadialGradient>
-                        <RadialGradient id={`${uid}-bounce`} cx={CENTER.x + 16} cy={CENTER.y + 30} r={RADIUS * 0.8} gradientUnits="userSpaceOnUse">
-                            <Stop offset="0" stopColor={GLASS.bounce} stopOpacity={0.5} />
-                            <Stop offset="1" stopColor={GLASS.bounce} stopOpacity={0} />
-                        </RadialGradient>
-                        <LinearGradient id={`${uid}-gloss`} x1="0" y1="0" x2="0" y2="1">
-                            <Stop offset="0" stopColor="#fff" stopOpacity={Math.min(1, GLASS.topGloss + 0.3)} />
-                            <Stop offset="1" stopColor="#fff" stopOpacity={0} />
-                        </LinearGradient>
                         <LinearGradient id={`${uid}-sheen`} x1="0" y1="0" x2="1" y2="0">
                             <Stop offset="0" stopColor="#fff" stopOpacity={0} />
                             <Stop offset="0.5" stopColor="#fff" stopOpacity={0.55} />
                             <Stop offset="1" stopColor="#fff" stopOpacity={0} />
                         </LinearGradient>
-                        <LinearGradient id={`${uid}-plate`} x1="0" y1="0" x2="0" y2="1">
-                            <Stop offset="0" stopColor={GLASS.plate[0]} />
-                            <Stop offset="1" stopColor={GLASS.plate[1]} />
-                        </LinearGradient>
                         <ClipPath id={`${uid}-clip`}>
-                            <Circle {...sphere} />
+                            <Path d={DROP_PATH} />
                         </ClipPath>
                     </Defs>
 
-                    <Circle {...sphere} fill={`url(#${uid}-body)`} />
+                    <Path d={DROP_PATH} fill={`url(#${uid}-body)`} />
                     <G clipPath={`url(#${uid}-clip)`}>
-                        <Circle {...sphere} fill={`url(#${uid}-bounce)`} />
                         {living && (
                             <G transform="skewX(-18)">
                                 <AnimatedG animatedProps={sheenProps}>
@@ -188,19 +183,15 @@ export function StewardOrb({ size, state = 'idle', facing = 'left', animated = t
                         )}
                         <AnimatedG animatedProps={faceProps}>
                             <G transform={`scale(${faceScale}) translate(${-BUDDY_FACE_CENTER} ${-EYE_Y})`}>
-                                <Rect x={plateX} y={plateTop + 0.7} width={PLATE.width} height={PLATE.height} rx={PLATE.radius} fill="#fff" fillOpacity={0.45} />
-                                <Rect x={plateX} y={plateTop} width={PLATE.width} height={PLATE.height} rx={PLATE.radius} fill={`url(#${uid}-plate)`} />
-                                <Rect x={plateX + 2} y={plateTop + 1.2} width={PLATE.width - 4} height={PLATE.height * 0.4} rx={PLATE.radius - 2} fill="#fff" fillOpacity={0.07} />
                                 <AnimatedG animatedProps={eyesProps}>
                                     <BuddyMotionScope motion={animated && !reducedMotion ? { kind: null, offset: 0, blinkOffset: 1.3 } : null}>
-                                        <BuddyFace uid={uid} eyes="round" mouth="none" mood={thinking ? 'working' : 'idle'} depth={EYE_Y / FACE_EYE_SHARE} light={GLASS.eyeLight} lit={!small} tint={GLASS.eyeTint} />
+                                        <BuddyFace uid={uid} eyes="pill" mouth="none" mood={thinking ? 'working' : 'idle'} depth={EYE_Y / FACE_EYE_SHARE} light={LUMEN.eyeLight} lit={!small} tint={LUMEN.eyeTint} />
                                     </BuddyMotionScope>
                                 </AnimatedG>
                             </G>
                         </AnimatedG>
-                        <Ellipse cx={CENTER.x - 13} cy={CENTER.y - 24} rx={17} ry={8.5} transform={`rotate(-24 ${CENTER.x - 13} ${CENTER.y - 24})`} fill={`url(#${uid}-gloss)`} />
                     </G>
-                    <Circle {...sphere} fill="none" stroke="#fff" strokeOpacity={0.6} strokeWidth={0.7} />
+                    <Path d={DROP_PATH} fill="none" stroke={LUMEN.outline} strokeOpacity={0.45} strokeWidth={0.8} />
                 </Svg>
             </Animated.View>
         </View>

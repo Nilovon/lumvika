@@ -39,3 +39,22 @@ The wordmark is drawn, not set: monoline geometric letters with round ends, 13 u
 x-height, with no font needed to render it.
 
 The interface uses Inter and Geist, with Geist Mono for code, as loaded in `apps/ui/app/layout.tsx`.
+
+## Characters
+
+**The Steward** is a drop of light: a round belly that rests on the floor and a soft tip pointing up.
+It is filled with a radial gradient from near-white through Mint to Teal, and has a thin Teal
+outline. Its two pill eyes are drawn in Ink, straight on the material, with no face plate and no
+glow. Code: `packages/ui/src/steward/StewardBall.tsx` (the `glass` material, labelled Lumen, in
+`steward-materials.ts`). The mobile port is in `apps/mobile/src/components/orb/StewardOrb.tsx`.
+
+**Coworkers** are small lanterns: a cylinder standing on its tile with a light cap and a pale window
+band around the wall.
+- The face is drawn on the front of the band in flat Ink: eyes, sometimes a mouth.
+- At rest, the cap wears the agent's own colour and the band is Paper.
+- When working, broken or waiting, the cap and a pale tint of the band take the state colour: amber,
+  red or cyan.
+- Code: `packages/ui/src/iso-grid/components/buddy/BuddyArt.tsx` and `BuddyFace.tsx`. The mobile port
+  is in `apps/mobile/src/components/buddy/`.
+
+`apps/ui/public/email/board-sample.png` is a render of four lanterns for the email previews.

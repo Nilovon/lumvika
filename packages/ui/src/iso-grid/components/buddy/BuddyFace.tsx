@@ -2,15 +2,15 @@ import type { ReactNode } from 'react'
 import type { BuddyEyes, BuddyMouth } from '../../types'
 import type { BuddyMood } from './buddy-look'
 
-// Drawn in the front-left wall's plane: the face is centred on x = 21, the eyes 10 units apart.
+// Drawn on the lantern's window band, in the face's own plane: the face is centred on x = 21, the
+// eyes 10 units apart. Every shape is flat ink on the light band, without sockets or glow.
 const CENTER = 21
 export const BUDDY_FACE_CENTER = CENTER
 const GAP = 5
-const INK = 'rgb(255 255 255 / 0.94)'
-const DARK = '#141419'
-const HEART = '#ff6b9a'
-const SOCKET = '#07070a'
-const LIP = 'rgb(255 255 255 / 0.2)'
+const INK = '#10201D'
+const PAPER = '#F7F4EC'
+const HEART = '#e0366f'
+const SPARK = '#F5A524'
 
 type EyeProps = { x: number; y: number }
 
@@ -18,9 +18,8 @@ function blinking(y: number) {
     return { className: 'iso-buddy-eyes', style: { transformOrigin: `${CENTER}px ${y}px` } }
 }
 
-// Les paupières d'un œil qui ne cligne que pour un buddy `alive`. Elles portent leur propre classe
-// plutôt que celle ci-dessus : sur un board, un œil globuleux reste fixe, et c'est seul dans une
-// page qu'il prend vie.
+// The lids of an eye that only blinks for an `alive` buddy: on a board a googly eye stays still,
+// alone on a page it comes to life.
 function lids(y: number) {
     return { className: 'iso-buddy-lids', style: { transformOrigin: `${CENTER}px ${y}px` } }
 }
@@ -30,310 +29,138 @@ function Pair({ y, children }: { y: number; children: (eye: EyeProps) => ReactNo
 }
 
 function closed(x: number, y: number, color = INK) {
-    return <path d={`M${x - 2.4} ${y} Q${x} ${y + 2.2} ${x + 2.4} ${y}`} stroke={color} strokeWidth={1.5} strokeLinecap="round" fill="none" />
+    return <path d={`M${x - 2.6} ${y} Q${x} ${y + 2.3} ${x + 2.6} ${y}`} stroke={color} strokeWidth={1.6} strokeLinecap="round" fill="none" />
 }
 
 function cross(x: number, y: number, color = INK) {
-    return <path d={`M${x - 2} ${y - 2} L${x + 2} ${y + 2} M${x + 2} ${y - 2} L${x - 2} ${y + 2}`} stroke={color} strokeWidth={1.6} strokeLinecap="round" />
+    return <path d={`M${x - 2.2} ${y - 2.2} L${x + 2.2} ${y + 2.2} M${x + 2.2} ${y - 2.2} L${x - 2.2} ${y + 2.2}`} stroke={color} strokeWidth={1.7} strokeLinecap="round" />
 }
 
 function star(x: number, y: number, r: number) {
-    const i = r * 0.32
+    const i = r * 0.36
     return `M${x} ${y - r} L${x + i} ${y - i} L${x + r} ${y} L${x + i} ${y + i} L${x} ${y + r} L${x - i} ${y + i} L${x - r} ${y} L${x - i} ${y - i} Z`
 }
 
-type Paints = { ink: string; white: string; pupil: string; glass: string; lens: string; light: string; heart: string }
-type Paint = (own: string) => string
+type EyesProps = { style: BuddyEyes; mood: BuddyMood; y: number; light: string }
 
-// One eye shape, set into the wall like a lit screen: a light lip under a dark socket, then the eye
-// itself with a halo. `paint` turns the shape's own colour into the colour of the pass being drawn;
-// `backing` is true for the two passes that sit behind the eye. Unlit, the shape is painted flat.
-function Solid({ uid, lit, children }: { uid: string; lit: boolean; children: (paint: Paint, backing: boolean) => ReactNode }) {
-    const eye = children(own => own, false)
-    if (!lit) return <>{eye}</>
-    return (
-        <>
-            <g transform="translate(0 0.9)" stroke={LIP} strokeWidth={2.2} strokeLinejoin="round">{children(() => LIP, true)}</g>
-            <g stroke={SOCKET} strokeWidth={2.2} strokeLinejoin="round">{children(() => SOCKET, true)}</g>
-            <g filter={`url(#${uid}-eye-glow)`}>{eye}</g>
-        </>
-    )
-}
-
-type EyePaint = Exclude<keyof Paints, 'white'> | 'eye-white'
-
-const INK_ONLY: ReadonlySet<EyePaint> = new Set(['ink'])
-const EYEBALL: ReadonlySet<EyePaint> = new Set(['eye-white', 'pupil'])
-const VISOR: ReadonlySet<EyePaint> = new Set(['glass', 'light'])
-const SHADES: ReadonlySet<EyePaint> = new Set(['glass'])
-const GLASSES: ReadonlySet<EyePaint> = new Set(['ink', 'lens'])
-const HEARTS: ReadonlySet<EyePaint> = new Set(['heart'])
-
-// The gradients one face actually paints with, following the branches of `Eyes`. A page draws a
-// buddy dozens of times, and writing all seven gradients into each one cost a few hundred nodes.
-function eyePaints(style: BuddyEyes, mood: BuddyMood): ReadonlySet<EyePaint> {
-    const keepsFrame = style === 'visor' || style === 'shades' || style === 'glasses'
-    if (mood === 'asleep' || (mood === 'error' && !keepsFrame)) return INK_ONLY
-    switch (style) {
-        case 'googly':
-        case 'cyclops':
-            return EYEBALL
-        case 'visor':
-            return VISOR
-        case 'shades':
-            return SHADES
-        case 'glasses':
-            return GLASSES
-        case 'heart':
-            return HEARTS
-        default:
-            return INK_ONLY
-    }
-}
-
-function EyeDefs({ uid, y, tint, light, paints }: { uid: string; y: number; tint: string; light: string; paints: ReadonlySet<EyePaint> }) {
-    const lit = (share: number) => `color-mix(in srgb, ${INK}, ${tint} ${share}%)`
-    return (
-        <defs>
-            {paints.has('ink') && <linearGradient id={`${uid}-ink`} x1="0" y1={y - 3.6} x2="0" y2={y + 3.6} gradientUnits="userSpaceOnUse">
-                <stop offset="0%" style={{ stopColor: `color-mix(in srgb, ${INK}, white 60%)` }} />
-                <stop offset="38%" style={{ stopColor: lit(12) }} />
-                <stop offset="100%" style={{ stopColor: lit(70) }} />
-            </linearGradient>}
-            {paints.has('eye-white') && <radialGradient id={`${uid}-eye-white`} cx="40%" cy="30%" r="75%">
-                <stop offset="0%" stopColor="#fff" />
-                <stop offset="55%" stopColor="#f3f4f8" />
-                <stop offset="100%" stopColor="#b3b9c9" />
-            </radialGradient>}
-            {paints.has('pupil') && <radialGradient id={`${uid}-pupil`} cx="38%" cy="30%" r="80%">
-                <stop offset="0%" stopColor="#4a4d60" />
-                <stop offset="60%" stopColor="#17171d" />
-                <stop offset="100%" stopColor="#050507" />
-            </radialGradient>}
-            {paints.has('glass') && <linearGradient id={`${uid}-glass`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b3e50" />
-                <stop offset="50%" stopColor="#17181f" />
-                <stop offset="100%" stopColor="#08080b" />
-            </linearGradient>}
-            {paints.has('lens') && <linearGradient id={`${uid}-lens`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fff" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#fff" stopOpacity="0.02" />
-            </linearGradient>}
-            {paints.has('light') && <linearGradient id={`${uid}-visor-light`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fff" />
-                <stop offset="100%" style={{ stopColor: light }} />
-            </linearGradient>}
-            {paints.has('heart') && <linearGradient id={`${uid}-heart`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffb3cb" />
-                <stop offset="50%" stopColor={HEART} />
-                <stop offset="100%" stopColor="#e0366f" />
-            </linearGradient>}
-            {/* In user space: a pair of flat lines has a bounding box with no height to size the region from. */}
-            <filter id={`${uid}-eye-glow`} filterUnits="userSpaceOnUse" x={CENTER - 18} y={y - 12} width={36} height={24}>
-                <feGaussianBlur stdDeviation="1.1" result="blur" />
-                <feComponentTransfer in="blur" result="halo">
-                    <feFuncA type="linear" slope="0.75" />
-                </feComponentTransfer>
-                <feMerge>
-                    <feMergeNode in="halo" />
-                    <feMergeNode in="SourceGraphic" />
-                </feMerge>
-            </filter>
-        </defs>
-    )
-}
-
-type EyesProps = { style: BuddyEyes; mood: BuddyMood; y: number; light: string; uid: string; lit: boolean }
-
-function Eyes({ style, mood, y: baseY, light, uid, lit }: EyesProps) {
-    const flat = !lit
-    const P: Paints = flat
-        ? { ink: INK, white: '#fff', pupil: DARK, glass: DARK, lens: 'rgb(255 255 255 / 0.08)', light, heart: HEART }
-        : { ink: `url(#${uid}-ink)`, white: `url(#${uid}-eye-white)`, pupil: `url(#${uid}-pupil)`, glass: `url(#${uid}-glass)`, lens: `url(#${uid}-lens)`, light: `url(#${uid}-visor-light)`, heart: `url(#${uid}-heart)` }
-    const solid = (shape: (paint: Paint, backing: boolean) => ReactNode) => <Solid uid={uid} lit={lit}>{shape}</Solid>
-    const glint = (x: number, y: number, r = 0.62) => (lit ? <ellipse cx={x - 0.55} cy={y} rx={r} ry={r * 1.15} fill="#fff" fillOpacity={0.95} /> : null)
-
-    if (mood === 'asleep') return solid(paint => <Pair y={baseY}>{({ x, y }) => closed(x, y, paint(P.ink))}</Pair>)
+function Eyes({ style, mood, y: baseY, light }: EyesProps) {
+    if (mood === 'asleep') return <Pair y={baseY}>{({ x, y }) => closed(x, y)}</Pair>
     // Glasses and visors keep their frame when broken; everything else shows the crossed eyes.
-    if (mood === 'error' && style !== 'visor' && style !== 'shades' && style !== 'glasses') return solid(paint => <Pair y={baseY}>{({ x, y }) => cross(x, y, paint(P.ink))}</Pair>)
+    if (mood === 'error' && style !== 'visor' && style !== 'shades' && style !== 'glasses') return <Pair y={baseY}>{({ x, y }) => cross(x, y)}</Pair>
 
     const lookX = mood === 'working' ? 1 : 0
-    const lookY = mood === 'waiting' ? -1.6 : mood === 'working' ? 1 : 0
+    const lookY = mood === 'waiting' ? -1.4 : mood === 'working' ? 0.8 : 0
     const y = baseY + lookY
     const at = (x: number) => x + lookX
 
     switch (style) {
         case 'pill':
-            return (
-                <g {...blinking(y)}>
-                    {solid(paint => <Pair y={y}>{e => <ellipse cx={at(e.x)} cy={e.y} rx={1.9} ry={3.3} fill={paint(P.ink)} />}</Pair>)}
-                    <Pair y={y}>{e => glint(at(e.x), e.y - 1.6)}</Pair>
-                </g>
-            )
+            return <g {...blinking(y)}><Pair y={y}>{e => <rect x={at(e.x) - 1.8} y={e.y - 3.4} width={3.6} height={6.8} rx={1.8} fill={INK} />}</Pair></g>
         case 'round':
-            return (
-                <g {...blinking(y)}>
-                    {solid(paint => <Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y} r={2.3} fill={paint(P.ink)} />}</Pair>)}
-                    <Pair y={y}>{e => glint(at(e.x), e.y - 0.9)}</Pair>
-                </g>
-            )
+            return <g {...blinking(y)}><Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y} r={2.6} fill={INK} />}</Pair></g>
         case 'dot':
-            return <g {...blinking(y)}>{solid(paint => <Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y} r={1.25} fill={paint(P.ink)} />}</Pair>)}</g>
+            return <g {...blinking(y)}><Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y} r={1.5} fill={INK} />}</Pair></g>
         case 'happy':
-            return solid(paint => <Pair y={y}>{e => <path d={`M${at(e.x) - 2.6} ${e.y + 1} Q${at(e.x)} ${e.y - 2.6} ${at(e.x) + 2.6} ${e.y + 1}`} stroke={paint(P.ink)} strokeWidth={1.6} strokeLinecap="round" fill="none" />}</Pair>)
+            return <Pair y={y}>{e => <path d={`M${at(e.x) - 3} ${e.y + 1.2} Q${at(e.x)} ${e.y - 3} ${at(e.x) + 3} ${e.y + 1.2}`} stroke={INK} strokeWidth={1.8} strokeLinecap="round" fill="none" />}</Pair>
         case 'line':
-            return solid(paint => <Pair y={y}>{e => <path d={`M${at(e.x) - 2.4} ${e.y} L${at(e.x) + 2.4} ${e.y}`} stroke={paint(P.ink)} strokeWidth={1.6} strokeLinecap="round" />}</Pair>)
+            return <Pair y={y}>{e => <path d={`M${at(e.x) - 2.8} ${e.y} L${at(e.x) + 2.8} ${e.y}`} stroke={INK} strokeWidth={1.8} strokeLinecap="round" />}</Pair>
         case 'googly':
             return (
                 <g {...lids(y)}>
-                    {solid(paint => <Pair y={y}>{e => <circle cx={e.x} cy={e.y} r={3.6} fill={paint(P.white)} />}</Pair>)}
-                    {/* La pupille glisse dans le blanc de l'œil quand le buddy est `alive`. Elle a
-                        1,9 unité de jeu avant d'en toucher le bord, et le regard en prend 1,1. */}
+                    <Pair y={y}>{e => <circle cx={e.x} cy={e.y} r={3.9} fill="#fff" stroke={INK} strokeWidth={1.1} />}</Pair>
                     <g className="iso-buddy-pupils">
-                        <Pair y={y}>
-                            {e => (
-                                <>
-                                    <circle cx={e.x + lookX * 0.8} cy={e.y + 0.6 + lookY * 0.6} r={1.7} fill={P.pupil} />
-                                    {!flat && <circle cx={e.x - 0.6 + lookX * 0.8} cy={e.y + lookY * 0.6} r={0.55} fill="#fff" />}
-                                </>
-                            )}
-                        </Pair>
+                        <Pair y={y}>{e => <circle cx={e.x + lookX * 0.8} cy={e.y + 0.5 + lookY * 0.5} r={1.8} fill={INK} />}</Pair>
                     </g>
                 </g>
             )
         case 'cyclops':
             return (
                 <g {...blinking(y)}>
-                    {solid(paint => <circle cx={CENTER} cy={y} r={4.4} fill={paint(P.white)} />)}
-                    <circle cx={CENTER + lookX} cy={y + 0.4 + lookY * 0.5} r={2.2} fill={P.pupil} />
-                    <circle cx={CENTER - 0.8 + lookX} cy={y - 0.6} r={0.7} fill="#fff" />
+                    <circle cx={CENTER} cy={y} r={4.8} fill="#fff" stroke={INK} strokeWidth={1.2} />
+                    <circle cx={CENTER + lookX} cy={y + 0.4 + lookY * 0.5} r={2.3} fill={INK} />
                 </g>
             )
         case 'visor':
             return (
                 <g>
-                    {solid((paint, backing) => <rect x={CENTER - 12} y={y - 3.6} width={24} height={7.2} rx={3.6} fill={paint(P.glass)} stroke={backing ? undefined : INK} strokeOpacity={0.3} strokeWidth={backing ? undefined : 0.6} />)}
-                    {!flat && <path d={`M${CENTER - 9.5} ${y - 2.2} L${CENTER + 3} ${y - 2.2}`} stroke="#fff" strokeOpacity={0.22} strokeWidth={0.7} strokeLinecap="round" />}
+                    <rect x={CENTER - 11} y={y - 2.8} width={22} height={5.6} rx={2.8} fill={INK} />
                     {mood === 'error' ? (
                         <Pair y={y}>{e => cross(e.x, e.y, light)}</Pair>
                     ) : (
-                        <g {...blinking(y)}><Pair y={y}>{e => <rect x={at(e.x) - 2.2} y={e.y - 1.2} width={4.4} height={2.4} rx={1.2} fill={P.light} />}</Pair></g>
+                        <g {...blinking(y)}><rect x={at(CENTER) - 7} y={y - 0.8} width={5} height={1.6} rx={0.8} fill={light} /></g>
                     )}
                 </g>
             )
         case 'shades':
             return (
                 <g>
-                    <path d={`M${CENTER - 2} ${y - 1.6} L${CENTER + 2} ${y - 1.6}`} stroke={DARK} strokeWidth={1.2} />
-                    {solid((paint, backing) => <Pair y={y}>{e => <rect x={e.x - 3.4} y={e.y - 2.6} width={6.8} height={5} rx={2} fill={paint(P.glass)} stroke={backing ? undefined : INK} strokeOpacity={0.45} strokeWidth={backing ? undefined : 0.6} />}</Pair>)}
-                    <Pair y={y}>
-                        {e =>
-                            flat ? (
-                                <path d={`M${e.x - 2.2} ${e.y - 1.2} L${e.x - 0.6} ${e.y - 1.2}`} stroke="#fff" strokeOpacity={0.55} strokeWidth={0.7} strokeLinecap="round" />
-                            ) : (
-                                <path d={`M${e.x - 2.4} ${e.y + 0.4} L${e.x - 0.2} ${e.y - 1.8}`} stroke="#fff" strokeOpacity={0.5} strokeWidth={0.8} strokeLinecap="round" />
-                            )
-                        }
-                    </Pair>
-                    {mood === 'error' && <path d={`M${CENTER - 3} ${y + 5} q3 -1.6 6 0`} stroke={INK} strokeWidth={1.2} strokeLinecap="round" fill="none" />}
+                    <path d={`M${CENTER - 2} ${y - 1.2} L${CENTER + 2} ${y - 1.2}`} stroke={INK} strokeWidth={1.3} />
+                    <Pair y={y}>{e => <path d={`M${e.x - 3.6} ${e.y - 2.4} L${e.x + 3.6} ${e.y - 2.4} L${e.x + 3} ${e.y + 1.4} Q${e.x} ${e.y + 3.4} ${e.x - 3} ${e.y + 1.4} Z`} fill={INK} />}</Pair>
+                    {mood === 'error' && <path d={`M${CENTER - 3} ${y + 5.4} q3 -1.6 6 0`} stroke={INK} strokeWidth={1.3} strokeLinecap="round" fill="none" />}
                 </g>
             )
         case 'glasses':
             return (
                 <g>
-                    {solid((paint, backing) => (
-                        <>
-                            <path d={`M${CENTER - 1.4} ${y - 0.6} Q${CENTER} ${y - 1.6} ${CENTER + 1.4} ${y - 0.6}`} stroke={paint(P.ink)} strokeWidth={0.9} fill="none" />
-                            <Pair y={y}>{e => <circle cx={e.x} cy={e.y} r={3.5} fill={backing ? 'none' : P.lens} stroke={paint(P.ink)} strokeWidth={0.9} />}</Pair>
-                        </>
-                    ))}
-                    {mood === 'error' ? <Pair y={y}>{e => cross(e.x, e.y, P.ink)}</Pair> : <g {...blinking(y)}><Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y + lookY * 0.3} r={1.2} fill={P.ink} />}</Pair></g>}
+                    <path d={`M${CENTER - 1.6} ${y - 0.4} L${CENTER + 1.6} ${y - 0.4}`} stroke={INK} strokeWidth={1.1} />
+                    <Pair y={y}>{e => <rect x={e.x - 3.4} y={e.y - 3} width={6.8} height={6} rx={1.6} fill="none" stroke={INK} strokeWidth={1.1} />}</Pair>
+                    {mood === 'error' ? <Pair y={y}>{e => cross(e.x, e.y)}</Pair> : <g {...blinking(y)}><Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y + lookY * 0.3} r={1.3} fill={INK} />}</Pair></g>}
                 </g>
             )
         case 'sleepy':
-            return (
-                <>
-                    {solid(paint => <Pair y={y}>{e => <path d={`M${at(e.x) - 2.2} ${e.y - 0.6} L${at(e.x) + 2.2} ${e.y - 0.6} L${at(e.x) + 2.2} ${e.y + 1} A2.2 2.6 0 0 1 ${at(e.x) - 2.2} ${e.y + 1} Z`} fill={paint(P.ink)} />}</Pair>)}
-                    <Pair y={y}>{e => glint(at(e.x), e.y + 0.4, 0.5)}</Pair>
-                </>
-            )
+            return <Pair y={y}>{e => <path d={`M${at(e.x) - 2.6} ${e.y - 0.4} L${at(e.x) + 2.6} ${e.y - 0.4} A2.6 2.6 0 0 1 ${at(e.x) - 2.6} ${e.y - 0.4} Z`} fill={INK} />}</Pair>
         case 'wink':
             return (
                 <g>
-                    {solid(paint => (
-                        <>
-                            <ellipse cx={at(CENTER - GAP)} cy={y} rx={1.9} ry={3.3} fill={paint(P.ink)} />
-                            <path d={`M${at(CENTER + GAP) - 2.4} ${y} Q${at(CENTER + GAP)} ${y - 2.4} ${at(CENTER + GAP) + 2.4} ${y}`} stroke={paint(P.ink)} strokeWidth={1.5} strokeLinecap="round" fill="none" />
-                        </>
-                    ))}
-                    {glint(at(CENTER - GAP), y - 1.6)}
+                    <rect x={at(CENTER - GAP) - 1.8} y={y - 3.4} width={3.6} height={6.8} rx={1.8} fill={INK} />
+                    <path d={`M${at(CENTER + GAP) - 2.8} ${y + 0.8} L${at(CENTER + GAP) + 2.8} ${y - 0.8}`} stroke={INK} strokeWidth={1.8} strokeLinecap="round" />
                 </g>
             )
         case 'pixel':
-            return (
-                <g {...blinking(y)}>
-                    {solid(paint => <Pair y={y}>{e => <rect x={at(e.x) - 1.9} y={e.y - 2.4} width={3.8} height={4.8} rx={0.6} fill={paint(P.ink)} />}</Pair>)}
-                    {lit && <Pair y={y}>{e => <rect x={at(e.x) - 1.3} y={e.y - 1.8} width={1.1} height={1.1} fill="#fff" />}</Pair>}
-                </g>
-            )
+            return <g {...blinking(y)}><Pair y={y}>{e => <rect x={at(e.x) - 2.2} y={e.y - 2.2} width={4.4} height={4.4} fill={INK} />}</Pair></g>
         case 'star':
-            return solid(paint => <Pair y={y}>{e => <path d={star(at(e.x), e.y, 3.2)} fill={paint(P.ink)} />}</Pair>)
+            return <Pair y={y}>{e => <path d={star(at(e.x), e.y, 3.4)} fill={INK} />}</Pair>
         case 'heart':
             return (
-                <>
-                    {solid(paint => (
-                        <Pair y={y}>
-                            {e => (
-                                <path
-                                    d={`M${at(e.x)} ${e.y + 2.6} C${at(e.x) - 4.2} ${e.y - 0.4} ${at(e.x) - 2.6} ${e.y - 3.6} ${at(e.x)} ${e.y - 1.4} C${at(e.x) + 2.6} ${e.y - 3.6} ${at(e.x) + 4.2} ${e.y - 0.4} ${at(e.x)} ${e.y + 2.6} Z`}
-                                    fill={paint(P.heart)}
-                                />
-                            )}
-                        </Pair>
-                    ))}
-                    {!flat && <Pair y={y}>{e => <ellipse cx={at(e.x) - 1.3} cy={e.y - 1.2} rx={0.6} ry={0.45} fill="#fff" fillOpacity={0.85} />}</Pair>}
-                </>
+                <Pair y={y}>
+                    {e => (
+                        <path
+                            d={`M${at(e.x)} ${e.y + 2.8} C${at(e.x) - 4.6} ${e.y - 0.4} ${at(e.x) - 2.8} ${e.y - 3.9} ${at(e.x)} ${e.y - 1.5} C${at(e.x) + 2.8} ${e.y - 3.9} ${at(e.x) + 4.6} ${e.y - 0.4} ${at(e.x)} ${e.y + 2.8} Z`}
+                            fill={HEART}
+                        />
+                    )}
+                </Pair>
             )
         case 'brows':
             return (
                 <g>
-                    {solid(paint => (
-                        <>
-                            <path d={`M${CENTER - GAP - 2.6} ${y - 5.2} L${CENTER - GAP + 2.2} ${y - 4}`} stroke={paint(P.ink)} strokeWidth={1.3} strokeLinecap="round" />
-                            <path d={`M${CENTER + GAP + 2.6} ${y - 5.2} L${CENTER + GAP - 2.2} ${y - 4}`} stroke={paint(P.ink)} strokeWidth={1.3} strokeLinecap="round" />
-                        </>
-                    ))}
-                    <g {...blinking(y)}>
-                        {solid(paint => <Pair y={y}>{e => <ellipse cx={at(e.x)} cy={e.y + 0.4} rx={1.8} ry={2.6} fill={paint(P.ink)} />}</Pair>)}
-                        <Pair y={y}>{e => glint(at(e.x), e.y - 0.8, 0.55)}</Pair>
-                    </g>
+                    <path d={`M${CENTER - GAP - 2.8} ${y - 4.4} L${CENTER - GAP + 2.4} ${y - 5.4}`} stroke={INK} strokeWidth={1.4} strokeLinecap="round" />
+                    <path d={`M${CENTER + GAP + 2.8} ${y - 4.4} L${CENTER + GAP - 2.4} ${y - 5.4}`} stroke={INK} strokeWidth={1.4} strokeLinecap="round" />
+                    <g {...blinking(y)}><Pair y={y}>{e => <circle cx={at(e.x)} cy={e.y + 0.6} r={2.2} fill={INK} />}</Pair></g>
                 </g>
             )
         case 'sparkle':
             return (
                 <g>
-                    <g {...blinking(y)}>
-                        {solid(paint => <Pair y={y}>{e => <ellipse cx={at(e.x)} cy={e.y} rx={2.2} ry={3.4} fill={paint(P.ink)} />}</Pair>)}
-                        <Pair y={y}>{e => glint(at(e.x), e.y - 1.6, 0.7)}</Pair>
-                    </g>
-                    <path d={star(CENTER + GAP + 4.6, y - 4.2, 1.8)} fill={light} />
+                    <g {...blinking(y)}><Pair y={y}>{e => <rect x={at(e.x) - 1.9} y={e.y - 3.4} width={3.8} height={6.8} rx={1.9} fill={INK} />}</Pair></g>
+                    <path d={star(CENTER + GAP + 4.6, y - 4, 2)} fill={SPARK} />
                 </g>
             )
     }
 }
 
 function Mouth({ mouth, mood, y }: { mouth: BuddyMouth; mood: BuddyMood; y: number }) {
-    if (mood === 'error') return <path d={`M${CENTER - 2.4} ${y + 0.8} Q${CENTER} ${y - 1.2} ${CENTER + 2.4} ${y + 0.8}`} stroke={INK} strokeWidth={1.2} strokeLinecap="round" fill="none" />
-    if (mood === 'waiting') return <ellipse cx={CENTER} cy={y} rx={1.3} ry={1.6} fill={INK} />
+    if (mood === 'error') return <path d={`M${CENTER - 2.6} ${y + 0.9} Q${CENTER} ${y - 1.3} ${CENTER + 2.6} ${y + 0.9}`} stroke={INK} strokeWidth={1.3} strokeLinecap="round" fill="none" />
+    if (mood === 'waiting') return <circle cx={CENTER} cy={y} r={1.4} fill="none" stroke={INK} strokeWidth={1.1} />
     switch (mouth) {
         case 'smile':
-            return <path d={`M${CENTER - 2.4} ${y - 0.6} Q${CENTER} ${y + 1.8} ${CENTER + 2.4} ${y - 0.6}`} stroke={INK} strokeWidth={1.2} strokeLinecap="round" fill="none" />
+            return <path d={`M${CENTER - 2.6} ${y - 0.6} Q${CENTER} ${y + 2} ${CENTER + 2.6} ${y - 0.6}`} stroke={INK} strokeWidth={1.3} strokeLinecap="round" fill="none" />
         case 'open':
-            return <path d={`M${CENTER - 2} ${y - 0.8} Q${CENTER} ${y + 2.8} ${CENTER + 2} ${y - 0.8} Z`} fill={INK} />
+            return <path d={`M${CENTER - 2.2} ${y - 0.8} Q${CENTER} ${y + 3} ${CENTER + 2.2} ${y - 0.8} Z`} fill={INK} />
         case 'cat':
-            return <path d={`M${CENTER - 2.8} ${y - 0.4} Q${CENTER - 1.4} ${y + 1.6} ${CENTER} ${y - 0.4} Q${CENTER + 1.4} ${y + 1.6} ${CENTER + 2.8} ${y - 0.4}`} stroke={INK} strokeWidth={1.1} strokeLinecap="round" fill="none" />
+            return <path d={`M${CENTER - 3} ${y - 0.4} Q${CENTER - 1.5} ${y + 1.7} ${CENTER} ${y - 0.4} Q${CENTER + 1.5} ${y + 1.7} ${CENTER + 3} ${y - 0.4}`} stroke={INK} strokeWidth={1.2} strokeLinecap="round" fill="none" />
         case 'flat':
-            return <path d={`M${CENTER - 1.8} ${y} L${CENTER + 1.8} ${y}`} stroke={INK} strokeWidth={1.2} strokeLinecap="round" />
+            return <path d={`M${CENTER - 2} ${y} L${CENTER + 2} ${y}`} stroke={INK} strokeWidth={1.3} strokeLinecap="round" />
         case 'none':
             return null
     }
@@ -345,20 +172,19 @@ type BuddyFaceProps = {
     mouth: BuddyMouth
     mood: BuddyMood
     depth: number
+    // The light in a visor's slit.
     light: string
-    // False on a placement ghost, whose face is painted flat.
+    // Kept for callers that tell a full-size face from a tiny one; the flat face reads at any size.
     lit: boolean
-    // The colour the eyes pick up towards their lower edge.
     tint: string
 }
 
-export function BuddyFace({ uid, eyes, mouth, mood, depth, light, lit, tint }: BuddyFaceProps) {
+export function BuddyFace({ eyes, mouth, mood, depth, light }: BuddyFaceProps) {
     const hasMouth = mouth !== 'none' || mood === 'error' || mood === 'waiting'
-    const eyeY = depth * (hasMouth ? 0.38 : 0.45)
+    const eyeY = depth * (hasMouth ? 0.34 : 0.47)
     return (
         <>
-            {lit && <EyeDefs uid={uid} y={eyeY} tint={tint} light={light} paints={eyePaints(eyes, mood)} />}
-            <Eyes style={eyes} mood={mood} y={eyeY} light={light} uid={uid} lit={lit} />
+            <Eyes style={eyes} mood={mood} y={eyeY} light={light === '#fff' ? PAPER : light} />
             {hasMouth && mood !== 'asleep' && <Mouth mouth={mouth} mood={mood} y={eyeY + 6.6} />}
         </>
     )

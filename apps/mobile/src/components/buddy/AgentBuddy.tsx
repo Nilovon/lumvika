@@ -1,16 +1,16 @@
 import { useId, type ReactNode } from 'react'
 import { View, type StyleProp, type ViewStyle } from 'react-native'
-import Svg, { ClipPath, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
+import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { useTheme } from '@/theme/theme'
 
 import { BUDDY_FACE_CENTER, BuddyFace } from './BuddyFace'
-import { BUDDY_GEOMETRY, boxTop, leftWallPlane, roundedDiamond, wallsOutline, type BoxGeometry } from './geometry'
+import { BUDDY_GEOMETRY, boxTop, type BoxGeometry } from './geometry'
 import { buddyColor, buddyEyes, buddyMouth, hashUnit, shade, type BuddyEyes, type BuddyLook, type BuddyMood } from './look'
 import { BuddyMotionScope, GrowsFrom, RidesOnWalls, Sweep } from './motion'
 
-// Ported from packages/ui/src/iso-grid/components/buddy (AgentBuddy, BuddyArt, RoundedBox): an
-// agent's buddy away from the board, the same block, colour and eyes, drawn from the same id.
+// Ported from packages/ui/src/iso-grid/components/buddy (AgentBuddy, BuddyArt): an agent's buddy
+// away from the board, the same lantern, colour and eyes, drawn from the same id.
 
 // Below this width the board's block is too squat for its face to read: the buddy stands taller,
 // its face is painted flat and larger, and it loses its mouth.
@@ -54,7 +54,8 @@ export function AgentBuddy({ agentId, mood = 'idle', size, animated = true, faci
     const body = mood === 'idle' ? theme.buddyBody : mood === 'asleep' ? theme.buddyAsleep : STATE_COLOR[mood]
     const resting = mood === 'idle' || mood === 'asleep'
     const identity = buddyColor(agentId, look)
-    const top = resting ? shade(identity, mood === 'asleep' ? -0.6 : -0.12) : body
+    const cap = resting ? shade(identity, mood === 'asleep' ? -0.6 : -0.05) : body
+    const band = mood === 'asleep' ? shade(body, 0.45) : resting ? PAPER : shade(body, 0.72)
     const faceScale = small ? SMALL_FACE_SCALE : 1
     const motion = animated ? { kind: mood === 'working' ? ('bob' as const) : mood === 'error' ? ('shudder' as const) : null, offset: hashUnit(agentId, 7) * 4, blinkOffset: hashUnit(agentId, 9) * 4.6 } : null
 
@@ -62,29 +63,25 @@ export function AgentBuddy({ agentId, mood = 'idle', size, animated = true, faci
         <View pointerEvents="none" style={[{ width: size, height: size, transform: facing === 'right' ? [{ scaleX: -1 }] : undefined, opacity: mood === 'asleep' ? 0.8 : 1 }, style]}>
             <BuddyMotionScope motion={mood === 'asleep' ? null : motion}>
                 <Svg viewBox={viewBox} width="100%" height="100%">
-                    <RoundedBox
+                    <Lantern
                         uid={uid}
                         geometry={geometry}
                         color={body}
-                        top={top}
-                        topLight={mood === 'idle' ? 0.12 : 0.22}
-                        rim={mood === 'idle' ? 0.22 : 0.32}
-                        left={
-                            <G transform={leftWallPlane(geometry)}>
-                                <GrowsFrom y={geometry.depth}>
-                                    <G transform={faceScale === 1 ? undefined : `translate(${BUDDY_FACE_CENTER * (1 - faceScale)} 0) scale(${faceScale})`}>
-                                        <BuddyFace
-                                            uid={uid}
-                                            eyes={buddyEyes(agentId, look)}
-                                            mouth={buddyMouth(agentId, look)}
-                                            mood={mood}
-                                            depth={geometry.depth / faceScale}
-                                            light={resting ? shade(identity, 0.35) : '#ffffff'}
-                                            lit={!small}
-                                            tint={resting ? identity : body}
-                                        />
-                                    </G>
-                                </GrowsFrom>
+                        cap={cap}
+                        band={band}
+                        glow={mood !== 'asleep'}
+                        face={
+                            <G transform={faceScale === 1 ? undefined : `translate(${BUDDY_FACE_CENTER * (1 - faceScale)} 0) scale(${faceScale})`}>
+                                <BuddyFace
+                                    uid={uid}
+                                    eyes={buddyEyes(agentId, look)}
+                                    mouth={buddyMouth(agentId, look)}
+                                    mood={mood}
+                                    depth={geometry.depth / faceScale}
+                                    light={resting ? shade(identity, 0.35) : '#ffffff'}
+                                    lit={!small}
+                                    tint={resting ? identity : body}
+                                />
                             </G>
                         }
                         working={mood === 'working'}
@@ -95,43 +92,56 @@ export function AgentBuddy({ agentId, mood = 'idle', size, animated = true, faci
     )
 }
 
-type RoundedBoxProps = {
+const PAPER = '#F7F4EC'
+// How much of the tile's diamond the lantern's round footprint spans.
+const FOOTPRINT = 0.78
+
+type LanternProps = {
     uid: string
     geometry: BoxGeometry
     color: string
-    top: string
-    topLight: number
-    rim: number
-    left: ReactNode
+    cap: string
+    band: string
+    glow: boolean
+    face: ReactNode
     working: boolean
 }
 
-// A thick, soft block: the rounded diamond swept down. The fold between the two visible walls is a
-// gradient, the way light turns around a rounded edge. Only the top moves; the walls stretch under it.
-function RoundedBox({ uid, geometry, color, top, topLight, rim, left, working }: RoundedBoxProps) {
-    const { halfW, halfH, depth, radius } = geometry
-    const topCenter = boxTop(geometry)
-    const topShape = roundedDiamond(topCenter, halfW, halfH, radius)
-    const x0 = topCenter.x - halfW + topShape.sideInset
-    const x1 = topCenter.x + halfW - topShape.sideInset
-    const fill = { x: x0 - 2, y: topCenter.y, width: x1 - x0 + 4, height: depth + halfH + 2 }
+// A small lantern: a round body, a light cap and a pale window band carrying the face. Only the cap
+// moves; the wall stretches under it and the band keeps its size.
+function Lantern({ uid, geometry, color, cap, band, glow, face, working }: LanternProps) {
+    const { base, depth } = geometry
+    const rx = geometry.halfW * FOOTPRINT
+    const ry = geometry.halfH * FOOTPRINT
+    const top = boxTop(geometry)
+    const x0 = base.x - rx
+    const ceiling = base.y - depth * 2
+    const c = BUDDY_FACE_CENTER
+    const b0 = depth * 0.16 - ry
+    const b1 = depth * 0.88 - ry
+    const bandPath = `M${c - rx} ${b0} A${rx} ${ry} 0 0 0 ${c + rx} ${b0} L${c + rx} ${b1} A${rx} ${ry} 0 0 1 ${c - rx} ${b1} Z`
 
     return (
         <>
             <Defs>
-                <LinearGradient id={`${uid}-side`} x1={x0} x2={x1} y1="0" y2="0" gradientUnits="userSpaceOnUse">
-                    <Stop offset="0" stopColor={shade(color, -0.1)} />
-                    <Stop offset="0.44" stopColor={shade(color, -0.26)} />
-                    <Stop offset="0.56" stopColor={shade(color, -0.46)} />
-                    <Stop offset="1" stopColor={shade(color, -0.6)} />
+                <LinearGradient id={`${uid}-side`} x1={x0} x2={base.x + rx} y1="0" y2="0" gradientUnits="userSpaceOnUse">
+                    <Stop offset="0" stopColor={shade(color, -0.05)} />
+                    <Stop offset="0.5" stopColor={shade(color, -0.25)} />
+                    <Stop offset="1" stopColor={shade(color, -0.55)} />
                 </LinearGradient>
-                <LinearGradient id={`${uid}-side-shade`} x1="0" y1={topCenter.y} x2="0" y2={geometry.base.y + halfH} gradientUnits="userSpaceOnUse">
-                    <Stop offset="0" stopColor="#000" stopOpacity={0} />
-                    <Stop offset="1" stopColor="#000" stopOpacity={0.35} />
+                <LinearGradient id={`${uid}-band`} x1={c - rx} x2={c + rx} y1="0" y2="0" gradientUnits="userSpaceOnUse">
+                    <Stop offset="0" stopColor={band} />
+                    <Stop offset="0.55" stopColor={band} />
+                    <Stop offset="1" stopColor={shade(band, -0.32)} />
                 </LinearGradient>
-                <RadialGradient id={`${uid}-top`} cx="42%" cy="35%" r="75%">
-                    <Stop offset="0" stopColor={shade(top, topLight)} />
-                    <Stop offset="1" stopColor={shade(top, -0.04)} />
+                <RadialGradient id={`${uid}-cap`} cx="50%" cy="50%" r="60%">
+                    <Stop offset="0" stopColor={shade(cap, 0.5)} />
+                    <Stop offset="0.6" stopColor={cap} />
+                    <Stop offset="1" stopColor={shade(cap, -0.25)} />
+                </RadialGradient>
+                <RadialGradient id={`${uid}-glow`}>
+                    <Stop offset="0" stopColor={cap} stopOpacity={0.45} />
+                    <Stop offset="1" stopColor={cap} stopOpacity={0} />
                 </RadialGradient>
                 <LinearGradient id={`${uid}-sweep`} x1="0" y1="0" x2="1" y2="0">
                     <Stop offset="0" stopColor="#fff" stopOpacity={0} />
@@ -139,28 +149,32 @@ function RoundedBox({ uid, geometry, color, top, topLight, rim, left, working }:
                     <Stop offset="1" stopColor="#fff" stopOpacity={0} />
                 </LinearGradient>
                 <ClipPath id={`${uid}-top-clip`}>
-                    <Path d={topShape.d} />
+                    <Ellipse cx={top.x} cy={top.y} rx={rx} ry={ry} />
                 </ClipPath>
                 <ClipPath id={`${uid}-body-clip`}>
-                    <Path d={wallsOutline(geometry)} />
+                    <Ellipse cx={base.x} cy={base.y} rx={rx} ry={ry} />
+                    <Rect x={x0} y={ceiling} width={rx * 2} height={base.y - ceiling} />
                 </ClipPath>
             </Defs>
 
             <G clipPath={`url(#${uid}-body-clip)`}>
-                <GrowsFrom y={geometry.base.y}>
-                    <Rect {...fill} fill={`url(#${uid}-side)`} />
-                    <Rect {...fill} fill={`url(#${uid}-side-shade)`} />
+                <GrowsFrom y={base.y}>
+                    <Rect x={x0 - 2} y={top.y} width={rx * 2 + 4} height={depth + ry + 2} fill={`url(#${uid}-side)`} />
                 </GrowsFrom>
-                {left}
+                <G transform={`translate(${base.x - c} ${top.y + ry})`}>
+                    <Path d={bandPath} fill={`url(#${uid}-band)`} />
+                    {face}
+                </G>
             </G>
 
             <RidesOnWalls depth={depth}>
-                <Path d={topShape.d} fill={`url(#${uid}-top)`} />
+                {glow && <Ellipse cx={top.x} cy={top.y} rx={rx + 10} ry={ry + 8} fill={`url(#${uid}-glow)`} />}
+                <Ellipse cx={top.x} cy={top.y} rx={rx} ry={ry} fill={`url(#${uid}-cap)`} />
                 <G clipPath={`url(#${uid}-top-clip)`}>
-                    <Path d={topShape.d} fill="none" stroke="#fff" strokeOpacity={rim * 0.7} strokeWidth={2.2} translateY={1.4} />
-                    {working && <Sweep x={topCenter.x - halfW} y={topCenter.y - halfH} width={halfW} height={halfH * 2} fill={`url(#${uid}-sweep)`} />}
+                    <Ellipse cx={top.x - rx * 0.28} cy={top.y - ry * 0.32} rx={rx * 0.3} ry={ry * 0.2} fill="#fff" fillOpacity={0.35} />
+                    {working && <Sweep x={top.x - geometry.halfW} y={top.y - geometry.halfH} width={geometry.halfW} height={geometry.halfH * 2} fill={`url(#${uid}-sweep)`} />}
                 </G>
-                <Path d={topShape.d} fill="none" stroke="#fff" strokeOpacity={0.2} strokeWidth={0.7} />
+                <Ellipse cx={top.x} cy={top.y} rx={rx - 0.4} ry={ry - 0.4} fill="none" stroke="#fff" strokeOpacity={0.35} strokeWidth={0.8} />
             </RidesOnWalls>
         </>
     )

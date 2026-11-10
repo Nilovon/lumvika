@@ -4,12 +4,14 @@
 
 export const ORB_RADIUS = 40
 export const ORB_CENTER = { x: 50, y: 44 }
-const FACE_AT = { x: ORB_CENTER.x - 9, y: ORB_CENTER.y - 3 }
+// The drop's round belly, resting on the floor line: the sphere the face slides over.
+export const ORB_BELLY = { x: ORB_CENTER.x, y: ORB_CENTER.y + ORB_RADIUS - 33, r: 33 }
+const FACE_AT = { x: ORB_BELLY.x - 9, y: ORB_BELLY.y - 2 }
 const FACE_LEAN = 0.2
 const MAX_FACE_LEAN = 0.35
 
-const REST_PITCH = Math.asin((ORB_CENTER.y - FACE_AT.y) / ORB_RADIUS)
-const REST_YAW = Math.asin((FACE_AT.x - ORB_CENTER.x) / (ORB_RADIUS * Math.cos(REST_PITCH)))
+const REST_PITCH = Math.asin((ORB_BELLY.y - FACE_AT.y) / ORB_BELLY.r)
+const REST_YAW = Math.asin((FACE_AT.x - ORB_BELLY.x) / (ORB_BELLY.r * Math.cos(REST_PITCH)))
 
 export type OrbFacing = 'left' | 'right'
 
@@ -28,8 +30,8 @@ export function facePose(yaw: number, pitch: number): { matrix: Matrix; shown: b
     'worklet'
     const towards = Math.cos(yaw)
     if (towards <= 0) return { matrix: [0, 0, 0, 0, ORB_CENTER.x, ORB_CENTER.y], shown: false }
-    const x = ORB_CENTER.x + ORB_RADIUS * Math.sin(yaw) * Math.cos(pitch)
-    const y = ORB_CENTER.y - ORB_RADIUS * Math.sin(pitch)
+    const x = ORB_BELLY.x + ORB_BELLY.r * Math.sin(yaw) * Math.cos(pitch)
+    const y = ORB_BELLY.y - ORB_BELLY.r * Math.sin(pitch)
     const lean = Math.max(-MAX_FACE_LEAN, Math.min(MAX_FACE_LEAN, (FACE_LEAN * Math.sin(yaw)) / Math.sin(REST_YAW)))
     const scaleX = towards / Math.cos(REST_YAW)
     const scaleY = Math.cos(pitch) / Math.cos(REST_PITCH)

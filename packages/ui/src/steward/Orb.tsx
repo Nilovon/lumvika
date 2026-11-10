@@ -54,7 +54,7 @@ export type OrbProps = {
 }
 
 /**
- * Le Steward : une boule de verre indigo, deux yeux ronds sur une plaque sombre. Les quatre états ne
+ * Le Steward : une goutte de lumière menthe, deux yeux d'encre posés à même la matière. Les quatre états ne
  * changent jamais la forme ni la matière, seulement le rythme du rebond, du reflet et du regard.
  */
 export function Orb({ state = 'idle', size, onClick, label, paused = false, gaze, facing = 'left', className }: OrbProps) {
@@ -148,7 +148,7 @@ export function Orb({ state = 'idle', size, onClick, label, paused = false, gaze
             style={{ width: size, height: size }}
         >
             <span ref={setBall} className="pointer-events-none absolute flex" style={{ left: inset, top: inset }}>
-                <StewardBall material="glass" face="plate" eyes="round" scale={STEWARD_BALL_FRAME.scale} size={size} state={state} animated={!paused} facing={facing} eyesRef={eyesRef} faceRef={faceRef} />
+                <StewardBall material="glass" face="bare" eyes="pill" scale={STEWARD_BALL_FRAME.scale} size={size} state={state} animated={!paused} facing={facing} eyesRef={eyesRef} faceRef={faceRef} />
             </span>
         </Root>
     )

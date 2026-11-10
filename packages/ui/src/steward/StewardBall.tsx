@@ -10,10 +10,21 @@ import type { OrbActivity } from './Orb'
 import { FACE_EYE_SHARE, STEWARD_VIEW_MARGIN, STEWARD_VIEW_WIDTH, StewardFacePlate, LISTENING_FACE_SCALE, MOTION, SMALL_BELOW, type StewardFace, type StewardFacing } from './steward-face'
 import { STEWARD_MATERIALS, type StewardMaterialKey } from './steward-materials'
 
-// Drawn in the buddy's units: a ball as wide as an agent's block, resting on the floor line.
+// Drawn in the buddy's units, in the box of a ball as wide as an agent's block: a drop of light whose
+// round belly rests on the floor line and whose tip reaches the top of that box.
 const RADIUS = 40
 const CENTER = { x: 50, y: 44 }
 const FLOOR = CENTER.y + RADIUS
+const TIP = CENTER.y - RADIUS
+// The belly: the sphere the face slides over when the drop turns.
+const BELLY = { x: CENTER.x, y: FLOOR - 33, r: 33 }
+const DROP_PATH = (() => {
+    const reach = Math.acos(BELLY.r / (BELLY.y - TIP))
+    const dx = BELLY.r * Math.sin(reach)
+    const y = BELLY.y - BELLY.r * Math.cos(reach)
+    const f = (n: number) => n.toFixed(2)
+    return `M${f(CENTER.x)} ${f(TIP)} C${f(CENTER.x + 6)} ${f(TIP + 14)} ${f(CENTER.x + dx)} ${f(y - 6)} ${f(CENTER.x + dx)} ${f(y)} A${BELLY.r} ${BELLY.r} 0 1 1 ${f(CENTER.x - dx)} ${f(y)} C${f(CENTER.x - dx)} ${f(y - 6)} ${f(CENTER.x - 6)} ${f(TIP + 14)} ${f(CENTER.x)} ${f(TIP)} Z`
+})()
 const MARGIN = STEWARD_VIEW_MARGIN
 const BELOW_FLOOR = 5
 const VIEW_HEIGHT = RADIUS * 2 + MARGIN + BELOW_FLOOR
@@ -23,26 +34,26 @@ export const STEWARD_BALL_FLOOR_SHARE = BELOW_FLOOR / STEWARD_VIEW_WIDTH
 // how far the sphere sits from the box's top left corner, as a share of the diameter.
 export const STEWARD_BALL_FRAME = { scale: STEWARD_VIEW_WIDTH / (RADIUS * 2), inset: MARGIN / (RADIUS * 2) }
 
-const FACE_SCALE = 1.4
-const SMALL_FACE_SCALE = 1.7
-// Where the eyes sit on the ball: off-centre towards the front-left, the way a buddy looks.
-const FACE_AT = { x: CENTER.x - 9, y: CENTER.y - 3 }
+const FACE_SCALE = 1.3
+const SMALL_FACE_SCALE = 1.6
+// Where the eyes sit on the belly: off-centre towards the front-left.
+const FACE_AT = { x: BELLY.x - 9, y: BELLY.y - 2 }
 // A buddy's wall leans by 0.5; a ball only hints at the same turn.
 const FACE_LEAN = 0.2
 const MAX_FACE_LEAN = 0.35
 const EYE_Y = 10
 
-const REST_PITCH = Math.asin((CENTER.y - FACE_AT.y) / RADIUS)
+const REST_PITCH = Math.asin((BELLY.y - FACE_AT.y) / BELLY.r)
 // Where the ball is turned when nothing moves it, in radians: the pose that puts the face on `FACE_AT`.
-export const STEWARD_FACE_REST = { yaw: Math.asin((FACE_AT.x - CENTER.x) / (RADIUS * Math.cos(REST_PITCH))), pitch: REST_PITCH }
+export const STEWARD_FACE_REST = { yaw: Math.asin((FACE_AT.x - BELLY.x) / (BELLY.r * Math.cos(REST_PITCH))), pitch: REST_PITCH }
 
-// The face carried by a ball turned by `yaw` (to the right) and `pitch` (upwards): it slides over the
-// sphere, flattens as it nears the rim and is gone once it has turned to the far side.
+// The face carried by a drop turned by `yaw` (to the right) and `pitch` (upwards): it slides over the
+// belly, flattens as it nears the rim and is gone once it has turned to the far side.
 export function stewardFacePose(yaw: number, pitch: number) {
     const towards = Math.cos(yaw)
     if (towards <= 0) return 'scale(0)'
-    const x = CENTER.x + RADIUS * Math.sin(yaw) * Math.cos(pitch)
-    const y = CENTER.y - RADIUS * Math.sin(pitch)
+    const x = BELLY.x + BELLY.r * Math.sin(yaw) * Math.cos(pitch)
+    const y = BELLY.y - BELLY.r * Math.sin(pitch)
     const lean = Math.max(-MAX_FACE_LEAN, Math.min(MAX_FACE_LEAN, (FACE_LEAN * Math.sin(yaw)) / Math.sin(STEWARD_FACE_REST.yaw)))
     const scaleX = towards / Math.cos(STEWARD_FACE_REST.yaw)
     const scaleY = Math.cos(pitch) / Math.cos(STEWARD_FACE_REST.pitch)
@@ -97,13 +108,13 @@ export function StewardBall({ material: materialKey, scale, size, face = 'plate'
 
     const small = width < SMALL_BELOW
     const faceScale = (small ? SMALL_FACE_SCALE : FACE_SCALE) * (state === 'listening' ? LISTENING_FACE_SCALE : 1)
-    const darkInk = face === 'bare' && material.bareInk === 'dark'
+    // The face is drawn in dark ink: on a plate or a dark material it is turned light.
+    const lightInk = face === 'plate' || material.bareInk === 'light'
 
     const motion = MOTION[state]
     const moving = animated && motion.amp > 0
     const viewBox = `${CENTER.x - STEWARD_VIEW_WIDTH / 2} ${CENTER.y - RADIUS - MARGIN} ${STEWARD_VIEW_WIDTH} ${VIEW_HEIGHT}`
     const outline = material.outline.length > 1 ? `url(#${uid}-outline)` : material.outline[0]
-    const sphere = { cx: CENTER.x, cy: CENTER.y, r: RADIUS }
     const rest = stewardFaceRest(facing)
 
     return (
@@ -124,23 +135,11 @@ export function StewardBall({ material: materialKey, scale, size, face = 'plate'
         >
             <svg viewBox={viewBox} width="100%" height="100%" style={{ overflow: 'visible' }}>
                 <defs>
-                    <radialGradient id={`${uid}-body`} cx={CENTER.x - 12} cy={CENTER.y - 16} r={RADIUS * 1.55} gradientUnits="userSpaceOnUse">
+                    <radialGradient id={`${uid}-body`} cx={BELLY.x - 12} cy={BELLY.y - 14} r={BELLY.r * 1.7} gradientUnits="userSpaceOnUse">
                         {paint.stops.map(([offset, color]) => (
                             <stop key={offset} offset={offset} stopColor={color} />
                         ))}
                     </radialGradient>
-                    <radialGradient id={`${uid}-bounce`} cx={CENTER.x + 16} cy={CENTER.y + 30} r={RADIUS * 0.8} gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stopColor={paint.bounce} stopOpacity="0.5" />
-                        <stop offset="100%" stopColor={paint.bounce} stopOpacity="0" />
-                    </radialGradient>
-                    <linearGradient id={`${uid}-horizon`} x1="0" y1={CENTER.y + 4} x2="0" y2={FLOOR} gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stopColor={paint.horizon} stopOpacity="0.85" />
-                        <stop offset="100%" stopColor={paint.horizon} stopOpacity="0.05" />
-                    </linearGradient>
-                    <linearGradient id={`${uid}-gloss`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#fff" stopOpacity={Math.min(1, material.topGloss + 0.3)} />
-                        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-                    </linearGradient>
                     <linearGradient id={`${uid}-outline`} x1="0" y1="0" x2="1" y2="1">
                         {material.outline.map((color, i) => (
                             <stop key={i} offset={i / Math.max(1, material.outline.length - 1)} stopColor={color} />
@@ -160,28 +159,21 @@ export function StewardBall({ material: materialKey, scale, size, face = 'plate'
                         <stop offset="100%" stopColor="#000" stopOpacity="0" />
                     </radialGradient>
                     <clipPath id={`${uid}-clip`}>
-                        <circle {...sphere} />
+                        <path d={DROP_PATH} />
                     </clipPath>
                     <filter id={`${uid}-glow`} x="-30%" y="-30%" width="160%" height="160%">
                         <feGaussianBlur stdDeviation="1.6" />
                     </filter>
                 </defs>
 
-                {material.aura && <ellipse cx={CENTER.x} cy={FLOOR - 2} rx={RADIUS * 1.2} ry={RADIUS * 0.34} fill={`url(#${uid}-aura)`} />}
+                {material.aura && <ellipse cx={CENTER.x} cy={FLOOR - 1} rx={BELLY.r * 1.25} ry={BELLY.r * 0.32} fill={`url(#${uid}-aura)`} />}
                 <FromFloor className="steward-ball-shadow">
-                    <ellipse cx={CENTER.x} cy={FLOOR} rx={RADIUS * 0.72} ry={BELOW_FLOOR - 1} fill={`url(#${uid}-shadow)`} />
+                    <ellipse cx={CENTER.x} cy={FLOOR} rx={BELLY.r * 0.72} ry={BELOW_FLOOR - 1} fill={`url(#${uid}-shadow)`} />
                 </FromFloor>
 
                 <FromFloor className="steward-ball-body">
-                    <circle {...sphere} fill={`url(#${uid}-body)`} />
+                    <path d={DROP_PATH} fill={`url(#${uid}-body)`} />
                     <g clipPath={`url(#${uid}-clip)`}>
-                        {paint.horizon && (
-                            <path
-                                d={`M${CENTER.x - RADIUS - 2} ${CENTER.y + 4} Q${CENTER.x} ${CENTER.y + 15} ${CENTER.x + RADIUS + 2} ${CENTER.y + 4} L${CENTER.x + RADIUS + 2} ${FLOOR + 2} L${CENTER.x - RADIUS - 2} ${FLOOR + 2} Z`}
-                                fill={`url(#${uid}-horizon)`}
-                            />
-                        )}
-                        <circle {...sphere} fill={`url(#${uid}-bounce)`} />
                         {animated && (
                             <g transform="skewX(-18)">
                                 <rect className="steward-buddy-sheen" x={CENTER.x - RADIUS - 24} y={CENTER.y - RADIUS} width={20} height={RADIUS * 2} fill={`url(#${uid}-sheen)`} />
@@ -190,15 +182,14 @@ export function StewardBall({ material: materialKey, scale, size, face = 'plate'
                         <g ref={faceRef} transform={stewardFacePose(rest.yaw, rest.pitch)}>
                             <g transform={`scale(${faceScale}) translate(${-BUDDY_FACE_CENTER} ${-EYE_Y})`}>
                                 {face === 'plate' && <StewardFacePlate uid={uid} y={EYE_Y} colors={material.plate} />}
-                                <g ref={eyesRef} style={darkInk ? { filter: 'invert(1)' } : undefined}>
-                                    <BuddyFace uid={uid} eyes={eyes} mouth="none" mood={state === 'thinking' ? 'working' : 'idle'} depth={EYE_Y / FACE_EYE_SHARE} light={material.eyeLight} lit={!small} tint={darkInk ? '#ffffff' : material.eyeTint} />
+                                <g ref={eyesRef} style={lightInk ? { filter: 'invert(1)' } : undefined}>
+                                    <BuddyFace uid={uid} eyes={eyes} mouth="none" mood={state === 'thinking' ? 'working' : 'idle'} depth={EYE_Y / FACE_EYE_SHARE} light={material.eyeLight} lit={!small} tint={material.eyeTint} />
                                 </g>
                             </g>
                         </g>
-                        <ellipse cx={CENTER.x - 13} cy={CENTER.y - 24} rx={17} ry={8.5} transform={`rotate(-24 ${CENTER.x - 13} ${CENTER.y - 24})`} fill={`url(#${uid}-gloss)`} />
                     </g>
-                    {material.neon && <circle {...sphere} fill="none" stroke={outline} strokeWidth={3} strokeOpacity={0.8} filter={`url(#${uid}-glow)`} />}
-                    <circle {...sphere} fill="none" stroke={outline} strokeOpacity={material.neon ? 1 : 0.6} strokeWidth={material.neon ? 1.1 : 0.7} />
+                    {material.neon && <path d={DROP_PATH} fill="none" stroke={outline} strokeWidth={3} strokeOpacity={0.8} filter={`url(#${uid}-glow)`} />}
+                    <path d={DROP_PATH} fill="none" stroke={outline} strokeOpacity={material.neon ? 1 : 0.45} strokeWidth={material.neon ? 1.1 : 0.8} />
                 </FromFloor>
             </svg>
         </span>
