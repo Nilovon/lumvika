@@ -9,7 +9,7 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 export const runtime = 'nodejs'
 
-const BRAND = '#0b6e63'
+const BRAND = '#7faf00'
 
 const BASE_W = 376
 const BASE_H = 600
@@ -303,7 +303,7 @@ function CardImage({ data, photoDataUrl, s }: { data: ExpertCard; photoDataUrl: 
                         lineHeight: 1,
                         letterSpacing: -0.5 * s,
                         textTransform: 'uppercase',
-                        backgroundImage: 'radial-gradient(120% 140% at 50% -40%, #ffffff 12%, #bab0ff 58%, #0b6e63 130%)',
+                        backgroundImage: 'radial-gradient(120% 140% at 50% -40%, #ffffff 12%, #bab0ff 58%, #7faf00 130%)',
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         color: 'transparent',

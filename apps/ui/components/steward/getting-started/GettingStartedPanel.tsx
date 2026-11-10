@@ -23,7 +23,7 @@ export function GettingStartedProgressMark({ progress, className }: { progress: 
     const done = doneCount(progress)
     const total = stepsOf(progress).length
     if (done === total) return <IconBadge tone="green" icon={CheckIcon} className={className} />
-    return <Gauge ratio={done / total} gradient={PROGRESS_GRADIENT} className={cn('size-5 text-brand', className)} />
+    return <Gauge ratio={done / total} gradient={PROGRESS_GRADIENT} className={cn('size-5 text-brand-text', className)} />
 }
 
 export function GettingStartedHeader({ progress, onHide, className }: { progress: GettingStartedProgress; onHide?: () => void; className?: string }) {

@@ -27,7 +27,7 @@ const rootVariantClass: Record<CheckboxVariant, string> = {
 
 const indicatorVariantClass: Record<CheckboxVariant, string> = {
   light: "text-foreground",
-  brand: "text-brand",
+  brand: "text-brand-text",
 }
 
 const beamTone: Record<CheckboxVariant, "white" | "brand"> = {

@@ -36,9 +36,13 @@ export const palette = {
 export type ColorScheme = keyof typeof palette
 export type Palette = { [K in keyof (typeof palette)['light']]: string }
 
+// The brand is a lime. `base` is the fill (a bubble, a dot, a swipe action) and always carries `ink`;
+// `soft` is the bright lime for marks on dark, `deep` the olive for marks and text on light.
 export const brand = {
-    base: '#0b6e63',
-    soft: '#7fdccb',
+    base: '#7faf00',
+    soft: '#c6f432',
+    deep: '#4a6600',
+    ink: '#0a0a0a',
 } as const
 
 export const radius = {

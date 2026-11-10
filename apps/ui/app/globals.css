@@ -43,6 +43,7 @@
   --color-charcoal-900: #202020;
   --color-brand: var(--brand);
   --color-brand-text: var(--brand-text);
+  --color-brand-foreground: var(--brand-foreground);
   --color-frame: var(--frame);
   --color-divide: var(--border);
   --radius-2xl: calc(var(--radius) * 1.8);
@@ -124,10 +125,12 @@ html:not(.dark) .progress-fill {
 /* Core tokens (background/foreground/card/...) + --radius : @lumvika/ui/theme.css.
    Ici uniquement les tokens sidebar/chart propres à apps/ui. */
 :root {
-  --brand: #0b6e63;
-  /* La marque posée en texte ou en point sur le fond : #0b6e63 se perd sur le noir, le thème sombre
-     reprend la lavande du badge brand. */
-  --brand-text: var(--brand);
+  /* La marque est un citron vert. En aplat (bulle, point, barre) il porte toujours de l'encre noire
+     (--brand-foreground) ; en thème clair l'aplat est un ton plus soutenu pour se voir sur le blanc.
+     Posée en texte sur le fond, la marque prend un olive foncé en clair et le citron vert en sombre. */
+  --brand: #7faf00;
+  --brand-foreground: #0a0a0a;
+  --brand-text: #4a6600;
   /* Gouttière autour du panneau du dashboard : plus sombre que le fond en thème sombre, plus claire
      que lui en thème clair, pour que le panneau se détache dans les deux cas. */
   --frame: oklch(0.925 0 0);
@@ -147,8 +150,9 @@ html:not(.dark) .progress-fill {
 }
 
 .dark {
-  --brand: #0b6e63;
-  --brand-text: #7fdccb;
+  --brand: #c6f432;
+  --brand-foreground: #0a0a0a;
+  --brand-text: #c6f432;
   --frame: oklch(0 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);

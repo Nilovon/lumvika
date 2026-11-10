@@ -78,7 +78,7 @@ export function dockConfig(iconsDir: string): string {
             ['background_color', '#000000 0'],
             ['border_color', '#000000 0'],
             ['background_color_hover', '#ffffff 8'],
-            ['background_color_pressed', '#0b6e63 40'],
+            ['background_color_pressed', '#c6f432 40'],
         ]),
         lines([
             ['panel_items', 'E'.repeat(DOCK_APPS.length)],

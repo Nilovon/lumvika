@@ -54,7 +54,7 @@ export type OrbProps = {
 }
 
 /**
- * Le Steward : une goutte de lumière menthe, deux yeux d'encre posés à même la matière. Les quatre états ne
+ * Le Steward : une goutte de lumière citron vert, deux yeux d'encre posés à même la matière. Les quatre états ne
  * changent jamais la forme ni la matière, seulement le rythme du rebond, du reflet et du regard.
  */
 export function Orb({ state = 'idle', size, onClick, label, paused = false, gaze, facing = 'left', className }: OrbProps) {

@@ -25,7 +25,7 @@ export function ModelRow({ id, label, description, selected, locked, disabled, l
                     </AppText>
                 ) : null}
             </View>
-            {locked ? <SymbolView name="lock" size={14} tintColor={theme.mutedForeground} /> : selected ? <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.base} /> : null}
+            {locked ? <SymbolView name="lock" size={14} tintColor={theme.mutedForeground} /> : selected ? <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.deep} /> : null}
         </Pressable>
     )
 }

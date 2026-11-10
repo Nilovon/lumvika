@@ -101,7 +101,7 @@
 
 /* Couleurs : --beam-1 = teinte claire (celle qui "glow"), --beam-2 = base.
    Couplées forme×ton pour reproduire à l'identique les variantes d'origine. */
-.border-beam--ring.border-beam--brand { --beam-1: #7fdccb; --beam-2: var(--color-brand, #0b6e63); }
+.border-beam--ring.border-beam--brand { --beam-1: #c6f432; --beam-2: var(--color-brand, #7faf00); }
 .border-beam--ring.border-beam--white { --beam-1: rgba(255, 255, 255, 0.55); --beam-2: #fff; }
 .border-beam--ring.border-beam--neutral { --beam-1: rgba(0, 0, 0, 0.06); --beam-2: rgba(0, 0, 0, 0.18); }
 .dark .border-beam--ring.border-beam--neutral { --beam-1: rgba(255, 255, 255, 0.08); --beam-2: rgba(255, 255, 255, 0.35); }
@@ -112,7 +112,7 @@
 .border-beam--ring.border-beam--yellow { --beam-1: rgba(250, 204, 21, 0.6); --beam-2: #facc15; }
 html:not(.dark) .border-beam--ring.border-beam--yellow { --beam-1: rgba(202, 138, 4, 0.45); --beam-2: #ca8a04; }
 
-.border-beam--arcs.border-beam--brand { --beam-1: #7fdccb; --beam-2: color-mix(in oklab, #7fdccb 20%, transparent); }
+.border-beam--arcs.border-beam--brand { --beam-1: #c6f432; --beam-2: color-mix(in oklab, #c6f432 20%, transparent); }
 .border-beam--arcs.border-beam--white { --beam-1: rgba(255, 255, 255, 1); --beam-2: rgba(255, 255, 255, 0.16); }
 html:not(.dark) .border-beam--arcs.border-beam--white { --beam-1: rgba(0, 0, 0, 0.9); --beam-2: rgba(0, 0, 0, 0.12); }
 .border-beam--arcs.border-beam--neutral { --beam-1: rgba(0, 0, 0, 0.4); --beam-2: rgba(0, 0, 0, 0.08); }
@@ -126,8 +126,8 @@ html:not(.dark) .border-beam--arcs.border-beam--white { --beam-1: rgba(0, 0, 0, 
 /* Badge (composant Badge) : couleur du texte (--badge-fg) + fond soft (--badge-soft)
    par ton, alignés sur les couleurs du BorderBeam. */
 .badge-beam { color: var(--badge-fg, currentColor); }
-.badge-beam--brand { --badge-fg: var(--color-brand, #0b6e63); --badge-soft: color-mix(in oklab, var(--color-brand, #0b6e63) 10%, transparent); }
-.dark .badge-beam--brand { --badge-fg: #7fdccb; }
+.badge-beam--brand { --badge-fg: var(--color-brand-text, #4a6600); --badge-soft: color-mix(in oklab, var(--color-brand, #7faf00) 14%, transparent); }
+.dark .badge-beam--brand { --badge-fg: #c6f432; }
 .badge-beam--white { --badge-fg: #fff; --badge-soft: rgba(255, 255, 255, 0.08); }
 html:not(.dark) .badge-beam--white { --badge-fg: #111; --badge-soft: rgba(0, 0, 0, 0.05); }
 .badge-beam--neutral { --badge-fg: rgba(0, 0, 0, 0.7); --badge-soft: rgba(0, 0, 0, 0.05); }
@@ -173,7 +173,7 @@ html:not(.dark) .badge-beam--yellow { --badge-fg: #a16207; --badge-soft: color-m
 }
 
 .holo-matrix {
-  background: #7fdccb;
+  background: #c6f432;
   -webkit-mask-image: var(--holo-logo), radial-gradient(125% 125% at 50% 38%, black 55%, transparent 100%);
   -webkit-mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%;
   -webkit-mask-repeat: repeat, no-repeat;

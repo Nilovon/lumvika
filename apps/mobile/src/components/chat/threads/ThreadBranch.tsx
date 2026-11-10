@@ -74,7 +74,7 @@ export function ThreadBranch({ thread, onOpen }: { thread: ThreadItem; onOpen: (
     const state = threadStateOf(thread.status)
     const badge = state === 'needs' || state === 'error' ? STATE_BADGE[state] : null
     const opener = thread.firstMessage?.trim() || genericOpener(thread)
-    const live = theme.scheme === 'dark' ? brand.soft : brand.base
+    const live = theme.scheme === 'dark' ? brand.soft : brand.deep
     const branchTone = { live: withAlpha(live, 0.7), needs: withAlpha(TONES.orange[theme.scheme], 0.7), error: withAlpha(TONES.red[theme.scheme], 0.7), done: theme.border }[state]
     const titleColor = thread.outcome === 'failed' ? theme.destructive : thread.outcome === 'nothing' ? theme.mutedForeground : theme.foreground
     return (

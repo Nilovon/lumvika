@@ -32,15 +32,15 @@ const SHEEN_WIDTH = 20
 
 const LUMEN = {
     stops: [
-        [0, '#fbfffd'],
-        [0.35, '#c9f0e6'],
-        [0.7, '#7fdccb'],
-        [1, '#0b6e63'],
+        [0, '#fcfff2'],
+        [0.35, '#eefbc4'],
+        [0.7, '#c6f432'],
+        [1, '#5c7f00'],
     ] as const,
-    outline: '#0b6e63',
-    aura: '#7fdccb',
-    eyeTint: '#10201d',
-    eyeLight: '#f7f4ec',
+    outline: '#3d5400',
+    aura: '#c6f432',
+    eyeTint: '#0a0a0a',
+    eyeLight: '#ffffff',
 }
 
 const TIP = CENTER.y - RADIUS

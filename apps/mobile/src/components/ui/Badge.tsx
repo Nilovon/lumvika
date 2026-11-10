@@ -9,7 +9,7 @@ export type BadgeTone = 'brand' | 'green' | 'red' | 'orange' | 'yellow' | 'cyan'
 // The web tones (packages/ui/src/styles.css), with darker text in light mode: the web pastels do not
 // read on a white card at phone sizes.
 export const TONES: Record<string, Record<ColorScheme, string>> = {
-    brand: { light: brand.base, dark: brand.soft },
+    brand: { light: brand.deep, dark: brand.soft },
     green: { light: '#059669', dark: '#34d399' },
     red: { light: '#dc2626', dark: '#f87171' },
     orange: { light: '#ea580c', dark: '#f97316' },

@@ -17,11 +17,10 @@ import sharp from 'sharp'
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
-const INK = '#10201D'
-const PAPER = '#F7F4EC'
-const TEAL = '#0B6E63'
-const MINT = '#7FDCCB'
-const AMBER = '#F5A524'
+const BLACK = '#0A0A0A'
+const WHITE = '#FFFFFF'
+const LIME = '#C6F432'
+const OLIVE = '#4A6600'
 // The email card the scene sits on (packages/emails/theme.ts): the band fades into it.
 const CARD = '#171717'
 
@@ -88,7 +87,7 @@ const GLYPHS = {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Email scenes: one hero glyph in Mint over a soft teal light, a few faint glyphs around it, and a
+// Email scenes: one hero glyph in Lime over a soft olive light, a few faint glyphs around it, and a
 // bottom edge that melts into the card.
 
 const SCENE_W = 1040
@@ -129,18 +128,18 @@ function sceneSvg({ hero, around }) {
     for (let y = 18; y < SCENE_H; y += 32) for (let x = 18 + ((y / 32) % 2) * 16; x < SCENE_W; x += 32) dots.push(`<circle cx="${x}" cy="${y}" r="1.6"/>`)
     const satellites = around.map((glyph, i) => {
         const [x, y, size, rotation] = SLOTS[i]
-        return placed(glyph, x, y, size, rotation, MINT, MINT)
+        return placed(glyph, x, y, size, rotation, LIME, LIME)
     })
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${SCENE_W}" height="${SCENE_H}" viewBox="0 0 ${SCENE_W} ${SCENE_H}">
 <defs>
   <radialGradient id="light" cx="${HERO_AT.x}" cy="${HERO_AT.y}" r="460" gradientUnits="userSpaceOnUse">
-    <stop offset="0" stop-color="${TEAL}" stop-opacity="0.75"/>
-    <stop offset="0.45" stop-color="${TEAL}" stop-opacity="0.28"/>
-    <stop offset="1" stop-color="${TEAL}" stop-opacity="0"/>
+    <stop offset="0" stop-color="${OLIVE}" stop-opacity="0.7"/>
+    <stop offset="0.45" stop-color="${OLIVE}" stop-opacity="0.24"/>
+    <stop offset="1" stop-color="${OLIVE}" stop-opacity="0"/>
   </radialGradient>
   <radialGradient id="halo" cx="${HERO_AT.x}" cy="${HERO_AT.y}" r="170" gradientUnits="userSpaceOnUse">
-    <stop offset="0" stop-color="${MINT}" stop-opacity="0.22"/>
-    <stop offset="1" stop-color="${MINT}" stop-opacity="0"/>
+    <stop offset="0" stop-color="${LIME}" stop-opacity="0.16"/>
+    <stop offset="1" stop-color="${LIME}" stop-opacity="0"/>
   </radialGradient>
   <radialGradient id="dotFade" cx="${HERO_AT.x}" cy="${HERO_AT.y}" r="560" gradientUnits="userSpaceOnUse">
     <stop offset="0" stop-color="#fff" stop-opacity="1"/>
@@ -153,13 +152,13 @@ function sceneSvg({ hero, around }) {
     <stop offset="1" stop-color="${CARD}" stop-opacity="1"/>
   </linearGradient>
 </defs>
-<rect width="${SCENE_W}" height="${SCENE_H}" fill="#0d1715"/>
+<rect width="${SCENE_W}" height="${SCENE_H}" fill="#0b0c08"/>
 <rect width="${SCENE_W}" height="${SCENE_H}" fill="url(#light)"/>
-<g fill="${PAPER}" fill-opacity="0.07" mask="url(#dotMask)">${dots.join('')}</g>
+<g fill="${WHITE}" fill-opacity="0.07" mask="url(#dotMask)">${dots.join('')}</g>
 <g opacity="0.26">${satellites.join('')}</g>
 <circle cx="${HERO_AT.x}" cy="${HERO_AT.y}" r="170" fill="url(#halo)"/>
-<g opacity="0.8" filter="url(#glow)">${placed(hero, HERO_AT.x, HERO_AT.y, HERO_SIZE, 0, MINT, AMBER)}</g>
-${placed(hero, HERO_AT.x, HERO_AT.y, HERO_SIZE, 0, MINT, AMBER)}
+<g opacity="0.8" filter="url(#glow)">${placed(hero, HERO_AT.x, HERO_AT.y, HERO_SIZE, 0, LIME, WHITE)}</g>
+${placed(hero, HERO_AT.x, HERO_AT.y, HERO_SIZE, 0, LIME, WHITE)}
 <rect width="${SCENE_W}" height="${SCENE_H}" fill="url(#fade)"/>
 </svg>`
 }
@@ -185,11 +184,11 @@ ${body}
 
 const ICONS = {
     // One point of light.
-    solo: iconSvg(['#14907f', '#084c44'], `<circle cx="50" cy="52" r="22" fill="${PAPER}"/><circle cx="72" cy="28" r="8" fill="${AMBER}"/>`),
+    solo: iconSvg(['#262626', BLACK], `<circle cx="50" cy="52" r="22" fill="${LIME}"/><circle cx="72" cy="28" r="8" fill="${WHITE}"/>`),
     // A few of them together.
-    team: iconSvg(['#b4eee2', '#5cc4b1'], `<circle cx="50" cy="32" r="14" fill="${INK}"/><circle cx="31" cy="64" r="14" fill="${INK}"/><circle cx="69" cy="64" r="14" fill="${TEAL}"/>`),
+    team: iconSvg(['#e4fb8f', '#a8d21c'], `<circle cx="50" cy="32" r="14" fill="${BLACK}"/><circle cx="31" cy="64" r="14" fill="${BLACK}"/><circle cx="69" cy="64" r="14" fill="${OLIVE}"/>`),
     // Rising steps.
-    scale: iconSvg(['#1d3a35', INK], `<rect x="22" y="58" width="14" height="22" rx="4" fill="${MINT}"/><rect x="43" y="44" width="14" height="36" rx="4" fill="${MINT}"/><rect x="64" y="30" width="14" height="50" rx="4" fill="${MINT}"/><circle cx="71" cy="19" r="6.5" fill="${AMBER}"/>`),
+    scale: iconSvg(['#2a2a2a', BLACK], `<rect x="22" y="58" width="14" height="22" rx="4" fill="${LIME}"/><rect x="43" y="44" width="14" height="36" rx="4" fill="${LIME}"/><rect x="64" y="30" width="14" height="50" rx="4" fill="${LIME}"/><circle cx="71" cy="19" r="6.5" fill="${WHITE}"/>`),
 }
 
 // ---------------------------------------------------------------------------------------------

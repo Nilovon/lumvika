@@ -38,8 +38,8 @@ const SURFACE = {
 } as const;
 
 const BRAND = {
-  base: "#0b6e63",
-  light: "#7fdccb",
+  base: "#7faf00",
+  light: "#c6f432",
   deep: "#220fa0",
 } as const;
 

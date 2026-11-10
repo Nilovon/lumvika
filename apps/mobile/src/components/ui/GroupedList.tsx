@@ -149,7 +149,7 @@ export function CheckRow({ label, detail, icon, badge, checked, disabled, onPres
                     </AppText>
                 ) : null}
             </View>
-            <View style={{ width: 20, alignItems: 'center', paddingTop: detail ? 3 : 0 }}>{checked && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.base} />}</View>
+            <View style={{ width: 20, alignItems: 'center', paddingTop: detail ? 3 : 0 }}>{checked && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.deep} />}</View>
         </Pressable>
     )
 }

@@ -1040,7 +1040,7 @@ export const PromptInputDropOverlay = ({ label }: { label?: string }) => {
   }
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-dashed border-brand bg-background/85">
-      <span className="flex items-center gap-2 text-sm font-medium text-brand">
+      <span className="flex items-center gap-2 text-sm font-medium text-brand-text">
         <UploadIcon className="size-4" />
         {label ?? t("dropFiles")}
       </span>

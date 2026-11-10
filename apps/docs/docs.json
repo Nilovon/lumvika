@@ -4,9 +4,9 @@
   "name": "Lumvika Docs",
   "description": "Documentation for Lumvika: autonomous AI coworkers running on your own private machine in the cloud, and the API to build them from anywhere.",
   "colors": {
-    "primary": "#0b6e63",
-    "light": "#7fdccb",
-    "dark": "#0b6e63"
+    "primary": "#4a6600",
+    "light": "#c6f432",
+    "dark": "#4a6600"
   },
   "fonts": {
     "family": "Inter"

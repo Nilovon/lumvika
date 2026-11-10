@@ -59,8 +59,8 @@ function PinSwipe({ pin, children }: { pin: PinControl; children: ReactNode }) {
             onSwipeableOpen={toggle}
             renderRightActions={() => (
                 <Pressable onPress={() => swipeable.current?.close()} accessibilityElementsHidden style={{ width: PIN_ACTION_WIDTH, alignItems: 'center', justifyContent: 'center', gap: 2, backgroundColor: brand.base }}>
-                    <SymbolView name={pin.pinned ? 'pin.slash.fill' : 'pin.fill'} size={18} weight="semibold" tintColor="#ffffff" />
-                    <AppText variant="caption" medium maxFontSizeMultiplier={1.2} style={{ color: '#ffffff' }}>
+                    <SymbolView name={pin.pinned ? 'pin.slash.fill' : 'pin.fill'} size={18} weight="semibold" tintColor={brand.ink} />
+                    <AppText variant="caption" medium maxFontSizeMultiplier={1.2} style={{ color: brand.ink }}>
                         {label}
                     </AppText>
                 </Pressable>

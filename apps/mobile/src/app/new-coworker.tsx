@@ -30,7 +30,7 @@ function BoxRow({ box, selected, onPress, divided }: { box: Box; selected: boole
             <AppText variant="body" numberOfLines={1} style={{ flex: 1 }}>
                 {label}
             </AppText>
-            {selected && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.base} />}
+            {selected && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.deep} />}
         </Pressable>
     )
 }

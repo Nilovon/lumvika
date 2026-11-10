@@ -27,7 +27,7 @@ window.active.button.hover.bg: flat solid
 window.active.button.hover.bg.color: #262626
 window.active.button.hover.image.color: #fafafa
 window.active.button.pressed.bg: flat solid
-window.active.button.pressed.bg.color: #0b6e63
+window.active.button.pressed.bg.color: #3a3a3a
 window.active.button.pressed.image.color: #ffffff
 window.active.button.disabled.bg: parentrelative
 window.active.button.disabled.image.color: #404040
@@ -40,7 +40,7 @@ window.inactive.button.hover.bg: flat solid
 window.inactive.button.hover.bg.color: #262626
 window.inactive.button.hover.image.color: #fafafa
 window.inactive.button.pressed.bg: flat solid
-window.inactive.button.pressed.bg.color: #0b6e63
+window.inactive.button.pressed.bg.color: #3a3a3a
 window.inactive.button.pressed.image.color: #ffffff
 window.inactive.button.disabled.bg: parentrelative
 window.inactive.button.disabled.image.color: #404040
@@ -58,7 +58,7 @@ menu.items.bg.color: #171717
 menu.items.text.color: #fafafa
 menu.items.disabled.text.color: #525252
 menu.items.active.bg: flat solid
-menu.items.active.bg.color: #0b6e63
+menu.items.active.bg.color: #3a3a3a
 menu.items.active.text.color: #ffffff
 
 osd.border.width: 1

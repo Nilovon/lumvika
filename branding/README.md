@@ -36,14 +36,16 @@ Keep clear space of at least the height of one plate around the mark.
 
 | Name | Hex | Use |
 |---|---|---|
-| Black | `#0A0A0A` | Logo, wordmark and app icon |
+| Black | `#0A0A0A` | Logo, wordmark, app icon, and the ink on any Lime fill (`--brand-foreground`) |
 | White | `#FFFFFF` | Logo and wordmark on dark |
-| Lime | `#C6F432` | The top plate of the mark and the dot of the i, nothing else |
-| Ink | `#10201D` | Text on light in the app, the characters' faces |
-| Paper | `#F7F4EC` | Text on dark in the app, the coworkers' window band |
-| Teal | `#0B6E63` | Brand color, `--brand` in the app |
-| Mint | `#7FDCCB` | Brand color as text on dark, `--brand-text` |
-| Amber | `#F5A524` | Sparing accents in the app and the email art |
+| Lime | `#C6F432` | The brand. The top plate of the mark, the dot of the i, `--brand` and `--brand-text` in the dark theme |
+| Lime fill | `#7FAF00` | `--brand` in the light theme: a fill (bubble, dot, bar) that still shows on white |
+| Olive | `#4A6600` | `--brand-text` in the light theme: the brand as text or icon on white |
+| Ink | `#10201D` | The characters' faces |
+| Paper | `#F7F4EC` | The coworkers' window band |
+
+A Lime fill always carries Black ink, never white. On mobile the same roles are `brand.soft`,
+`brand.base`, `brand.deep` and `brand.ink` in `apps/mobile/src/theme/tokens.ts`.
 
 ## Type
 
@@ -55,8 +57,8 @@ The interface uses Inter and Geist, with Geist Mono for code, as loaded in `apps
 ## Characters
 
 **The Steward** is a drop of light: a round belly that rests on the floor and a soft tip pointing up.
-It is filled with a radial gradient from near-white through Mint to Teal, and has a thin Teal
-outline. Its two pill eyes are drawn in Ink, straight on the material, with no face plate and no
+It is filled with a radial gradient from near-white through Lime to a deep olive, and has a thin olive
+outline. Its two pill eyes are drawn in Black, straight on the material, with no face plate and no
 glow. Code: `packages/ui/src/steward/StewardBall.tsx` (the `glass` material, labelled Lumen, in
 `steward-materials.ts`). The mobile port is in `apps/mobile/src/components/orb/StewardOrb.tsx`.
 
@@ -77,8 +79,8 @@ The rest of the artwork is flat SVG in the palette above, drawn and rendered by
 `apps/ui/scripts/render-brand-art.mjs` (run it from `apps/ui` with `node scripts/render-brand-art.mjs`):
 
 - `apps/ui/public/pricing/{solo,team,scale}.png`: the fallback workspace icons, shown cropped to a circle.
-- `apps/ui/public/email/scene/*.jpg`: the band that opens every email about the account. One Mint
-  pictogram with an Amber point of light over a soft Teal light, faint pictograms around it, fading
+- `apps/ui/public/email/scene/*.jpg`: the band that opens every email about the account. One Lime
+  pictogram with a white point of light over a soft olive light on black, faint pictograms around it, fading
   into the email card at the bottom.
 
 File names, sizes and formats stay fixed, because workspace rows and sent emails point at them. Bump

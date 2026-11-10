@@ -60,8 +60,8 @@ export function InboxRow({ item, onOpen, onMarkRead, rule, onRule, onSettings }:
             onSwipeableOpen={markRead}
             renderRightActions={() => (
                 <Pressable onPress={() => swipeable.current?.close()} accessibilityElementsHidden style={{ width: ACTION_WIDTH, alignItems: 'center', justifyContent: 'center', gap: 2, backgroundColor: brand.base }}>
-                    <SymbolView name="checkmark" size={18} weight="semibold" tintColor="#ffffff" />
-                    <AppText variant="caption" medium maxFontSizeMultiplier={1.2} style={{ color: '#ffffff' }}>
+                    <SymbolView name="checkmark" size={18} weight="semibold" tintColor={brand.ink} />
+                    <AppText variant="caption" medium maxFontSizeMultiplier={1.2} style={{ color: brand.ink }}>
                         {t('row.read')}
                     </AppText>
                 </Pressable>

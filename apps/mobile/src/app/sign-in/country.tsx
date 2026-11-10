@@ -53,7 +53,7 @@ export default function PickCountry() {
                         <AppText variant="body" tone="muted">
                             +{item.callingCode}
                         </AppText>
-                        <View style={{ width: 18 }}>{item.code === country && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.base} />}</View>
+                        <View style={{ width: 18 }}>{item.code === country && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={theme.scheme === 'dark' ? brand.soft : brand.deep} />}</View>
                     </Pressable>
                 )}
             />

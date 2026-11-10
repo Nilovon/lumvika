@@ -5,7 +5,7 @@ const DURATION_MS = 2500
 const EMIT_INTERVAL_MS = 60
 const EMITTERS_PER_TICK = 3
 const PARTICLES_PER_EMITTER = 2
-const COLORS = ['#ffffff', '#e5e5e5', '#a3a3a3', '#0b6e63', '#7fdccb']
+const COLORS = ['#ffffff', '#e5e5e5', '#a3a3a3', '#7faf00', '#c6f432']
 
 let rShape: Shape | null = null
 let firing = false

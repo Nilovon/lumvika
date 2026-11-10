@@ -103,11 +103,11 @@ const VARIANTS = {
     approval: { icon: 'thumbsUp', solid: '#f59e0b', ink: '#f59e0b' },
     connector: { icon: 'plug', solid: '#06b6d4', ink: '#06b6d4' },
     failed: { icon: 'warning', solid: '#f87171', ink: '#f87171' },
-    digest: { icon: 'inbox', solid: '#0b6e63', ink: '#7fdccb' },
-    budget: { icon: 'gauge', solid: '#0b6e63', ink: '#7fdccb' },
-    invite: { icon: 'userPlus', solid: '#0b6e63', ink: '#7fdccb' },
-    library: { icon: 'grid', solid: '#0b6e63', ink: '#7fdccb' },
-    schedule: { icon: 'calendar', solid: '#0b6e63', ink: '#7fdccb' },
+    digest: { icon: 'inbox', solid: '#c6f432', ink: '#c6f432' },
+    budget: { icon: 'gauge', solid: '#c6f432', ink: '#c6f432' },
+    invite: { icon: 'userPlus', solid: '#c6f432', ink: '#c6f432' },
+    library: { icon: 'grid', solid: '#c6f432', ink: '#c6f432' },
+    schedule: { icon: 'calendar', solid: '#c6f432', ink: '#c6f432' },
 } as const satisfies Record<string, { icon: keyof typeof ICONS; solid: string; ink: string }>
 
 export const ART_VARIANTS = Object.keys(VARIANTS) as ArtVariant[]

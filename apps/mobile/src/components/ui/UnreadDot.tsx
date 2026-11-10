@@ -7,5 +7,5 @@ import { brand } from '@/theme/tokens'
 export function UnreadDot({ style }: { style?: StyleProp<ViewStyle> }) {
     const theme = useTheme()
     const t = useTranslations('mobileCommon')
-    return <View accessibilityLabel={t('unread')} style={[{ width: 9, height: 9, borderRadius: 5, backgroundColor: theme.scheme === 'dark' ? brand.soft : brand.base }, style]} />
+    return <View accessibilityLabel={t('unread')} style={[{ width: 9, height: 9, borderRadius: 5, backgroundColor: theme.scheme === 'dark' ? brand.soft : brand.deep }, style]} />
 }

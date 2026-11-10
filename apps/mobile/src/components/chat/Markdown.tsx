@@ -10,7 +10,7 @@ import { ownedFileUrl, rawFileUrl, type FileOwner } from '@/api/files'
 import { AppText } from '@/components/ui/AppText'
 import { EASE_OUT } from '@/theme/motion'
 import { useTheme } from '@/theme/theme'
-import { fonts, spacing, withAlpha } from '@/theme/tokens'
+import { brand, fonts, spacing, withAlpha } from '@/theme/tokens'
 
 import { CodeBlock, DraftBlock, inlineCodeBackground } from './markdown/CodeBlock'
 import { MarkdownImage } from './markdown/MarkdownImage'
@@ -43,7 +43,7 @@ const WORD_ENTERING = FadeInDown.duration(120)
 function useInk() {
     const theme = useTheme()
     const { surface, muted } = use(Scope)
-    if (surface === 'brand') return { text: '#ffffff', link: '#ffffff', muted: withAlpha('#ffffff', 0.7), faint: withAlpha('#ffffff', 0.4) }
+    if (surface === 'brand') return { text: brand.ink, link: brand.ink, muted: withAlpha(brand.ink, 0.7), faint: withAlpha(brand.ink, 0.4) }
     return { text: muted ? theme.mutedForeground : theme.foreground, link: theme.primary, muted: theme.mutedForeground, faint: surface === 'bubble' ? withAlpha(theme.foreground, 0.2) : theme.border }
 }
 

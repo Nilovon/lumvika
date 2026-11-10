@@ -11,7 +11,7 @@ import { MessageView } from '@/components/chat/MessageView'
 import { openViewer, type ViewerItem } from '@/components/viewer/viewer-store'
 import { StartedByBanner } from '@/components/chat/origins/StartedByBanner'
 import { ThemeScope } from '@/theme/theme'
-import { palette, spacing, type ColorScheme } from '@/theme/tokens'
+import { brand, palette, spacing, type ColorScheme } from '@/theme/tokens'
 
 // Dev only: every markdown construct of the web's chat in a thread, to judge the native rendering.
 //   /lab-markdown?scheme=dark&part=1   part: 1 (text) | 2 (code, tables, media) | stream | steps | running
@@ -199,8 +199,8 @@ function ViewerLab() {
     return (
         <View style={{ gap: spacing.md }}>
             <UserBubble text="Here are the screenshots" media={PHOTOS.map(photo => ({ ...photo, image: true }))} />
-            <Pressable onPress={() => openViewer(DOCUMENTS, 0)} accessibilityRole="button" style={{ padding: spacing.md, borderRadius: 12, backgroundColor: '#0b6e63' }}>
-                <Text style={{ color: '#ffffff' }}>Open a PDF, then a photo</Text>
+            <Pressable onPress={() => openViewer(DOCUMENTS, 0)} accessibilityRole="button" style={{ padding: spacing.md, borderRadius: 12, backgroundColor: brand.base }}>
+                <Text style={{ color: brand.ink }}>Open a PDF, then a photo</Text>
             </Pressable>
         </View>
     )

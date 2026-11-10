@@ -34,7 +34,7 @@ export function QueuedMessagePill({ text, busy, pending, onSendNow, onDiscard }:
     const glass = useGlassStyle()
     const t = useTranslations('mobileChat.queued')
     const preview = queuedPreview(text)
-    const accent = theme.scheme === 'dark' ? brand.soft : brand.base
+    const accent = theme.scheme === 'dark' ? brand.soft : brand.deep
     return (
         <GlassView key={theme.scheme} colorScheme={theme.scheme} glassEffectStyle={glass} tintColor={withAlpha(theme.card, GLASS_TINT_ALPHA)} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingLeft: spacing.md, paddingRight: spacing.xs, paddingVertical: 4, borderRadius: radius.lg, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border, boxShadow: GLASS_SHADOW[theme.scheme] }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 1, borderRadius: radius.pill, borderWidth: 1, borderColor: withAlpha(accent, 0.3), backgroundColor: withAlpha(accent, 0.1) }}>

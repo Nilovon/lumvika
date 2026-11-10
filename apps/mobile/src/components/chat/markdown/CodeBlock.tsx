@@ -111,7 +111,7 @@ export function DraftBlock({ code, title }: { code: string; title: string }) {
 }
 
 export function inlineCodeBackground(theme: ReturnType<typeof useTheme>, surface: 'page' | 'bubble' | 'brand'): string {
-    if (surface === 'brand') return 'rgba(255,255,255,0.15)'
+    if (surface === 'brand') return 'rgba(0,0,0,0.1)'
     if (surface === 'bubble') return withAlpha(theme.background, 0.7)
     return theme.muted
 }

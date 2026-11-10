@@ -33,7 +33,7 @@ export function CardThumb({ src, fileUrl, className }: { src: unknown; fileUrl?:
     return <img src={url} alt="" loading="lazy" onError={() => setBrokenUrl(url)} className={cn('object-cover', className)} />
 }
 
-const AVATAR_TINTS = ['bg-brand/15 text-brand', 'bg-cyan-500/15 text-cyan-600', 'bg-green-500/15 text-green-600', 'bg-orange-500/15 text-orange-600', 'bg-pink-500/15 text-pink-600']
+const AVATAR_TINTS = ['bg-brand/15 text-brand-text', 'bg-cyan-500/15 text-cyan-600', 'bg-green-500/15 text-green-600', 'bg-orange-500/15 text-orange-600', 'bg-pink-500/15 text-pink-600']
 
 /** A round photo when the row has one, the initials of the title on a hashed tint otherwise. */
 export function CardAvatar({ src, fileUrl, name, className }: { src?: unknown; fileUrl?: FileUrl; name: string; className?: string }) {

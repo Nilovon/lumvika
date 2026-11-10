@@ -15,7 +15,7 @@ import { RewindHeadline, RewindSlideFrame } from '../RewindSlideFrame'
 import type { RewindSlideProps } from './types'
 
 const AWARDS: Record<RewindAwardId, { icon: LucideIcon; tone: NonNullable<BorderBeamProps['tone']>; color: string }> = {
-    'night-owl': { icon: MoonStar, tone: 'brand', color: '#7fdccb' },
+    'night-owl': { icon: MoonStar, tone: 'brand', color: '#c6f432' },
     marathon: { icon: TimerIcon, tone: 'orange', color: '#ff8a1f' },
     flawless: { icon: ShieldCheck, tone: 'green', color: '#a3ff3f' },
     toolsmith: { icon: WrenchIcon, tone: 'cyan', color: '#38d4ff' },
