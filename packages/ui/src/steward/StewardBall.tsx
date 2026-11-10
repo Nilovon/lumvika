@@ -7,7 +7,7 @@ import { BUDDY_FACE_CENTER, BuddyFace } from '../iso-grid/components/buddy/Buddy
 import type { BuddyEyes } from '../iso-grid/types'
 
 import type { OrbActivity } from './Orb'
-import { FACE_EYE_SHARE, STEWARD_VIEW_MARGIN, STEWARD_VIEW_WIDTH, StewardFacePlate, LISTENING_FACE_SCALE, MOTION, SMALL_BELOW, type StewardFace, type StewardFacing } from './steward-face'
+import { FACE_EYE_SHARE, STEWARD_VIEW_MARGIN, STEWARD_VIEW_WIDTH, LISTENING_FACE_SCALE, MOTION, SMALL_BELOW, type StewardFace, type StewardFacing } from './steward-face'
 import { STEWARD_MATERIALS, type StewardMaterialKey } from './steward-materials'
 
 // Drawn in the buddy's units, in the box of a ball as wide as an agent's block: a drop of light whose
@@ -100,7 +100,7 @@ type StewardBallProps = {
     className?: string
 }
 
-export function StewardBall({ material: materialKey, scale, size, face = 'plate', eyes = 'pill', state = 'idle', animated = true, facing = 'left', eyesRef, faceRef, className }: StewardBallProps) {
+export function StewardBall({ material: materialKey, scale, size, eyes = 'pill', state = 'idle', animated = true, facing = 'left', eyesRef, faceRef, className }: StewardBallProps) {
     const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
     const material = STEWARD_MATERIALS[materialKey]
     const paint = material.ball
@@ -108,8 +108,8 @@ export function StewardBall({ material: materialKey, scale, size, face = 'plate'
 
     const small = width < SMALL_BELOW
     const faceScale = (small ? SMALL_FACE_SCALE : FACE_SCALE) * (state === 'listening' ? LISTENING_FACE_SCALE : 1)
-    // The face is drawn in dark ink: on a plate or a dark material it is turned light.
-    const lightInk = face === 'plate' || material.bareInk === 'light'
+    // The face is drawn in dark ink: on a dark material it is turned light.
+    const lightInk = material.bareInk === 'light'
 
     const motion = MOTION[state]
     const moving = animated && motion.amp > 0
@@ -181,7 +181,6 @@ export function StewardBall({ material: materialKey, scale, size, face = 'plate'
                         )}
                         <g ref={faceRef} transform={stewardFacePose(rest.yaw, rest.pitch)}>
                             <g transform={`scale(${faceScale}) translate(${-BUDDY_FACE_CENTER} ${-EYE_Y})`}>
-                                {face === 'plate' && <StewardFacePlate uid={uid} y={EYE_Y} colors={material.plate} />}
                                 <g ref={eyesRef} style={lightInk ? { filter: 'invert(1)' } : undefined}>
                                     <BuddyFace uid={uid} eyes={eyes} mouth="none" mood={state === 'thinking' ? 'working' : 'idle'} depth={EYE_Y / FACE_EYE_SHARE} light={material.eyeLight} lit={!small} tint={material.eyeTint} />
                                 </g>
