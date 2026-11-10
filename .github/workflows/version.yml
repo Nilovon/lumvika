@@ -1,11 +1,11 @@
 name: Version
 
-# Every push to master that ships something publishes the next open source version: the engine
+# Every push to main that ships something publishes the next open source version: the engine
 # image first, then the tag and its GitHub Release, so a release never points at a missing image.
 # scripts/release/next-version.mjs picks the number and writes the notes.
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -18,7 +18,7 @@ permissions:
 jobs:
   plan:
     # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'rerun-build/rerun'
+    if: github.repository == 'schnebel-technologie/lumvika'
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.next.outputs.tag }}

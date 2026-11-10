@@ -1,7 +1,7 @@
 name: Release
 
 # Builds the engine image the Servers page tells people to run. The Version workflow calls it on
-# every push to master; a tag pushed by hand runs it too.
+# every push to main; a tag pushed by hand runs it too.
 on:
   push:
     tags: ['v*']
@@ -21,7 +21,7 @@ permissions:
 jobs:
   engine-image:
     # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'rerun-build/rerun'
+    if: github.repository == 'schnebel-technologie/lumvika'
     runs-on: ubuntu-latest
     steps:
       # The two-platform build fills the runner's disk ("No space left on device" on v0.1.0):
@@ -44,7 +44,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/${{ github.repository_owner }}/rerun-engine
+          images: ghcr.io/${{ github.repository_owner }}/lumvika-engine
           tags: |
             type=semver,pattern={{version}},value=${{ inputs.tag || github.ref_name }}
             type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag || github.ref_name }}

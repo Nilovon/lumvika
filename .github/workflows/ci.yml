@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [dev, master, staging]
+    branches: [main]
   pull_request:
 
 concurrency:
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   check:
     # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'rerun-build/rerun'
+    if: github.repository == 'schnebel-technologie/lumvika'
     name: Typecheck, lint, tests
     runs-on: ubuntu-latest
     steps:
@@ -23,15 +23,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @rerun/contracts build
+      - run: pnpm --filter @lumvika/contracts build
       - run: pnpm -r --if-present ts-check
-      - run: pnpm --filter rerun lint
-      - run: pnpm --filter rerun test
-      - run: pnpm --filter rerun-engine test
+      - run: pnpm --filter lumvika lint
+      - run: pnpm --filter lumvika test
+      - run: pnpm --filter lumvika-engine test
 
   migrations:
     # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'rerun-build/rerun'
+    if: github.repository == 'schnebel-technologie/lumvika'
     name: Migrations and seed on a fresh database
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +46,7 @@ jobs:
   # goes into them beyond the code the other jobs already check, and every push to master and
   # staging builds them anyway before anything ships.
   docker-inputs:
-    if: github.repository == 'rerun-build/rerun' && github.event_name == 'pull_request'
+    if: github.repository == 'schnebel-technologie/lumvika' && github.event_name == 'pull_request'
     name: Docker inputs changed
     runs-on: ubuntu-latest
     outputs:
@@ -67,8 +67,8 @@ jobs:
     # Runs in the open source repository only, not in a private clone of it.
     needs: docker-inputs
     if: >-
-      always() && github.repository == 'rerun-build/rerun' &&
-      ((github.event_name == 'push' && github.ref != 'refs/heads/dev') || needs.docker-inputs.outputs.changed == 'true')
+      always() && github.repository == 'schnebel-technologie/lumvika' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') || needs.docker-inputs.outputs.changed == 'true')
     name: Docker images build
     runs-on: ubuntu-latest
     steps:
