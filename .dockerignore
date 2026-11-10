@@ -7,7 +7,7 @@ node_modules
 **/.turbo
 dist
 **/dist
-*.tsbuildinfo
+**/*.tsbuildinfo
 *.log
 .DS_Store
 .env
