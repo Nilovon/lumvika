@@ -17,8 +17,6 @@ permissions:
 
 jobs:
   plan:
-    # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'schnebel-technologie/lumvika'
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.next.outputs.tag }}

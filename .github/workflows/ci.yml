@@ -11,8 +11,6 @@ concurrency:
 
 jobs:
   check:
-    # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'schnebel-technologie/lumvika'
     name: Typecheck, lint, tests
     runs-on: ubuntu-latest
     steps:
@@ -30,8 +28,6 @@ jobs:
       - run: pnpm --filter lumvika-engine test
 
   migrations:
-    # Runs in the open source repository only, not in a private clone of it.
-    if: github.repository == 'schnebel-technologie/lumvika'
     name: Migrations and seed on a fresh database
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +42,7 @@ jobs:
   # goes into them beyond the code the other jobs already check, and every push to master and
   # staging builds them anyway before anything ships.
   docker-inputs:
-    if: github.repository == 'schnebel-technologie/lumvika' && github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request'
     name: Docker inputs changed
     runs-on: ubuntu-latest
     outputs:
@@ -64,10 +60,9 @@ jobs:
           fi
 
   images:
-    # Runs in the open source repository only, not in a private clone of it.
     needs: docker-inputs
     if: >-
-      always() && github.repository == 'schnebel-technologie/lumvika' &&
+      always() &&
       ((github.event_name == 'push' && github.ref == 'refs/heads/main') || needs.docker-inputs.outputs.changed == 'true')
     name: Docker images build
     runs-on: ubuntu-latest
