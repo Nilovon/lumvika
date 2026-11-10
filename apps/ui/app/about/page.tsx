@@ -14,6 +14,7 @@ export default async function AboutPage() {
             <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
             <p>{t('license')}</p>
             <p>{t('upstream')}</p>
+            <p>{t('copyright')}</p>
             <p>{t('warranty')}</p>
             <p className="flex gap-4">
                 <a className="underline underline-offset-4" href={SOURCE_REPO_URL} target="_blank" rel="noopener noreferrer">

@@ -18,6 +18,7 @@
         "license": "O Lumvika é software livre, licenciado sob a GNU Affero General Public License, versão 3 (AGPL-3.0). Com essa licença, você pode obter, alterar e compartilhar o código-fonte.",
         "upstream": "Ele se baseia em um projeto de código aberto e contém o trabalho dos autores desse projeto, que mantêm seus direitos. O arquivo NOTICE no código-fonte identifica o projeto e descreve o que foi alterado.",
         "warranty": "Este programa é fornecido sem nenhuma garantia, na medida permitida por lei.",
+        "copyright": "© Os autores do projeto original. Alterações © 2026 Schnebel Technologie GmbH.",
         "source": "Código-fonte",
         "licenseText": "Texto da licença"
     }
