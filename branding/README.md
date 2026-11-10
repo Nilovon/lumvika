@@ -58,3 +58,16 @@ band around the wall.
   is in `apps/mobile/src/components/buddy/`.
 
 `apps/ui/public/email/board-sample.png` is a render of four lanterns for the email previews.
+
+## Art
+
+The rest of the artwork is flat SVG in the palette above, drawn and rendered by
+`apps/ui/scripts/render-brand-art.mjs` (run it from `apps/ui` with `node scripts/render-brand-art.mjs`):
+
+- `apps/ui/public/pricing/{solo,team,scale}.png`: the fallback workspace icons, shown cropped to a circle.
+- `apps/ui/public/email/scene/*.jpg`: the band that opens every email about the account. One Mint
+  pictogram with an Amber point of light over a soft Teal light, faint pictograms around it, fading
+  into the email card at the bottom.
+
+File names, sizes and formats stay fixed, because workspace rows and sent emails point at them. Bump
+`ART_VERSION` in `packages/emails/assets.ts` after changing a scene.

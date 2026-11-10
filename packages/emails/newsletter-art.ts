@@ -1,6 +1,6 @@
-// The header of an issue, described rather than drawn: cloud/packages/cloud/scripts/generate-newsletter-art.mts
-// turns one of these into the 3D-glass band served at /email/newsletter/<slug>.jpg. The vocabulary
-// is the `lumvika-image-glass` one, shared with the re-engagement scenes, so an issue header and a
+// The header of an issue, described rather than drawn: a generator (not part of this repository)
+// turns one of these into the band served at /email/newsletter/<slug>.jpg. It should match the
+// re-engagement scenes drawn by apps/ui/scripts/render-brand-art.mjs, so an issue header and a
 // lifecycle banner read as the same family: only the hero pictogram, its satellites and the tilt
 // change from one to the next.
 //

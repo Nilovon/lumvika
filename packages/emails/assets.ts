@@ -10,7 +10,7 @@ export const ASSET_ORIGIN =
   "https://app.lumvika.com";
 
 /** Bumped whenever the artwork changes: both art routes are cached immutably. */
-export const ART_VERSION = "7";
+export const ART_VERSION = "8";
 
 // The framed mark, rendered by /email/logo the same way the banner is. The flat `logo.png` it
 // replaces stays in `public/` because mail already in inboxes still points at it.
@@ -38,10 +38,10 @@ export function heroUrl(variant: HeroVariant): string {
   return `${ASSET_ORIGIN}/email/art?variant=${variant}&v=${ART_VERSION}`;
 }
 
-// Every email an account gets about itself opens on a rendered 3D glass scene instead of the icon
-// stripe. The stripe is left to the agent notifications, which are relayed one per event and pick
-// their band from the notification kind. One flat file per sequence, drawn by
-// cloud/packages/cloud/scripts/generate-email-scenes.mts and served from the same origin as the rest of the art.
+// Every email an account gets about itself opens on a drawn scene instead of the icon stripe. The
+// stripe is left to the agent notifications, which are relayed one per event and pick their band
+// from the notification kind. One flat file per sequence, drawn by
+// apps/ui/scripts/render-brand-art.mjs and served from the same origin as the rest of the art.
 export type HeroScene =
   | "automate-agent"
   | "agent-idle"
@@ -71,15 +71,15 @@ export function boardSampleUrl(): string {
 
 // A newsletter issue opens on its own render rather than on a shared banner: an issue is written
 // once and its header is drawn for it, the way a magazine cover belongs to one number. Same band
-// geometry as a scene, drawn by cloud/packages/cloud/scripts/generate-newsletter-art.mts from the brief the
-// issue declares in newsletter-art.ts, and served as a flat file next to the scenes.
+// geometry as a scene, drawn from the brief the issue declares in newsletter-art.ts and served as a
+// flat file next to the scenes. The generator is not part of this repository; no issue ships yet.
 export function newsletterArtUrl(slug: string): string {
   return `${ASSET_ORIGIN}/email/newsletter/${slug}.jpg?v=${ART_VERSION}`;
 }
 
 // A section of an issue can carry its own picture: a screenshot of what shipped, or a screen
 // recording turned into a GIF. Unlike the header, which is one file per issue, these are many, so
-// they live in a folder named after the slug. Produced by cloud/packages/cloud/scripts/newsletter-media.mts.
+// they live in a folder named after the slug.
 export function newsletterMediaUrl(slug: string, file: string): string {
   return `${ASSET_ORIGIN}/email/newsletter/${slug}/${file}?v=${ART_VERSION}`;
 }
