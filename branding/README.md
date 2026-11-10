@@ -6,7 +6,13 @@ Lumvika, said `LOOM-vee-kah`. Invented word, a nod to light (lumen).
 
 ## Logo
 
-The mark is an upright L with a point of light beside it.
+The mark is an open orbit: a thick ring with a gap at the top right, a point of light (Amber) sitting
+in the gap on the ring's own line, and a core in the middle. On light backgrounds the ring and core are
+Teal; on dark backgrounds and on the app icon the ring is Paper and the core Mint.
+
+Every logo file below, plus the app icons, the favicons, the email mark, the social preview image and
+the engine's desktop wallpaper, is drawn by `apps/ui/scripts/render-logo.mjs` (run it from `apps/ui`
+with `node scripts/render-logo.mjs`).
 
 | File | Use |
 |---|---|
@@ -19,9 +25,11 @@ The mark is an upright L with a point of light beside it.
 | `favicon/favicon-{16,32,180,192,512}.png` | Browser, Apple touch and PWA icons |
 
 The app's own copies live in `apps/ui/app`, `apps/ui/public`, `apps/docs` and `apps/mobile/assets`.
-In code, the mark is `MARK_PATH` in `packages/ui/src/logo/Logo.tsx`.
+In code, the mark is `MARK_PATH` in `packages/ui/src/logo/Logo.tsx`, one single-colour path. The
+copy in `apps/mobile/src/components/ui/ProviderLogo.tsx` must match it; the script refuses to run
+when either no longer matches the geometry.
 
-Keep clear space of at least the diameter of the point around the mark.
+Keep clear space of at least the diameter of the point of light around the mark.
 
 ## Colors
 
@@ -35,8 +43,9 @@ Keep clear space of at least the diameter of the point around the mark.
 
 ## Type
 
-The wordmark is drawn, not set: monoline geometric letters with round ends, 13 units wide on a 60 unit
-x-height, with no font needed to render it.
+The wordmark is drawn, not set: lowercase monoline letters with round ends, 15 units wide on a 56 unit
+x-height, with no font needed to render it. The l ends in a small foot, the a is a full bowl with a
+stem, and the dot of the i is the Amber point of light.
 
 The interface uses Inter and Geist, with Geist Mono for code, as loaded in `apps/ui/app/layout.tsx`.
 

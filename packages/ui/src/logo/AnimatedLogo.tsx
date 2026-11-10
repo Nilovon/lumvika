@@ -5,7 +5,7 @@ import * as React from 'react'
 import { cn } from '../cn'
 import { MARK_PATH } from './Logo'
 
-// La marque est composée de 2 sous-paths (le L et le point) :
+// La marque est composée de 3 sous-paths (l'anneau, la lumière, le noyau) :
 // on les sépare pour pouvoir les dessiner en cascade (stagger).
 const MARK_SUBPATHS = MARK_PATH.split(/(?=M)/).map((s) => s.trim())
 

@@ -10,7 +10,7 @@ export const ASSET_ORIGIN =
   "https://app.lumvika.com";
 
 /** Bumped whenever the artwork changes: both art routes are cached immutably. */
-export const ART_VERSION = "8";
+export const ART_VERSION = "9";
 
 // The framed mark, rendered by /email/logo the same way the banner is. The flat `logo.png` it
 // replaces stays in `public/` because mail already in inboxes still points at it.
