@@ -1,0 +1,104 @@
+---
+title: "Administration"
+description: "Admins, the data in Supabase Studio, invitations, background jobs and logs."
+---
+
+A self-hosted Rerun has no back office. You administer it with one variable, Supabase Studio, and the Docker logs.
+
+## Admins
+
+`ADMIN_EMAILS` names the admins, separated by commas:
+
+```bash .env
+ADMIN_EMAILS=you@example.com,ops@example.com
+```
+
+Admins see a few extra switches in the app. The list is also baked into the app for the browser, so rebuild after changing it: `docker compose up -d --build`.
+
+There is no `/admin` page in the open source build. Everything else goes through Supabase Studio.
+
+## Supabase Studio
+
+Studio is the table editor and SQL editor of your Supabase project: the project dashboard on supabase.com, [http://localhost:54423](http://localhost:54423) for the local stack, or the root of your Supabase domain for open source Supabase. There, it sits behind `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` from `supabase-stack/.env`, and anyone can reach its login: keep the generated password.
+
+People are in **Authentication > Users**. Deleting a user there removes their account and their memberships.
+
+The tables that matter:
+
+| Table | What it holds |
+| --- | --- |
+| `workspaces` | One row per workspace: its `name`, and `max_agents`, the most coworkers it may run, empty for unlimited |
+| `workspace_members` | Who belongs to which workspace: `workspace_id`, `user_id` |
+| `workspace_invitations` | Pending, accepted and revoked invitations, with their `email`, `token` and `expires_at` |
+| `agents` | The coworkers as the app knows them: `name`, `handle`, `workspace_id`, `space_id` (its Box) and `engine_agent_id`, its id on the server |
+| `engine_pool` | One row per attached server: `engine_host`, `engine_api_key` and `claimed_by_workspace_id` |
+| `engine_pairing_tokens` | Pairing tokens, stored hashed, with `expires_at` and `used_at` |
+| `services` | The catalog: `slug`, `name`, `enabled`, `manifest`, `embedding` |
+
+The `agents` table is only an index. What a coworker knows and does lives on its server, in the data-dir. See [What is stored where](/self-host/overview#what-is-stored-where).
+
+Some tables stay empty on your install, because what fills them belongs to Rerun Cloud: billing, paid apps, paid data, the machine pool and its hosts. They are part of the schema all the same.
+
+### Common tasks
+
+Which workspace runs on which server:
+
+```sql
+select w.id, w.name, e.engine_host
+from engine_pool e
+join workspaces w on w.id = e.claimed_by_workspace_id;
+```
+
+Free the engine docker compose started, so the next workspace that needs one gets it. Its data-dir keeps the coworkers of the previous workspace:
+
+```sql
+delete from engine_pool where engine_host = 'http://engine:3000';
+```
+
+Cap a workspace at ten coworkers:
+
+```sql
+update workspaces set max_agents = 10 where id = 42;
+```
+
+Turn a service off for everyone:
+
+```sql
+update services set enabled = false where slug = 'stripe';
+```
+
+## Invitations
+
+Members invite people from the workspace menu, as on Rerun Cloud. See [Teams](/teams).
+
+This build sends no invitation email. Send the link yourself: it is `NEXT_PUBLIC_APP_URL/invite/<token>`, with the `token` of the invitation in `workspace_invitations`. The person opens it and signs in with their email code.
+
+Sign-in codes are the one email Rerun relies on, and Supabase sends them. See [Set up Supabase](/self-host/install#2-set-up-supabase).
+
+## Background jobs
+
+There is no job queue to run. The app runs its background work in its own process:
+
+- researching the company and seeding the Brain during onboarding
+- suggesting coworker ideas
+- switching a coworker off on its server once the app has turned it off
+- every night at 3:00, deleting anonymous visitors older than a day who never signed up
+- every night at 3:40, clearing the web search cache
+
+The times follow the clock of the app container, UTC unless you set `TZ`. A restart drops a job in flight. Each one is asked again by the screen or the flow that needs it.
+
+## Logs
+
+```bash
+docker compose logs -f app engine        # follow both
+docker compose logs --since 1h app       # the last hour of the app
+docker logs -f rerun-engine              # a paired server
+```
+
+The app tags its lines: `[task]` for background jobs, `[llm]` for the Rerun models, `[servers]` for pairing, `[email]` for the emails this build skips. For more detail from an engine, set `RERUN_LOG_LEVEL=debug` and run `docker compose up -d`.
+
+To check an engine's data-dir without changing it:
+
+```bash
+docker compose exec engine node dist/cli/bin.js doctor
+```

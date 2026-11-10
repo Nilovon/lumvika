@@ -1,0 +1,19 @@
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+/AGENTS.md
+.temp
+.context/
+.claude/settings.local.json
+
+# The private cloud/ repository of Rerun Cloud, cloned inside the checkout by the team.
+/cloud/

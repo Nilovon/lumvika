@@ -1,0 +1,13 @@
+# Fixtures and public identifiers that look like secrets to the default rules.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "test fixtures, public OAuth client ids, alphabets"
+paths = [
+    '''(^|/)[^/]+\.test\.tsx?$''',
+    '''^apps/engine/bench/''',
+    '''^apps/engine/src/connections/claude-token\.ts$''',
+    '''^apps/ui/lib/opaque-token\.ts$''',
+    '''^apps/ui/lib/company/explore/(catalog|synthesize)\.ts$''',
+]

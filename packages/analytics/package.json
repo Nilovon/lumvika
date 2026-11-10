@@ -1,0 +1,27 @@
+{
+    "name": "@rerun/analytics",
+    "license": "AGPL-3.0-only",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./client": "./src/client.ts",
+        "./server": "./src/server.ts",
+        "./experiments": "./src/experiments.ts"
+    },
+    "scripts": {
+        "ts-check": "tsc --noEmit"
+    },
+    "peerDependencies": {
+        "posthog-js": "^1.301.1"
+    },
+    "dependencies": {
+        "posthog-node": "^4.18.0"
+    },
+    "devDependencies": {
+        "posthog-js": "^1.301.1",
+        "@types/node": "^20",
+        "typescript": "^5"
+    }
+}

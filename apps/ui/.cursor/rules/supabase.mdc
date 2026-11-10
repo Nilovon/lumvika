@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+# Supabase Database Queries
+
+TOUJOURS utiliser les helpers de `@src/app/supabase/supabase-helpers.ts` pour interagir avec la base de données.
+
+NE JAMAIS utiliser directement `supabase.from().select()` etc.
+
+NE JAMAIS MODIFIER supabase-helpers.ts sans mon accord!

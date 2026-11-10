@@ -1,0 +1,226 @@
+---
+title: "Templates"
+description: "Author a marketplace template from coworkers that already work, without leaving your editor."
+---
+
+These twelve tools turn coworkers running in your sandbox into a marketplace listing other people install in one click. See [Create a template](/templates/create) for the same workflow in the app.
+
+<Warning>
+  **Expert accounts only.** Every tool on this page requires the key to belong to the sandbox of an expert account. The gate says so on the first call. All 53 tools are advertised to every key, so a client will offer these even when your account cannot use them. See [the Expert Program](/templates/expert-program).
+</Warning>
+
+Two rules every tool here shares. Publication is never the caller's decision: you write a draft and hand it over. And a template can only be built from sandbox coworkers, because capturing from a working workspace would publish a client's memory files.
+
+## The usual sequence
+
+<Steps>
+  <Step title="create_template">Create a draft from a title.</Step>
+  <Step title="update_template">Write the copy and set the pricing.</Step>
+  <Step title="plan_template_capture">Dry run the capture and read what it would ship.</Step>
+  <Step title="capture_template_agents">Archive the coworkers into the template.</Step>
+  <Step title="add_template_image">Add the cover.</Step>
+  <Step title="get_template">Read `submitChecklist` and fix what is missing.</Step>
+  <Step title="submit_template">Hand it to the Rerun team.</Step>
+</Steps>
+
+## list_templates
+
+Lists the templates this account authors, with `templateId`, `slug`, `title`, `status`, pricing, how many coworkers are captured, and why a template is no longer editable when it is.
+
+Takes no arguments. Call it first: every other template tool takes the `templateId` it returns.
+
+Statuses are `draft` (yours, editable), `in_review` (handed over, frozen), `published` and `unlisted` (live, maintained by Rerun from then on), and `archived`.
+
+## get_template
+
+One template in full: the editorial document, the coworkers already captured with their `key`, and `submitChecklist`, the exact list `submit_template` enforces with `met` true or false per item, plus `readyToSubmit` and `missing`.
+
+<ParamField body="templateId" type="string" required />
+
+Read it before every update. `update_template` only touches the fields you pass, so this is how you know what is already written.
+
+## create_template
+
+Creates an empty draft.
+
+<ParamField body="title" type="string" required>
+  The product name of the template, 50 characters maximum, for example `Inbound lead qualifier`.
+</ParamField>
+
+The slug, which is the public URL of the page, is derived from that title and is not editable afterwards. Treat the title as the product name.
+
+Nothing becomes public here. A draft stays private until `submit_template` hands it over and the team approves it.
+
+## update_template
+
+Writes the editorial page of a draft. Only the fields you pass change.
+
+<ParamField body="templateId" type="string" required />
+<ParamField body="title" type="string">
+  The catalogue title, 50 characters maximum.
+</ParamField>
+
+<ParamField body="tagline" type="string">
+  One line, up to about 160 characters. The card subtitle.
+</ParamField>
+
+<ParamField body="longDescription" type="string">
+  The body of the page, in markdown. This is the page.
+</ParamField>
+
+<ParamField body="category" type="string">
+  The audience the template is for, not the team that built it. One of `agencies`, `ecommerce`, `saas`, `sales`, `recruiting`, `real-estate`, `legal`, `creators`, `productivity`, `other`.
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Replaces the whole list.
+</ParamField>
+
+<ParamField body="setupMinutes" type="number">
+  Honest minutes to install it and connect the accounts. Shown on the page.
+</ParamField>
+
+<ParamField body="gallery" type="object[]">
+  Replaces the whole gallery, cover first. Each entry needs `url` and may carry `alt`.
+</ParamField>
+
+<ParamField body="videoUrl" type="string" />
+
+<ParamField body="faq" type="object[]">
+  Replaces the whole FAQ. Each entry needs `question` and `answer`. Four to six entries reads best, written the way someone types them into a search box.
+</ParamField>
+
+<ParamField body="metaTitle" type="string">
+  Search title, about 60 characters.
+</ParamField>
+
+<ParamField body="metaDescription" type="string">
+  Search snippet, 120 to 155 characters. Required in that range before the template can be submitted.
+</ParamField>
+
+<ParamField body="pricingModel" type="string">
+  `free`, `one_time` (charged once) or `recurring` (monthly).
+</ParamField>
+
+<ParamField body="priceAmountCents" type="number">
+  Cents. `0` when free, at least `500` (\$5) when paid, up to `200000` (\$2,000). Any other combination is refused rather than silently stored.
+</ParamField>
+
+<Warning>
+  Three traps. `tags`, `gallery` and `faq` replace the whole list, so passing `gallery` here drops the images already on the template. A template in review or published is read-only, and `withdraw_template` is the way back. Status, slug, creator, featured and the visibility flags are not writable.
+</Warning>
+
+## submit_template
+
+Hands a draft to the Rerun team for review.
+
+<ParamField body="templateId" type="string" required />
+
+It enforces the list `get_template` returns: a title, a tagline, a description, a meta description of 120 to 155 characters, at least one captured coworker, an install answer for every coworker, and for a paid template a Stripe account that can actually receive payouts. No image is required: the cards draw the board of the captured coworkers. It names what is missing instead of half-submitting. It also refuses on a credential found anywhere in the copy.
+
+Once it succeeds the template is frozen: still private, no longer editable. `withdraw_template` is the only way back to a draft.
+
+<Note>
+  Payout onboarding cannot happen from here. It needs a browser: in the Rerun app, board toolbar, **My templates**, **Payouts**.
+</Note>
+
+## withdraw_template
+
+Takes a template back from review into draft so it can be edited again.
+
+<ParamField body="templateId" type="string" required />
+
+Only works while it is `in_review`. Once published, the page is maintained by Rerun and this is refused.
+
+## delete_template
+
+Permanently deletes a draft. Refused on a template in review or already published.
+
+<ParamField body="templateId" type="string" required />
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`.
+</ParamField>
+
+## list_capture_sources
+
+Lists the Boxes and coworkers that can be captured: the sandbox only, and only coworkers the engine actually knows about.
+
+Takes no arguments. The coworker ids it returns are what `plan_template_capture` and `capture_template_agents` take.
+
+## plan_template_capture
+
+Dry run. Inspects what capturing these coworkers would ship, without writing anything.
+
+<ParamField body="templateId" type="string" required />
+<ParamField body="spaceId" type="string" required>
+  From `list_capture_sources`.
+</ParamField>
+<ParamField body="agentIds" type="string[]" required>
+  Coworker ids from `list_capture_sources`, in that Box.
+</ParamField>
+
+Returns, per coworker: its skills, scheduled tasks and declared apps, the `.env` key **names** a copy will have to be given again (names only, never values), the MCP servers whose sign-in stays behind, how many memory files it holds, what the engine will redact on the way out, and `excludedByDefault`, the paths considered too personal to publish.
+
+<Note>
+  Read this before capturing. It is the security review, and the archive ends up behind a public install button.
+</Note>
+
+## capture_template_agents
+
+Captures coworkers from the sandbox into the template: prompt, skills, scheduled tasks, app declarations and workspace files are archived, and the template page is rewritten from what the folder actually contains.
+
+<ParamField body="templateId" type="string" required />
+<ParamField body="spaceId" type="string" required />
+
+<ParamField body="agents" type="object[]" required>
+  One entry per coworker. Each entry needs `agentId` and may carry `exclude`, `keep` and `setup`.
+</ParamField>
+
+<ParamField body="agents[].exclude" type="string[]">
+  Extra paths from `plan_template_capture` to leave out.
+</ParamField>
+
+<ParamField body="agents[].keep" type="string[]">
+  Paths from `excludedByDefault` to ship anyway. A deliberate act: these are memories and credentials.
+</ParamField>
+
+<ParamField body="agents[].setup" type="object">
+  The answer to "does this coworker need to be configured after install?", which a template cannot be submitted without. `required` is mandatory. `prompt` is required when `required` is `true`, and is addressed to the coworker, not to the user.
+</ParamField>
+
+Paths marked excluded by default (memory, credential folders) are left out unless you name them in `keep`. Do not keep a memory folder without the account owner asking for it. The coworker database, `data/agent.db`, is not excluded by default: its tables ship with their rows, so clear the test rows first or name it in `exclude`.
+
+Re-capturing a coworker already in the template updates its entry in place, and the editorial copy written about it survives. Read the `warnings` that come back: they name literal credentials the engine had to strip.
+
+## remove_template_agent
+
+Removes a captured coworker from a template and deletes its archive.
+
+<ParamField body="templateId" type="string" required />
+<ParamField body="agentKey" type="string" required>
+  The `key` `get_template` returns for each coworker, not the sandbox coworker id.
+</ParamField>
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`.
+</ParamField>
+
+Apps no remaining coworker uses leave the page with it.
+
+## add_template_image
+
+Adds one image to the gallery from a URL that is already hosted somewhere public.
+
+<ParamField body="templateId" type="string" required />
+<ParamField body="imageUrl" type="string" required>
+  Public https URL of a png, jpg or webp.
+</ParamField>
+<ParamField body="alt" type="string">
+  What the image shows, one sentence. Read by search engines and screen readers.
+</ParamField>
+<ParamField body="cover" type="boolean">
+  Put it first, making it the cover and the social preview.
+</ParamField>
+
+The bytes are downloaded and re-encoded into Rerun storage, so the gallery never points at a host that can expire or swap the picture after the review. Unlike `update_template(gallery)` this appends: the images already there are kept.
+
+There is no upload and no image generation here. Produce or host the image elsewhere, then pass its https URL.

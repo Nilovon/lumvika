@@ -1,0 +1,527 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "streamdown/styles.css";
+@import "../../../packages/ui/src/styles.css";
+
+@source "../../../packages/ui/src";
+/* Rerun Cloud's side of @rerun/cloud/* (marketing cards…): a checkout without cloud/ has nothing there. */
+@source "../../../cloud/packages/cloud/src";
+@source "../node_modules/streamdown/dist/*.js";
+@source "../node_modules/@streamdown/code/dist/*.js";
+@source "../node_modules/@streamdown/math/dist/*.js";
+@source "../node_modules/@streamdown/mermaid/dist/*.js";
+@source "../node_modules/@streamdown/cjk/dist/*.js";
+
+@custom-variant dark (&:is(.dark *));
+/* Rewind slides follow the shape of their story card, not the viewport: a wide card splits text and visual in two columns. */
+@custom-variant story-landscape (@media (orientation: landscape) and (width >= 40rem) and (height >= 30rem));
+@custom-variant rewind-wide (@container rewind (width >= 40rem) and (aspect-ratio > 1));
+
+/* Core design tokens (background/foreground/card/popover/primary/secondary/muted/
+   accent/destructive/border/input/ring + radius-sm..xl) : source partagée dans
+   @rerun/ui/theme.css. Ici uniquement les tokens spécifiques à apps/ui. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  /* Tokens repris du design Pricing de la landing (cloud/apps/landing) pour BillingDialog */
+  --color-charcoal-700: #343434;
+  --color-charcoal-900: #202020;
+  --color-brand: var(--brand);
+  --color-brand-text: var(--brand-text);
+  --color-frame: var(--frame);
+  --color-divide: var(--border);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-scroll: scroll var(--animation-duration, 40s)
+    var(--animation-direction, forwards) linear infinite;
+  --animate-gradient-text: gradient-text-pan 6s ease-in-out infinite;
+  --animate-link-dot: link-dot 2s linear infinite;
+}
+
+/* Models marquee (ModelsDialog right column). Ported from cloud/apps/landing. */
+@keyframes scroll {
+  to {
+    transform: translate(calc(-50% - 0.5rem));
+  }
+}
+
+/* Slow horizontal pan of a bg-clip-text gradient (Expert story titles). */
+@keyframes gradient-text-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* One dot of a dotted path lighting up as the signal passes over it (LinkedinRerunLink). */
+@keyframes link-dot {
+  0%, 22%, 100% { background-color: color-mix(in oklab, var(--muted-foreground) 25%, transparent); box-shadow: none; }
+  6% { background-color: var(--foreground); box-shadow: 0 0 6px color-mix(in oklab, var(--foreground) 60%, transparent); }
+}
+
+/* Marquee pill: faint neutral fill (theme-aware via --foreground). */
+.model-pill {
+  background: color-mix(in oklab, var(--foreground) 3%, var(--background));
+}
+
+/* Halo de la barre de crédits. La teinte arrive par --credits-accent (posée inline, brand ou rouge
+   d'épuisement) ; le thème clair réduit le rayon et l'opacité, sinon le halo bave sur le fond. */
+.credits-bar-glow {
+  --credits-highlight: 55%;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--credits-accent) 55%, transparent));
+}
+
+html:not(.dark) .credits-bar-glow {
+  --credits-highlight: 25%;
+  filter: drop-shadow(0 0 2px color-mix(in oklab, var(--credits-accent) 25%, transparent));
+}
+
+/* Dose de blanc en tête du dégradé des barres de progression. Le dégradé lui-même est posé inline
+   par la primitive Progress : un color-mix avec une variable en position de pourcentage ne survit
+   pas au compilateur CSS, il se fait jeter à la compilation (même raison que la barre de crédits).
+   Le thème clair reçoit moins de blanc, sinon le début de la barre se confond avec la piste.
+   `--progress-stripe-ink` encre les hachures posées par-dessus : l'encre par défaut des Stripes est
+   calibrée pour un fond de panneau, elle disparaîtrait sur une barre de 2 px remplie de couleur. */
+.progress-fill {
+  --progress-highlight: 55%;
+  --progress-stripe-ink: rgb(0 0 0 / 0.18);
+}
+
+html:not(.dark) .progress-fill {
+  --progress-highlight: 25%;
+  --progress-stripe-ink: rgb(0 0 0 / 0.14);
+}
+
+/* Barre de progression indéterminée : la phase où les octets sont partis mais où le serveur écrit
+   encore. Un remplissage figé à 100% se lit comme un bug, un va-et-vient se lit comme une attente. */
+.progress-indeterminate {
+  animation: progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Core tokens (background/foreground/card/...) + --radius : @rerun/ui/theme.css.
+   Ici uniquement les tokens sidebar/chart propres à apps/ui. */
+:root {
+  --brand: #4d34f7;
+  /* La marque posée en texte ou en point sur le fond : #4d34f7 se perd sur le noir, le thème sombre
+     reprend la lavande du badge brand. */
+  --brand-text: var(--brand);
+  /* Gouttière autour du panneau du dashboard : plus sombre que le fond en thème sombre, plus claire
+     que lui en thème clair, pour que le panneau se détache dans les deux cas. */
+  --frame: oklch(0.925 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --brand: #4d34f7;
+  --brand-text: #b7a8ff;
+  --frame: oklch(0 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@keyframes agent-breathing {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.04); }
+}
+
+@keyframes agent-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes agent-glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes agent-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-1.5px); }
+  40% { transform: translateX(1.5px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* iOS Safari zooms into any editable field whose font-size < 16px on focus.
+   Force >=16px on touch/small viewports. Unlayered so it wins over Tailwind
+   text-xs/text-sm utilities; desktop (>=md) keeps its smaller sizes. */
+@media screen and (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select,
+  [contenteditable]:not([contenteditable="false"]) {
+    font-size: 16px;
+  }
+}
+
+[data-streamdown="heading-1"] {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+[data-streamdown="heading-2"] {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+[data-streamdown="heading-3"] {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+[data-streamdown="heading-4"],
+[data-streamdown="heading-5"],
+[data-streamdown="heading-6"] {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Unlayered like the heading margins above, which Streamdown's `[&>*:first-child]:mt-0` utility cannot override. */
+[data-streamdown^="heading-"]:first-child {
+  margin-top: 0;
+}
+
+[data-streamdown="strong"] {
+  font-weight: 700;
+}
+
+[data-streamdown="link"] {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--primary);
+}
+
+[data-streamdown="link"]:hover {
+  opacity: 0.8;
+}
+
+[data-streamdown="inline-code"] {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--muted);
+  color: var(--foreground);
+  padding: 0.15em 0.35em;
+  border-radius: var(--radius-sm);
+}
+
+[data-streamdown="blockquote"] {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+  margin-block: 0.75rem;
+}
+
+[data-streamdown="horizontal-rule"] {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-block: 1.25rem;
+}
+
+[data-streamdown="blockquote"] p + p,
+[data-streamdown="list-item"] p + p {
+  margin-top: 0.5rem;
+}
+
+[data-streamdown="ordered-list"] {
+  list-style-type: decimal;
+  list-style-position: inside;
+}
+
+[data-streamdown="unordered-list"] {
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
+[data-streamdown="ordered-list"] [data-streamdown="ordered-list"],
+[data-streamdown="unordered-list"] [data-streamdown="unordered-list"],
+[data-streamdown="ordered-list"] [data-streamdown="unordered-list"],
+[data-streamdown="unordered-list"] [data-streamdown="ordered-list"] {
+  padding-left: 1.5rem;
+}
+
+[data-streamdown="list-item"] {
+  padding-block: 0.25rem;
+}
+
+[data-streamdown="table-wrapper"] {
+  overflow-x: auto;
+  margin-block: 0.75rem;
+}
+
+[data-streamdown="table"] {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+[data-streamdown="table-header-cell"] {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+
+[data-streamdown="table-cell"] {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-streamdown="table-row"]:last-child [data-streamdown="table-cell"] {
+  border-bottom: none;
+}
+
+/* Inside a chat answer's stack (MessageBubbles) every block takes the bubble's shape: 20px corners
+   on the muted surface, no border, and the stack's own gap instead of a margin. */
+[data-bubble-frame="bare"] [data-streamdown="code-block"],
+[data-bubble-frame="bare"] [data-streamdown="mermaid-block"],
+[data-bubble-frame="bare"] [data-streamdown="table-wrapper"] {
+  margin-block: 0;
+  border: none;
+  border-radius: 20px;
+  background: var(--muted);
+}
+
+[data-bubble-frame="bare"] [data-streamdown="code-block-body"],
+[data-bubble-frame="bare"] [data-streamdown="mermaid-block"] > div:last-child,
+[data-bubble-frame="bare"] [data-streamdown="table-wrapper"] > div:has(> [data-streamdown="table"]) {
+  border: none;
+  border-radius: 14px;
+}
+
+[data-bubble-frame="media"] [data-streamdown="image-wrapper"] {
+  display: block;
+  margin-block: 0;
+}
+
+[data-bubble-frame="media"] [data-streamdown="image"] {
+  border-radius: 20px;
+}
+
+[data-bubble-frame="bubble"] [data-streamdown="blockquote"] {
+  border-left-color: color-mix(in oklab, var(--foreground) 20%, transparent);
+}
+
+[data-bubble-frame="bubble"] [data-streamdown="blockquote"]:first-child {
+  margin-top: 0;
+}
+
+[data-bubble-frame="bubble"] [data-streamdown="blockquote"]:last-child {
+  margin-bottom: 0;
+}
+
+/* Streamdown wraps every streamed word in a span it blurs in. It ships no reduced-motion
+   rule of its own, so the words land instantly here instead. */
+@media (prefers-reduced-motion: reduce) {
+  [data-sd-animate] {
+    animation: none;
+  }
+}
+
+/* Wider, softer border beam for selected cards (CreateAgentDialog): the bright band
+   is spread across the whole edge instead of a short arc, and dialed down so it stays
+   subtle. Override only — the shared @rerun/ui arcs preset is untouched. */
+.beam-soft.border-beam--arcs {
+  background: conic-gradient(
+    from var(--border-beam-angle),
+    var(--beam-2) 0%,
+    var(--beam-1) 25%,
+    var(--beam-2) 50%,
+    var(--beam-1) 75%,
+    var(--beam-2) 100%
+  );
+}
+.beam-soft.border-beam--arcs.border-beam--white {
+  --beam-1: rgba(255, 255, 255, 0.55);
+}
+html:not(.dark) .beam-soft.border-beam--arcs.border-beam--white {
+  --beam-1: rgba(0, 0, 0, 0.4);
+}
+
+/* Thin, theme-aware scrollbars so Windows classic scrollbars look like the
+   discreet macOS ones instead of the wide white default.
+   In @layer base and not unlayered: `* { scrollbar-width: thin }` would otherwise outrank the
+   `scrollbar-width: none` that `no-scrollbar` and `[scrollbar-width:none]` set from
+   @layer utilities, and every hidden-scrollbar row would keep its bar on Firefox. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 40%, transparent) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .dark * {
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent) transparent;
+  }
+
+  .dark *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+  }
+
+  .dark *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+  }
+}
+
+/* Sonner injects its own stylesheet at runtime, outside of any cascade layer, so Tailwind
+   utilities passed through `toastOptions.classNames` would always lose against it. These rules
+   stay unlayered too, and outrank it on specificity. */
+@media (max-width: 639.98px) {
+  [data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-title] {
+    line-height: 1.35;
+  }
+
+  /* Server error strings land here at any length, and a toast that tall covers the screen. */
+  [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-description] {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+/* Sonner's own close button rules for the dark theme already sit at the same specificity as the
+   selectors above, and its runtime stylesheet is appended last, so it wins every tie. The `html`
+   prefix is what puts these ahead of it. */
+html [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button] {
+  left: auto;
+  right: 8px;
+  top: 8px;
+  transform: none;
+  height: 24px;
+  width: 24px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button]:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* A loading toast never gets a close button, and would otherwise carry an orphan gutter. */
+html [data-sonner-toaster] [data-sonner-toast][data-styled='true']:has([data-close-button]) [data-content] {
+  padding-right: 24px;
+}
+
+/* Only pointer devices hide the button: a touch screen has no hover to reveal it with. Keeping
+   every opacity rule inside this query also leaves sonner's `[data-front='false'] > * { opacity: 0 }`
+   untouched, so stacked toasts don't show a floating close button behind the front one. */
+@media (pointer: fine) {
+  html [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button] {
+    opacity: 0;
+  }
+
+  html [data-sonner-toaster] [data-sonner-toast][data-styled='true']:hover [data-close-button],
+  html [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button]:focus-visible {
+    opacity: 1;
+  }
+}

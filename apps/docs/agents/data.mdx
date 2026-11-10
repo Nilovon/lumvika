@@ -1,0 +1,73 @@
+---
+title: "Data and files"
+description: "Where a coworker keeps what it produces, and how you get it out."
+---
+
+A coworker has four places to put things: its own database, the shared database, its own folder and the shared folder.
+
+## Databases
+
+Structured data goes in a database. It is plain SQLite, and it is the default home for anything a coworker produces repeatedly: leads, invoices, articles, events, anything with rows.
+
+<CardGroup cols={2}>
+  <Card title="The coworker database" icon="database">
+    Private to one coworker. No other coworker can read it.
+  </Card>
+  <Card title="The shared database" icon="database">
+    Shared by every coworker of the workspace, whichever Box they sit in. This is how a group of coworkers works from the same tables.
+  </Card>
+</CardGroup>
+
+Browse either from the **Database** tab: the coworker panel for the private one, the **Knowledge base** dialog of the workspace menu for the shared one. You get the table list, the rows with paging, sorting and search, and a **Export** button for CSV or JSON.
+
+You can also delete selected rows or drop a table from there.
+
+### Etiquette in the shared database
+
+Every coworker of the workspace sees the same tables, so a few rules keep it usable:
+
+- Create with `CREATE TABLE IF NOT EXISTS`, extend with `ALTER TABLE ADD COLUMN`.
+- Never drop or alter a table you did not create, and never delete rows you did not insert.
+- Name a table after the domain (`leads`, `invoices`), not after the coworker that made it.
+- A table has one home. Do not keep a copy in both databases.
+
+The schema view shows which coworker created each table, so ownership is never a guess.
+
+## Files
+
+Files are for deliverables and scratch: a report, a chart, a PDF, an export, a page, some code. Anything with rows belongs in a database instead.
+
+| | Reach |
+| --- | --- |
+| **The coworker workspace** | Private to one coworker. It is also the working directory of any shell command it runs |
+| **The shared folder** | Every coworker of the workspace reads and writes it. This is how coworkers hand files to each other |
+
+Browse and upload from the **Files** tab of the coworker panel, or the **Knowledge base** dialog of the workspace menu for the shared folder. Dropping a file into a coworker workspace is how you give it something to work on.
+
+## Publishing a file
+
+A coworker can publish any file from its workspace to a public URL.
+
+The link looks like `https://app.rerun.build/p/<slug>` and is served to anyone who has it. Re-publishing the same file keeps the same URL, and unpublishing revokes it for real.
+
+Limits worth knowing:
+
+- 25 MB per file.
+- The file is served exactly as it is. Linked assets are not published, so an HTML page has to inline its CSS and its JavaScript.
+
+Ask the coworker to publish and it gives you the link. That is usually better than telling you a file is somewhere in its workspace.
+
+## Getting data out
+
+<Columns cols={2}>
+  <Card title="Export a table" icon="file-spreadsheet">
+    CSV or JSON, from the **Database** tab.
+  </Card>
+  <Card title="Query it from the API" icon="code" href="/api/tools/databases">
+    `db_query` and `space_db_query` return rows straight to your script.
+  </Card>
+</Columns>
+
+## Memory is not storage
+
+Memory holds facts about you and about how the work should be done, not the work itself. A preference, a name, a correction: memory. Two thousand rows of leads: the database.

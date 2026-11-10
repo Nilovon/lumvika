@@ -1,0 +1,33 @@
+---
+description: Use useRealtimeSubscription hook for Supabase realtime subscriptions
+globs: 
+alwaysApply: true
+---
+
+# Supabase Realtime Subscriptions
+
+ALWAYS use the `useRealtimeSubscription` hook from `@/hooks/useRealtimeSubscription.ts` for listening to Supabase realtime changes.
+
+NEVER use `supabase.channel()` directly in components.
+
+## Usage
+
+```tsx
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription'
+
+useRealtimeSubscription('table_name', {
+    enabled: true,
+    filter: { column: 'id', value: someId },
+    onInsert: (newRecord) => { /* handle insert */ },
+    onUpdate: (updated, old) => { /* handle update */ },
+    onDelete: (deleted) => { /* handle delete */ },
+})
+```
+
+## Options
+
+- `enabled`: boolean to enable/disable the subscription
+- `filter`: optional `{ column, value }` to filter by a specific column
+- `onInsert`: callback for INSERT events
+- `onUpdate`: callback for UPDATE events (receives new and old record)
+- `onDelete`: callback for DELETE events

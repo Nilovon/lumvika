@@ -1,0 +1,86 @@
+---
+title: "Rerun API"
+description: "One MCP endpoint to build and drive coworkers from anywhere, plus webhook URLs to fire them from other services."
+---
+
+import PaidPlanNote from '/snippets/paid-plan-note.mdx'
+
+Rerun exposes two programmatic surfaces, and only two.
+
+<CardGroup cols={2}>
+  <Card title="The MCP server" icon="plug" href="/api/protocol">
+    A single endpoint, `POST https://app.rerun.build/api/mcp/account`, that speaks the Model Context Protocol. It carries 53 tools covering coworkers, skills, scheduled tasks, webhook triggers, apps, databases, runs, share links and template authoring.
+  </Card>
+  <Card title="Webhook triggers" icon="bolt" href="/api/webhooks">
+    A public URL per trigger. Anything that can send an HTTP request can start a coworker run, with no SDK and no key exchange.
+  </Card>
+</CardGroup>
+
+<PaidPlanNote />
+
+## There is no REST API
+
+Every capability is reached through the MCP endpoint. There is no `/v1/agents`, no OpenAPI document, and no other route that accepts an API key. If you are writing a plain HTTP client rather than plugging in an AI coding assistant, you still call the MCP endpoint: it is ordinary JSON-RPC 2.0 over `POST`, so `curl` works fine. See [Protocol](/api/protocol).
+
+## Who this is for
+
+The API was designed for an AI coding assistant sitting next to you. You connect Claude Code, Codex or Cursor to your Rerun workspace, then describe what you want in plain language:
+
+> Create a coworker that watches our support inbox, writes a daily summary into the shared database, and pings me on Slack when a refund request comes in.
+
+The assistant calls `create_agent`, `upsert_skill`, `upsert_schedule`, `attach_connector` and `send_message` to build and test it. See [Connect a client](/api/connect).
+
+Everything the API does is also available in the Rerun app. The API exists so you can script it, version it, and repeat it.
+
+## What a key reaches
+
+An API key is scoped to **one workspace** and nothing finer. It reaches every Box, every coworker, every database and every run of that workspace, with full read and write. Treat it as a production credential.
+
+## Tool index
+
+<Columns cols={2}>
+  <Card title="Coworkers" icon="bot" href="/api/tools/agents">
+    `list_spaces` `list_agents` `get_agent` `create_agent` `update_agent` `delete_agent` `list_ai_connections` `set_default_model`
+  </Card>
+  <Card title="Skills" icon="book" href="/api/tools/skills">
+    `list_skills` `get_skill` `read_skill_file` `upsert_skill` `delete_skill`
+  </Card>
+  <Card title="Scheduled tasks" icon="clock" href="/api/tools/schedules">
+    `list_schedules` `upsert_schedule` `run_schedule_now` `delete_schedule`
+  </Card>
+  <Card title="Triggers" icon="webhook" href="/api/tools/triggers">
+    `list_triggers` `upsert_trigger` `test_trigger` `rotate_trigger_token` `delete_trigger`
+  </Card>
+  <Card title="Messages and runs" icon="messages-square" href="/api/tools/runs">
+    `send_message` `list_runs` `get_run`
+  </Card>
+  <Card title="Databases" icon="database" href="/api/tools/databases">
+    `list_tables` `db_query` `db_execute` `list_space_tables` `space_db_query` `space_db_execute`
+  </Card>
+  <Card title="Apps" icon="link" href="/api/tools/connectors">
+    `search_connectors` `list_connectors` `list_agent_connectors` `attach_connector` `detach_connector`
+  </Card>
+  <Card title="Share links" icon="share-2" href="/api/tools/sharing">
+    `plan_agent_share` `create_agent_share` `list_agent_shares` `revoke_agent_share`
+  </Card>
+  <Card title="Templates" icon="box" href="/api/tools/templates">
+    12 authoring tools, reserved for expert sandbox accounts
+  </Card>
+</Columns>
+
+## What the API cannot do
+
+Some things are deliberately left to the app, mostly because they involve a secret or a decision that should not be automated. See [Limits and guarantees](/api/limits) for the full list. The short version:
+
+- No credential ever goes through the API. `attach_connector` declares a connector, and the account owner finishes the sign-in in the app.
+- No billing, no plan change, no member management, no Box creation.
+- No API key management. You cannot mint or revoke a key over MCP.
+- No template publication. You submit a draft, the Rerun team publishes it.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Create a key" icon="key" href="/api/authentication" horizontal />
+  <Card title="Connect a client" icon="terminal" href="/api/connect" horizontal />
+  <Card title="Read the protocol" icon="code" href="/api/protocol" horizontal />
+</CardGroup>

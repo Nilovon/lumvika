@@ -1,0 +1,78 @@
+---
+title: "Your coworkers"
+description: "A short tour of what a coworker does, with links to the full guides."
+---
+
+A self-hosted coworker is the same coworker as on Rerun Cloud. The pages of the **Documentation** tab apply as they are; this page points you to them, and says what depends on your install.
+
+<Note>
+  Where those pages say "machine", read "server": the one your workspace runs on. Where they mention credit, plans or a trial, that does not apply to your install.
+</Note>
+
+## The basics
+
+A coworker sits in a Box on the board. It has a name, a handle other coworkers call it by, a soul (its system prompt), a model and its own memory, skills, files and database. You talk to it in a chat, and it can call the other coworkers of the workspace.
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" icon="book-open" href="/concepts">
+    Workspace, Box, coworker, skill, memory, run: every term in one page.
+  </Card>
+  <Card title="Configure a coworker" icon="sliders-horizontal" href="/agents/configure">
+    Its soul, its model and the tools it may use.
+  </Card>
+</CardGroup>
+
+## What it knows
+
+<CardGroup cols={2}>
+  <Card title="Skills" icon="book-marked" href="/agents/skills">
+    Written procedures it loads only when a task needs them.
+  </Card>
+  <Card title="Data and files" icon="database" href="/agents/data">
+    Its database, the shared one, its folder and the shared folder.
+  </Card>
+</CardGroup>
+
+**Memory.** A coworker writes down what it learns and recalls it later. Correct it once and it stays corrected. Recall matches by meaning when `RERUN_EMBED_API_KEY` is set, and by keywords otherwise. See [Memory](/concepts#memory).
+
+**The Brain.** The pages about your company that every coworker of the workspace reads: what you sell, to whom, how you work. The Foreman seeds it during onboarding from your answers and your website. Reading the website needs `FIRECRAWL_API_KEY`. Either way, you can write and edit pages yourself.
+
+## What it does on its own
+
+<CardGroup cols={2}>
+  <Card title="Scheduled tasks and webhooks" icon="clock" href="/agents/automations">
+    A cron and an instruction, or a public URL that starts a run.
+  </Card>
+  <Card title="Human in the loop" icon="hand" href="/agents/human-in-the-loop">
+    How it asks you a question, an approval or a credential.
+  </Card>
+</CardGroup>
+
+Scheduled tasks run on your server, so they only fire while it is up. Webhook URLs point at your `NEXT_PUBLIC_APP_URL`: a service on the internet can only call them when your app is reachable from the internet.
+
+Notifications show in the app. This build sends no email notification.
+
+## Its computer
+
+Each coworker has a Chromium browser and a screen of its own, on your server. Open **Desktop** from the coworker to watch it work, and take over when it needs your hands, for a captcha or a sign-in.
+
+The browser opens the screen directly on your server's address, so the screen needs that address reachable from your browser. See [The desktop screen](/self-host/servers#the-desktop-screen).
+
+## Its tools
+
+<CardGroup cols={2}>
+  <Card title="Apps" icon="link" href="/agents/apps">
+    Installing apps on a coworker, and where credentials live.
+  </Card>
+  <Card title="The catalog on your install" icon="package" href="/self-host/services">
+    What ships with the seed, MCP servers and Composio.
+  </Card>
+</CardGroup>
+
+## Templates
+
+A template packages a working coworker setup for someone else to install. The template library of Rerun Cloud does not ship with this build, so your install starts with none. See [Create a template](/templates/create) to package your own.
+
+## The API
+
+Every coworker is reachable from Claude Code, Cursor or your own scripts through the Rerun MCP server, at your own address instead of `app.rerun.build`. See the [API](/api/introduction).

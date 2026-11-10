@@ -1,0 +1,76 @@
+---
+title: "Quickstart"
+description: "From signing up to a working coworker."
+---
+
+## Before you start
+
+You need an account on [app.rerun.build](https://app.rerun.build). Rerun starts with a 5 day free trial.
+
+Nothing to install. Everything happens in the browser.
+
+## 1. Sign up
+
+Open [app.rerun.build](https://app.rerun.build). You land on the board, the isometric view where your Boxes and coworkers live, with a sign-in dialog on top.
+
+Right after signing up you answer three short questions about your sector, your team size and your role. They only decide which templates you get shown first.
+
+## 2. Pick your first coworker
+
+The template library opens on its own, filtered on the sector you picked. Two ways forward:
+
+<Tabs>
+  <Tab title="Install a template">
+    A template is a setup that already works: a prompt, skills, scheduled tasks and the apps it needs. Pick one, and Rerun creates the coworkers it contains in your account.
+  </Tab>
+  <Tab title="Start from scratch">
+    Click **Start from scratch**, give the coworker a name, and describe what you want it to do in the chat. It writes its own prompt from your description.
+  </Tab>
+</Tabs>
+
+## 3. Place it on the board
+
+The toolbar switches to placement mode. Tap a tile and the coworker takes its spot.
+
+Your first coworker needs a Box, and Rerun draws one for you. Behind it, your workspace claims its machine from a pool of ready ones: a private cloud computer, isolated from every other account, that hosts every coworker you place. It takes a few seconds.
+
+## 4. Run the guided setup
+
+A coworker that came from a template usually needs to be connected to your own accounts. When it does, the chat opens on a **Start installation** button instead of a message box.
+
+Click it and the coworker walks you through its own setup: it tells you what it needs, offers to install the apps it is missing, and asks you for the values only you can give. You answer in the chat, exactly like a conversation.
+
+<Note>
+  When it needs an API key, the coworker opens a masked form. The value goes straight to your machine and is never shown to the coworker or stored in the conversation. Never paste a secret into the chat itself.
+</Note>
+
+When the setup is done, the coworker switches on the scheduled tasks and webhooks it shipped with, and tells you what it can do and when it will next run.
+
+## 5. Talk to it
+
+You now have a normal message box. Ask it for something.
+
+While it works you see every step: the files it reads, the searches it runs, the tools it calls. If it needs a decision, it stops and asks you, right in the chat.
+
+## 6. Let it run without you
+
+Two ways to make a coworker work while you are away.
+
+<CardGroup cols={2}>
+  <Card title="Scheduled tasks" icon="clock" href="/agents/automations#scheduled-tasks">
+    A cron and an instruction. Every Monday at 9, summarise last week and email it to me.
+  </Card>
+  <Card title="Webhook triggers" icon="webhook" href="/agents/automations#webhook-triggers">
+    A public URL. When Stripe posts a refund, handle it.
+  </Card>
+</CardGroup>
+
+You can add both from the coworker panel, or just ask the coworker to set them up for you.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Core concepts" icon="book-open" href="/concepts" horizontal />
+  <Card title="Connect your tools" icon="link" href="/agents/apps" horizontal />
+  <Card title="Drive it from the API" icon="code" href="/api/introduction" horizontal />
+</CardGroup>

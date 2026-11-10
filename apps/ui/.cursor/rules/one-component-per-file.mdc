@@ -1,0 +1,27 @@
+---
+description: One component per file rule
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# One Component Per File
+
+NEVER define multiple React components in the same file.
+
+Each component MUST have its own dedicated file. Split aggressively into small, focused entities.
+
+- Extract sub-components into separate files, even if they're small
+- Colocate related components in the same folder if needed
+- Prefer a flat component alongside its parent rather than inlining it
+
+```
+❌ BAD — components/SceneCard.tsx
+export function SceneCard() { ... }
+function SceneCardHeader() { ... }  // should be its own file
+function SceneCardActions() { ... } // should be its own file
+
+✅ GOOD — split into separate files
+components/SceneCard.tsx        → SceneCard
+components/SceneCardHeader.tsx  → SceneCardHeader
+components/SceneCardActions.tsx → SceneCardActions
+```

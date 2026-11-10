@@ -1,0 +1,187 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "almond",
+  "name": "Rerun Docs",
+  "description": "Documentation for Rerun: autonomous AI coworkers running on your own private machine in the cloud, and the API to build them from anywhere.",
+  "colors": {
+    "primary": "#4d34f7",
+    "light": "#b7a8ff",
+    "dark": "#4d34f7"
+  },
+  "fonts": {
+    "family": "Inter"
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "background": {
+    "color": {
+      "light": "#f7f7f7",
+      "dark": "#0a0a0a"
+    }
+  },
+  "styling": {
+    "codeblocks": "system"
+  },
+  "icons": {
+    "library": "lucide"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": ["index", "quickstart", "concepts"]
+          },
+          {
+            "group": "Build a coworker",
+            "pages": [
+              "agents/configure",
+              "agents/skills",
+              "agents/apps",
+              "agents/automations",
+              "agents/human-in-the-loop",
+              "agents/data"
+            ]
+          },
+          {
+            "group": "Your account",
+            "pages": ["billing", "teams"]
+          }
+        ]
+      },
+      {
+        "tab": "Templates",
+        "groups": [
+          {
+            "group": "Templates",
+            "pages": [
+              "templates/install",
+              "templates/create",
+              "templates/selling",
+              "templates/expert-program"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Self-hosting",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "self-host/overview",
+              "self-host/install",
+              "self-host/dokploy",
+              "self-host/configuration"
+            ]
+          },
+          {
+            "group": "Run it",
+            "pages": [
+              "self-host/servers",
+              "self-host/models",
+              "self-host/services",
+              "self-host/coworkers",
+              "self-host/administration",
+              "self-host/mobile"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "self-host/open-source-vs-cloud",
+              "self-host/troubleshooting",
+              "self-host/contributing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "api/introduction",
+              "api/authentication",
+              "api/connect",
+              "api/protocol"
+            ]
+          },
+          {
+            "group": "Tool reference",
+            "pages": [
+              "api/tools/agents",
+              "api/tools/skills",
+              "api/tools/schedules",
+              "api/tools/triggers",
+              "api/tools/runs",
+              "api/tools/databases",
+              "api/tools/connectors",
+              "api/tools/sharing",
+              "api/tools/templates"
+            ]
+          },
+          {
+            "group": "HTTP",
+            "pages": ["api/webhooks", "api/limits"]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Blog",
+          "href": "https://rerun.build/blog",
+          "icon": "newspaper"
+        },
+        {
+          "anchor": "Experts",
+          "href": "https://rerun.build/community/experts",
+          "icon": "users"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:help@rerun.build"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://app.rerun.build"
+    }
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+  },
+  "redirects": [
+    {
+      "source": "/agents/connectors",
+      "destination": "/agents/apps"
+    },
+    {
+      "source": "/self-host",
+      "destination": "/self-host/overview"
+    }
+  ],
+  "footer": {
+    "socials": {
+      "x": "https://x.com/rerun_build",
+      "linkedin": "https://www.linkedin.com/company/rerunai"
+    }
+  }
+}

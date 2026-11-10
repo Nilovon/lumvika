@@ -1,0 +1,358 @@
+'use client'
+
+import { memo, useMemo } from 'react'
+import { DEFAULT_SPAN, ISO_DIM_MS, ISO_DIM_OPACITY, TILE_H, TILE_W, hashUnit, isPlaced } from '../iso'
+import type { Container, Tile, TileLink, WorldOffset } from '../types'
+
+const HALF_W = TILE_W / 2
+const HALF_H = TILE_H / 2
+
+// Période du motif pointillé du « courant » : longueur du tiret + longueur du vide.
+// Animer le dash-offset sur exactement une période → boucle sans saut visible.
+const DASH = '6 16'
+const DASH_PERIOD = 22
+
+const DEFAULT_COLOR = '#38bdf8'
+
+// Longueur de la comète « cable », proportionnelle au câble mais bornée : sur un lien très long une
+// traînée proportionnelle deviendrait un trait, sur un lien très court elle disparaîtrait.
+const CABLE_TAIL_RATIO = 0.16
+const CABLE_TAIL_MIN = 8
+const CABLE_TAIL_MAX = 26
+// Les sommets du chemin parcouru sont arrondis : offset-rotate suit la tangente, et sur un angle
+// vif la traînée pivoterait d'un coup au lieu de tourner.
+const CABLE_CORNER_RADIUS = 5
+// Durée du branchement d'un câble qui porte un appearDelay.
+export const CABLE_DRAW_MS = 420
+
+type TileLinksProps = {
+    tiles: Tile[]
+    liveLinks: TileLink[]
+    containers: Container[]
+    worldOffset: WorldOffset
+    svgHalfW: number
+    svgHalfH: number
+}
+
+type Link = {
+    // La paire nue, source→target. Deux liens de variantes différentes sur la même paire la
+    // partagent : c'est elle qui donne son rythme à la comète, et il ne doit pas dépendre de ce qui
+    // est allumé par-dessus.
+    id: string
+    key: string
+    source: Tile
+    target: Tile
+    variant: 'beam' | 'cable'
+    appearDelay: number
+    color?: string
+}
+
+// Coordonnées le long des deux axes iso : u suit l'axe « col », v l'axe « row ». Le centre d'une
+// tile de footprint span ancrée en (col,row) tombe en (col + span/2, row + span/2), et son losange
+// s'étend de span/2 de part et d'autre sur chaque axe. Une arête du losange est donc un u ou un v
+// constant, et son milieu (le centre d'une face) est le point où un segment aligné sur l'autre axe
+// la traverse.
+type TileAxis = { u: number; v: number; half: number }
+type AxisPoint = { u: number; v: number }
+
+function tileAxis(tile: Tile): TileAxis {
+    const span = tile.span ?? DEFAULT_SPAN
+    return { u: tile.position.col + span / 2, v: tile.position.row + span / 2, half: span / 2 }
+}
+
+// Même convention d'écran que tileBox/ContainerBlock : isoPosition().left + TILE_W/2.
+function axisToWorld(point: AxisPoint, worldOffset: WorldOffset) {
+    return {
+        x: (point.u - point.v) * HALF_W + HALF_W + worldOffset.left,
+        y: (point.u + point.v) * HALF_H + worldOffset.top,
+    }
+}
+
+// Tracé du câble entre deux tiles, en segments alignés sur les axes de la grille. Les extrémités
+// sont posées au milieu d'une face (jamais vers un coin) : un segment ne peut servir de sortie que
+// s'il est assez long pour franchir le losange de sa tile, sinon c'est l'autre segment qui perce
+// le bloc, et il le fait hors du centre de face. On essaie donc le coude simple sur chaque axe,
+// puis, si aucun des deux ne tient, un tracé en Z qui rentre perpendiculairement des deux côtés.
+function routeLink(source: TileAxis, target: TileAxis): AxisPoint[] {
+    const du = target.u - source.u
+    const dv = target.v - source.v
+    const su = Math.sign(du) || 1
+    const sv = Math.sign(dv) || 1
+
+    if (Math.abs(du) >= source.half && Math.abs(dv) > target.half) {
+        return [
+            { u: source.u + su * source.half, v: source.v },
+            { u: target.u, v: source.v },
+            { u: target.u, v: target.v - sv * target.half },
+        ]
+    }
+
+    if (Math.abs(dv) >= source.half && Math.abs(du) > target.half) {
+        return [
+            { u: source.u, v: source.v + sv * source.half },
+            { u: source.u, v: target.v },
+            { u: target.u - su * target.half, v: target.v },
+        ]
+    }
+
+    if (Math.abs(du) >= source.half + target.half) {
+        const from = source.u + su * source.half
+        const to = target.u - su * target.half
+        const mid = (from + to) / 2
+        return [
+            { u: from, v: source.v },
+            { u: mid, v: source.v },
+            { u: mid, v: target.v },
+            { u: to, v: target.v },
+        ]
+    }
+
+    if (Math.abs(dv) >= source.half + target.half) {
+        const from = source.v + sv * source.half
+        const to = target.v - sv * target.half
+        const mid = (from + to) / 2
+        return [
+            { u: source.u, v: from },
+            { u: source.u, v: mid },
+            { u: target.u, v: mid },
+            { u: target.u, v: to },
+        ]
+    }
+
+    return [
+        { u: source.u, v: source.v },
+        { u: target.u, v: target.v },
+    ]
+}
+
+// Chaque câble a sa propre vitesse, sa propre pause et son propre point de départ dans le cycle :
+// deux câbles ne pulsent jamais ensemble et ne se réalignent jamais.
+function cableTiming(id: string) {
+    const travel = 1.7 + hashUnit(id, 1) * 1.5
+    const rest = 0.5 + hashUnit(id, 2) * 2
+    const period = travel + rest
+    return { period, travelRatio: travel / period, phase: hashUnit(id, 3) * period }
+}
+
+function dedupe(points: AxisPoint[]) {
+    return points.filter((point, index) => index === 0 || point.u !== points[index - 1].u || point.v !== points[index - 1].v)
+}
+
+type ScreenPoint = { x: number; y: number }
+type Route = { link: Link; points: ScreenPoint[]; d: string; length: number }
+
+function distance(a: ScreenPoint, b: ScreenPoint) {
+    return Math.hypot(b.x - a.x, b.y - a.y)
+}
+
+function polylineLength(points: ScreenPoint[]) {
+    let total = 0
+    for (let i = 1; i < points.length; i++) total += distance(points[i - 1], points[i])
+    return total
+}
+
+// Point à `length` de `from` en direction de `to` ; une longueur négative prolonge dans l'autre sens.
+function towards(from: ScreenPoint, to: ScreenPoint, length: number): ScreenPoint {
+    const d = distance(from, to) || 1
+    return { x: from.x + ((to.x - from.x) / d) * length, y: from.y + ((to.y - from.y) / d) * length }
+}
+
+// Chemin parcouru par la comète : le tracé visible prolongé aux deux bouts, pour qu'elle entre et
+// sorte du câble au lieu d'apparaître et de disparaître sur place. Les prolongements rentrent dans
+// les tiles, qui sont peintes au-dessus des liens.
+function cometPath(points: ScreenPoint[], overshoot: number) {
+    const all = [
+        towards(points[0], points[1], -overshoot),
+        ...points,
+        towards(points[points.length - 1], points[points.length - 2], -overshoot),
+    ]
+    const at = (p: ScreenPoint) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`
+    let d = `M ${at(all[0])}`
+    for (let i = 1; i < all.length - 1; i++) {
+        const radius = Math.min(CABLE_CORNER_RADIUS, distance(all[i - 1], all[i]) / 2, distance(all[i], all[i + 1]) / 2)
+        d += ` L ${at(towards(all[i], all[i - 1], radius))} Q ${at(all[i])} ${at(towards(all[i], all[i + 1], radius))}`
+    }
+    return `${d} L ${at(all[all.length - 1])}`
+}
+
+export const TileLinks = memo(function TileLinks({ tiles, liveLinks, containers, worldOffset, svgHalfW, svgHalfH }: TileLinksProps) {
+    // Un lien par paire source→target *et par variante* : un câble est une installation, un beam est
+    // l'appel qui y passe, et les deux coexistent sur la même paire — le beam se superpose alors
+    // exactement au tracé du câble, qui reste branché dessous. Le dédoublonnage ne vaut donc que
+    // pour deux liens identiques.
+    const links = useMemo<Link[]>(() => {
+        const tileById = new Map(tiles.map(t => [t.id, t]))
+        const byKey = new Map<string, Link>()
+        const add = (sourceId: string | null, targetId: string, variant: 'beam' | 'cable', appearDelay: number, color?: string) => {
+            if (!sourceId || sourceId === targetId) return
+            const source = tileById.get(sourceId)
+            const target = tileById.get(targetId)
+            if (!source || !target) return
+            if (!isPlaced(source.position) || !isPlaced(target.position)) return
+            const id = `${sourceId}->${targetId}`
+            const key = `${variant}:${id}`
+            if (!byKey.has(key)) byKey.set(key, { id, key, source, target, variant, appearDelay, color })
+        }
+        for (const l of liveLinks) add(l.source, l.target, l.variant ?? 'beam', l.appearDelay ?? 0, l.color)
+        // Les câbles d'abord : un beam est peint par-dessus la plomberie qu'il emprunte.
+        return Array.from(byKey.values()).sort((a, b) => Number(a.variant === 'beam') - Number(b.variant === 'beam'))
+    }, [tiles, liveLinks])
+
+    const containerColorById = useMemo(() => {
+        const m = new Map<string, string>()
+        for (const c of containers) m.set(c.id, c.color)
+        return m
+    }, [containers])
+
+    // Géométrie écran de chaque lien, dans le repère du SVG (origine décalée de svgHalfW/H). Le calque
+    // des comètes est un frère du SVG calé sur la même origine, donc il partage ces coordonnées.
+    const routes = useMemo<Route[]>(() => {
+        const out: Route[] = []
+        for (const link of links) {
+            const route = dedupe(routeLink(tileAxis(link.source), tileAxis(link.target)))
+            if (route.length < 2) continue
+            const points = route.map(point => {
+                const world = axisToWorld(point, worldOffset)
+                return { x: world.x + svgHalfW, y: world.y + svgHalfH }
+            })
+            out.push({ link, points, d: points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' '), length: polylineLength(points) })
+        }
+        return out
+    }, [links, worldOffset, svgHalfW, svgHalfH])
+
+    if (routes.length === 0) return null
+
+    const cables = routes.filter(route => route.link.variant === 'cable')
+
+    return (
+        <>
+            <svg
+                className="absolute pointer-events-none"
+                style={{ left: -svgHalfW, top: -svgHalfH, overflow: 'visible' }}
+                width={svgHalfW * 2}
+                height={svgHalfH * 2}
+            >
+                <defs>
+                    <filter id="agentlink-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="2" />
+                    </filter>
+                </defs>
+                {routes.map(({ link, points, d, length }) => {
+                    const color = link.color ?? (link.source.containerId ? containerColorById.get(link.source.containerId) : undefined) ?? DEFAULT_COLOR
+
+                    // Un lien n'a pas de mise en retrait à lui : il prend celle de ses extrémités. Un
+                    // câble laissé allumé vers une tuile effacée se lit comme un branchement en l'air.
+                    const dim = link.source.dimmed || link.target.dimmed
+
+                    // Variante « cable » : petit câble fin et discret, sans marqueur d'extrémité. Le tracé
+                    // vit dans le plan du sol, donc une pastille posée au bout dépasse sous la silhouette
+                    // du bloc dès que le lien arrive sur une face tournée vers la caméra. La comète de
+                    // courant vit dans le calque HTML ci-dessous.
+                    if (link.variant === 'cable') {
+                        return (
+                            <path
+                                key={link.key}
+                                d={d}
+                                fill="none"
+                                strokeWidth={1}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                // Le câble se trace au lieu d'apparaître. « backwards » le tient
+                                // rentré pendant son attente, et l'absence de « forwards » le rend
+                                // au strokeDashoffset inline (0, soit tracé) une fois fini.
+                                strokeDasharray={link.appearDelay > 0 ? length : undefined}
+                                strokeDashoffset={link.appearDelay > 0 ? 0 : undefined}
+                                style={{
+                                    stroke: link.color ?? 'rgb(var(--iso-glint) / 0.18)',
+                                    opacity: dim ? ISO_DIM_OPACITY : undefined,
+                                    transition: `opacity ${ISO_DIM_MS}ms ease`,
+                                    ...(link.appearDelay > 0
+                                        ? {
+                                              ['--iso-cable-length' as string]: `${length}`,
+                                              animation: `iso-cable-draw ${CABLE_DRAW_MS}ms ease-out ${link.appearDelay}ms backwards`,
+                                          }
+                                        : {}),
+                                }}
+                            />
+                        )
+                    }
+
+                    return (
+                        // Le fondu d'entrée : un beam est monté à l'instant où l'appel commence, et
+                        // il apparaîtrait sinon d'un coup au milieu du plateau. Un beam posé en même
+                        // temps que sa tuile porte le même appearDelay qu'un câble, « backwards » le
+                        // tenant éteint le temps que la tuile finisse de tomber.
+                        <g
+                            key={link.key}
+                            style={{
+                                animation: `iso-appear 220ms ease ${link.appearDelay}ms backwards`,
+                                opacity: dim ? ISO_DIM_OPACITY : undefined,
+                                transition: `opacity ${ISO_DIM_MS}ms ease`,
+                            }}
+                        >
+                            {/* Gaine */}
+                            <path d={d} fill="none" style={{ stroke: 'rgb(var(--iso-glint) / 0.12)' }} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+                            {/* Lueur : couleur du container source, floutée */}
+                            <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" opacity={0.55} filter="url(#agentlink-glow)" />
+                            {/* Courant : pointillés qui circulent de la source vers la destination */}
+                            <path
+                                d={d}
+                                className="iso-link-current"
+                                fill="none"
+                                stroke={color}
+                                strokeWidth={1.5}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeDasharray={DASH}
+                                opacity={0.95}
+                                style={{ ['--iso-link-dash-period' as string]: `${DASH_PERIOD}` }}
+                            />
+                        </g>
+                    )
+                })}
+            </svg>
+            {/* Comètes de courant : un élément par câble, déplacé le long du chemin via offset-distance.
+                Cette propriété se résout en transform et se compose sur le GPU, là où un stroke-dashoffset
+                animé ferait repeindre le tracé entier à chaque frame. */}
+            {cables.length > 0 && (
+                <div className="absolute pointer-events-none" style={{ left: -svgHalfW, top: -svgHalfH }}>
+                    {cables.map(({ link, points, length }) => {
+                        const dim = link.source.dimmed || link.target.dimmed
+                        const { period, travelRatio, phase } = cableTiming(link.id)
+                        const tail = Math.min(CABLE_TAIL_MAX, Math.max(CABLE_TAIL_MIN, length * CABLE_TAIL_RATIO))
+                        const travel = (travelRatio * 100).toFixed(1)
+                        // Le courant ne circule pas dans un câble pas encore branché. Le délai est
+                        // porté par un voile plutôt que par la comète : ses propres animations ont
+                        // déjà un fill-mode, qui la garerait allumée à l'entrée du câble le temps de
+                        // l'attente. Le voile est statique, donc la comète se positionne toujours
+                        // contre le calque, pas contre lui.
+                        const veil =
+                            link.appearDelay > 0 ? { opacity: 0, animation: `iso-appear 200ms ease ${link.appearDelay + CABLE_DRAW_MS}ms forwards` } : undefined
+                        return (
+                            <div key={link.key} style={veil}>
+                                {/* Un calque à part pour la mise en retrait : le voile porte déjà une
+                                    animation d'opacité, et les deux se multiplient au lieu de se
+                                    disputer la même propriété. */}
+                                <div style={{ opacity: dim ? ISO_DIM_OPACITY : undefined, transition: `opacity ${ISO_DIM_MS}ms ease` }}>
+                                    <div
+                                        className="iso-cable-comet"
+                                        style={{
+                                            width: tail,
+                                            offsetPath: `path("${cometPath(points, tail)}")`,
+                                            animationDuration: `${period.toFixed(2)}s`,
+                                            animationDelay: `-${phase.toFixed(2)}s`,
+                                            // Un seul jeu de keyframes sert tous les câbles : la part voyage /
+                                            // pause, propre à chacun, est portée par l'easing. Le second easing
+                                            // éteint la comète à l'instant où elle finit sa course.
+                                            animationTimingFunction: `linear(0 0%, 1 ${travel}%, 1 100%), linear(0 0%, 0 ${travel}%, 1 ${travel}%, 1 100%)`,
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+        </>
+    )
+})

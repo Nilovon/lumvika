@@ -1,0 +1,14 @@
+---
+description: Always reuse existing shadcn/ui components
+alwaysApply: true
+---
+
+# Use shadcn/ui Components
+
+ALWAYS reuse existing components from `@/components/ui/` and `@/components/` before creating custom UI elements.
+
+NEVER reimplement buttons, dialogs, inputs, selects, dropdowns, tooltips, cards, or any other primitive that already exists in shadcn/ui.
+
+- Check `src/components/ui/` for available shadcn primitives (Button, Dialog, Input, Select, etc.)
+- Check `src/components/` for project-level shared components
+- If a shadcn component doesn't exist yet but is available in the shadcn/ui library, install it via `npx shadcn@latest add <component>`

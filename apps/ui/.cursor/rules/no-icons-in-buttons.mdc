@@ -1,0 +1,18 @@
+# No Icons in Buttons
+
+Do not add icons inside buttons by default.
+Buttons should only contain text unless the user explicitly requests an icon.
+This applies to all Button components (e.g., Shadcn UI Button, custom buttons).
+
+<example>
+Bad:
+<Button>
+  <PlusIcon className="mr-2 h-4 w-4" />
+  Add Item
+</Button>
+
+Good:
+<Button>
+  Add Item
+</Button>
+</example>

@@ -1,0 +1,20 @@
+---
+description: Type Supabase insert/update/upsert calls with Database types
+alwaysApply: true
+---
+
+# Typed Supabase Mutations
+
+ALWAYS type `update`, `insert`, and `upsert` calls with the corresponding `Database` type from `@/app/api/database.types`.
+
+```typescript
+// ❌ BAD
+supabase.from('projects').update({ name: 'foo' })
+supabase.from('projects').insert({ name: 'foo' })
+
+// ✅ GOOD
+import { Database } from '@/app/api/database.types'
+
+supabase.from('projects').update<Database['public']['Tables']['projects']['Update']>({ name: 'foo' })
+supabase.from('projects').insert<Database['public']['Tables']['projects']['Insert']>({ name: 'foo' })
+```

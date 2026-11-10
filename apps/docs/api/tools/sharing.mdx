@@ -1,0 +1,92 @@
+---
+title: "Share links"
+description: "Hand one coworker to someone else by link, without going through the marketplace."
+---
+
+A share link is a copy of one coworker, frozen at the moment you create it, reachable at a URL. Whoever opens it signs in and the copy lands on their own board, with its apps disconnected and its webhooks reissued. Unlike a [template](/api/tools/templates), it is a transfer to one person rather than a page anyone installs from, so it needs no expert account and no sandbox: any workspace can send a coworker it owns.
+
+<Warning>
+  **A link is a bearer capability.** No expiry, no password, no list of allowed recipients. Anyone holding the URL can install the coworker until `revoke_agent_share` kills it. Hand it only to the person it is for, and do not paste it anywhere it outlives the conversation.
+</Warning>
+
+Two things every tool here shares. **The copy is frozen at creation**: renaming, switching off or deleting the source coworker changes nothing about what was sent, and the link can never distribute data the coworker gained afterwards. And **the API only emits links, it never consumes them**: there is no tool that opens a link or installs a shared coworker. That is a browser flow, and it needs an active plan on the receiving side.
+
+## The usual sequence
+
+<Steps>
+  <Step title="plan_agent_share">See what a link would carry, without creating one.</Step>
+  <Step title="create_agent_share">Create the link and hand the URL over.</Step>
+  <Step title="list_agent_shares">Find a link again, and see how often it has been used.</Step>
+  <Step title="revoke_agent_share">Kill a link and delete the archive behind it.</Step>
+</Steps>
+
+## What travels, and what never does
+
+The coworker itself always travels: its instructions, its skills, its scheduled tasks, its webhooks, the shape of its configuration. Three buckets of **data** travel only if you name them in `include`:
+
+| Bucket | What it is |
+| --- | --- |
+| `memories` | What the coworker has learned and written down about the people and the work it serves |
+| `database` | The private SQLite database of that coworker, with every row in it |
+| `files` | The files in the coworker workspace folder |
+
+Four things never travel, whatever you pass:
+
+- **API keys, OAuth sign-ins and passwords.** The engine strips them out of the archive and the copy arrives asking for its own. `plan_agent_share` counts them, it never names them.
+- **The shared database and the shared files.** Those belong to the workspace, not the coworker, so a copy starts with empty ones. If the coworker works out of them, say so to whoever you send it to.
+- **Chat history.** Sessions stay in the sending workspace.
+- **Files flagged by the archive plan.** A path that looks like a credential dump is refused, and no switch brings it back.
+
+## plan_agent_share
+
+Dry run. Reads the coworker on its machine and prices what a link would carry, without creating one.
+
+<ParamField body="agentId" type="string" required>
+  From `list_agents`.
+</ParamField>
+
+Returns `contents` — the three buckets with a `count` and a `bytes` each — plus `envKeyCount` and `mcpAuthCount` (how many credentials the copy will have to be given again, counted, never named), `warnings`, and `includeDefaults`, which is what `create_agent_share` uses when you say nothing: all three buckets off.
+
+Read it before creating a link. It is how you tell the account owner what turning a switch on would actually send.
+
+## create_agent_share
+
+Captures the coworker and creates the link.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="include" type="object">
+  `{ memories: boolean, database: boolean, files: boolean }`. Everything left out stays in this workspace. **Empty by default**: a call that omits `include` sends the coworker alone.
+</ParamField>
+
+<ParamField body="confirm" type="boolean">
+  Required as soon as one of the three switches is `true`. Not needed otherwise.
+</ParamField>
+
+Returns `shareId`, `url`, the `include` actually applied, `reused`, `warnings` and `expires: "never"`. The token lives inside the URL and is never returned on its own: copy the link whole.
+
+Three behaviours worth knowing before the first call:
+
+- **The confirmation is about data, not about sharing.** Sending a coworker needs no ceremony. Sending someone's memories, database or files out of the workspace does, so the second case comes back as a tool error until you call again with `confirm: true`. Ask the account owner first — that is the point of the gate.
+- **Calling it twice is free.** The same coworker with the same `include` and a link that is still alive hands back the existing link with `reused: true`, rather than taking a second snapshot.
+- **It is not instant.** The call streams the whole coworker folder off its machine and uploads it. Give it time rather than retrying.
+
+## list_agent_shares
+
+The links this workspace currently has out. Takes no arguments.
+
+Each entry carries `shareId`, `url`, `agentId`, `agentName`, `createdAt`, `installCount` and `include`, alongside `activeCount`.
+
+This is the only way to get a URL back after `create_agent_share` returned it. Every link listed is live. Revoked links are not listed. `agentId` comes back `null` once the source coworker has been deleted: the link keeps working, because the snapshot never depended on it, and `agentName` is the name frozen at creation rather than the current one.
+
+## revoke_agent_share
+
+Kills a link and deletes the archive behind it.
+
+<ParamField body="shareId" type="string" required>
+  From `list_agent_shares`, never from the URL.
+</ParamField>
+
+<ParamField body="confirm" type="boolean" required />
+
+Immediate and irreversible. The URL stops working for everyone holding it, including someone in the middle of installing, and the same URL can never be reissued: a new link means a new `create_agent_share` and a new snapshot. Coworkers already installed from it are untouched, they belong to whoever installed them.

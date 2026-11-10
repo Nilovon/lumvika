@@ -1,0 +1,60 @@
+---
+title: "Deploy on Dokploy"
+sidebarTitle: "Dokploy"
+description: "Run Rerun on a server managed by Dokploy, with a domain and HTTPS."
+---
+
+[Dokploy](https://dokploy.com) builds the same `docker-compose.yml` as a manual install, then adds the domain and the certificate. Plan for 5 to 8 minutes of build on a server with 4 vCPUs and 8 GB of memory.
+
+## Before you start
+
+- A server attached to Dokploy, with at least 8 GB of memory: the app build needs 6. With Supabase on the same server, use 16 GB, or 8 GB and 4 GB of swap.
+- Supabase, on [supabase.com](https://supabase.com) or open source on your server, set up as in [Install](/self-host/install#2-set-up-supabase).
+- Two domains pointing at the server, one for the app and one for the engine: `rerun.example.com` and `engine.example.com`.
+
+## 1. Create the service
+
+1. In a Dokploy project, add a **Compose** service, type **Docker Compose**.
+2. Point it at your clone of `https://github.com/rerun-build/rerun.git`, branch `main`, compose path `./docker-compose.yml`.
+
+## 2. Set the environment
+
+Paste the content of your `.env` in the **Environment** tab. Start from `.env.example` and run `node scripts/self-host-check.mjs` on your machine to generate the secrets. Three values depend on your domains:
+
+```bash .env
+NEXT_PUBLIC_APP_URL=https://rerun.example.com
+NEXT_PUBLIC_SUPABASE_URL=<the address of your Supabase>
+RERUN_ENGINE_BROWSER_URL=https://engine.example.com
+```
+
+The **Site URL** of your Supabase must be the same address as `NEXT_PUBLIC_APP_URL`.
+
+## 3. Add the domains
+
+In the **Domains** tab, add two domains, both with HTTPS and Let's Encrypt:
+
+| Host | Service | Port |
+| --- | --- | --- |
+| `rerun.example.com` | `app` | 3000 |
+| `engine.example.com` | `engine` | 3000 |
+
+The engine needs its own domain: a browser connects to it directly to show a coworker's screen.
+
+## 4. Deploy
+
+Click **Deploy**. When it finishes, check both domains:
+
+```bash
+curl -s https://rerun.example.com/api/version
+curl -s https://engine.example.com/health
+```
+
+Then [sign in](/self-host/install#7-sign-in).
+
+## 5. Close the published ports
+
+`docker-compose.yml` also publishes the app on port 3000 and the engine on port 3001. Docker opens these ports past `ufw`, so close them in your provider's firewall, and keep only 22, 80 and 443 open.
+
+## Updating
+
+Pull the new version into your clone, then click **Deploy**. The engine keeps its data in the `engine-data` volume. When a release adds database migrations, apply them with `npx supabase db push`.

@@ -1,0 +1,321 @@
+---
+title: "Install Rerun"
+sidebarTitle: "Install"
+description: "From an empty machine to your first coworker, with docker compose."
+---
+
+This page takes about ten minutes, plus the time Docker needs to build the two images the first time.
+
+## Before you start
+
+- **Docker** with Docker Compose. Give Docker at least 6 GB of memory: the app build needs it, and 60 GB of disk: the images and the build cache take about 40.
+- **Node.js 22**, for `npx supabase` and the setup check.
+- **Git**.
+- **On a server:** a domain for the app, one for the engine, and a reverse proxy for HTTPS. See [On a server](#on-a-server).
+- **An OpenRouter key** from [openrouter.ai/keys](https://openrouter.ai/keys). It runs the Foreman's onboarding and the default models of every coworker. Without it, connect your own AI in the app, your Claude or ChatGPT plan included.
+
+## 1. Get the code
+
+```bash
+git clone https://github.com/rerun-build/rerun.git && cd rerun
+cp .env.example .env
+```
+
+Every command below runs from this folder.
+
+## 2. Set up Supabase
+
+Pick one. The first is simpler to keep running, the second is the full open source stack on your own server, the third is for trying Rerun on your own computer.
+
+<Tabs>
+  <Tab title="A project on supabase.com (recommended)">
+    1. Create a free project on [supabase.com](https://supabase.com). Note the database password you choose.
+    2. In **Project settings > API keys**, copy the project URL, the publishable key (anon key on older projects) and the secret key (service_role on older projects).
+    3. Apply the schema and the seed from your clone. `link` asks for the database password:
+
+    ```bash
+    npx supabase link --project-ref <your-project-ref>
+    npx supabase db push --include-seed
+    ```
+
+    The project ref is the part before `.supabase.co` in the project URL.
+
+    4. In **Authentication > Sign In / Providers**, turn on **Allow anonymous sign-ins** and keep **Confirm email** on. A visitor lands on the board as an anonymous user, and signing up turns that user into an account.
+    5. In **Authentication > Emails > SMTP Settings**, turn on **Custom SMTP** and enter your SMTP server. This step is required: on the Free plan, a project that keeps Supabase's own mailer cannot edit its email templates, so the email arrives without the code. That mailer also sends only 2 emails an hour, and only to the members of your Supabase organization.
+    6. Once SMTP is saved, in **Authentication > Email Templates**, paste the template below into **Magic Link**, **Confirm signup** and **Change Email Address**. Rerun signs people in with a 6-digit code, and Supabase's default templates only carry a link.
+    7. In **Authentication > URL Configuration**, set the **Site URL** to the address people open, the same as `NEXT_PUBLIC_APP_URL` below.
+
+    ```html Email template
+    <!doctype html>
+    <html>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; padding: 24px">
+        <p>Your Rerun code:</p>
+        <p style="font-size: 28px; font-weight: 600; letter-spacing: 6px">{{ .Token }}</p>
+        <p>It works for 15 minutes. Or open this link on the same device: <a href="{{ .ConfirmationURL }}">sign in to Rerun</a>.</p>
+        <p style="color: #666; font-size: 13px">If you did not ask for it, ignore this email.</p>
+      </body>
+    </html>
+    ```
+
+    The same file lives in your clone at `supabase/templates/magic_link.html`. The template says 15 minutes: set **Email OTP Expiration** to `900` seconds in the email provider settings to match, and keep **Email OTP Length** at 6.
+
+    Fill `.env` with what you copied:
+
+    ```bash .env
+    NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+    SUPABASE_SECRET_KEY=<secret key>
+    ```
+  </Tab>
+  <Tab title="Open source Supabase on your server">
+    Run the official [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting/docker) next to Rerun. Everything stays on your machines.
+
+    <Warning>
+      Building Rerun with Supabase running next to it takes more than 8 GB of memory: without swap, the build can kill Supabase services. Use a server with 16 GB, or add 4 GB of swap to a server with 8 GB.
+
+      ```bash
+      fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+      echo '/swapfile none swap sw 0 0' >> /etc/fstab
+      ```
+    </Warning>
+
+    1. Get the stack and generate its secrets, from a folder outside your Rerun clone:
+
+    ```bash
+    git clone --depth 1 https://github.com/supabase/supabase
+    cp -r supabase/docker supabase-stack && cd supabase-stack
+    cp .env.example .env
+    sh utils/generate-keys.sh --update-env
+    ```
+
+    2. Set these values in `supabase-stack/.env`. `api.example.com` is the domain that serves Supabase, `rerun.example.com` the one that serves Rerun:
+
+    ```bash supabase-stack/.env
+    COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml
+    POOLER_TENANT_ID=rerun
+    SITE_URL=https://rerun.example.com
+    ADDITIONAL_REDIRECT_URLS=https://rerun.example.com/**
+    SUPABASE_PUBLIC_URL=https://api.example.com
+    API_EXTERNAL_URL=https://api.example.com/auth/v1
+    ENABLE_ANONYMOUS_USERS=true
+    SMTP_HOST=<your SMTP server>
+    SMTP_PORT=587
+    SMTP_USER=<your SMTP user>
+    SMTP_PASS=<your SMTP password>
+    SMTP_ADMIN_EMAIL=<the address codes are sent from>
+    SMTP_SENDER_NAME=Rerun
+    ```
+
+    `SMTP_HOST` must be reachable from inside the `auth` container. Supabase refuses to send a password over an unencrypted connection: a test server without TLS, such as Mailpit, takes an empty `SMTP_USER` and `SMTP_PASS`, and runs as a service of the same stack.
+
+    3. Rerun signs people in with a 6-digit code, and the default Supabase emails only carry a link. Add this file next to the stack's `docker-compose.yml`, with the path of your Rerun clone. It serves the email templates of your clone to Supabase:
+
+    ```yaml supabase-stack/docker-compose.override.yml
+    services:
+      mail-templates:
+        image: nginx:1.27-alpine
+        restart: unless-stopped
+        volumes:
+          - /path/to/rerun/supabase/templates:/usr/share/nginx/html:ro
+      auth:
+        depends_on:
+          mail-templates:
+            condition: service_started
+        environment:
+          GOTRUE_MAILER_OTP_LENGTH: "6"
+          GOTRUE_MAILER_OTP_EXP: "900"
+          GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://mail-templates/confirmation.html
+          GOTRUE_MAILER_TEMPLATES_MAGIC_LINK: http://mail-templates/magic_link.html
+          GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://mail-templates/email_change.html
+    ```
+
+    4. Start it, then point `api.example.com` at port 8000 of this server, with HTTPS, as in [On a server](#on-a-server). This check answers with the version of the auth service:
+
+    ```bash
+    docker compose up -d
+    curl -H "apikey: <ANON_KEY>" https://api.example.com/auth/v1/health
+    ```
+
+    5. Apply the schema and the seed from your Rerun clone. Replace `<password>` with `POSTGRES_PASSWORD` from `supabase-stack/.env`:
+
+    ```bash
+    npx supabase db push --include-seed --yes \
+      --db-url "postgresql://postgres.rerun:<password>@127.0.0.1:5432/postgres?sslmode=disable"
+    ```
+
+    Fill Rerun's `.env` with `ANON_KEY` and `SERVICE_ROLE_KEY` from `supabase-stack/.env`. That file also has empty `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` lines: ignore them.
+
+    ```bash .env
+    NEXT_PUBLIC_SUPABASE_URL=https://api.example.com
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<ANON_KEY>
+    SUPABASE_SECRET_KEY=<SERVICE_ROLE_KEY>
+    ```
+
+  </Tab>
+  <Tab title="Everything on this computer">
+    Start Supabase in Docker, from the root of your clone:
+
+    ```bash
+    npx supabase start
+    ```
+
+    It takes ports 54420 to 54429, applies every migration and loads the seed. Sign-in, the code templates and anonymous sign-ins are already configured.
+
+    | What | Where |
+    | --- | --- |
+    | API | http://localhost:54421 |
+    | Studio, to browse the data | http://localhost:54423 |
+    | Mailpit, where sign-in codes land | http://localhost:54424 |
+
+    Copy the keys from `npx supabase status` into `.env`:
+
+    ```bash .env
+    NEXT_PUBLIC_SUPABASE_URL=http://localhost:54421
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<Publishable key>
+    SUPABASE_SECRET_KEY=<Secret key>
+    ```
+
+    No email leaves this machine: every code is in Mailpit. That is fine for you alone, and not for a team.
+
+    <Warning>
+      This stack is made for trying Rerun on your own machine. Its keys are public defaults, and Studio and Postgres listen on every network interface with no password of yours. On a server reachable from the internet, use a project on supabase.com or open source Supabase on your server.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## 3. Fill the rest of `.env`
+
+Three more lines:
+
+```bash .env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+OPENROUTER_API_KEY=sk-or-...
+ADMIN_EMAILS=you@example.com
+```
+
+`NEXT_PUBLIC_APP_URL` is the address people type in their browser, without a trailing slash. Keep `http://localhost:3000` to try Rerun on this machine. For a team, use the address they will reach it at, for example `https://rerun.example.com`. `ADMIN_EMAILS` is baked in by the build, so set it now. Every other variable is optional: see [Configuration](/self-host/configuration).
+
+## 4. Run the check
+
+```bash
+node scripts/self-host-check.mjs
+```
+
+It generates the three secrets left empty (`RERUN_ENGINE_API_KEY`, `FOREMAN_HUB_TOKEN_SECRET`, `BOARD_IMAGE_SECRET`), checks the required values, then asks Supabase whether the schema is in place and `SUPABASE_SECRET_KEY` is the secret key. It stops with a plain message on anything only you can fix, warns when `OPENROUTER_API_KEY` is empty, and prints the exact command to start.
+
+## 5. Start Rerun
+
+<Tabs>
+  <Tab title="Supabase on supabase.com or your server">
+    ```bash
+    docker compose up -d --build
+    ```
+  </Tab>
+  <Tab title="Supabase on this computer">
+    ```bash
+    docker compose --profile local-supabase up -d --build
+    ```
+
+    The profile adds a small relay, so the app container reaches Supabase at `http://localhost:54421`, the same address as your browser.
+  </Tab>
+</Tabs>
+
+The first build takes several minutes. Later starts take seconds.
+
+## 6. Check it runs
+
+```bash
+docker compose ps                                              # app and engine are "running"
+curl -s http://localhost:3000/api/version                      # the app answers
+docker compose exec engine curl -s http://localhost:3000/health # the engine answers
+docker compose exec engine node dist/cli/bin.js doctor         # the engine data-dir is healthy
+```
+
+When something is off, read the logs first:
+
+```bash
+docker compose logs -f app engine
+```
+
+## On a server
+
+On your own computer, skip this section. On a server, people reach Rerun over HTTPS and nothing else stays open.
+
+Set the engine's address in `.env`, before the build:
+
+```bash .env
+NEXT_PUBLIC_APP_URL=https://rerun.example.com
+RERUN_ENGINE_BROWSER_URL=https://engine.example.com
+```
+
+The engine needs its own domain: a browser connects to it directly to show a coworker's screen. Point the domains at the server, then put a reverse proxy in front. With [Caddy](https://caddyserver.com), which gets its certificates on its own and forwards WebSockets:
+
+```text Caddyfile
+rerun.example.com {
+    reverse_proxy localhost:3000
+}
+
+engine.example.com {
+    reverse_proxy localhost:3001
+}
+
+# Only with open source Supabase on this server.
+api.example.com {
+    reverse_proxy localhost:8000
+}
+```
+
+<Warning>
+  docker compose publishes the app on port 3000 and the engine on port 3001, and open source Supabase publishes Postgres on 5432 and 6543 and its gateway on 8000. Docker opens these ports past `ufw`, so Postgres ends up on the internet. Close them in your provider's firewall, and keep only 22, 80 and 443 open.
+</Warning>
+
+Without a firewall at your provider, this `nftables` rule does the same. Replace `eth0` with your network interface:
+
+```text /etc/nftables.conf
+table inet rerun_edge {
+  chain prerouting {
+    type filter hook prerouting priority -300; policy accept;
+    iifname "eth0" tcp dport { 3000, 3001, 5432, 6543, 8000 } drop
+  }
+}
+```
+
+Then `nft -f /etc/nftables.conf` and `systemctl enable nftables`.
+
+## 7. Sign in
+
+Open [http://localhost:3000](http://localhost:3000), or your `NEXT_PUBLIC_APP_URL`. You land on the board with a sign-in dialog on top.
+
+Enter your email. A 6-digit code arrives, in your inbox or in Mailpit, and you type it in. There is no phone sign-in, and no Google or Apple button unless you [configure them](/self-host/configuration#sign-in).
+
+The emails in `ADMIN_EMAILS` see the admin switches in the app. See [Administration](/self-host/administration).
+
+## 8. Meet your first coworker
+
+The Foreman, Rerun's guide, greets you and asks what you need done. Answer in plain words: it plans a team and builds it. You can also click the board to create a coworker yourself and describe its job in the chat.
+
+The first coworker you place on the board needs a machine to run on. Your first workspace takes the engine that docker compose started, with nothing to configure. The second workspace, and every one after it, needs a [server of its own](/self-host/servers).
+
+From here, the coworker works exactly as on Rerun Cloud: see the [Quickstart](/quickstart) from step 4.
+
+## Updating
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+The engine migrates its data-dir on start. When a release adds database migrations, apply them too: `npx supabase db push` for a project on supabase.com, the same command with `--yes --db-url` and the address from [Install](#2-set-up-supabase) for open source Supabase, or `npx supabase migration up` for the local stack.
+
+<Note>
+  The values starting with `NEXT_PUBLIC_` are baked into the app when it is built. So is `ADMIN_EMAILS`. After changing one, rebuild with `docker compose up -d --build`. Other values only need `docker compose up -d`.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy on Dokploy" icon="rocket" href="/self-host/dokploy" horizontal />
+  <Card title="Connect your AI" icon="cpu" href="/self-host/models" horizontal />
+  <Card title="Add a server" icon="server" href="/self-host/servers" horizontal />
+  <Card title="Troubleshooting" icon="life-buoy" href="/self-host/troubleshooting" horizontal />
+</CardGroup>

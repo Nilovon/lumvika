@@ -1,0 +1,110 @@
+---
+title: "Triggers"
+description: "Give a coworker a public webhook URL, test it, rotate its secret."
+---
+
+A trigger gives a coworker a public URL. Whoever calls it starts a run. See [Webhook triggers](/api/webhooks) for the HTTP contract on the other side of that URL.
+
+## list_triggers
+
+Lists a coworker triggers in full: `slug`, `name`, `body`, accepted `methods`, `enabled`, the `connectionId` and `model` of its own when it has one, `fireCount`, `lastFiredAt`, and `url`, the public webhook address to paste into the other service.
+
+<ParamField body="agentId" type="string" required />
+
+<Warning>
+  Every URL returned here carries the trigger secret. Treat each one as a credential, and do not log the response.
+</Warning>
+
+## upsert_trigger
+
+Creates a trigger, or updates it when `slug` is given.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="slug" type="string">
+  Omit to create. Pass an existing slug to update.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Required when creating. The slug, and therefore the public URL, is derived from it.
+</ParamField>
+
+<ParamField body="body" type="string">
+  Required when creating. The instruction sent to the coworker when the URL is called.
+</ParamField>
+
+<ParamField body="methods" type="string[]">
+  Accepted HTTP methods among `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Defaults to `["POST"]`.
+</ParamField>
+
+<ParamField body="description" type="string" />
+
+<ParamField body="enabled" type="boolean" />
+
+<ParamField body="connectionId" type="string">
+  Run this one on a given AI connection, by its id from [`list_ai_connections`](/api/tools/agents#list_ai_connections). Goes with `model`.
+</ParamField>
+
+<ParamField body="model" type="string | null">
+  Run this one on a model of its own. Omit it and it runs whatever its coworker runs. Pass `null` to go back to that.
+</ParamField>
+
+The caller HTTP payload is appended to `body` automatically inside a `<trigger_payload>` block. Write the instruction as "a Stripe refund event arrives, do X with it", not as if the payload had to be fetched.
+
+The response carries the full `url`, which is a secret: anyone holding it can fire the coworker.
+
+<Warning>
+  A trigger cannot be renamed, because the public URL is built from the slug. Delete and recreate, knowing the URL changes and every caller has to be updated.
+</Warning>
+
+<Note>
+  Adding `GET` to `methods` means any link preview or prefetch of that URL could fire the coworker. Rerun filters known previewers, but `POST` alone is the safer default.
+</Note>
+
+## test_trigger
+
+Fires a trigger yourself with a sample payload, to check the instruction before handing the URL to another service.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+
+<ParamField body="body" type="string | object">
+  The payload. An object is sent as JSON. Defaults to empty. Maximum 1 MB, the same cap the public URL enforces.
+</ParamField>
+
+<ParamField body="method" type="string">
+  One of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Defaults to the first method the trigger accepts.
+</ParamField>
+
+<ParamField body="query" type="string">
+  Query string to simulate, without the leading `?`.
+</ParamField>
+
+<ParamField body="contentType" type="string">
+  Defaults to `application/json` when the body is JSON.
+</ParamField>
+
+<Warning>
+  This is a real fire, not a dry run. It counts towards the trigger fire count and updates its last-fired date. It also needs the trigger to be enabled: unlike `run_schedule_now`, firing a disabled trigger fails, because the engine answers a disabled trigger exactly like a missing one.
+</Warning>
+
+Returns `runId` and `sessionId`. Read the outcome with [`get_run`](/api/tools/runs#get-run).
+
+## rotate_trigger_token
+
+Issues a new secret for a trigger and returns its new URL.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+
+The previous URL stops working immediately, so every service already configured with it has to be updated. Use this when a URL has leaked.
+
+## delete_trigger
+
+Deletes a trigger. Its URL stops working at once and any service calling it starts failing.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`.
+</ParamField>

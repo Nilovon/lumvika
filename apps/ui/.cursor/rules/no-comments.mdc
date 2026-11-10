@@ -1,0 +1,12 @@
+---
+description: "Empêcher l'ajout de commentaires dans le code"
+globs: '**/*'
+alwaysApply: true
+---
+
+# No Comments
+
+NE PAS AJOUTER DE COMMENTAIRES DANS LE CODE.
+
+Le code doit être auto-explicatif.
+Ne pas ajouter de commentaires // ou /\* \*/ pour expliquer ce que fait le code.

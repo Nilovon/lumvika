@@ -1,0 +1,103 @@
+---
+title: "Configure a coworker"
+description: "Its prompt, its model, and what it is allowed to do."
+---
+
+Open a coworker by clicking it on the board. The panel on the right is where everything about it lives. Most of what this page covers is in the **Settings** and **Capabilities** tabs.
+
+Some tabs only appear once you switch on **Expert mode** at the bottom of the panel rail. That is where **Capabilities**, **MCP**, **Memories** and **Logs** live.
+
+## The soul
+
+The soul is the coworker system prompt. It is the single most important field: it defines who the coworker is, what it owns, how it works and what it must never do.
+
+Edit it in **Settings**, under **Soul (system prompt)**. It is markdown, so headings and lists are fine.
+
+A soul that works usually says:
+
+- who the coworker is and what job it holds
+- what it is responsible for, and what it must hand to someone else
+- how it should behave: tone, level of detail, when to ask before acting
+- the rules that are not negotiable
+
+You do not have to write it yourself. A coworker created from a description writes its own, and you can ask it to rewrite it later.
+
+## Model and provider
+
+Click the model name above the message box to change it. The picker has three sections.
+
+<Tabs>
+  <Tab title="Free">
+    **Rerun** runs hosted models paid from the model credit included in your plan. No setup, no key. Pick one of three:
+
+    - **Fast** for quick, simple jobs. The cheapest on your credit.
+    - **Balanced** for everyday work. The default.
+    - **Smart** for your hardest tasks. It uses the most credit, and comes with a paid plan.
+  </Tab>
+  <Tab title="Subscription">
+    Connect the Claude or ChatGPT plan you already pay for, and your coworkers use it. Sign in once from the picker. On a ChatGPT plan, a coworker also generates and edits images with the image tool built into Codex.
+  </Tab>
+  <Tab title="API key">
+    Paste your own key for Anthropic, OpenAI, Google or OpenRouter. Or pick **Custom endpoint** to run coworkers on your own model (Ollama, LM Studio, vLLM) or any OpenAI-compatible provider. See [AI models](/self-host/models#your-own-model).
+  </Tab>
+</Tabs>
+
+Each model shows a power rating and its context window, so you can trade cost against capability without knowing the model names by heart.
+
+Picking a model from the chat changes it for that conversation only. Click **Set as default** to change it for the coworker.
+
+## Capabilities
+
+A coworker has families of tools, all switched on by default. Turn off what it has no business doing.
+
+| Family | What it allows |
+| --- | --- |
+| `filesystem` | Read, write, edit and search files in its own workspace |
+| `shared` | The same, on the folder every coworker of the workspace shares |
+| `shell` | Run shell commands in its workspace, behind a denylist of destructive commands |
+| `web` | Fetch URLs, search the web, download files |
+| `memory` | Write durable facts and recall them later |
+| `db` | Its own private SQLite database |
+| `sharedDb` | The database shared by every coworker of the workspace |
+| `skills` | Create and edit its own skills, and read the ones an app installed |
+| `schedule` | Give itself recurring or one-off tasks |
+| `trigger` | Give itself public webhook URLs |
+| `delegate` | Spawn throwaway sub-coworkers for subtasks, up to four at once |
+| `callAgent` | Message another coworker of the workspace by its handle |
+| `browser` | Navigate JavaScript-heavy pages with a headless browser and take screenshots |
+| `vision` | Analyse images in its workspace |
+| `notify` | Ping you out of band without pausing |
+| `hub` | Search and install apps, and publish files to public URLs |
+| `askUser` | Ask you a question and pause until you answer |
+| `requestApproval` | Ask for your approval before a consequential action |
+| `suggestService` | Ask you to set up an app it needs |
+| `requestSecret` | Ask you for an API key through a masked form |
+
+See [Human in the loop](/agents/human-in-the-loop) for the last four.
+
+## Self-improvement
+
+Separate from the capability list, and worth a deliberate decision.
+
+| Flag | What it allows |
+| --- | --- |
+| `enabled` | The self-improvement family as a whole |
+| `allowSoulEdit` | The coworker may rewrite its own system prompt |
+| `allowToolInstall` | The coworker may install packages and register MCP servers |
+| `autoMemory` | After each conversation, the coworker reviews it and may store, update or delete a memory on its own |
+
+All of these are on by default. A coworker that must stay exactly as you wrote it needs `allowSoulEdit` and `allowToolInstall` off.
+
+## Other settings
+
+**Enabled** switches the coworker off without deleting it. A switched-off coworker runs nothing and refuses calls from other coworkers.
+
+## Name and handle
+
+The **name** is free text, the one you see. The **handle** is the key other coworkers use to call it with `@handle`.
+
+Renaming a coworker moves its handle too: the handle is re-derived from the new name, and every `@oldhandle` written into the other coworkers (prompts, skills, scheduled tasks, webhook triggers, memories) is rewritten to the new one. Set the handle on its own only when the call key should differ from the name.
+
+## Doing it from the API
+
+Everything on this page is reachable with [`create_agent` and `update_agent`](/api/tools/agents), which is the fastest way to version a coworker setup or repeat it across workspaces.

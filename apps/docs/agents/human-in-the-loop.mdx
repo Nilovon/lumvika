@@ -1,0 +1,63 @@
+---
+title: "Human in the loop"
+description: "How a coworker asks you a question, requests an approval, or collects a credential."
+---
+
+A coworker that never checks with you is a liability. Rerun gives every coworker four ways to hand a decision back, and one way to tell you something without stopping.
+
+## The four pauses
+
+When a coworker uses any of these, it **stops its turn**. A card appears above the message box, you answer it, and the run continues from your reply.
+
+<CardGroup cols={2}>
+  <Card title="A question" icon="message-circle-question">
+    Several questions at once, each with suggested answers as buttons. A question can accept a single answer or let you tick every option that applies, long lists of options scroll inside the card, and you can always type something else instead.
+  </Card>
+  <Card title="An approval" icon="hand">
+    A list of actions it wants to take, with the detail behind each one: the command, the target, the diff. Approve or decline per item.
+  </Card>
+  <Card title="An app" icon="link">
+    It found the integration it needs in the library and asks you to connect it. The card carries the setup form.
+  </Card>
+  <Card title="A credential" icon="key">
+    A masked form for an API key that no app covers.
+  </Card>
+</CardGroup>
+
+A coworker asks one thing at a time, batching everything into a single card, so you are never facing three stacked questions.
+
+## The secret guarantee
+
+When a coworker needs an API key, it never asks for it in the chat. It opens a masked form, and the value goes straight into the coworker's variables, on your machine.
+
+The coworker learns which variable name was filled and nothing else. It then references it as `${VARIABLE_NAME}` in an app config or a command, and the value resolves on your machine at run time.
+
+<Warning>
+  Never paste a secret into the chat itself. The conversation is stored and sent to the model. A coworker that asks you to is doing it wrong: use the masked form.
+</Warning>
+
+## Notifications
+
+Separate from the pauses, a coworker can tell you something and keep working. Those arrive as notifications rather than cards.
+
+Kinds are `info`, `progress`, `done`, `error`, plus the `question`, `approval` and `connector` kinds raised by the pauses above.
+
+Everything waiting for you is collected in the coworker **To handle** tab, and in the workspace notifications panel.
+
+## Delivery
+
+Notifications reach you in the app and by email. Configure it from your profile menu, under **Notifications**: per kind, per channel, and separately for runs you started and runs that fired on their own.
+
+Set the automated ones to email and leave your own conversations in-app, so a 3am approval actually finds you.
+
+Email has guardrails the app does not need. A failing schedule or webhook sends at most a few emails in real time (3 per source and 10 per recipient over 15 minutes), then folds into a single hourly digest until it recovers. When the workspace's Rerun AI budget runs out, automated runs on Rerun models pause and you get one notice, in-app plus at most one email per day, instead of one email per failure. Sandbox workspaces never receive notification emails at all; everything still arrives in-app.
+
+## While you are away
+
+A run started by a [scheduled task or a webhook](/agents/automations) can pause exactly like a chat run. Nothing is skipped because nobody was watching.
+
+The run waits, the notification goes out, and the coworker resumes from your answer whenever you get to it.
+
+## Reading it back
+
+A paused run shows up in [`list_runs`](/api/tools/runs#list-runs) like any other, and `output` carries the coworker last message. The card itself is answered in the app: there is no API tool for approving on someone's behalf.

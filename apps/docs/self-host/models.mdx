@@ -1,0 +1,105 @@
+---
+title: "AI models"
+description: "The Rerun models on your OpenRouter key, your own API keys, and your Claude, ChatGPT or OpenCode plan."
+---
+
+Every coworker thinks with one model at a time. On a self-hosted Rerun you pay the AI provider directly: there is no credit, no meter and no plan in between.
+
+## The Rerun models
+
+A new coworker starts on **Rerun**, with three tiers to pick from:
+
+| Tier | For |
+| --- | --- |
+| **Fast** | Quick, simple jobs |
+| **Balanced** | Everyday work. The default |
+| **Smart** | The hardest tasks |
+
+On your install, these run on your `OPENROUTER_API_KEY`. The engine asks the app, the app relays the call to OpenRouter with your key, and nothing is counted. All three tiers are open to every workspace.
+
+The app only relays for engines it knows, so your key never serves anybody else. The Foreman's onboarding and its helpers run on the same key. Without the key, the Foreman skips the onboarding and runs on the model you pick for it, like any coworker.
+
+<Tip>
+  Set a credit limit on the key in your OpenRouter dashboard. It is the simplest way to cap what your coworkers can spend.
+</Tip>
+
+Without `OPENROUTER_API_KEY`, a coworker on a Rerun model answers with an error asking you to set the key or connect another provider. Connect one below and pick it, and the coworker works again.
+
+The OpenRouter model behind each tier is set in `RERUN_UPSTREAM_MODELS`, in `apps/ui/lib/engine/constants.ts`. Change it and rebuild to run a tier on another model.
+
+## Your own API keys
+
+Open the workspace menu, the pill in the top left corner, and click **AI providers**. Add a key for any of these:
+
+| Provider | Gives you |
+| --- | --- |
+| **Anthropic** | Claude models |
+| **OpenAI** | GPT models |
+| **Google** | Gemini models |
+| **OpenRouter** | Every model OpenRouter carries. Also accepts a custom base URL and custom model ids, to point coworkers at your own router |
+| **Custom endpoint** | Any server that speaks the OpenAI chat format: your own model, or a provider not listed here. See below |
+
+Provider credentials belong to the workspace. They are stored on the workspace's server, in its data-dir, and never in Supabase. Every coworker of the workspace can use them.
+
+## Your own model
+
+Under **Your API keys**, pick **Custom endpoint** to run coworkers on a model you host or on any OpenAI-compatible provider. Pick a server, check the address, paste a key if it needs one, and click **Connect**. The engine asks the server which models it serves and switches them on.
+
+| Server | Base URL | Key |
+| --- | --- | --- |
+| **Ollama** | `http://localhost:11434/v1` | none |
+| **LM Studio** | `http://localhost:1234/v1` | none |
+| **vLLM** | `http://localhost:8000/v1` | the `--api-key` you started it with, if any |
+| **LiteLLM** | `http://localhost:4000/v1` | your LiteLLM key |
+| **Groq** | `https://api.groq.com/openai/v1` | your Groq key |
+| **Together** | `https://api.together.xyz/v1` | your Together key |
+| **Mistral** | `https://api.mistral.ai/v1` | your Mistral key |
+| **DeepSeek** | `https://api.deepseek.com/v1` | your DeepSeek key |
+
+The engine is the one that calls the server, so the address has to work from the engine, not from your browser. With the Docker Compose setup, `localhost` inside the engine container is the container itself: Rerun tries `host.docker.internal` for you when `localhost` does not answer, and the address that worked is the one saved.
+
+<Warning>
+  Ollama keeps a 4k-token context by default, and a coworker's instructions and tools alone take about 28k. Start Ollama with `OLLAMA_CONTEXT_LENGTH=32768` (or more) or the model reads a cut prompt without saying so. On Linux, also set `OLLAMA_HOST=0.0.0.0` so the engine's container can reach it.
+</Warning>
+
+In the connection, under **Endpoint**:
+
+- **Context window** is used for models the server does not size itself (Ollama never does). Rerun compacts a conversation before it fills the window, 128k when nothing is set.
+- **Models see images** stays off by default. Turn it on for a vision model: screenshots and the computer tools need it.
+- Add a model the server serves but does not list by its id.
+
+Small models are uneven at calling tools, which every coworker does all the time. A model of 30B parameters or more, or a hosted one, gives far better results than a 4B one.
+
+On Rerun Cloud, the address has to be a public one: a cloud machine cannot reach your computer. Expose a local server through a tunnel (Cloudflare Tunnel, ngrok) to use it there.
+
+## Your Claude or ChatGPT plan
+
+In the same **AI providers** dialog, connect a plan you already pay for:
+
+- **Claude**, with a Pro or Max plan
+- **ChatGPT**, with a Plus or Pro plan
+
+Sign in once and your coworkers run on the plan. The engine image ships the official Claude Code and Codex command-line tools that make this work, so there is nothing to install on the server.
+
+A coworker on a ChatGPT plan also generates and edits images, with the image tool built into Codex: the picture shows up in its chat and in its files, and counts against the plan's image allowance. Coworkers on Claude or on an API key have no image tool.
+
+### OpenCode
+
+Paste an OpenCode key (it starts with `oc_sk_`, get one at [opencode.ai/auth](https://opencode.ai/auth)) under **OpenCode Go or Console**. One key reaches both of OpenCode's catalogs:
+
+- **Go**, the subscription: its models are switched on when you connect, and cost nothing on top of the plan. The picker shows them with an **Included** badge, and the connection shows the plan's 5-hour, weekly and monthly limits.
+- **Console**, paid per token from your OpenCode credits: its models (Claude, GPT, Gemini and more) start switched off, with a **Credits** badge and their price per million tokens.
+
+A model sold on both sides appears twice, once per catalog. OpenCode runs inside the engine itself, with no command-line tool. Your app only offers it once `NEXT_PUBLIC_OPENCODE_ENABLED=1` is set and the engine is recent enough to run it.
+
+## Choose the model per coworker
+
+Click the model name above a coworker's message box. The picker lists the Rerun tiers, your plans and your keys, with a power rating and the context window of each model.
+
+Picking a model in the chat changes it for that conversation. Click **Set as default** to change it for the coworker. See [Configure a coworker](/agents/configure#model-and-provider) for the details.
+
+## Embeddings
+
+Semantic search of the services catalog and of the coworkers' memories needs embeddings. They run on `RERUN_EMBED_API_KEY`, an OpenRouter key, through the app. Without it, both searches fall back to keyword search, which works but matches less.
+
+You can use the same OpenRouter key for both variables, or a separate one to see the two costs apart.

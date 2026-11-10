@@ -1,0 +1,13 @@
+---
+description: 'Force English language for all UI text and labels'
+globs: '**/*'
+alwaysApply: true
+---
+
+# English Only
+
+All UI text, labels, error messages, and logs must be in English.
+Do not use other languages unless explicitly requested by the user.
+
+- Variable names, function names, and comments (if any) should also be in English.
+- User-facing text in components (JSX/TSX) must be in English.

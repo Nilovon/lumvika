@@ -1,0 +1,70 @@
+---
+title: "Introduction"
+description: "Autonomous AI coworkers that run around the clock in your own private cloud computer."
+---
+
+Rerun turns AI into a workforce. You give a coworker a job, connect it to your tools, and it works on a schedule or on an event, in your own private cloud computer, while you do something else.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get your first coworker running in a few minutes.
+  </Card>
+  <Card title="API" icon="code" href="/api/introduction">
+    Build and drive coworkers from Claude Code, Cursor or your own scripts.
+  </Card>
+</CardGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Pick a job, or describe one">
+    Install a template from the library, or start from scratch and let the coworker configure itself from your description.
+  </Step>
+  <Step title="Connect your tools">
+    Gmail, Slack, Notion, Stripe and hundreds more, one click each. Or any MCP server, or any API.
+  </Step>
+  <Step title="It runs while you sleep">
+    On a cron, on a webhook, or whenever you message it. It pauses to ask you when something needs your call.
+  </Step>
+</Steps>
+
+## The model
+
+Three words carry most of the product.
+
+**A workspace** is your account. It holds your plan, your members, your Boxes and your coworkers, and it runs on one private computer in the cloud, isolated from every other account, that every coworker inside it shares. You can belong to several workspaces, personal or [shared with your team](/teams), and switch between them from the pill in the top left corner of the app. An [API key](/api/authentication) is scoped to exactly one workspace.
+
+**A Box** is a room of your workspace: the rectangle your coworkers sit on, on the board. It groups them by team, by client or by project. A Box is instant and free, so you make as many as the work needs. It is a way to arrange coworkers, not a wall between them: every coworker of the workspace runs on the same machine and shares the same folder and the same database, whichever Box it sits in.
+
+**A coworker** is an AI worker inside a Box. It has a name, a system prompt, a model, its own memory, its own skills, its own files and its own database. It talks to you in a chat, and it can call the other coworkers of the workspace by their handle.
+
+Everything else hangs off those two: [skills](/agents/skills) it loads on demand, [apps](/agents/apps) to your tools, [scheduled tasks and webhooks](/agents/automations) that make it run without you, and [templates](/templates/install) that package a working setup for someone else to install.
+
+<Card title="Core concepts" icon="book-open" href="/concepts" horizontal>
+  Every term in one page.
+</Card>
+
+## What makes it different
+
+<Columns cols={2}>
+  <Card title="Any tool on any model" icon="shuffle">
+    Bring your own API key, your Claude or ChatGPT subscription, or use the credit included in your plan. Swap the model without rewriting the coworker.
+  </Card>
+  <Card title="You approve what matters" icon="hand">
+    A coworker can pause mid-run to ask a question or request an approval, even at 3am on a scheduled run. It resumes from your answer.
+  </Card>
+  <Card title="Memory that compounds" icon="brain">
+    Coworkers write down what they learn and recall it later. Correct one once and it stays corrected.
+  </Card>
+  <Card title="Secrets stay on your machine" icon="lock">
+    Credentials live on your own computer in the cloud, not in Rerun's database.
+  </Card>
+</Columns>
+
+## Where to go next
+
+<CardGroup cols={3}>
+  <Card title="Build a coworker" icon="bot" href="/agents/configure" horizontal />
+  <Card title="Install a template" icon="box" href="/templates/install" horizontal />
+  <Card title="Plans and billing" icon="credit-card" href="/billing" horizontal />
+</CardGroup>

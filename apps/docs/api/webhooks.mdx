@@ -1,0 +1,95 @@
+---
+title: "Webhook triggers"
+description: "Start a coworker run from any service that can send an HTTP request."
+---
+
+A trigger gives a coworker a public URL. Call that URL and the coworker starts working. There is no SDK, no key exchange and no handshake: anything that can send an HTTP request can fire a coworker.
+
+```
+https://app.rerun.build/api/t/{agentId}/{slug}/{token}
+```
+
+Create a trigger in the app under the coworker **Triggers** tab, or with [`upsert_trigger`](/api/tools/triggers#upsert-trigger). Both give you the full URL.
+
+## The URL is the credential
+
+There is no signature, no secret header and no allowlist. Whoever holds the URL can fire the coworker, as many times as they want.
+
+<Warning>
+  Treat every trigger URL like a password. Do not paste it into a shared document, a ticket or a public repository. If one leaks, rotate it with [`rotate_trigger_token`](/api/tools/triggers#rotate-trigger-token) or from the **Triggers** tab, and update every service configured with it.
+</Warning>
+
+Because the URL is the whole authentication, Rerun cannot validate a third-party signature header today. Caller headers are never forwarded to the coworker: they carry credentials and are trivially spoofed.
+
+## Methods
+
+A trigger declares which HTTP methods it accepts. The default is `POST` alone.
+
+`GET`, `POST`, `PUT`, `PATCH` and `DELETE` all reach the same handler. `HEAD` and `OPTIONS` never start a run.
+
+<Note>
+  Accepting `GET` means a link preview, a prefetch or a crawler could fire your coworker by touching the URL. Rerun filters the known ones, but keep `POST` unless the calling service cannot send it.
+</Note>
+
+## What the coworker receives
+
+The coworker gets the trigger `body`, which is the instruction you wrote, followed by the caller payload in a `<trigger_payload>` block:
+
+```
+Read the Stripe payload and add a row to the payments table.
+
+<trigger_payload trigger="stripe-payment" method="POST" received="2026-08-15T09:12:04.000Z" content-type="application/json" bytes="412">
+{
+  "type": "payment_intent.succeeded",
+  "data": { … }
+}
+</trigger_payload>
+```
+
+JSON is pretty-printed. The payload is truncated at 64 KB. Any closing tag inside the payload is escaped, so a caller cannot inject instructions by ending the block early.
+
+Each call opens a new session named `trigger: <slug>`. Two calls are always two runs: nothing is collapsed or debounced.
+
+## Response codes
+
+The call returns as soon as the run has started. It does not wait for the coworker to finish.
+
+| Code | Body | When |
+| --- | --- | --- |
+| `202` | `{ "runId": "…", "sessionId": "…", "trigger": "…" }` | The run started |
+| `204` | empty | Passive visit, or `OPTIONS` |
+| `200` | empty | `HEAD` |
+| `405` | `{ "error": "Method not allowed" }` plus an `Allow` header | The trigger does not accept that method |
+| `413` | `{ "error": "Payload too large" }` | Body over 1 MB |
+| `404` | `{ "error": "Not found" }` | Everything else |
+
+That last row is deliberate. A malformed slug, a missing token, an unknown coworker, a wrong token, a disabled trigger and an engine that turned the call away all answer `404`, so nobody can probe which triggers exist on your account.
+
+## Passive visits
+
+Link unfurlers, prefetchers and clipboard managers touch URLs without anyone clicking them. Rerun answers those with `204` and never starts a run. The filter covers Slack, Discord, Twitter, WhatsApp, Raycast and other known coworkers, plus any request carrying a prefetch or preview intent header.
+
+Pasting a trigger URL into a chat is still a leak, but it will not fire your coworker by itself.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Request body | 1 MB, `413` above |
+| Payload handed to the coworker | 64 KB, truncated |
+| Time the front door waits for the machine to acknowledge | 15 seconds |
+| Rate limit | None |
+
+## Testing
+
+Fire it yourself with `curl`:
+
+```bash
+curl -i -X POST "https://app.rerun.build/api/t/AGENT_ID/SLUG/TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"event":"test"}'
+```
+
+Or use [`test_trigger`](/api/tools/triggers#test-trigger), which pre-checks the method and the enabled state so you get a readable error instead of a bare `404`. Either way it is a real fire: it counts towards the trigger fire count.
+
+Read the outcome with [`get_run`](/api/tools/runs#get-run), using the `runId` from the `202`.

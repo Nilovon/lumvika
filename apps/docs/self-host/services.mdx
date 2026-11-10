@@ -1,0 +1,68 @@
+---
+title: "Services and apps"
+description: "The catalog that ships with Rerun, any MCP server you add, and Composio for Google, Microsoft and the rest."
+---
+
+A coworker reaches your tools through apps: Stripe, Notion, Slack, GitHub and hundreds more. On your install, they come from three places: the catalog, any MCP server you register, and Composio if you turn it on.
+
+How a coworker installs and uses an app is the same as on Rerun Cloud. See [Apps](/agents/apps).
+
+## The catalog
+
+The database seed carries the whole services catalog: 216 services, each with its manifest, its skills and its icon. The icons are served by the app itself, from `/services/`. The seed also carries the embeddings of every service, so search works from the first start, and the alternatives between services, so a coworker can suggest another one when the first is not connected.
+
+Each service declares how it connects:
+
+| How | What you need on a self-hosted install |
+| --- | --- |
+| **API key** | Nothing. You paste the key in a masked form when you install it |
+| **OAuth** | Nothing. You sign in to the service in a browser window, and the token is stored on your server |
+| **Command** | Nothing. The engine runs the MCP command on your server |
+| **Composio** | A Composio key and an auth config per service. See [Composio](#composio) |
+| **Managed** | An OAuth app of your own with the service. See [Managed sign-in](#managed-sign-in) |
+
+Search uses embeddings when `RERUN_EMBED_API_KEY` is set, and keywords otherwise. The catalog lives in the `services` table: an admin can turn a service off by setting `enabled` to false in Supabase Studio.
+
+## Any MCP server
+
+When the catalog does not have what you need, register the service's MCP server on a coworker yourself. Switch on **Expert mode** at the bottom of the coworker panel, open the **MCP** tab, and add an HTTP, SSE or local command server, with its own headers, OAuth or environment variables.
+
+Reference a stored secret with `${VARIABLE_NAME}`: it resolves on your server at run time. Anything with an MCP server works with Rerun this way, catalog or not.
+
+## Composio
+
+[Composio](https://composio.dev) connects 2,000+ apps by OAuth, and Rerun uses it for the services that are hard to sign in to otherwise. In the seeded catalog that is the Google family (Gmail, Calendar, Drive, Docs, Sheets, Slides, Meet, Tasks, Photos, Analytics, Search Console, BigQuery), the Microsoft family (Outlook, Teams, OneDrive, Excel, SharePoint), plus Canva, Instagram, LinkedIn, Reddit and YouTube.
+
+Composio is optional. Without it, those services do not connect, and everything else works.
+
+To turn it on:
+
+<Steps>
+  <Step title="Set the key">
+    Create a Composio project, copy its API key into `COMPOSIO_API_KEY` in `.env`, and run `docker compose up -d`.
+  </Step>
+  <Step title="Create an auth config per service">
+    The auth config ids in the seed are empty: the ones Rerun Cloud uses belong to its own Composio project. In your Composio dashboard, create an auth config for each toolkit you want, for example `gmail`, and copy its id (`ac_...`).
+  </Step>
+  <Step title="Write the id on the service">
+    In Supabase Studio, open the `services` table and the row of the service. In its `manifest`, find the auth method whose `kind` is `composio`, and set `composio.authConfigId` to the id you copied.
+  </Step>
+</Steps>
+
+The service now connects like any other: the person signs in on Composio's page, and lands back in Rerun at `NEXT_PUBLIC_APP_URL/api/oauth/composio/callback`.
+
+<Tip>
+  Several Rerun installs can share one Composio project. Give each one its own `COMPOSIO_USER_NAMESPACE` (default `local`), so their connected accounts never mix.
+</Tip>
+
+## Managed sign-in
+
+Two services in the catalog, Facebook and Typeform, sign in through an OAuth app that Rerun itself holds. On your install, that OAuth app has to be yours:
+
+1. Create an OAuth app with the service, with the redirect URL `NEXT_PUBLIC_APP_URL/api/oauth/managed/facebook/callback` or `.../typeform/callback`.
+2. Put its credentials in `.env`: `RERUN_FACEBOOK_CLIENT_ID` and `RERUN_FACEBOOK_CLIENT_SECRET`, or `RERUN_TYPEFORM_CLIENT_ID` and `RERUN_TYPEFORM_CLIENT_SECRET`.
+3. Run `docker compose up -d`.
+
+## Paid apps
+
+LinkedIn Pro and WhatsApp Pro are paid apps of Rerun Cloud. They are in the catalog but switched off. For the same jobs, connect an MCP server or a Composio app. See [Open source and Cloud](/self-host/open-source-vs-cloud).

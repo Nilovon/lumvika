@@ -1,0 +1,97 @@
+---
+title: "Apps"
+description: "Search the app library and declare integrations on a coworker."
+---
+
+An app is a ready-made integration from the Rerun library: Stripe, Gmail, Notion, Slack and hundreds more. Declaring one on a coworker gives it that service tools. See [Apps](/agents/apps) for the concept.
+
+<Warning>
+  No credential ever goes through the API. `attach_connector` takes no secret, by design. Never ask anyone for an API key, a password or a token: the account owner finishes the connection in the Rerun app.
+</Warning>
+
+## search_connectors
+
+Semantic search over the library. Describe the capability in natural language.
+
+<ParamField body="query" type="string">
+  For example `send emails` or `read a CRM`.
+</ParamField>
+
+<ParamField body="category" type="string">
+  One of `payments`, `ecommerce`, `crm`, `marketing`, `seo`, `analytics`, `dev`, `productivity`, `other`.
+</ParamField>
+
+Each result carries `slug`, `name`, `category`, `summary`, `setup` and `setupReason`. Use the `slug` with `attach_connector`.
+
+`setup` tells you what declaring it will leave behind:
+
+| Value | Meaning |
+| --- | --- |
+| `active` | Works straight away, no credential needed |
+| `needs_auth` | Waiting for a sign-in |
+| `needs_config` | Waiting for a credential, or for the owner to pick between several ways to connect |
+
+This search returns the best matches only. Use `list_connectors` when you need to know whether something exists at all.
+
+## list_connectors
+
+Walks the whole library page by page, in a stable order.
+
+<ParamField body="category" type="string" />
+
+<ParamField body="limit" type="number">
+  Default `60`, maximum `200`.
+</ParamField>
+
+<ParamField body="offset" type="number">
+  Default `0`.
+</ParamField>
+
+Returns `total` alongside the page, so you know when you are done. Use it to prove an app is absent, which a semantic search can never do.
+
+## list_agent_connectors
+
+Lists the apps declared on a coworker with their real status and the tool names each one contributes.
+
+<ParamField body="agentId" type="string" required />
+
+This is the truth, whatever the catalog predicted at search time.
+
+An app can be connected several times, one account each. Every row carries its `key`, the bare slug for the first account and `slug@id` for the others, and the `label` that tells the accounts apart.
+
+## attach_connector
+
+Declares an app on a coworker.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="slug" type="string" required>
+  Catalog slug, from `search_connectors`.
+</ParamField>
+
+<ParamField body="newInstance" type="boolean">
+  Add another account of an app that supports several. Ignored for an app limited to one account.
+</ParamField>
+
+When the app needs no credential and no sign-in, it is installed right away. Otherwise it is recorded as pending, and the account owner finishes the connection from the Rerun app, in the coworker panel under **Apps**.
+
+The response carries the resulting `status`, the `key` of the account it declared, the available `authMethods` when one is still pending, and a `message` describing what is left to do.
+
+<Note>
+  Declaring an app on a coworker that will become a template is exactly the intended use. The person installing the template connects their own account.
+</Note>
+
+## detach_connector
+
+Removes an app from a coworker: its tools, its credentials and the skill it installed.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="key" type="string">
+  Account key from `list_agent_connectors`, for example `gmail@k3x9ab`. Targets one account of an app connected several times.
+</ParamField>
+<ParamField body="slug" type="string">
+  Catalog slug. Removes the first account of the app. Pass `key` or `slug`.
+</ParamField>
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`.
+</ParamField>

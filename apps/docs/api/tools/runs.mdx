@@ -1,0 +1,94 @@
+---
+title: "Messages and runs"
+description: "Talk to a coworker, then read what it actually did."
+---
+
+A run is one execution of a coworker. These three tools are how you test a coworker without first inventing a routine for it, and how you find out why the answer was not what you expected.
+
+## send_message
+
+Talks to a coworker and waits for its answer.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="message" type="string" required />
+
+<ParamField body="sessionId" type="string">
+  Continue an earlier conversation. Omit to start a new one.
+</ParamField>
+
+<ParamField body="waitSeconds" type="number">
+  How long to wait for the answer. Default `120`, maximum `600`.
+</ParamField>
+
+If the coworker is still working when the wait runs out, the call returns `status: "running"` with a `runId`, a `note`, and the run carries on in the background. Poll `get_run` for the result.
+
+```json Response
+{
+  "runId": "…",
+  "status": "done",
+  "sessionId": "…",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "trigger": "api",
+  "steps": 7,
+  "inputTokens": 18422,
+  "outputTokens": 913,
+  "totalTokens": 19335,
+  "costUsd": 0.0741,
+  "startedAt": "2026-08-15T09:12:04.000Z",
+  "finishedAt": "2026-08-15T09:12:41.000Z",
+  "error": null,
+  "output": "Done. I added 14 rows to the leads table and flagged 3 duplicates."
+}
+```
+
+<Note>
+  A coworker can pause mid-run to ask you something or request an approval. When that happens the run finishes with the question waiting in the app, and `output` carries the coworker last message. See [Human in the loop](/agents/human-in-the-loop).
+</Note>
+
+## list_runs
+
+Recent executions of a coworker, newest first.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="limit" type="number">
+  Default `20`, maximum `200`.
+</ParamField>
+
+Each run carries the same fields as the response above, without `output`. Use it to see whether a scheduled task or a webhook actually did anything.
+
+The `trigger` field tells you where the run came from: `chat`, `api`, `schedule:<slug>` or `trigger:<slug>`.
+
+## get_run
+
+One execution: its status, output, error, token usage and cost.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="runId" type="string" required />
+
+<ParamField body="includeToolCalls" type="boolean">
+  Also return every tool the coworker called, with its input and its result. Each `input` and `result` keeps its first 2,000 characters; a longer one ends with `… [truncated] N more chars elided to save context`, and the full payload is not available over the API.
+</ParamField>
+
+```json Response with includeToolCalls
+{
+  "runId": "…",
+  "status": "error",
+  "error": "App notion is not connected",
+  "output": null,
+  "toolCalls": [
+    {
+      "step": 1,
+      "tool": "memory_recall",
+      "input": "{\"query\":\"weekly report format\"}",
+      "result": "{\"memories\":[…]}",
+      "isError": false,
+      "durationMs": 82
+    }
+  ]
+}
+```
+
+Run statuses are `running`, `done`, `error` and `cancelled`. `costUsd` is the model cost of that run, and is `null` while it is still running.

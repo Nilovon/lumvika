@@ -1,0 +1,14 @@
+# Server Actions
+
+ALWAYS prefer Server Actions over API routes for data fetching and mutations.
+
+Use `'use server'` at the top of the file or function.
+
+Server Actions should be placed in:
+- `actions.ts` files co-located with components
+- Or dedicated `@/actions/` folder for shared actions
+
+Only use API routes when:
+- External webhooks need to call the endpoint
+- Third-party services require a REST endpoint
+- You need specific HTTP headers/status codes control

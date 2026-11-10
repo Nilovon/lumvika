@@ -1,0 +1,51 @@
+---
+description: Dialog components must use DialogTrigger with children, not external open/onOpenChange state
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# Dialog Trigger Pattern
+
+ALWAYS use `DialogTrigger` with `children` for dialog components. The dialog manages its own `open` state internally.
+
+NEVER pass `open` / `onOpenChange` props from a parent — the parent wraps its trigger element as children instead.
+
+```tsx
+// ❌ BAD — parent manages open state
+function MyDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>...</DialogContent>
+        </Dialog>
+    )
+}
+
+function Parent() {
+    const [open, setOpen] = useState(false)
+    return (
+        <>
+            <Button onClick={() => setOpen(true)}>Open</Button>
+            <MyDialog open={open} onOpenChange={setOpen} />
+        </>
+    )
+}
+
+// ✅ GOOD — dialog owns its state, trigger is children
+function MyDialog({ children }: { children: React.ReactNode }) {
+    const [open, setOpen] = useState(false)
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>...</DialogContent>
+        </Dialog>
+    )
+}
+
+function Parent() {
+    return (
+        <MyDialog>
+            <Button>Open</Button>
+        </MyDialog>
+    )
+}
+```

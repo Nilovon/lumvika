@@ -1,0 +1,122 @@
+"use client"
+
+import * as React from "react"
+import { Tooltip as TooltipPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+
+function TooltipProvider({
+  delayDuration = 0,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return (
+    <TooltipPrimitive.Provider
+      data-slot="tooltip-provider"
+      delayDuration={delayDuration}
+      {...props}
+    />
+  )
+}
+
+function Tooltip({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+}
+
+function TooltipTrigger({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}
+
+function TooltipContent({
+  className,
+  sideOffset = 0,
+  children,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 inline-flex w-fit max-w-xs origin-(--radix-tooltip-content-transform-origin) items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground" />
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
+  )
+}
+
+function TooltipLabeled({
+  label,
+  children,
+  side,
+  align,
+  delayDuration,
+  contentClassName,
+  ...props
+}: {
+  label: React.ReactNode
+  children: React.ReactNode
+  side?: React.ComponentProps<typeof TooltipContent>["side"]
+  align?: React.ComponentProps<typeof TooltipContent>["align"]
+  delayDuration?: number
+  contentClassName?: string
+} & Omit<React.ComponentProps<typeof TooltipContent>, "children" | "className">) {
+  return (
+    <TooltipProvider delayDuration={delayDuration}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent
+          side={side}
+          align={align}
+          className={contentClassName}
+          {...props}
+        >
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+// A tooltip that only exists to say why a control is off. `buttonVariants` carries
+// `disabled:pointer-events-none`, so a disabled button emits no hover of its own: the trigger has
+// to be a wrapper around it, and that wrapper takes the focus the disabled control cannot.
+function TooltipDisabledReason({
+  reason,
+  children,
+  side,
+  className,
+}: {
+  reason?: string
+  children: React.ReactNode
+  side?: React.ComponentProps<typeof TooltipContent>["side"]
+  className?: string
+}) {
+  if (!reason) return <>{children}</>
+
+  return (
+    <TooltipLabeled label={reason} side={side}>
+      <span tabIndex={0} className={cn("inline-flex cursor-not-allowed rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50", className)}>
+        {children}
+      </span>
+    </TooltipLabeled>
+  )
+}
+
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipDisabledReason,
+  TooltipLabeled,
+  TooltipProvider,
+  TooltipTrigger,
+}

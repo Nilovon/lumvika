@@ -1,0 +1,154 @@
+---
+description: Vercel AI SDK structured data generation patterns
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: false
+---
+
+# AI SDK - Structured Data Generation
+
+`generateObject` is DEPRECATED. Use `generateText` with `Output.object()` instead.
+
+## Output types
+
+### `Output.object()` — structured object from a Zod schema
+
+```typescript
+// ❌ NEVER
+import { generateObject } from 'ai'
+const { object } = await generateObject({
+    model: anthropic('claude-sonnet-4-6'),
+    schema: mySchema,
+    prompt: '...',
+})
+
+// ✅ ALWAYS
+import { generateText, Output } from 'ai'
+import { z } from 'zod'
+
+const { output } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.object({ schema: z.object({ name: z.string() }) }),
+    prompt: '...',
+})
+if (!output) throw new Error('Failed to generate object')
+```
+
+### `Output.array()` — array of typed objects
+
+```typescript
+import { generateText, Output } from 'ai'
+import { z } from 'zod'
+
+const { output } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.array({
+        element: z.object({ location: z.string(), temperature: z.number() }),
+    }),
+    prompt: '...',
+})
+```
+
+When streaming, use `elementStream` to receive each completed element:
+
+```typescript
+import { streamText, Output } from 'ai'
+
+const { elementStream } = streamText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.array({ element: z.object({ name: z.string() }) }),
+    prompt: '...',
+})
+
+for await (const element of elementStream) {
+    console.log(element)
+}
+```
+
+### `Output.choice()` — classification / fixed enum
+
+```typescript
+import { generateText, Output } from 'ai'
+
+const { output } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.choice({ options: ['positive', 'negative', 'neutral'] }),
+    prompt: 'Classify the sentiment of this text: ...',
+})
+// output is one of the options, validated
+```
+
+### `Output.json()` — unstructured JSON (no schema validation)
+
+```typescript
+import { generateText, Output } from 'ai'
+
+const { output } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.json(),
+    prompt: '...',
+})
+```
+
+### `Output.text()` — plain text (default)
+
+```typescript
+import { generateText, Output } from 'ai'
+
+const { output } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.text(),
+    prompt: '...',
+})
+```
+
+## Property descriptions
+
+Use `.describe()` on Zod fields to guide the model:
+
+```typescript
+z.object({
+    name: z.string().describe('The full name of the person'),
+    age: z.number().describe('Age in years'),
+})
+```
+
+## Output name & description
+
+```typescript
+Output.object({
+    name: 'Recipe',
+    description: 'A recipe for a dish.',
+    schema: z.object({ ... }),
+})
+```
+
+## Error handling
+
+```typescript
+import { generateText, Output, NoObjectGeneratedError } from 'ai'
+
+try {
+    await generateText({ model, output: Output.object({ schema }), prompt })
+} catch (error) {
+    if (NoObjectGeneratedError.isInstance(error)) {
+        console.log('Cause:', error.cause)
+        console.log('Text:', error.text)
+        console.log('Response:', error.response)
+        console.log('Usage:', error.usage)
+    }
+}
+```
+
+## Combining with tools
+
+```typescript
+import { generateText, Output, tool, stepCountIs } from 'ai'
+
+const { output } = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    tools: { myTool: tool({ ... }) },
+    output: Output.object({ schema }),
+    stopWhen: stepCountIs(5), // structured output counts as a step
+    prompt: '...',
+})
+```

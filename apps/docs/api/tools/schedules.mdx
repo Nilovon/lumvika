@@ -1,0 +1,79 @@
+---
+title: "Scheduled tasks"
+description: "Give a coworker a cron or a one-off run, and fire it on demand to test it."
+---
+
+A scheduled task runs a coworker with no user message. Its body is the instruction the coworker receives when it fires. See [Automations](/agents/automations) for the concept.
+
+## list_schedules
+
+Lists a coworker scheduled tasks in full: `slug`, `name`, `body`, `cron` or `runAt`, `timezone`, the connection and model of its own when it has one, enabled state and last run.
+
+<ParamField body="agentId" type="string" required />
+
+This is how you audit what an existing scheduled task actually does.
+
+## upsert_schedule
+
+Creates a scheduled task, or updates it when `slug` is given.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="slug" type="string">
+  Omit to create. Pass an existing slug to update.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Required when creating. The slug is derived from it.
+</ParamField>
+
+<ParamField body="body" type="string">
+  Required when creating. The instruction sent to the coworker when the task fires, written as if you were talking to it.
+</ParamField>
+
+<ParamField body="cron" type="string">
+  Standard 5-field cron, for example `0 9 * * 1` for every Monday at 9. Required when creating unless you pass `runAt`.
+</ParamField>
+
+<ParamField body="runAt" type="string">
+  ISO date for a one-off run. The task disables itself after it fires.
+</ParamField>
+
+<ParamField body="timezone" type="string">
+  IANA timezone, for example `Europe/Paris`. Without it, the cron is read in the timezone of your machine.
+</ParamField>
+
+<ParamField body="description" type="string" />
+
+<ParamField body="enabled" type="boolean" />
+
+<ParamField body="connectionId" type="string">
+  Run this one on a given AI connection, by its id from [`list_ai_connections`](/api/tools/agents#list_ai_connections). Goes with `model`.
+</ParamField>
+
+<ParamField body="model" type="string | null">
+  Run this one on a model of its own. Omit it and it runs whatever its coworker runs. Pass `null` to go back to that.
+</ParamField>
+
+<Warning>
+  Two things to know. The slug is derived from the name and is what `run_schedule_now` and `delete_schedule` address, so read it back from the response. And an update can change a cron but cannot clear it, nor turn a recurring task into a one-off: delete and recreate for that.
+</Warning>
+
+## run_schedule_now
+
+Fires a scheduled task immediately, without waiting for its cron.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+
+It works on a disabled task, does not enable it, and does not touch its last-run date. That makes it safe for testing an instruction before putting the task live.
+
+Returns a `runId`. Read the outcome with [`get_run`](/api/tools/runs#get-run).
+
+## delete_schedule
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`.
+</ParamField>

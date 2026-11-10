@@ -1,0 +1,82 @@
+{
+  "expo": {
+    "name": "Rerun",
+    "slug": "rerun",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "rerun",
+    "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "ios": {
+      "bundleIdentifier": "build.rerun.app",
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "deploymentTarget": "26.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "NSLocalNetworkUsageDescription": "Rerun connects to a Rerun server on your local network when you choose one.",
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rerun uses your photo library to attach photos to a message.",
+          "cameraPermission": "Rerun uses the camera to attach a photo to a message."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Rerun uses the microphone to record voice messages."
+        }
+      ],
+      "./plugins/with-home-launch-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f8f8f8",
+          "dark": {
+            "backgroundColor": "#0a0a0a"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "26.0"
+          }
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.530380179314-likpnhr06isv0ucqs86c4bgpt0oi91c5"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "platforms": [
+      "ios"
+    ]
+  }
+}

@@ -1,0 +1,194 @@
+---
+title: "Troubleshooting"
+description: "The problems people meet when hosting Rerun, what causes them, and the fix."
+---
+
+Start with the logs. Most problems say their cause there in one line.
+
+```bash
+docker compose logs --since 30m app engine
+```
+
+## "We could not send your code. Try again."
+
+The sign-in stopped before sending any email: the app could not read the database. Either the schema was never applied, or `SUPABASE_SECRET_KEY` holds the publishable key instead of the secret one. The check says which, and what to run:
+
+```bash
+node scripts/self-host-check.mjs
+```
+
+The app logs name the cause too, on a line starting with `[email-sign-up]`:
+
+```bash
+docker compose logs app | grep email-sign-up
+```
+
+`Could not find the function public.check_email_exists` means the schema is missing, `permission denied` means the wrong key. After fixing `.env`, run `docker compose up -d`.
+
+## No sign-in code arrives
+
+**With `npx supabase start`**, no email leaves your computer. Every code lands in Mailpit, at [http://localhost:54424](http://localhost:54424).
+
+**With open source Supabase on your server**, emails go through the SMTP server of `supabase-stack/.env`, and `docker logs supabase-auth` shows why one failed.
+
+**With a project on supabase.com**, check in this order:
+
+1. **The mailer.** Set up your own SMTP server in **Authentication > Emails > SMTP Settings**. On the Free plan, a project that keeps Supabase's own mailer cannot edit its templates, so the email arrives without the code. That mailer also sends only 2 emails an hour, and only to the members of your Supabase organization.
+2. **The template.** Once SMTP is saved, the email must carry the code, `{{ .Token }}`. Supabase's default templates only carry a link. Paste the [Rerun template](/self-host/install#2-set-up-supabase) into **Magic Link**, **Confirm signup** and **Change Email Address**.
+3. **The logs.** **Logs > Auth** in the Supabase dashboard shows each email Supabase tried to send, and why it failed.
+4. **The spam folder**, with the built-in mailer especially.
+
+If the code arrives but is refused, it may have expired (15 minutes with the Rerun settings), or **Email OTP Length** is not 6.
+
+## The sign-in dialog fails, or "Anonymous sign-in failed" in the logs
+
+A visitor starts as an anonymous user, and signing up turns that user into an account. On a project on supabase.com, turn on **Allow anonymous sign-ins** in **Authentication > Sign In / Providers**, and keep **Confirm email** on.
+
+## "permission denied" from Postgres
+
+The database is missing migrations. The schema is built by every file of `supabase/migrations`, in order, and a single missing one leaves tables or grants out.
+
+```bash
+npx supabase migration list      # what is applied, on a linked project
+npx supabase db push             # apply what is missing, on a project on supabase.com
+npx supabase migration up        # the same, on the local stack
+```
+
+With open source Supabase, add `--db-url` and the address from [Install](/self-host/install#2-set-up-supabase) to `migration list` and to `db push --yes`.
+
+After `git pull`, run it again: a release can add migrations.
+
+Also check that `SUPABASE_SECRET_KEY` holds the secret key (service_role), not the publishable one. The app does its server-side work with it.
+
+## The app cannot reach Supabase on your machine
+
+Symptoms: the board does not load, and the app logs show `ECONNREFUSED` on port 54421.
+
+Inside the app container, `localhost` is the container itself, not your machine. Start with the profile that adds the relay:
+
+```bash
+docker compose --profile local-supabase up -d --build
+```
+
+And keep `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54421`, the address your browser uses too.
+
+## Tables are missing after `npx supabase start`
+
+If the first start failed partway, the next one reuses a database that never received the migrations: pages fail with `relation "public.services" does not exist`. Rebuild it, which erases its data:
+
+```bash
+npx supabase db reset
+```
+
+## No sign-in code in the email
+
+With open source Supabase, the default emails carry a link and no code. Serve the templates of your clone to the `auth` service, as in [Install](/self-host/install#2-set-up-supabase).
+
+## A Supabase service dies during the build
+
+The server ran out of memory: `dmesg | grep -i "out of memory"` confirms it. Add swap or memory, as in [Install](/self-host/install#2-set-up-supabase), then restart Supabase with `docker compose up -d` in its folder.
+
+## The build fails for lack of memory
+
+Symptoms: `Killed`, exit code `137`, or `JavaScript heap out of memory` while building the app.
+
+The app build needs about 6 GB of memory. In Docker Desktop, raise it in **Settings > Resources > Memory**. On a small VPS, add swap, or build the image on another machine.
+
+## Changing `.env` changed nothing
+
+Values starting with `NEXT_PUBLIC_`, and `ADMIN_EMAILS`, are baked into the app when it is built. Rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+Any other value only needs `docker compose up -d`, which recreates the containers with the new `.env`.
+
+## "This workspace has no server yet", or a coworker "could not be built"
+
+The engine docker compose started already belongs to another workspace. It goes to the first workspace that needs an engine, which can be a workspace you created while trying things out.
+
+Either [pair a server](/self-host/servers#add-a-server) for this workspace, or free the compose engine in Supabase Studio (see [Common tasks](/self-host/administration#common-tasks)) and place a coworker again.
+
+## The app cannot reach your server
+
+The pairing says: "The app cannot reach your server at ...". The app checks the address before attaching the server, from inside its own container.
+
+- **The address.** Is it the one in the message? Without `RERUN_PUBLIC_URL`, the app guesses from where the request came from, which is wrong behind a proxy, a NAT or a tunnel. Set `RERUN_PUBLIC_URL` in the command.
+- **The port.** The command publishes the engine on port 3000 with `-p 3000:3000`. Check nothing else holds it.
+- **The firewall.** Open port 3000 to the app's machine only, or use HTTPS behind a proxy. See [Networking](/self-host/servers#networking).
+- **Tailscale.** Both machines on the same tailnet, and the server's Tailscale IP as the address, not its MagicDNS name.
+
+Run `curl http://<address>/health` from the app's machine: it must answer before the pairing can.
+
+## The server cannot reach the app
+
+The server logs say `pairing not done yet` a few times, then `pairing failed`.
+
+`RERUN_HUB_URL` in the command is your `NEXT_PUBLIC_APP_URL`. When it is `http://localhost:3000`, a server elsewhere cannot reach it, and a container on the same machine reaches itself. Give the app an address the server can reach, rebuild, and click **Add server** again.
+
+## The pairing token expired, or was already used
+
+A token works once, for 15 minutes, for one workspace. Click **Add server** again for a new command, then:
+
+```bash
+docker rm -f rerun-engine
+```
+
+and run the new command. The volume keeps its data.
+
+## A coworker answers "Set OPENROUTER_API_KEY to run the Rerun models"
+
+The coworker is on a Rerun model, and the app has no OpenRouter key. Either:
+
+- put your key in `OPENROUTER_API_KEY` in `.env` and run `docker compose up -d`, or
+- connect another provider in **AI providers** and pick it in the coworker's model picker. See [AI models](/self-host/models).
+
+## A coworker on your own model answers "Could not reach the custom endpoint"
+
+The engine could not reach the server of a **Custom endpoint** connection. The message names the address it tried.
+
+- Check the server is running: `curl http://localhost:11434/v1/models` on its machine should list the models.
+- The engine runs in a container: `localhost` there is the container. Use `host.docker.internal` (the Compose file maps it) or the machine's network address.
+- Ollama on Linux only listens on `127.0.0.1` by default: start it with `OLLAMA_HOST=0.0.0.0`.
+
+If the model answers but forgets its instructions, its context is too small. See [Your own model](/self-host/models#your-own-model).
+
+## The Foreman does not answer
+
+With `OPENROUTER_API_KEY` set, the Foreman walks a new workspace through its onboarding on that key: look for `[llm]` or OpenRouter errors in `docker compose logs app`, an empty balance or a spending limit on the key stops it too.
+
+Without the key, the Foreman skips the onboarding and runs on the AI you connect. If it answers "Set OPENROUTER_API_KEY to run the Rerun models", connect a provider or your Claude or ChatGPT plan from its model picker and pick it.
+
+## A Composio app does not connect
+
+**"Composio connections are not configured on this server"**: set `COMPOSIO_API_KEY` and run `docker compose up -d`.
+
+**An error from Composio when you click Connect**: the service has no auth config of yours yet. The ids shipped in the catalog are empty. Create one in Composio and write its id on the service. See [Composio](/self-host/services#composio).
+
+## The screen does not show
+
+The browser opens a coworker's screen directly on the server's address, over `ws://` or `wss://`.
+
+- **The engine started by docker compose** needs `RERUN_ENGINE_BROWSER_URL`: its `https` domain on a server, as in [On a server](/self-host/install#on-a-server).
+- **Your browser must reach the server.** On Tailscale, the person watching must be on the tailnet too.
+- **HTTPS on both sides.** When the app is on `https://`, the server must be too, or the browser blocks the connection. Put it behind [Caddy](/self-host/servers#networking).
+- **The screen was turned off** with `RERUN_DESKTOP=off` on the server.
+
+## Web search does not work
+
+Coworkers search the web through Brave. Set `BRAVE_SEARCH_API_KEY` and run `docker compose up -d`.
+
+## An engine misbehaves after an update
+
+Check its data-dir. The command changes nothing:
+
+```bash
+docker compose exec engine node dist/cli/bin.js doctor
+```
+
+`/health` also reports `dataVersion` against `dataVersionTarget`. An engine older than its data-dir leaves the data untouched and boots: update the engine image rather than restoring an older archive.
+
+## Still stuck
+
+Open an issue on [GitHub](https://github.com/rerun-build/rerun/issues) with what you ran, what you expected, and the output of `docker compose logs --since 30m app engine`. Remove keys and tokens first.

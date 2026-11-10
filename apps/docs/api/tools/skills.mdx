@@ -1,0 +1,108 @@
+---
+title: "Skills"
+description: "Read and write the procedures a coworker loads on demand."
+---
+
+A skill is a written procedure the coworker loads when the task matches its description. It is a folder: a markdown body plus optional reference files. See [Skills](/agents/skills) for the concept.
+
+A skill an [app](/agents/apps) installed belongs to that app. It reads like any other, and every write is refused. Reconfigure the app to change it, or create a skill of your own next to it.
+
+## list_skills
+
+<ParamField body="agentId" type="string" required />
+
+Returns each skill with its `slug`, `name`, `description` and the list of reference `files` it carries. A skill installed by an app also carries `connector`, the slug of the service that owns it, and `readOnly: true`.
+
+## get_skill
+
+Reads one skill in full: its `body`, plus every reference file it carries with its size in bytes. The content of those files is not included, since a skill can bundle a corpus: read one with [read_skill_file](#read-skill-file) when the body points at it.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+
+```json Response
+{
+  "slug": "weekly-report",
+  "name": "Weekly report",
+  "description": "Use when asked for the weekly numbers.",
+  "body": "1. Query the `sales` table…",
+  "files": [{ "path": "references/format.md", "bytes": 1240 }]
+}
+```
+
+A skill installed by an app also carries `connector` and `readOnly: true`.
+
+## read_skill_file
+
+Reads one 100,000-character page of a reference file bundled with a skill. One file per call.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+<ParamField body="path" type="string" required>
+  Path inside the skill folder, as returned by `get_skill`, e.g. `references/format.md`.
+</ParamField>
+<ParamField body="offset" type="integer">
+  Character offset to start at. Omit it for the first page, then pass the returned `nextOffset` to continue.
+</ParamField>
+
+Returns `{ slug, path, content, offset, nextOffset, totalChars, truncated }`. `truncated` is `true` and `nextOffset` is non-null when another page remains. `SKILL.md` is not readable this way: it is the body `get_skill` already returns.
+
+Reach for it before rewriting a reference file, since `upsert_skill` replaces a file whole.
+
+## upsert_skill
+
+Creates a skill, or replaces the one with the same name.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="name" type="string" required>
+  The skill name. The slug is derived from it.
+</ParamField>
+
+<ParamField body="body" type="string" required>
+  The procedure, in markdown.
+</ParamField>
+
+<ParamField body="description" type="string">
+  What makes the coworker decide to load this skill, so state when to use it. This is the only line the coworker sees before opening the skill.
+</ParamField>
+
+<ParamField body="slug" type="string">
+  The existing skill to update, when the name is changing too. Without it, a new name creates a second skill.
+</ParamField>
+
+<ParamField body="files" type="object[]">
+  Reference documents the body can point to, which keeps the body short. Each entry needs `path` and `content`, and is written whole. Files already on the skill and not listed again are kept.
+</ParamField>
+
+<ParamField body="removeFiles" type="string[]">
+  Reference files to delete, e.g. `["references/old.md"]`. A path cannot be in both `files` and `removeFiles`.
+</ParamField>
+
+```json Request arguments
+{
+  "agentId": "…",
+  "name": "Weekly report",
+  "description": "Use when asked for the weekly numbers, on Monday or on demand.",
+  "body": "1. Query the `sales` table for the last 7 days\n2. Follow `references/format.md`\n3. Send the report to the shared space",
+  "files": [{ "path": "references/format.md", "content": "# Report format\n…" }]
+}
+```
+
+The body and `files` are written in one atomic swap: if that write fails, nothing changed. `removeFiles` is checked before the write and applied after it, so a deletion that fails leaves the new body written and that file still in place.
+
+A skill an app installed is refused, whether you name its `slug` or pass a `name` that lands on it. The error names the app that owns it.
+
+An imported skill can carry up to 200 reference files. Each text file can be up to 10 MB, and the complete skill can be up to 50 MB including `SKILL.md`.
+
+Editing an existing reference file is a round trip: `get_skill` to see what the skill carries, `read_skill_file` to get the current content, then `upsert_skill` with the new content for that `path`.
+
+## delete_skill
+
+Deletes a skill and its reference files. A skill an app installed is refused: detach that app to remove its skill.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="slug" type="string" required />
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`.
+</ParamField>

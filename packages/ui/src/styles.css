@@ -1,0 +1,398 @@
+/* CSS partagé du package @rerun/ui.
+   Importer une fois par app : @import "@rerun/ui/styles.css"; */
+
+@import "./theme.css";
+@import "./iso-grid/styles.css";
+@import "./foreman/styles.css";
+
+/* Logos de marque et reflets de la boîte <Icon>. Les couleurs source sont le rendu par défaut.
+   Seuls les assets classés trop sombres utilisent --dark-brand-icon-filter sur une surface sombre,
+   et les assets classés trop clairs --light-brand-icon-filter sur une surface claire.
+   `--icon-glint` est un triplet rgb, pas une couleur. En clair le glint et la grille sont noirs sur
+   fond quasi blanc : à intensité égale ils portent davantage, d'où des opacités plus basses. */
+:root,
+.light {
+    --icon-glint: 0 0 0;
+    --icon-glint-core: 0.05;
+    --icon-glint-halo: 0.012;
+    --icon-grid-opacity: 0.15;
+    --logo-grid-opacity: 0.2;
+    --dark-brand-icon-filter: none;
+    --light-brand-icon-filter: brightness(0);
+    --logo-shimmer-bright: rgb(0 0 0 / 0.16);
+    --logo-shimmer-dim: rgb(0 0 0 / 0.07);
+    --stripes-ink: rgb(0 0 0 / 0.03);
+    --stripes-gutter-ink: rgb(0 0 0 / 0.045);
+}
+
+.dark {
+    --icon-glint: 255 255 255;
+    --icon-glint-core: 0.18;
+    --icon-glint-halo: 0.04;
+    --icon-grid-opacity: 0.25;
+    --logo-grid-opacity: 0.35;
+    --dark-brand-icon-filter: brightness(0) invert(1);
+    --light-brand-icon-filter: none;
+    --logo-shimmer-bright: rgb(255 255 255 / 0.65);
+    --logo-shimmer-dim: rgb(255 255 255 / 0.12);
+    --stripes-ink: rgb(255 255 255 / 0.025);
+    --stripes-gutter-ink: rgb(255 255 255 / 0.075);
+}
+
+/* Balayage shimmer sur du texte (composant TextShimmer) */
+@keyframes text-shimmer {
+    0% { background-position: 100% center; }
+    100% { background-position: 0% center; }
+}
+
+/* Bordure conic-gradient masquée (composant BorderBeam).
+   L'overlay remplit le parent (qui doit être position:relative) et n'affiche que
+   l'anneau de largeur --beam-w grâce au masque content-box / mask-composite. */
+@property --border-beam-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+}
+
+@keyframes border-beam-spin {
+    to { --border-beam-angle: 360deg; }
+}
+
+.border-beam {
+    position: absolute;
+    /* `inset: 0` cale l'overlay sur la boîte de padding du parent : sur un parent bordé, l'anneau
+       tombe DANS la bordure (double trait) et le `border-radius: inherit`, calculé pour la boîte
+       externe, ne suit plus la courbure. --beam-outset (= l'épaisseur de bordure du parent) le
+       ramène sur la boîte externe. */
+    inset: calc(-1 * var(--beam-outset, 0px));
+    /* Un parent en `space-y-*` pose une marge sur tous ses enfants sauf le dernier, y compris sur
+       cet overlay : la marge rogne alors la boîte résolue par `inset` et l'anneau s'arrête avant le
+       bas du bloc, ce qui se lit comme un padding bottom manquant. */
+    margin: 0 !important;
+    padding: var(--beam-w, 1px);
+    pointer-events: none;
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* Forme du dégradé : anneau plein alterné vs deux arcs qui balaient. */
+.border-beam--ring {
+    background: conic-gradient(
+        from var(--border-beam-angle),
+        var(--beam-2), var(--beam-1), var(--beam-2), var(--beam-1), var(--beam-2)
+    );
+}
+
+.border-beam--arcs {
+    background: conic-gradient(
+        from var(--border-beam-angle),
+        var(--beam-2) 0%,
+        var(--beam-1) 10%,
+        var(--beam-2) 22%,
+        var(--beam-2) 50%,
+        var(--beam-1) 60%,
+        var(--beam-2) 72%,
+        var(--beam-2) 100%
+    );
+}
+
+/* Couleurs : --beam-1 = teinte claire (celle qui "glow"), --beam-2 = base.
+   Couplées forme×ton pour reproduire à l'identique les variantes d'origine. */
+.border-beam--ring.border-beam--brand { --beam-1: #b7a8ff; --beam-2: var(--color-brand, #4d34f7); }
+.border-beam--ring.border-beam--white { --beam-1: rgba(255, 255, 255, 0.55); --beam-2: #fff; }
+.border-beam--ring.border-beam--neutral { --beam-1: rgba(0, 0, 0, 0.06); --beam-2: rgba(0, 0, 0, 0.18); }
+.dark .border-beam--ring.border-beam--neutral { --beam-1: rgba(255, 255, 255, 0.08); --beam-2: rgba(255, 255, 255, 0.35); }
+.border-beam--ring.border-beam--green { --beam-1: rgba(52, 211, 153, 0.55); --beam-2: #34d399; }
+.border-beam--ring.border-beam--red { --beam-1: rgba(248, 113, 113, 0.55); --beam-2: #f87171; }
+.border-beam--ring.border-beam--orange { --beam-1: rgba(251, 146, 60, 0.6); --beam-2: #f97316; }
+.border-beam--ring.border-beam--cyan { --beam-1: rgba(34, 211, 238, 0.55); --beam-2: #22d3ee; }
+.border-beam--ring.border-beam--yellow { --beam-1: rgba(250, 204, 21, 0.6); --beam-2: #facc15; }
+html:not(.dark) .border-beam--ring.border-beam--yellow { --beam-1: rgba(202, 138, 4, 0.45); --beam-2: #ca8a04; }
+
+.border-beam--arcs.border-beam--brand { --beam-1: #b7a8ff; --beam-2: color-mix(in oklab, #b7a8ff 20%, transparent); }
+.border-beam--arcs.border-beam--white { --beam-1: rgba(255, 255, 255, 1); --beam-2: rgba(255, 255, 255, 0.16); }
+html:not(.dark) .border-beam--arcs.border-beam--white { --beam-1: rgba(0, 0, 0, 0.9); --beam-2: rgba(0, 0, 0, 0.12); }
+.border-beam--arcs.border-beam--neutral { --beam-1: rgba(0, 0, 0, 0.4); --beam-2: rgba(0, 0, 0, 0.08); }
+.dark .border-beam--arcs.border-beam--neutral { --beam-1: rgba(255, 255, 255, 0.55); --beam-2: rgba(255, 255, 255, 0.1); }
+.border-beam--arcs.border-beam--green { --beam-1: #34d399; --beam-2: color-mix(in oklab, #34d399 20%, transparent); }
+.border-beam--arcs.border-beam--red { --beam-1: #f87171; --beam-2: color-mix(in oklab, #f87171 20%, transparent); }
+.border-beam--arcs.border-beam--orange { --beam-1: #f97316; --beam-2: rgba(249, 115, 22, 0.22); }
+.border-beam--arcs.border-beam--cyan { --beam-1: #22d3ee; --beam-2: color-mix(in oklab, #22d3ee 20%, transparent); }
+.border-beam--arcs.border-beam--yellow { --beam-1: #facc15; --beam-2: color-mix(in oklab, #facc15 20%, transparent); }
+
+/* Badge (composant Badge) : couleur du texte (--badge-fg) + fond soft (--badge-soft)
+   par ton, alignés sur les couleurs du BorderBeam. */
+.badge-beam { color: var(--badge-fg, currentColor); }
+.badge-beam--brand { --badge-fg: var(--color-brand, #4d34f7); --badge-soft: color-mix(in oklab, var(--color-brand, #4d34f7) 10%, transparent); }
+.dark .badge-beam--brand { --badge-fg: #b7a8ff; }
+.badge-beam--white { --badge-fg: #fff; --badge-soft: rgba(255, 255, 255, 0.08); }
+html:not(.dark) .badge-beam--white { --badge-fg: #111; --badge-soft: rgba(0, 0, 0, 0.05); }
+.badge-beam--neutral { --badge-fg: rgba(0, 0, 0, 0.7); --badge-soft: rgba(0, 0, 0, 0.05); }
+.dark .badge-beam--neutral { --badge-fg: rgba(255, 255, 255, 0.8); --badge-soft: rgba(255, 255, 255, 0.07); }
+.badge-beam--green { --badge-fg: #34d399; --badge-soft: color-mix(in oklab, #34d399 12%, transparent); }
+.badge-beam--red { --badge-fg: #f87171; --badge-soft: color-mix(in oklab, #f87171 12%, transparent); }
+.badge-beam--orange { --badge-fg: #f97316; --badge-soft: color-mix(in oklab, #f97316 12%, transparent); }
+.badge-beam--cyan { --badge-fg: #0e7490; --badge-soft: color-mix(in oklab, #22d3ee 12%, transparent); }
+.dark .badge-beam--cyan { --badge-fg: #22d3ee; }
+.badge-beam--yellow { --badge-fg: #facc15; --badge-soft: color-mix(in oklab, #facc15 12%, transparent); }
+html:not(.dark) .badge-beam--yellow { --badge-fg: #a16207; --badge-soft: color-mix(in oklab, #eab308 14%, transparent); }
+
+/* Animation (rotation de l'angle du dégradé) et glow optionnel. */
+.border-beam--spin {
+    animation: border-beam-spin var(--beam-dur, 6s) linear infinite;
+}
+
+.border-beam--glow {
+    filter: drop-shadow(0 0 2px var(--beam-1));
+}
+
+/* Carte holographique Expert (composant @rerun/ui/experts HoloExpertCard).
+   Les couches (matrix/foil/glare/cross-field/scrim/halo) réagissent au pointeur
+   via les variables --mx/--my/--holo-* posées inline par le composant. */
+.holo-card {
+  --mx: 50%;
+  --my: 50%;
+  --holo-opacity: 0;
+  --holo-from-center: 0;
+  --holo-bgx: 50%;
+  --holo-bgy: 50%;
+  --holo-sparkle-x: 50%;
+  --holo-sparkle-y: 50%;
+  --holo-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-150 -150 812 812'%3E%3Cpath fill-rule='evenodd' fill='none' stroke='%23000' stroke-width='26' stroke-linejoin='round' d='M69.39,399.06Q55.56,391.02 55.51,375.02L54.84,134.50Q54.80,118.50 68.63,126.54L248.94,231.34Q262.78,239.38 262.82,255.38L263.51,495.88Q263.56,511.88 249.72,503.84Z M224.25,8.00Q238.11,0.00 251.94,8.04L432.37,112.89Q446.21,120.92 432.35,128.92L287.50,212.55Q273.64,220.55 259.81,212.51L79.39,107.67Q65.56,99.63 79.41,91.63Z M442.44,147.35Q456.52,139.75 456.56,155.75L456.61,173.16Q456.65,189.16 442.80,197.16L378.85,234.08Q365.00,242.08 365.04,258.08L365.55,443.00Q365.60,459.00 351.74,467.00L304.03,494.56Q290.18,502.56 290.13,486.56L289.45,245.93Q289.40,229.93 303.48,222.33Z'/%3E%3C/svg%3E");
+  transform-style: preserve-3d;
+}
+
+.holo-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.holo-matrix {
+  background: #b7a8ff;
+  -webkit-mask-image: var(--holo-logo), radial-gradient(125% 125% at 50% 38%, black 55%, transparent 100%);
+  -webkit-mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-image: var(--holo-logo), radial-gradient(125% 125% at 50% 38%, black 55%, transparent 100%);
+  mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%;
+  mask-repeat: repeat, no-repeat;
+  mask-composite: intersect;
+  opacity: calc(0.12 + var(--holo-opacity) * 0.4);
+}
+
+.holo-matrix-holo {
+  background-image:
+    radial-gradient(circle at var(--mx) var(--my), #fff 5%, #000 50%, #fff 80%),
+    linear-gradient(-45deg, #000 15%, #fff, #000 85%),
+    repeating-linear-gradient(
+      115deg,
+      hsl(248 40% 92%) 0%,
+      hsl(0 0% 100%) 22%,
+      hsl(248 45% 90%) 44%,
+      hsl(254 40% 94%) 66%,
+      hsl(248 40% 92%) 88%
+    );
+  background-blend-mode: soft-light, soft-light;
+  background-size: 130% 130%, 200% 200%, 320% 320%;
+  background-position:
+    center center,
+    var(--mx) var(--my),
+    var(--holo-bgx) var(--holo-bgy);
+  -webkit-mask-image:
+    var(--holo-logo),
+    radial-gradient(125% 125% at 50% 38%, black 55%, transparent 100%);
+  -webkit-mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%, 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat, no-repeat;
+  -webkit-mask-composite: source-in, source-in;
+  mask-image:
+    var(--holo-logo),
+    radial-gradient(125% 125% at 50% 38%, black 55%, transparent 100%);
+  mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%, 100% 100%;
+  mask-repeat: repeat, no-repeat, no-repeat;
+  mask-composite: intersect;
+  mix-blend-mode: color-dodge;
+  opacity: calc(0.12 + var(--holo-opacity) * 0.3 - var(--holo-from-center) * 0.25);
+  animation: holo-matrix-hue 9s ease-in-out infinite alternate;
+}
+
+@keyframes holo-matrix-hue {
+  from {
+    filter: saturate(0.7) brightness(0.5) contrast(1.25) hue-rotate(-4deg);
+  }
+  to {
+    filter: saturate(0.7) brightness(0.5) contrast(1.25) hue-rotate(4deg);
+  }
+}
+
+.holo-foil {
+  background:
+    repeating-linear-gradient(
+      112deg,
+      hsl(264 90% 68% / 0.34) 0%,
+      hsl(0 0% 100% / 0.3) 12%,
+      hsl(270 88% 72% / 0.28) 24%,
+      hsl(258 90% 66% / 0.32) 36%,
+      hsl(264 90% 68% / 0.34) 50%
+    ),
+    repeating-linear-gradient(
+      -56deg,
+      hsl(268 92% 70% / 0.26) 0%,
+      hsl(0 0% 100% / 0.22) 14%,
+      hsl(260 92% 68% / 0.26) 28%,
+      hsl(264 92% 68% / 0.26) 42%
+    ),
+    radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.28), transparent 58%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 260% 260%, 220% 220%, 100% 100%, 160px 160px;
+  background-position:
+    var(--holo-bgx) var(--holo-bgy),
+    var(--holo-sparkle-x) var(--holo-sparkle-y),
+    0 0,
+    0 0;
+  background-blend-mode: color-dodge, color-dodge, screen, overlay;
+  mix-blend-mode: color-dodge;
+  filter: brightness(0.92) contrast(1.2) saturate(1);
+  opacity: calc(var(--holo-opacity) * (0.08 + var(--holo-from-center) * 0.38));
+}
+
+.holo-glare {
+  background: radial-gradient(
+    circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.1) 26%,
+    transparent 52%
+  );
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--holo-opacity) * (0.16 + var(--holo-from-center) * 0.34));
+}
+
+.holo-cross-field {
+  background-image:
+    radial-gradient(circle at var(--mx) var(--my), #fff 5%, #000 50%, #fff 80%),
+    linear-gradient(-45deg, #000 15%, #fff, #000 85%),
+    repeating-linear-gradient(
+      115deg,
+      hsl(264 38% 91%) 0%,
+      hsl(0 0% 100%) 22%,
+      hsl(264 42% 90%) 44%,
+      hsl(270 38% 93%) 66%,
+      hsl(264 38% 91%) 88%
+    );
+  background-blend-mode: soft-light, soft-light;
+  background-size: 130% 130%, 200% 200%, 320% 320%;
+  background-position:
+    center center,
+    var(--mx) var(--my),
+    var(--holo-bgx) var(--holo-bgy);
+  -webkit-mask-image:
+    var(--holo-logo),
+    radial-gradient(circle at var(--mx) var(--my), black 3%, transparent 38%);
+  -webkit-mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-image:
+    var(--holo-logo),
+    radial-gradient(circle at var(--mx) var(--my), black 3%, transparent 38%);
+  mask-size: var(--holo-cell, 22px) var(--holo-cell, 22px), 100% 100%;
+  mask-repeat: repeat, no-repeat;
+  mask-composite: intersect;
+  filter: brightness(0.55) contrast(1.25) saturate(0.7);
+  mix-blend-mode: color-dodge;
+  opacity: calc(var(--holo-opacity) * 0.38);
+}
+
+.holo-matrix-holo--over {
+  background-image:
+    radial-gradient(circle at var(--mx) var(--my), #fff 5%, #000 50%, #fff 80%),
+    linear-gradient(-45deg, #000 15%, #fff, #000 85%),
+    repeating-linear-gradient(
+      115deg,
+      hsl(265 90% 70%) 0%,
+      hsl(0 0% 100%) 22%,
+      hsl(272 85% 78%) 44%,
+      hsl(258 92% 64%) 66%,
+      hsl(265 90% 70%) 88%
+    );
+  -webkit-mask-image:
+    var(--holo-logo),
+    radial-gradient(circle at var(--mx) var(--my), rgba(0, 0, 0, 0.85) 5%, transparent 48%);
+  mask-image:
+    var(--holo-logo),
+    radial-gradient(circle at var(--mx) var(--my), rgba(0, 0, 0, 0.85) 5%, transparent 48%);
+  animation: holo-matrix-hue-over 6s ease-in-out infinite alternate;
+  opacity: calc(var(--holo-opacity) * 0.5);
+}
+
+@keyframes holo-matrix-hue-over {
+  from {
+    filter: saturate(1.1) brightness(0.78) contrast(1.25) hue-rotate(-4deg);
+  }
+  to {
+    filter: saturate(1.1) brightness(0.78) contrast(1.25) hue-rotate(4deg);
+  }
+}
+
+.holo-badge-halo {
+  background-image:
+    radial-gradient(circle at var(--mx) var(--my), #fff 5%, #000 50%, #fff 80%),
+    linear-gradient(-45deg, #000 15%, #fff, #000 85%),
+    repeating-linear-gradient(
+      112deg,
+      hsl(264 38% 91%) 0%,
+      hsl(0 0% 100%) 20%,
+      hsl(264 42% 90%) 42%,
+      hsl(270 38% 93%) 64%,
+      hsl(264 38% 91%) 86%
+    );
+  background-blend-mode: soft-light, soft-light;
+  background-size: 130% 130%, 220% 220%, 260% 260%;
+  background-position:
+    center center,
+    var(--mx) var(--my),
+    var(--holo-bgx) var(--holo-bgy);
+  filter: brightness(0.68) contrast(1.25) saturate(0.75);
+  mix-blend-mode: color-dodge;
+  opacity: calc(0.08 + var(--holo-opacity) * 0.4 - var(--holo-from-center) * 0.18);
+}
+
+.holo-scrim {
+  background: rgba(9, 7, 13, 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  -webkit-mask-image:
+    radial-gradient(circle 175px at 50% 24%, transparent 0px, transparent 60px, black 175px),
+    radial-gradient(circle 240px at var(--mx) var(--my), rgb(0 0 0 / calc(1 - var(--holo-opacity))) 0px, black 240px);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle 175px at 50% 24%, transparent 0px, transparent 60px, black 175px),
+    radial-gradient(circle 240px at var(--mx) var(--my), rgb(0 0 0 / calc(1 - var(--holo-opacity))) 0px, black 240px);
+  mask-composite: intersect;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.holo-halo {
+  background: radial-gradient(circle 220px at var(--mx) var(--my), rgba(183, 168, 255, 0.07), transparent 80%);
+  mix-blend-mode: screen;
+  opacity: var(--holo-opacity);
+}
+
+/* Hachures du segment en cours (composant StepperBar). Les bandes sont teintées avec --background
+   plutôt qu'un blanc en dur : sur la barre claire du thème sombre elles creusent, sur la barre
+   sombre du thème clair elles éclaircissent, sans deuxième règle. */
+.stepper-stripes {
+    --stepper-stripe: color-mix(in oklab, var(--background) 35%, transparent);
+    background-image: linear-gradient(
+        45deg,
+        var(--stepper-stripe) 25%,
+        transparent 25% 50%,
+        var(--stepper-stripe) 50% 75%,
+        transparent 75%
+    );
+    background-size: 8px 8px;
+}

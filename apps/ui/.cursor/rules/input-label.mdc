@@ -1,0 +1,20 @@
+---
+description: Use the label prop on Input component, never add a separate span/label element above it
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# Input Component Label
+
+The `Input` component from `@/components/ui/input` has a built-in `label` prop. Always use it — never add a `<span>`, `<label>` or any wrapper above the input.
+
+```tsx
+// ❌ BAD
+<span className="text-sm font-semibold">Email</span>
+<Input type="email" ... />
+
+// ✅ GOOD
+<Input label="Email" type="email" ... />
+```
+
+The `label` prop also supports `required` (hides the "Optional" badge) and `helperText` for a hint below the field.

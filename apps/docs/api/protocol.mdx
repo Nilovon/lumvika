@@ -1,0 +1,153 @@
+---
+title: "Protocol"
+description: "JSON-RPC 2.0 over HTTP: the handshake, the call shape, and how errors come back."
+---
+
+The Rerun MCP server is a stateless JSON-RPC 2.0 endpoint. There is no SSE stream, no session id and no long-lived connection. Every request is a `POST` that carries its own authentication and gets a complete answer.
+
+```
+POST https://app.rerun.build/api/mcp/account
+Authorization: Bearer rk_your_key
+Content-Type: application/json
+```
+
+Only `POST` is handled. A client that opens an SSE stream first will fail, and that is expected.
+
+## initialize
+
+Optional in practice, since the server keeps no state, but every MCP client sends it.
+
+<CodeGroup>
+```json Request
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": { "protocolVersion": "2025-06-18" }
+}
+```
+
+```json Response
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": { "tools": {} },
+    "serverInfo": { "name": "rerun", "version": "1.0.0" }
+  }
+}
+```
+</CodeGroup>
+
+Supported protocol versions are `2025-06-18`, `2025-03-26`, `2024-11-05` and `2024-10-07`. The server echoes yours when it recognises it, and answers `2025-06-18` otherwise.
+
+The only capability is `tools`. The server exposes no resources, no prompts and no sampling, and it never sends a notification to the client. Notifications you send to it are accepted with a `202` and an empty body.
+
+## tools/list
+
+Returns the full tool list in one shot. There is no pagination cursor.
+
+```json
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+```
+
+The list is static: all 53 tools are advertised to every key, including the 12 template authoring tools. Calling a template tool without an expert sandbox account fails at call time with a readable message. See [Template tools](/api/tools/templates).
+
+## tools/call
+
+<CodeGroup>
+```json Request
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "list_agents",
+    "arguments": {}
+  }
+}
+```
+
+```json Response
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "content": [{ "type": "text", "text": "{\"agents\":[…]}" }],
+    "structuredContent": { "agents": [] }
+  }
+}
+```
+</CodeGroup>
+
+Every result carries the same payload twice: once as JSON encoded into `content[0].text` for clients that only read text, and once as a real object in `structuredContent`. Read `structuredContent` if your client supports it.
+
+## Errors
+
+Two error shapes exist, and the distinction matters.
+
+### Protocol errors
+
+Returned for a malformed request. HTTP status is still `200`.
+
+| Code | Meaning |
+| --- | --- |
+| `-32700` | The body is not valid JSON |
+| `-32601` | Unknown method |
+
+```json
+{ "jsonrpc": "2.0", "id": null, "error": { "code": -32700, "message": "Parse error" } }
+```
+
+### Tool errors
+
+A tool that throws does **not** produce a JSON-RPC error. It produces a normal result flagged with `isError`, so a calling model reads the reason and corrects its arguments.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "content": [{ "type": "text", "text": "{\"error\":\"Agent not found\"}" }],
+    "isError": true
+  }
+}
+```
+
+Messages are written to be actionable: a missing required argument, a coworker that belongs to another workspace, a plan limit reached, an app slug that does not exist in the catalog.
+
+If you write your own client, check `result.isError` on every call. A `200` response does not mean the tool succeeded.
+
+### Authentication errors
+
+A missing or invalid key is the one case that is not JSON-RPC at all: `401 Unauthorized` with a plain text body, before any parsing happens.
+
+## Destructive tools
+
+Eight tools refuse to run unless you pass `confirm: true`:
+
+`delete_agent`, `delete_skill`, `delete_schedule`, `delete_trigger`, `detach_connector`, `delete_template`, `remove_template_agent`, `revoke_agent_share`.
+
+Without it, the call comes back as a tool error telling you to call again once the account owner has agreed. This exists so an assistant cannot delete a coworker as a side effect of a vague instruction.
+
+A ninth asks for the same agreement without destroying anything. `create_agent_share` needs `confirm: true` when its `include` carries data out of the workspace, because a share link is readable by anyone holding it. Sending the coworker alone needs no confirmation. See [Share link tools](/api/tools/sharing).
+
+## Calling it with curl
+
+Nothing about this endpoint requires an MCP client.
+
+```bash
+curl -s https://app.rerun.build/api/mcp/account \
+  -H "Authorization: Bearer $RERUN_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "send_message",
+      "arguments": { "agentId": "…", "message": "Status report please", "waitSeconds": 60 }
+    }
+  }'
+```

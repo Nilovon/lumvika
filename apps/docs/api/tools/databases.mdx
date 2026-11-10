@@ -1,0 +1,103 @@
+---
+title: "Databases"
+description: "Read and write the private database of a coworker and the database shared by a workspace."
+---
+
+Each coworker has one private SQLite database that no other coworker can read. The workspace has a second database that every coworker in it reads and writes, whichever Box they sit in. These tools reach both, so you can lay out the tables a coworker works from before it ever runs.
+
+It is plain SQLite. Column types are `TEXT`, `INTEGER`, `REAL`, `BLOB` or `NUMERIC`.
+
+## Coworker database
+
+### list_tables
+
+Structure of the coworker private database: every table with its columns, types, primary keys and not-null flags.
+
+<ParamField body="agentId" type="string" required />
+
+### db_query
+
+Runs a read-only `SELECT` and returns the rows. Anything that writes is refused here.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="sql" type="string" required>
+  A single `SELECT`, or `WITH … SELECT`.
+</ParamField>
+
+<ParamField body="params" type="array">
+  Values bound to the `?` placeholders, in order.
+</ParamField>
+
+<ParamField body="limit" type="number">
+  Maximum rows returned. Default `100`, maximum `1000`.
+</ParamField>
+
+```json Request arguments
+{
+  "agentId": "…",
+  "sql": "SELECT email, created_at FROM leads WHERE status = ? ORDER BY created_at DESC",
+  "params": ["new"],
+  "limit": 50
+}
+```
+
+Use `?` placeholders with `params` rather than pasting values into the SQL.
+
+### db_execute
+
+Changes the coworker private database: `CREATE`, `ALTER`, `DROP` a table, or `INSERT`, `UPDATE`, `DELETE` rows.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="sql" type="string">
+  A single statement.
+</ParamField>
+
+<ParamField body="params" type="array">
+  Values bound to the `?` placeholders in `sql`, in order.
+</ParamField>
+
+<ParamField body="statements" type="object[]">
+  Several statements applied atomically in one transaction. Each entry needs `sql` and may carry `params`. This is the right way to lay out a whole schema.
+</ParamField>
+
+Pass either `sql` or `statements`. The call fails if you pass neither.
+
+```json Request arguments
+{
+  "agentId": "…",
+  "statements": [
+    { "sql": "CREATE TABLE IF NOT EXISTS leads (id INTEGER PRIMARY KEY, email TEXT NOT NULL, status TEXT)" },
+    { "sql": "CREATE INDEX IF NOT EXISTS leads_status ON leads (status)" }
+  ]
+}
+```
+
+## Shared database
+
+The same three operations, on the database every coworker of the workspace shares. Get the `spaceId` from [`list_spaces`](/api/tools/agents#list-spaces).
+
+### list_space_tables
+
+<ParamField body="spaceId" type="string" required />
+
+### space_db_query
+
+<ParamField body="spaceId" type="string" required />
+<ParamField body="sql" type="string" required />
+<ParamField body="params" type="array" />
+<ParamField body="limit" type="number">
+  Default `100`, maximum `1000`.
+</ParamField>
+
+### space_db_execute
+
+<ParamField body="spaceId" type="string" required />
+<ParamField body="sql" type="string" />
+<ParamField body="params" type="array" />
+<ParamField body="statements" type="object[]" />
+
+<Warning>
+  Every coworker of the workspace sees the result immediately. Prefer `CREATE TABLE IF NOT EXISTS`, extend with `ALTER TABLE ADD COLUMN`, and do not drop a table the coworkers already fill.
+</Warning>

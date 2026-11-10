@@ -1,0 +1,217 @@
+---
+title: "Servers"
+description: "Give each workspace a machine to run on, reach it safely, update it and back it up."
+---
+
+A server is the machine a workspace's coworkers run on: one engine, in one Docker container. Each workspace has exactly one server, and a server belongs to one workspace.
+
+Your first workspace already has one: the engine docker compose starts next to the app. Every other workspace gets its server by pairing, from the app, in about a minute.
+
+## Add a server
+
+You need a machine with Docker. It can be the same machine as the app, another computer on your network, or a VPS.
+
+<Steps>
+  <Step title="Open Servers">
+    Open the workspace menu, the pill in the top left corner of the app, and click **Servers**. The dialog shows the workspace's server, or an **Add server** button when it has none.
+  </Step>
+  <Step title="Get the command">
+    Click **Add server**. Fill **Address the app reaches it at** if you know it, for example `http://100.101.102.103:3000` or `https://engine.example.com`. Then copy the command.
+
+    ```bash
+    docker run -d --name rerun-engine --restart unless-stopped \
+      -p 3000:3000 -v rerun-engine:/data \
+      -e RERUN_HUB_URL=https://rerun.example.com \
+      -e RERUN_PAIR_TOKEN=rrn_pair_... \
+      -e RERUN_PUBLIC_URL=https://engine.example.com \
+      ghcr.io/rerun-build/rerun-engine:latest
+    ```
+
+    The command works once, for 15 minutes, and only for this workspace.
+  </Step>
+  <Step title="Run it on the server">
+    Paste it in a terminal on the machine. The dialog waits, and shows the server as **Connected** as soon as it is attached.
+  </Step>
+</Steps>
+
+<Tip>
+  Add `--shm-size 2g` to the command, before the image name. The engine started by docker compose has it: it keeps Chromium from crashing on heavy pages.
+</Tip>
+
+### What happens behind the command
+
+1. The engine starts and makes up its own key. It keeps it in its data-dir, at `/data/engine.key`. The key never appears in the command nor in a URL.
+2. It sends the key and the token to your app, at `RERUN_HUB_URL/api/engines/pair`.
+3. The app checks it can reach the server: first `GET /health`, then a call that needs the key.
+4. Only then does the app attach the server to the workspace, and spend the token.
+
+The address the app uses is `RERUN_PUBLIC_URL` when you set it. Without it, the app takes the address the request came from, on port 3000. Set it whenever the server sits behind a proxy, a NAT or a tunnel.
+
+### When it does not connect
+
+The server logs say why, in one line:
+
+```bash
+docker logs rerun-engine
+```
+
+The usual messages, and the fix for each:
+
+| Message | Fix |
+| --- | --- |
+| The app cannot reach your server at ... | Open the port to the app, or put both on the same network. See [Networking](#networking). |
+| Your server at ... answers, but refused the key | Something else answers on that address, or the engine was started with another key. |
+| This pairing token has expired | Click **Add server** again for a new command. |
+| This pairing token is not valid, or was already used | Same: a token works once. |
+| This workspace already has a server | Remove the current one first. |
+
+A refused pairing is final: the engine stops trying. A pairing that failed before the app attached the server did not spend the token, so within the 15 minutes you can fix the cause and run the command again, after `docker rm -f rerun-engine`.
+
+The server also needs to reach the app. `RERUN_HUB_URL` is your `NEXT_PUBLIC_APP_URL`: when it is `http://localhost:3000`, only a server on the same machine can pair, and even then `localhost` inside the container is the container itself. Give the app an address the server can reach first.
+
+### Enter a server by hand
+
+For an engine you started yourself with your own `RERUN_API_KEY`, click **Enter address and key** instead of **Add server**. Fill the address and the key, and click **Connect**. The app runs the same two checks before attaching it.
+
+## Networking
+
+The app must reach the server on its port, and the server must reach the app. Two setups work well.
+
+<Tabs>
+  <Tab title="Tailscale">
+    Put the app's machine and the server on the same [tailnet](https://tailscale.com). Nothing to open to the internet, and the traffic is encrypted.
+
+    Use the server's Tailscale IP as the address, for example `RERUN_PUBLIC_URL=http://100.101.102.103:3000`. An IP is safer than a MagicDNS name, which the app container may not resolve.
+
+    The people watching a coworker's screen need to be on the tailnet too, since their browser opens it on the same address.
+  </Tab>
+  <Tab title="A public VPS with HTTPS">
+    Never expose the engine on port 3000 in clear. Publish it on the loopback only, and put a reverse proxy in front for HTTPS. With [Caddy](https://caddyserver.com), the certificate is automatic.
+
+    Start the engine with `-p 127.0.0.1:3000:3000` instead of `-p 3000:3000`, and `RERUN_PUBLIC_URL=https://engine.example.com`. Then point a DNS record at the VPS and give Caddy this `Caddyfile`:
+
+    ```text Caddyfile
+    engine.example.com {
+        reverse_proxy localhost:3000
+    }
+    ```
+
+    Caddy forwards WebSockets on its own, so the screen works through it. This is for a server you paired, where the engine listens on 3000. On the machine that runs docker compose, the engine is on 3001: see [On a server](/self-host/install#on-a-server).
+  </Tab>
+</Tabs>
+
+The app itself goes behind HTTPS the same way: a `Caddyfile` block for `rerun.example.com` with `reverse_proxy localhost:3000`, then `NEXT_PUBLIC_APP_URL=https://rerun.example.com` and a rebuild with `docker compose up -d --build`.
+
+## The desktop screen
+
+Each coworker has a screen you can watch and take over. The browser opens it directly on the server's address: `ws://` when the server is on `http://`, `wss://` when it is on `https://`. So:
+
+- The person watching must be able to reach the server, not just the app.
+- When the app is on HTTPS, the server must be on HTTPS too. A browser refuses a `ws://` connection from an `https://` page.
+
+A browser reaches the engine docker compose starts at `RERUN_ENGINE_BROWSER_URL`: `http://localhost:3001` by default, its own `https` domain on a server. See [On a server](/self-host/install#on-a-server).
+
+## Remove or replace a server
+
+In **Servers**, click **Remove**. The workspace's coworkers stop answering until a server is attached again.
+
+Removing only detaches the server. Its data-dir stays on the machine, with every coworker, file and memory. Attach the same server again and they come back.
+
+To move a workspace to another machine:
+
+<Steps>
+  <Step title="Stop the old server">
+    `docker stop rerun-engine`, so nothing changes while you copy.
+  </Step>
+  <Step title="Copy its data-dir">
+    Back up the volume as in [Backups](#backups), copy the archive to the new machine, and restore it there into a volume named `rerun-engine`.
+  </Step>
+  <Step title="Start the engine on the new machine">
+    Without a pairing token: the key and the app's address are already in the data-dir.
+
+    ```bash
+    docker run -d --name rerun-engine --restart unless-stopped --shm-size 2g \
+      -p 3000:3000 -v rerun-engine:/data \
+      ghcr.io/rerun-build/rerun-engine:latest
+    ```
+  </Step>
+  <Step title="Point the workspace at it">
+    In **Servers**, click **Remove**, then **Enter address and key**. The address is the new machine's, and the key is the one in the data-dir:
+
+    ```bash
+    docker run --rm -v rerun-engine:/data alpine cat /data/engine.key
+    ```
+  </Step>
+</Steps>
+
+## Updating
+
+The app and the engine of your first workspace update together:
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+A paired server updates by pulling the image and starting it again on the same volume, without a pairing token:
+
+```bash
+docker pull ghcr.io/rerun-build/rerun-engine:latest
+docker rm -f rerun-engine
+docker run -d --name rerun-engine --restart unless-stopped --shm-size 2g \
+  -p 3000:3000 -v rerun-engine:/data \
+  ghcr.io/rerun-build/rerun-engine:latest
+```
+
+Keep the same `-p` you started it with. On start, the engine migrates its data-dir to the new version. An archive taken weeks ago boots on a newer engine the same way.
+
+To check a server's data-dir without changing it:
+
+```bash
+docker exec rerun-engine node dist/cli/bin.js doctor                  # a paired server
+docker compose exec engine node dist/cli/bin.js doctor                # the engine started by compose
+```
+
+## Backups
+
+Two things hold your data, and you back up both.
+
+**The Supabase database**: accounts, workspaces, members, the catalog. On supabase.com, the project's own backups cover it. With open source Supabase, run `docker exec supabase-db pg_dump -U postgres postgres | gzip > rerun-db.sql.gz`. Otherwise, dump it with `pg_dump` and the connection string from **Connect** in the Supabase dashboard. For the local stack:
+
+```bash
+pg_dump postgresql://postgres:postgres@localhost:54422/postgres -Fc -f rerun-db.dump
+```
+
+Files people upload to the app live in Supabase Storage, which a database dump does not include.
+
+**The engine data-dir**: everything the coworkers know and do. It holds their credentials too, so store the archive like a password.
+
+<Tabs>
+  <Tab title="Engine started by compose">
+    ```bash
+    docker run --rm -v rerun_engine-data:/data -v $PWD:/backup alpine \
+      tar czf /backup/engine-data.tgz -C /data .
+    ```
+  </Tab>
+  <Tab title="Paired server">
+    ```bash
+    docker run --rm -v rerun-engine:/data -v $PWD:/backup alpine \
+      tar czf /backup/engine-data.tgz -C /data .
+    ```
+  </Tab>
+</Tabs>
+
+Stop the engine first for a perfectly consistent copy, or take it while it runs and accept the last seconds may be missing.
+
+### Restore the data-dir
+
+Stop the engine, empty the volume, unpack the archive, and start again. For the engine started by compose:
+
+```bash
+docker compose stop engine
+docker run --rm -v rerun_engine-data:/data -v $PWD:/backup alpine \
+  sh -c "find /data -mindepth 1 -delete && tar xzf /backup/engine-data.tgz -C /data"
+docker compose start engine
+```
+
+For a paired server, use `docker stop rerun-engine`, the volume `rerun-engine`, and `docker start rerun-engine`. The engine migrates an older archive on start.

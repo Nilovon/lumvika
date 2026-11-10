@@ -1,0 +1,74 @@
+---
+title: "Plans and billing"
+description: "One plan with unlimited coworkers, the add-ons, and the trial."
+---
+
+Rerun sells a single plan with unlimited coworkers. There are no tiers to compare and no feature held back for a higher one.
+
+## The base plan
+
+<Card title="Rerun" icon="box">
+  **Billed per month or per year**, at the price your workspace shows when you start the plan. Five day free trial.
+
+  Includes **unlimited coworkers**, **unlimited seats**, **your own private machine** and **Rerun credits every month**.
+</Card>
+
+Also included at every level:
+
+- **Bring your own AI.** Your API key, your Claude or ChatGPT subscription, or the credits above.
+- **Every app**, plus any MCP server and any API you wire yourself.
+- **Unlimited executions.** No run quotas and no per-task fee.
+- **The coworker and template library.**
+- **As many Boxes as you want.** They group your coworkers by team, client or project, and they cost nothing.
+
+## Add-ons
+
+Add-ons are quantities on the same subscription. Add and remove them whenever you want.
+
+| Add-on | What it grants | Price |
+| --- | --- | --- |
+| Rerun credits | More credits every month | \$10 |
+
+## The trial
+
+Your account comes with free credits, enough for the Foreman to plan and build your team and for your coworkers to run their first tasks. The trial starts when you accept the plan the Foreman draws up, and lasts 5 days. It runs on those same credits and adds none of its own. What is left of them carries over once your plan starts. The trial runs 3 coworkers at once: coworkers past the third are built and wait, switched off, for your plan to start.
+
+The trial has no seat limit: invite your team from day one.
+
+Starting the trial asks for a card: \$0 is charged today, and the card is charged the plan's monthly price on day 5, the date shown before you confirm. Cancel before from **Billing** in the workspace menu and you pay nothing.
+
+Subscribing during the trial ends it on the spot: the plan is billed that day, monthly unless you pick yearly. To pay nothing before day 5, keep the trial and let the plan start on its own.
+
+If the trial credits run out before day 5, the coworker that stopped offers to start the plan now. The amount and the next billing date are shown before you confirm, nothing is charged until you do, and a refused card leaves the trial as it was. Once paid, the coworker picks the task back up where it stopped.
+
+<Note>
+  The [Rerun API](/api/introduction) is not part of the trial. It requires a started subscription.
+</Note>
+
+## Rerun credits
+
+One dollar is 100 credits. Credits only apply to the models Rerun hosts and the paid data your coworkers look up. When a coworker runs on your own API key or on your Claude or ChatGPT subscription, it costs you nothing on the Rerun side.
+
+Every run records what its model cost, in dollars, so you can see where the credits go in the **Monitoring** tab.
+
+## When you hit a limit
+
+Only the trial has a coworker limit. Going over it does not delete anything. The coworkers past the third are switched off and stay exactly as they were: their prompt, their skills, their memory and their data are untouched.
+
+Start your plan and the coworkers the trial had switched off come back on with it.
+
+The same applies through the API: [`create_agent`](/api/tools/agents#create-agent) succeeds and returns `active: false` with the reason, rather than failing halfway.
+
+## Managing the subscription
+
+Open the workspace pill in the top left corner, then **Billing**. From there you change add-on quantities, switch between monthly and yearly, update your card and cancel.
+
+Adding an add-on takes effect immediately and is billed for the remainder of the current period. Removing one takes effect at the next renewal: you keep the limit you already paid for until then.
+
+Adding an add-on during the trial ends the trial. Nothing is sold on top of a period nobody pays for, so the first full cycle is invoiced there and then.
+
+To leave Rerun altogether, cancel the subscription first, then [delete your account](/teams#delete-your-account).
+
+## Enterprise
+
+Everything above plus custom or self-hosted infrastructure, dedicated support, SSO and an SLA. Write to [help@rerun.build](mailto:help@rerun.build).

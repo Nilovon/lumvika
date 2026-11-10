@@ -1,0 +1,201 @@
+---
+title: "Coworkers"
+description: "List Boxes, read a coworker in full, create, update and delete coworkers."
+---
+
+A coworker lives inside a Box. Start from `list_spaces` when you need a `spaceId`, and from `list_agents` when you need an `agentId`: every other tool on this page takes one of those two.
+
+## list_spaces
+
+Lists the Boxes of the workspace with how many coworkers each one holds.
+
+Takes no arguments.
+
+```json Response
+{
+  "spaces": [
+    { "id": "…", "name": "Main Box", "agentCount": 3, "createdAt": "2026-07-04T10:12:00.000Z" }
+  ]
+}
+```
+
+## list_agents
+
+Lists the coworkers of the workspace, newest first.
+
+<ParamField body="spaceId" type="string">
+  Restrict the list to one Box.
+</ParamField>
+
+Each coworker carries `id`, `name` (the display name), `handle` (the mention and call key), `description`, `status`, `space_id` and `created_at`. The `id` is what every other tool takes as `agentId`.
+
+## get_agent
+
+The full picture of one coworker in a single call. Read this before changing anything.
+
+<ParamField body="agentId" type="string" required />
+
+Returns the coworker identity (`handle`, `name`, `description`), its `soul` (the system prompt), its model settings (`provider`, `model`, `verbosity`, and `runsOn`: the connection it resolves to and whether it follows the workspace default), its enabled `tools` families, its `selfImprovement` flags, its `setup` answer with the install instructions behind it, its custom `mcpServers`, and summaries of its `skills`, `schedules`, `triggers` and `connectors` (the apps it declares).
+
+Skills and scheduled tasks are summarised here. Use [`get_skill`](/api/tools/skills) and [`list_schedules`](/api/tools/schedules) for their full text.
+
+When a part cannot be read, the call still answers: that part comes back empty and is named in `unavailable`, for example `["schedules"]`. For `runsOn` the provider and model are still there, only `connectionName` is lost. The field is absent when everything was read, so an empty list outside `unavailable` really is empty.
+
+<Note>
+  `get_agent` deliberately omits trigger URLs, because a trigger URL carries a secret. Use [`list_triggers`](/api/tools/triggers) to read them on purpose.
+</Note>
+
+## create_agent
+
+Creates a coworker and places it on the board. It is visible in the app immediately.
+
+<ParamField body="name" type="string" required>
+  Free display name, for example `Content Manager`.
+</ParamField>
+
+<ParamField body="soul" type="string">
+  The system prompt, in markdown. Who the coworker is, what it owns, how it works. This is the single most important field, so write it properly rather than leaving it empty.
+</ParamField>
+
+<ParamField body="description" type="string">
+  One line on what this coworker is for.
+</ParamField>
+
+<ParamField body="spaceId" type="string">
+  Optional when the workspace has a single Box. With several Boxes, the call fails and lists them so you can pick.
+</ParamField>
+
+<ParamField body="connectors" type="string[]">
+  Catalog slugs to declare on the coworker. The response gives each one its real status. See [Apps](/api/tools/connectors).
+</ParamField>
+
+<ParamField body="connectionId" type="string">
+  The AI connection to run on, by its id from [`list_ai_connections`](#list_ai_connections). This is how you pick one account among several of the same provider. An unknown id, a connection that is not signed in or a model it does not serve is refused, with what is available.
+</ParamField>
+
+<ParamField body="provider" type="string">
+  One of `rerun`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider. With several, the call is refused and lists them.
+</ParamField>
+
+<ParamField body="model" type="string | null">
+  A model the connection serves. Omit it and the coworker runs the workspace default model, following it whenever that default changes.
+</ParamField>
+
+<ParamField body="verbosity" type="string">
+  How long its answers to the user are: `minimal`, `concise`, `normal` (the default) or `detailed`. It shapes the prose only, never how much work the coworker does.
+</ParamField>
+
+<ParamField body="tools" type="object">
+  Capability families, all on by default, for example `{"shell": false, "browser": false}`. See [Configure a coworker](/agents/configure) for the list.
+</ParamField>
+
+<ParamField body="selfImprovement" type="object">
+  Defaults to everything on. `{"allowSoulEdit": false, "allowToolInstall": false}` pins the coworker to the prompt and the tools you gave it.
+</ParamField>
+
+<ParamField body="setup" type="object">
+  The guided setup this coworker runs on the account of whoever installs it from a template. `required` is a boolean and is mandatory inside the object. `prompt` is required when `required` is `true`, and is addressed to the coworker, not to the user.
+</ParamField>
+
+<Warning>
+  A coworker created with defaults may rewrite its own prompt and install its own tools. Pass `selfImprovement` explicitly when that is not what you want.
+</Warning>
+
+```json Response
+{
+  "agentId": "…",
+  "name": "Content Manager",
+  "handle": "content_manager",
+  "spaceId": "…",
+  "active": true,
+  "connectors": [{ "slug": "notion", "name": "Notion", "status": "needs_auth" }]
+}
+```
+
+`active: false` means the creation succeeded but the plan has no free coworker slot, so the coworker will not run until one frees up. An `inactiveReason` explains it.
+
+## update_agent
+
+Updates a coworker. Every field is optional and only what you pass changes.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="name" type="string">
+  New display name. The handle is re-derived from it, and every `@mention` of the old handle in the other coworkers is rewritten.
+</ParamField>
+
+<ParamField body="handle" type="string">
+  The mention and call key, when it should differ from the one derived from the name. Existing `@handle` references are rewritten.
+</ParamField>
+
+<ParamField body="spaceId" type="string">
+  Moves the coworker to another Box. A Box is a rectangle on the board, not a machine, so the coworker
+  keeps its files, its handle, its skills and its history: only the rectangle it is drawn in
+  changes. It lands on the first free cell of that Box.
+</ParamField>
+
+<ParamField body="soul" type="string">
+  Full replacement of the system prompt, in markdown.
+</ParamField>
+
+<ParamField body="description" type="string" />
+<ParamField body="connectionId" type="string">
+  The AI connection to run on, by its id from [`list_ai_connections`](#list_ai_connections). This is how you pick one account among several of the same provider. An unknown id, a connection that is not signed in or a model it does not serve is refused, with what is available.
+</ParamField>
+
+<ParamField body="provider" type="string">
+  One of `rerun`, `anthropic`, `claude`, `codex`, `openai`, `google`, `openrouter`, `opencode`. A shortcut for `connectionId` that only works while the workspace has a single connection of that provider. With several, the call is refused and lists them.
+</ParamField>
+
+<ParamField body="model" type="string | null">
+  A model the connection serves. Pass `null` to put the coworker back on the workspace default, which also drops its pinned connection.
+</ParamField>
+
+<ParamField body="verbosity" type="string">
+  How long its answers to the user are: `minimal`, `concise`, `normal` (the default) or `detailed`. It shapes the prose only, never how much work the coworker does.
+</ParamField>
+
+<ParamField body="tools" type="object">
+  Capability families to toggle, for example `{"shell": false, "browser": true}`.
+</ParamField>
+<ParamField body="selfImprovement" type="object" />
+<ParamField body="setup" type="object" />
+
+Renaming moves the handle. It is re-derived from the new `name`, and every `@oldhandle` written into the other coworkers (prompts, skills, scheduled tasks, webhook triggers, memories) is rewritten, so their calls keep resolving. Pass `handle` only to set a call key that differs from the name.
+
+The response lists the fields that were actually written in `updated`.
+
+When the call changed what the coworker runs on, the response also carries `runsOn`: the connection, provider and model it now resolves to, and whether it follows the workspace default. Report that rather than what you asked for.
+
+## list_ai_connections
+
+Lists the AI connections of the workspace, which is what every coworker runs on: the subscriptions and API keys plugged into it, plus the keyless Rerun one. No parameter.
+
+Each entry carries its `id`, the `name` the user gave it, its `provider`, the `models` it serves, whether it is `connected` and whether it holds the workspace default (`isDefault`). `default` is the connection and model every coworker that picked nothing runs on.
+
+Read it before changing what a coworker runs on: the id is the only way to tell two accounts of the same provider apart. Connections are added and removed in the app, under AI providers.
+
+## set_default_model
+
+Sets the workspace default: the connection and model every coworker that picked no model of its own runs on, along with their scheduled tasks and triggers.
+
+<ParamField body="connectionId" type="string" required>
+  The id of the connection, from `list_ai_connections`.
+</ParamField>
+
+<ParamField body="model" type="string" required>
+  A model that connection serves.
+</ParamField>
+
+<Warning>
+  It moves every coworker that follows the default at once, and with them which account is billed. A coworker pinned to a model of its own is not touched.
+</Warning>
+
+## delete_agent
+
+Permanently deletes a coworker with its skills, scheduled tasks, memory and workspace files. Irreversible.
+
+<ParamField body="agentId" type="string" required />
+<ParamField body="confirm" type="boolean" required>
+  Must be `true`. See [Destructive tools](/api/protocol#destructive-tools).
+</ParamField>

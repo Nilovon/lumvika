@@ -1,0 +1,81 @@
+---
+title: "Automations"
+description: "Make a coworker run on a schedule, or on an event from another service."
+---
+
+A coworker that only answers when you write to it is a chatbot. Two things make it a worker: scheduled tasks and webhook triggers.
+
+Both open their own session, so an automated run never lands in the middle of your conversation, and both are fully recorded in **Monitoring** and **Logs**.
+
+## Scheduled tasks
+
+A scheduled task is a cron plus an instruction. When it fires, the coworker runs with no user message and follows that instruction.
+
+Add one from the coworker **Scheduled runs** tab, or just ask the coworker to set it up.
+
+<ParamField path="Name" type="string">
+  Also decides the slug the task is addressed by.
+</ParamField>
+
+<ParamField path="Instruction" type="string">
+  What the coworker does when it fires, written as if you were talking to it. This is the whole prompt for that run.
+</ParamField>
+
+<ParamField path="Cron" type="string">
+  A standard 5-field expression. `0 9 * * 1` is every Monday at 9.
+</ParamField>
+
+<ParamField path="Timezone" type="string">
+  An IANA timezone, for example `Europe/Paris`. Set it, or the cron follows the timezone of your machine.
+</ParamField>
+
+A task can also be a one-off: give it a date instead of a cron and it disables itself after it fires.
+
+Each task can carry its own model, which is useful when a nightly job should run on something cheaper than your daily driver. Without one, it uses the coworker default.
+
+<Tip>
+  Test the instruction before putting it live. **Run now** fires the task immediately, works on a disabled task, and does not touch its schedule. From the API that is [`run_schedule_now`](/api/tools/schedules#run-schedule-now).
+</Tip>
+
+### Continuity between runs
+
+A scheduled run opens a fresh session every time. The coworker does not remember last Monday's conversation.
+
+What carries over is [memory](/concepts#memory) and the [database](/agents/data). If a task needs to know where it left off, tell it to write that down.
+
+## Webhook triggers
+
+A trigger gives the coworker a public URL. Whoever calls it starts a run, with the caller payload attached.
+
+Add one from the **Triggers** tab. You get a URL to paste into the other service.
+
+Write the instruction as if the event had already happened:
+
+> A Stripe refund event arrives. Record it in the `refunds` table and tell me if the amount is over 500.
+
+The payload lands right after your instruction, so the coworker does not have to fetch anything.
+
+<Warning>
+  The URL is the credential. There is no signature and no secret header, so anyone holding it can fire your coworker. Do not paste it into a shared document or a public repository. Rotate it from the **Triggers** tab if it leaks.
+</Warning>
+
+By default a trigger accepts `POST` only. See [Webhook triggers](/api/webhooks) for the full HTTP contract: methods, response codes, size limits and how link previews are filtered out.
+
+### Which one to use
+
+| You want | Use |
+| --- | --- |
+| Something every morning, every Monday, every hour | A scheduled task |
+| Something when another service says so | A trigger |
+| Something once, at a date | A one-off scheduled task |
+| Something on demand from your own script | A trigger, or [`send_message`](/api/tools/runs#send-message) |
+
+## Unattended runs still pause for you
+
+A coworker running at 3am can still stop and ask you a question or request an approval. The run pauses, you get notified, and it resumes from your answer whenever you give it.
+
+This is deliberate: a coworker should not skip an approval just because nobody is watching. See [Human in the loop](/agents/human-in-the-loop).
+
+## From the API
+
+[`upsert_schedule`](/api/tools/schedules#upsert-schedule) and [`upsert_trigger`](/api/tools/triggers#upsert-trigger) do everything on this page, which is how you keep an automation setup in version control.

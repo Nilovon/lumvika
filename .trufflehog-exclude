@@ -1,0 +1,4 @@
+\.test\.tsx?$
+^apps/engine/bench/
+node_modules/
+^apps/ui/lib/templates/archives\.ts$

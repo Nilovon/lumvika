@@ -1,0 +1,78 @@
+---
+title: "Apps"
+description: "Give a coworker access to Gmail, Slack, Notion, Stripe and hundreds of other services."
+---
+
+An app is a ready-made integration. Installing one on a coworker gives it that service tools, plus a skill explaining how to use them, plus wherever the credentials live.
+
+That skill belongs to the app: it is read only, in the app as much as for the coworker and the API. See [Skills](/agents/skills#skills-an-app-installed).
+
+Apps are installed **per coworker**, not per Box and not per workspace. Two coworkers sitting side by side can each have their own Gmail connection.
+
+## Install one
+
+<Tabs>
+  <Tab title="From the coworker panel">
+    Open the **Apps** tab, search the library, and click the app. Rerun tells you what it needs before you commit.
+  </Tab>
+  <Tab title="Ask the coworker">
+    Name the service in the chat. The coworker searches the library itself and raises a setup card for you to finish. It never asks you to paste a key into the conversation.
+  </Tab>
+  <Tab title="From the API">
+    [`search_connectors`](/api/tools/connectors#search-connectors) then [`attach_connector`](/api/tools/connectors#attach-connector). The API declares the app; you finish the sign-in in the app.
+  </Tab>
+</Tabs>
+
+## How an app authenticates
+
+A service can offer several ways to connect, and you pick one at install time.
+
+| Method | What you do |
+| --- | --- |
+| **Managed** | Click sign in. Rerun brokers the OAuth and proxies the calls. Nothing to configure |
+| **OAuth** | Sign in to the service in a browser window. Rerun stores the token on your machine |
+| **API key** | Paste a key into a masked form. It goes straight to your machine |
+| **Command** | The app runs a local MCP command on your machine |
+| **None** | Nothing to connect. It works right away |
+
+## Statuses
+
+Every app on a coworker shows one of three states:
+
+<CardGroup cols={3}>
+  <Card title="active" icon="circle-check">
+    Connected. Its tools are available to the coworker.
+  </Card>
+  <Card title="needs_auth" icon="circle-user">
+    Waiting for you to sign in.
+  </Card>
+  <Card title="needs_config" icon="circle-alert">
+    Waiting for a credential, or for you to pick between several ways to connect.
+  </Card>
+</CardGroup>
+
+A coworker with an app in `needs_auth` or `needs_config` will tell you so rather than silently failing.
+
+## Where credentials live
+
+Credentials go to your machine and stay there. Rerun's database keeps only a reference to the variable name, never the value.
+
+That holds everywhere:
+
+- The [API](/api/tools/connectors) accepts no secret at all.
+- When a coworker needs a key, it opens a masked form. The value never enters the conversation, and the coworker only learns which variable name was filled.
+- Capturing a coworker into a [template](/templates/create) ships the variable names, never the values.
+
+<Warning>
+  Never paste an API key, a password or a token into the chat. The conversation is stored and sent to the model. If a coworker ever asks you to, refuse and use the masked form instead.
+</Warning>
+
+## Missing an app
+
+Two ways forward.
+
+**Ask for it.** The **Apps** tab has a request form. Requests go to the Rerun team and the library grows from them.
+
+**Add the MCP server yourself.** Switch on expert mode, open the **MCP** tab, and register any Model Context Protocol server: HTTP, SSE or a local command, with its own headers, OAuth or environment variables. Anything with an MCP server works with Rerun today, app or not.
+
+Reference a stored secret in an MCP config with `${VARIABLE_NAME}`. It resolves on your machine at run time.

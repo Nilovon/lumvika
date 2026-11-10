@@ -1,0 +1,99 @@
+---
+title: "Contributing"
+description: "Run Rerun from source, find your way in the code, and get a pull request in."
+---
+
+Bug reports, fixes and docs are welcome. This page is the short version of `CONTRIBUTING.md` at the root of the repository.
+
+## Run it from source
+
+You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and an OpenRouter key.
+
+<Steps>
+  <Step title="Install and start Supabase">
+    ```bash
+    pnpm install
+    npx supabase start      # Postgres, auth, storage and Mailpit on ports 54420 to 54429
+    ```
+  </Step>
+  <Step title="Configure the app">
+    ```bash
+    cp .env.example .env
+    ```
+
+    In `.env`, set `NEXT_PUBLIC_APP_URL=http://localhost:3050`, `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54421`, the two keys from `npx supabase status`, and `OPENROUTER_API_KEY`. Then generate the secrets and hand the file to the app:
+
+    ```bash
+    node scripts/self-host-check.mjs
+    cp .env apps/ui/.env
+    echo "RERUN_ENGINE_URL=http://localhost:3000" >> apps/ui/.env
+    ```
+
+    `RERUN_ENGINE_URL` gives the engine below to the first workspace that needs one.
+  </Step>
+  <Step title="Start the app">
+    ```bash
+    pnpm --filter @rerun/contracts build
+    pnpm dev:ui             # http://localhost:3050
+    ```
+  </Step>
+  <Step title="Start the engine">
+    In another terminal:
+
+    ```bash
+    cp apps/engine/.env.example apps/engine/.env
+    ```
+
+    In `apps/engine/.env`, set `RERUN_API_KEY` to the `RERUN_ENGINE_API_KEY` of `.env`, and `RERUN_HUB_BASE_URL=http://localhost:3050`. Then:
+
+    ```bash
+    pnpm dev:engine         # http://localhost:3000
+    ```
+  </Step>
+</Steps>
+
+Sign-in codes land in Mailpit, at [http://localhost:54424](http://localhost:54424).
+
+To work on these docs, run `pnpm dev:docs` and open [http://localhost:3333](http://localhost:3333).
+
+## Checks
+
+```bash
+pnpm -r --if-present ts-check
+pnpm --filter rerun lint
+pnpm --filter rerun test
+pnpm --filter rerun-engine test
+```
+
+CI runs the same, plus every migration on an empty database and a build of both Docker images.
+
+## The code
+
+| Path | What it is |
+|---|---|
+| `apps/ui` | The web app and its API (Next.js). Talks to Supabase and to the engine of each workspace |
+| `apps/engine` | The engine: runs the coworkers, their tools, their memory, their browser and screen |
+| `apps/docs` | This documentation (Mintlify) |
+| `packages/contracts` | Types and schemas shared by the app and the engine |
+| `packages/ui` | The design system and the board |
+| `supabase/migrations` | The database schema, one migration per change |
+
+`CLAUDE.md` holds the conventions of the codebase, and is what coding agents read. Three of them matter most:
+
+- **Supabase access** goes through the typed helpers for reads, and every write states its payload type.
+- **Responsive** from the first version: every screen works on a phone, a tablet and a desktop.
+- **Engine data-dir migrations**: anything that changes what the engine keeps on disk is a new numbered step at the end of its ladder, never an edit of a shipped one. Details in `apps/engine/README.md`.
+
+A schema change is a new migration: `pnpm db:new <name>` creates the file, and `pnpm db:reset` replays every migration and the seed on the local stack.
+
+`apps/ui/cloud/` is the seam where Rerun Cloud plugs in billing, paid apps, emails and its machine pool. In this repository it holds the self-hosted behaviour. Pull requests that change what it exports are unlikely to be merged.
+
+## Pull requests
+
+1. Open an issue first for anything bigger than a fix, so you agree on the direction before writing code.
+2. Keep a pull request to one change, with tests where the code has them.
+3. Sign the CLA when the bot asks: once, for all your contributions.
+
+Rerun is developed in a private repository that Rerun Cloud deploys from, and this repository is published from it at each release. A merged pull request is applied there with its author kept, and comes back here with the next release, credited in the release notes.
+
+What will not be merged: anything that touches `apps/ui/cloud/`, a dependency with a license incompatible with the AGPL, or a feature that only makes sense for one deployment.

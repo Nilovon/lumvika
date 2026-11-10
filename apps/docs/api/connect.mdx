@@ -1,0 +1,102 @@
+---
+title: "Connect a client"
+description: "Wire Claude Code, Codex, Cursor, a Rerun coworker or any MCP client to your workspace."
+---
+
+The server URL is the same for everyone:
+
+```
+https://app.rerun.build/api/mcp/account
+```
+
+It is an HTTP MCP server. Every snippet below sends your key in an `Authorization` header. The app shows these same snippets with your real key already filled in, right after you create it, under the workspace pill then **API keys & MCP**.
+
+<Info>
+  Replace `rk_your_key` with the key you copied. See [Authentication](/api/authentication) if you do not have one yet.
+</Info>
+
+## Claude Code
+
+```bash
+claude mcp add --transport http rerun https://app.rerun.build/api/mcp/account --header "Authorization: Bearer rk_your_key"
+```
+
+Then ask Claude Code what it can do with Rerun. It calls `tools/list` on its own and discovers the 53 tools.
+
+## Codex
+
+Codex reads the key from the environment each time it starts the server, so export it first.
+
+```bash
+export RERUN_MCP_KEY="rk_your_key"
+codex mcp add rerun --url https://app.rerun.build/api/mcp/account --bearer-token-env-var RERUN_MCP_KEY
+```
+
+<Note>
+  This is the Codex CLI. The ChatGPT app only accepts OAuth connections, so an API key gets you nowhere there.
+</Note>
+
+## Cursor
+
+Add the server to `~/.cursor/mcp.json`:
+
+```json ~/.cursor/mcp.json
+{
+  "mcpServers": {
+    "rerun": {
+      "url": "https://app.rerun.build/api/mcp/account",
+      "headers": {
+        "Authorization": "Bearer rk_your_key"
+      }
+    }
+  }
+}
+```
+
+## A Rerun coworker
+
+You can give one of your own coworkers the same reach over the workspace as an outside client. Open the coworker panel, go to the **MCP** tab, click **New**, and paste:
+
+```json
+{
+  "name": "rerun",
+  "transport": "http",
+  "url": "https://app.rerun.build/api/mcp/account",
+  "headers": {
+    "Authorization": "Bearer rk_your_key"
+  }
+}
+```
+
+<Warning>
+  This lets that coworker create, edit and delete every other coworker of the workspace, including itself. Do it on purpose, and prefer a dedicated coworker for it.
+</Warning>
+
+## Any other client
+
+Point the client at the URL and add the header.
+
+| Field | Value |
+| --- | --- |
+| Server URL | `https://app.rerun.build/api/mcp/account` |
+| Transport | HTTP |
+| Header | `Authorization: Bearer rk_your_key` |
+
+For a client that only speaks stdio, bridge it:
+
+```bash
+npx -y mcp-remote https://app.rerun.build/api/mcp/account --header "Authorization: Bearer rk_your_key"
+```
+
+## Check the connection
+
+The cheapest call that proves everything works is `tools/list`.
+
+```bash
+curl -s https://app.rerun.build/api/mcp/account \
+  -H "Authorization: Bearer rk_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+A `401 Unauthorized` in plain text means the key is missing, malformed or revoked. Anything else comes back as JSON-RPC. See [Protocol](/api/protocol) for the full handshake.
