@@ -6,9 +6,10 @@ Lumvika, said `LOOM-vee-kah`. Invented word, a nod to light (lumen).
 
 ## Logo
 
-The mark is an open orbit: a thick ring with a gap at the top right, a point of light (Amber) sitting
-in the gap on the ring's own line, and a core in the middle. On light backgrounds the ring and core are
-Teal; on dark backgrounds and on the app icon the ring is Paper and the core Mint.
+The mark is a stack of three square plates in isometric view, the top one in Lime: a platform with
+the light on top. On light backgrounds the plates are Black with grey sides; on dark backgrounds and on
+the black app icon they are White with grey sides. The single-colour version (`MARK_PATH`) shows the
+sides of each plate as a solid band and lifts the top of the stack off its band by a thin line.
 
 Every logo file below, plus the app icons, the favicons, the email mark, the social preview image and
 the engine's desktop wallpaper, is drawn by `apps/ui/scripts/render-logo.mjs` (run it from `apps/ui`
@@ -20,7 +21,7 @@ with `node scripts/render-logo.mjs`).
 | `logo/mark-on-dark.svg` | Mark on dark backgrounds |
 | `logo/wordmark-on-light.svg` | Mark and name on light backgrounds |
 | `logo/wordmark-on-dark.svg` | Mark and name on dark backgrounds |
-| `logo/app-icon.svg` | App icon on the teal tile |
+| `logo/app-icon.svg` | App icon on the black tile |
 | `favicon/favicon.ico` | 16, 32 and 48 px |
 | `favicon/favicon-{16,32,180,192,512}.png` | Browser, Apple touch and PWA icons |
 
@@ -29,23 +30,25 @@ In code, the mark is `MARK_PATH` in `packages/ui/src/logo/Logo.tsx`, one single-
 copy in `apps/mobile/src/components/ui/ProviderLogo.tsx` must match it; the script refuses to run
 when either no longer matches the geometry.
 
-Keep clear space of at least the diameter of the point of light around the mark.
+Keep clear space of at least the height of one plate around the mark.
 
 ## Colors
 
 | Name | Hex | Use |
 |---|---|---|
-| Ink | `#10201D` | Text and mark on light |
-| Paper | `#F7F4EC` | Text and mark on dark |
+| Black | `#0A0A0A` | Logo, wordmark and app icon |
+| White | `#FFFFFF` | Logo and wordmark on dark |
+| Lime | `#C6F432` | The top plate of the mark and the dot of the i, nothing else |
+| Ink | `#10201D` | Text on light in the app, the characters' faces |
+| Paper | `#F7F4EC` | Text on dark in the app, the coworkers' window band |
 | Teal | `#0B6E63` | Brand color, `--brand` in the app |
 | Mint | `#7FDCCB` | Brand color as text on dark, `--brand-text` |
-| Amber | `#F5A524` | The point of light, sparing accents |
+| Amber | `#F5A524` | Sparing accents in the app and the email art |
 
 ## Type
 
-The wordmark is drawn, not set: lowercase monoline letters with round ends, 15 units wide on a 56 unit
-x-height, with no font needed to render it. The l ends in a small foot, the a is a full bowl with a
-stem, and the dot of the i is the Amber point of light.
+The wordmark is drawn, not set: lowercase monoline letters with square ends, 17 units wide on a 56 unit
+x-height, with no font needed to render it. The dot of the i is a Lime square.
 
 The interface uses Inter and Geist, with Geist Mono for code, as loaded in `apps/ui/app/layout.tsx`.
 

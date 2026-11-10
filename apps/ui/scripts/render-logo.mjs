@@ -2,10 +2,12 @@
 // branding/logo, apps/docs and apps/ui/app, the favicons and app icons, the email mark, the
 // desktop wallpaper of the engine and the social preview image.
 //
-// The mark is an open orbit: a thick ring with a gap at the top right, a point of light (Amber)
-// sitting in the gap on the ring's own line, and a core in the middle. In code it is one
-// single-colour path, MARK_PATH in packages/ui/src/logo/Logo.tsx (and its copy in the mobile
-// ProviderLogo); this script refuses to run when either disagrees with the geometry below.
+// The mark is a stack of three square plates seen in isometric view, the top one in Lime: the
+// platform, and the light on top of it. In colour every plate shows its top and two sides. In
+// code it is one single-colour path, MARK_PATH in packages/ui/src/logo/Logo.tsx (and its copy in
+// the mobile ProviderLogo): there the sides of each plate are a solid band, the gaps between the
+// plates are left open and the top of the stack is lifted off its band by a thin line. This
+// script refuses to run when either copy disagrees with the geometry below.
 //
 // Run from apps/ui: node scripts/render-logo.mjs
 
@@ -16,109 +18,101 @@ import sharp from 'sharp'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 
-const INK = '#10201D'
-const PAPER = '#F7F4EC'
-const TEAL = '#0B6E63'
-const MINT = '#7FDCCB'
-const AMBER = '#F5A524'
+const BLACK = '#0A0A0A'
+const WHITE = '#FFFFFF'
+const LIME = '#C6F432'
+
+// Faces of a plate: top, left side, right side.
+const ON_LIGHT = { top: '#4A4A4A', left: BLACK, right: '#262626' }
+const ON_DARK = { top: WHITE, left: '#D4D4D4', right: '#8A8A8A' }
+const LIGHT = { top: LIME, left: '#9DC41F', right: '#7A9A12' }
 
 // ---------------------------------------------------------------------------------------------
-// The mark, in a 512 x 512 box.
+// The mark, in a 512 x 512 box. Plates span -1.6..1.6 on both floor axes.
 
-const C = { x: 256, y: 252 }
-const RING = 150 // radius of the ring's centre line
-const WIDTH = 60 // thickness of the ring
-const LIGHT = { angle: -52, r: 46 } // the point of light, on the ring's line
-const CLEARANCE = 18 // air between the light and the ends of the ring
-const CORE = 34
-
+const HALF = 1.6
+const THICK = 0.62
+const LEVELS = [0, 1.25, 2.5]
+const SCALE = 4.46
 const round = (n) => Math.round(n * 10) / 10
-const at = (radius, degrees) => {
-    const a = (degrees * Math.PI) / 180
-    return `${round(C.x + radius * Math.cos(a))} ${round(C.y + radius * Math.sin(a))}`
+// Isometric projection, centred on the box.
+const P = (x, y, z) => [round(256 + (x - y) * 13.5 * SCALE), round(256 + ((x + y) * 7.8 - z * 15.6 + 24.32) * SCALE)]
+const poly = (points) => `M${points.map((p) => p.join(' ')).join('L')}Z`
+
+const top = (z) => [P(-HALF, -HALF, z), P(HALF, -HALF, z), P(HALF, HALF, z), P(-HALF, HALF, z)]
+const leftFace = (z) => [P(-HALF, HALF, z), P(HALF, HALF, z), P(HALF, HALF, z + THICK), P(-HALF, HALF, z + THICK)]
+const rightFace = (z) => [P(HALF, -HALF, z), P(HALF, HALF, z), P(HALF, HALF, z + THICK), P(HALF, -HALF, z + THICK)]
+// Both sides of a plate as one band.
+const band = (z) => [P(-HALF, HALF, z + THICK), P(-HALF, HALF, z), P(HALF, HALF, z), P(HALF, -HALF, z), P(HALF, -HALF, z + THICK), P(HALF, HALF, z + THICK)]
+
+// Single colour: three bands, and the top of the stack lifted off its band by a thin line.
+const LIFT = 0.16
+export const MARK_PATH = LEVELS.map((z) => poly(band(z))).join('') + poly(top(LEVELS[2] + THICK + LIFT))
+
+function plate(z, faces) {
+    return `<path d="${poly(leftFace(z))}" fill="${faces.left}"/><path d="${poly(rightFace(z))}" fill="${faces.right}"/><path d="${poly(top(z + THICK))}" fill="${faces.top}"/>`
 }
-const circle = (x, y, r) => `M${round(x - r)} ${round(y)}A${r} ${r} 0 1 0 ${round(x + r)} ${round(y)}A${r} ${r} 0 1 0 ${round(x - r)} ${round(y)}Z`
 
-const halfGap = ((LIGHT.r + CLEARANCE + WIDTH / 2) / RING) * (180 / Math.PI)
-const start = LIGHT.angle + halfGap
-const end = LIGHT.angle - halfGap + 360
-const outer = RING + WIDTH / 2
-const inner = RING - WIDTH / 2
-const cap = WIDTH / 2
-
-const RING_PATH = `M${at(outer, start)}A${outer} ${outer} 0 1 1 ${at(outer, end)}A${cap} ${cap} 0 0 1 ${at(inner, end)}A${inner} ${inner} 0 1 0 ${at(inner, start)}A${cap} ${cap} 0 0 1 ${at(outer, start)}Z`
-const lightCentre = at(RING, LIGHT.angle).split(' ').map(Number)
-const LIGHT_PATH = circle(lightCentre[0], lightCentre[1], LIGHT.r)
-const CORE_PATH = circle(C.x, C.y, CORE)
-
-export const MARK_PATH = RING_PATH + LIGHT_PATH + CORE_PATH
-
-function mark({ ring, core, light }) {
-    return `<path d="${RING_PATH}" fill="${ring}"/><path d="${CORE_PATH}" fill="${core}"/><path d="${LIGHT_PATH}" fill="${light}"/>`
+function mark(faces) {
+    return LEVELS.map((z, i) => plate(z, i === LEVELS.length - 1 ? LIGHT : faces)).join('')
 }
 
 // The mark scaled around the centre of the 512 box.
 const scaled = (factor, body) => `<g transform="translate(${256 * (1 - factor)} ${256 * (1 - factor)}) scale(${factor})">${body}</g>`
 
 // ---------------------------------------------------------------------------------------------
-// The wordmark: lowercase, monoline, round ends, x-height 56 on a 100 unit line (ascenders from 0,
-// baseline at 100). The l ends in a small foot, the a is a full bowl, the i carries the light.
+// The wordmark: lowercase, monoline, square ends, x-height 56 on a 100 unit line (ascenders from 0,
+// baseline at 100). The dot of the i is a Lime square.
 
-const STROKE = 15
+const STROKE = 17
 const LETTERS = [
-    'M8 0V78A22 22 0 0 0 30 100', // l
-    'M52 44V72A28 28 0 0 0 108 72V44M108 72V100', // u
-    'M132 100V44M132 70A24 24 0 0 1 180 70V100M180 70A24 24 0 0 1 228 70V100', // m
-    'M250 44L276 98L302 44', // v
-    'M324 44V100', // i
-    'M348 0V100M348 76L392 44M366 63L394 100', // k
+    'M8 0V100', // l
+    'M40 44V72A28 28 0 0 0 96 72V44M96 44V100', // u
+    'M122 100V44M122 70A24 24 0 0 1 170 70V100M170 70A24 24 0 0 1 218 70V100', // m
+    'M238 44L264 100L290 44', // v
+    'M314 44V100', // i
+    'M342 0V100M342 78L386 44M362 64L392 100', // k
     'M416 72A28 28 0 1 0 472 72A28 28 0 1 0 416 72M472 44V100', // a
 ]
-const I_DOT = { x: 324, y: 16, r: 10 }
-const LETTERS_WIDTH = 480
+const I_DOT = { x: 314 - STROKE / 2, y: 6, size: STROKE }
+const WORD_W = 640
+const WORD_H = 120
 
-function wordmark(ink, { ring, core, light }) {
-    // The mark sits on the height of the letters, the letters start right of it.
-    const markScale = 0.3
-    const letters = `<g fill="none" stroke="${ink}" stroke-width="${STROKE}" stroke-linecap="round" stroke-linejoin="round">${LETTERS.map((d) => `<path d="${d}"/>`).join('')}</g><circle cx="${I_DOT.x}" cy="${I_DOT.y}" r="${I_DOT.r}" fill="${light}"/>`
-    const width = 150 + LETTERS_WIDTH + 12
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 124"><g transform="translate(-15 -13) scale(${markScale})">${mark({ ring, core, light })}</g><g transform="translate(150 12)">${letters}</g></svg>`
+function wordmark(ink, faces) {
+    const letters = `<g fill="none" stroke="${ink}" stroke-width="${STROKE}" stroke-linecap="butt" stroke-linejoin="miter">${LETTERS.map((d) => `<path d="${d}"/>`).join('')}</g><rect x="${I_DOT.x}" y="${I_DOT.y}" width="${I_DOT.size}" height="${I_DOT.size}" fill="${LIME}"/>`
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WORD_W} ${WORD_H}"><g transform="translate(-4 2) scale(0.226)">${mark(faces)}</g><g transform="translate(150 12)">${letters}</g></svg>`
 }
 
 // ---------------------------------------------------------------------------------------------
 
 const svg512 = (body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">${body}</svg>`
 
-const ON_LIGHT = { ring: TEAL, core: TEAL, light: AMBER }
-const ON_DARK = { ring: PAPER, core: MINT, light: AMBER }
-const ON_TEAL = { ring: PAPER, core: MINT, light: AMBER }
-
 const MARK_ON_LIGHT = svg512(mark(ON_LIGHT))
 const MARK_ON_DARK = svg512(mark(ON_DARK))
-const APP_ICON = svg512(`<rect width="512" height="512" rx="112" fill="${TEAL}"/>${scaled(0.78, mark(ON_TEAL))}`)
-const FULL_BLEED = (factor) => svg512(`<rect width="512" height="512" fill="${TEAL}"/>${scaled(factor, mark(ON_TEAL))}`)
-const WORDMARK_ON_LIGHT = wordmark(INK, ON_LIGHT)
-const WORDMARK_ON_DARK = wordmark(PAPER, ON_DARK)
+const APP_ICON = svg512(`<rect width="512" height="512" rx="112" fill="${BLACK}"/>${scaled(0.72, mark(ON_DARK))}`)
+const FULL_BLEED = (factor) => svg512(`<rect width="512" height="512" fill="${BLACK}"/>${scaled(factor, mark(ON_DARK))}`)
+const WORDMARK_ON_LIGHT = wordmark(BLACK, ON_LIGHT)
+const WORDMARK_ON_DARK = wordmark(WHITE, ON_DARK)
 
-function backdrop(width, height) {
+// Black with a faint grid, fading out from the middle.
+function backdrop(width, height, cell) {
     return `<defs>
-  <radialGradient id="glow" cx="${width * 0.78}" cy="${height * 0.18}" r="${width * 0.75}" gradientUnits="userSpaceOnUse">
-    <stop offset="0" stop-color="#17594f"/>
-    <stop offset="0.55" stop-color="#123b35"/>
-    <stop offset="1" stop-color="#0f1f1c"/>
-  </radialGradient>
+  <pattern id="grid" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse"><path d="M${cell} 0H0V${cell}" fill="none" stroke="${WHITE}" stroke-width="1.5"/></pattern>
+  <radialGradient id="fade" cx="${width / 2}" cy="${height / 2}" r="${width * 0.6}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${WHITE}"/><stop offset="1" stop-color="${WHITE}" stop-opacity="0"/></radialGradient>
+  <mask id="fadeMask"><rect width="${width}" height="${height}" fill="url(#fade)"/></mask>
 </defs>
-<rect width="${width}" height="${height}" fill="url(#glow)"/>`
+<rect width="${width}" height="${height}" fill="${BLACK}"/>
+<rect width="${width}" height="${height}" fill="url(#grid)" mask="url(#fadeMask)" opacity="0.07"/>`
 }
 
-const WALLPAPER = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">${backdrop(1920, 1080)}
-<g transform="translate(888 468) scale(0.28)" opacity="0.2"><path fill-rule="evenodd" fill="${PAPER}" d="${MARK_PATH}"/></g></svg>`
+const WALLPAPER = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">${backdrop(1920, 1080, 64)}
+<g transform="translate(888 468) scale(0.28)" opacity="0.22"><path fill="${WHITE}" d="${MARK_PATH}"/></g></svg>`
 
 const OG_W = 2400
 const OG_H = 1260
-const OG_WORDMARK_W = 1640
-const OG_WORDMARK_H = (OG_WORDMARK_W / 642) * 124
-const OG_IMAGE = `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_W}" height="${OG_H}" viewBox="0 0 ${OG_W} ${OG_H}">${backdrop(OG_W, OG_H)}
+const OG_WORDMARK_W = 1600
+const OG_WORDMARK_H = (OG_WORDMARK_W / WORD_W) * WORD_H
+const OG_IMAGE = `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_W}" height="${OG_H}" viewBox="0 0 ${OG_W} ${OG_H}">${backdrop(OG_W, OG_H, 80)}
 <svg x="${(OG_W - OG_WORDMARK_W) / 2}" y="${(OG_H - OG_WORDMARK_H) / 2}" width="${OG_WORDMARK_W}" height="${OG_WORDMARK_H}" ${WORDMARK_ON_DARK.slice(5)}</svg>`
 
 // ---------------------------------------------------------------------------------------------

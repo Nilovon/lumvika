@@ -2,10 +2,11 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { cn } from '../cn'
 
-// Marque Lumvika, une orbite ouverte : un anneau, un point de lumière dans son ouverture et un
-// noyau au centre (viewBox 0 0 512 512). Dessinée par apps/ui/scripts/render-logo.mjs.
+// Marque Lumvika, une pile de trois plaques en vue isométrique, en une seule couleur : les flancs de
+// chaque plaque, et le dessus de la pile détaché par un mince trait (viewBox 0 0 512 512).
+// Dessinée par apps/ui/scripts/render-logo.mjs.
 export const MARK_PATH =
-    'M428.9 202.1A180 180 0 1 1 262.6 72.1A30 30 0 0 1 260.4 132.1A120 120 0 1 0 371.3 218.7A30 30 0 0 1 428.9 202.1ZM302.3 133.8A46 46 0 1 0 394.3 133.8A46 46 0 1 0 302.3 133.8ZM222 252A34 34 0 1 0 290 252A34 34 0 1 0 222 252Z'
+    'M63.3 321.3L63.3 364.5L256 475.8L448.7 364.5L448.7 321.3L256 432.7ZM63.3 234.4L63.3 277.5L256 388.8L448.7 277.5L448.7 234.4L256 345.7ZM63.3 147.4L63.3 190.5L256 301.8L448.7 190.5L448.7 147.4L256 258.7ZM256 24.9L448.7 136.3L256 247.6L63.3 136.3Z'
 
 // Même traitement que <Icon> (cf. ServiceList) : carré bordé, grille carrée
 // atténuée+fondue en radial, reflet lumineux centré, glyph (la marque) par-dessus.
