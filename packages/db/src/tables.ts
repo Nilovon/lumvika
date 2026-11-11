@@ -12,9 +12,9 @@ export type TableRow<T extends TableName> = InferSelectModel<PublicTables[T]>
 export type TableInsert<T extends TableName> = InferInsertModel<PublicTables[T]>
 export type TableUpdate<T extends TableName> = Partial<TableInsert<T>>
 
-type PublicEnums = { [K in keyof PublicExports as PublicExports[K] extends PgEnumType<[string, ...string[]]> ? K : never]: PublicExports[K] }
+type PublicEnums = { [K in keyof PublicExports as PublicExports[K] extends { enumName: string; enumValues: readonly string[] } ? K : never]: PublicExports[K] }
 export type EnumName = keyof PublicEnums & string
-export type EnumValue<E extends EnumName> = PublicEnums[E] extends PgEnumType<infer V> ? V[number] : never
+export type EnumValue<E extends EnumName> = PublicEnums[E] extends { enumValues: readonly (infer V)[] } ? V : never
 
 export const publicTables = Object.fromEntries(Object.entries(publicSchema).filter(([, value]) => is(value, PgTable))) as unknown as PublicTables
 

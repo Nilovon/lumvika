@@ -13,7 +13,7 @@ import {
 } from '@/lib/published/gate'
 import { extractPublishedSlug, PUBLISHED_SITE_ROUTE } from '@/lib/published/host'
 import { STAGING_GATE_CHALLENGE, stagingGateVerdict } from '@/lib/staging-gate'
-import { updateSession } from '@/supabase/middleware'
+import { updateSession } from '@/lib/auth/proxy-session'
 import {
     APP_GATED_PATHS,
     BRAND_GATE_COOKIE,
