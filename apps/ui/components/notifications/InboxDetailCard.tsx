@@ -3,17 +3,11 @@
 import { ATTENTION_STATUS_META, AttentionBuddy, type InboxEntry } from '@lumvika/ui/inbox'
 import { Button } from '@lumvika/ui/primitives'
 import { shortRelativeTime } from '@lumvika/ui/time'
-import { cjk } from '@streamdown/cjk'
-import { code } from '@streamdown/code'
-import { math } from '@streamdown/math'
-import { mermaid } from '@streamdown/mermaid'
 import { useLocale, useTranslations } from 'next-intl'
-import { Streamdown } from 'streamdown'
 
+import { LazyNotificationMarkdown } from '@/components/notifications/LazyNotificationMarkdown'
 import { TooltipDisabledReason, TooltipLabeled } from '@/components/ui/tooltip'
 import { ArrowRight, CheckCheckIcon, XIcon } from '@/lib/icons'
-
-const streamdownPlugins = { cjk, code, math, mermaid }
 
 type InboxDetailCardProps = {
     entry: InboxEntry
@@ -47,7 +41,7 @@ export function InboxDetailCard({ entry, message, total, onClose, onSeeAll, onOp
                 </Button>
             </div>
             <div className="max-h-40 overflow-y-auto text-sm break-words text-foreground/80 [&_li]:my-0.5 [&_ol]:my-1 [&_p]:my-1 [&_pre]:my-1 [&_ul]:my-1 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                <Streamdown plugins={streamdownPlugins}>{message}</Streamdown>
+                <LazyNotificationMarkdown message={message} />
             </div>
             <div className="flex items-center justify-between gap-2">
                 <Button size="sm" variant="ghost" onClick={onSeeAll}>

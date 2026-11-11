@@ -2,15 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { BorderBeam, type BorderBeamProps, TextShimmer } from '@lumvika/ui'
 import { BuddyPip } from '@lumvika/ui/inbox'
 import { AgentBuddy } from '@lumvika/ui/iso-grid'
-import { cjk } from '@streamdown/cjk'
-import { code } from '@streamdown/code'
-import { math } from '@streamdown/math'
-import { mermaid } from '@streamdown/mermaid'
-import { Streamdown } from 'streamdown'
 import { ArrowRight, XIcon, type LucideIcon } from '@/lib/icons'
 import { useTranslations } from 'next-intl'
-
-const streamdownPlugins = { cjk, code, math, mermaid }
+import { LazyNotificationMarkdown } from '@/components/notifications/LazyNotificationMarkdown'
 
 interface NotificationToastProps {
     title: string
@@ -29,7 +23,13 @@ export function NotificationToast({ title, message, agentId, Icon, iconColor, be
     const [isOverflowing, setIsOverflowing] = useState(false)
     useEffect(() => {
         const el = messageRef.current
-        if (el) setIsOverflowing(el.scrollHeight > el.clientHeight)
+        const content = el?.firstElementChild
+        if (!el || !content) return
+        const measure = () => setIsOverflowing(el.scrollHeight > el.clientHeight)
+        measure()
+        const observer = new ResizeObserver(measure)
+        observer.observe(content)
+        return () => observer.disconnect()
     }, [message])
 
     return (
@@ -57,9 +57,11 @@ export function NotificationToast({ title, message, agentId, Icon, iconColor, be
                 <div className="relative">
                     <div
                         ref={messageRef}
-                        className="mt-0.5 max-h-32 overflow-hidden break-words text-sm text-foreground/80 max-sm:max-h-10 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-0 [&_pre]:my-1"
+                        className="mt-0.5 max-h-32 overflow-hidden break-words text-sm text-foreground/80 max-sm:max-h-10 [&>div>*:first-child]:mt-0 [&>div>*:last-child]:mb-0 [&_p]:my-0 [&_pre]:my-1"
                     >
-                        <Streamdown plugins={streamdownPlugins}>{message}</Streamdown>
+                        <div>
+                            <LazyNotificationMarkdown message={message} />
+                        </div>
                     </div>
                     {isOverflowing && (
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent" />
