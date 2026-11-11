@@ -5,8 +5,7 @@ import { isPublishedAccess, type PublishedAccess } from '@/lib/published/access'
 import { mintAccessCookie, openAccessCookie, type AccessClaims, type AccessGrant } from '@/lib/published/access-ticket'
 import { publishedSiteOrigin } from '@/lib/published/host'
 import { resolveSitePath } from '@/lib/published/site-path'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // Everything `<slug>.lumvika.site` decides before it serves a byte: which link the host names, whether
 // the visitor may open it, and what they see when they may not (the gate) or when the link is a
@@ -30,7 +29,7 @@ type Row = Pick<Database['public']['Tables']['published_files']['Row'], (typeof 
 export type PublishedEntry = Omit<Row, 'access'> & { access: PublishedAccess }
 
 export async function loadPublished(slug: string): Promise<PublishedEntry | null> {
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'published_files', PUBLISHED_ENTRY_COLUMNS, { slug })
+    const { data } = await selectMaybeSingle(serviceScope(), 'published_files', PUBLISHED_ENTRY_COLUMNS, { slug })
     if (!data) return null
     // A value the check constraint rules out reads as the narrowest access, never the widest.
     return { ...data, access: isPublishedAccess(data.access) ? data.access : 'workspace' }
@@ -39,7 +38,7 @@ export async function loadPublished(slug: string): Promise<PublishedEntry | null
 export type WorkspaceBrand = { name: string; iconUrl: string | null }
 
 export async function loadWorkspaceBrand(workspaceId: number): Promise<WorkspaceBrand> {
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'workspaces', ['name', 'icon_url'] as const, { id: workspaceId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'workspaces', ['name', 'icon_url'] as const, { id: workspaceId })
     return { name: data?.name ?? 'Lumvika', iconUrl: data?.icon_url ?? null }
 }
 

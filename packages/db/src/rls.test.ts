@@ -79,3 +79,13 @@ describe('row level security', () => {
         expect(rows.map(row => row.table)).toEqual([])
     })
 })
+
+describe('raw SQL', () => {
+    afterAll(closeDb)
+
+    it('answers int8 as numbers and timestamps in ISO 8601', async () => {
+        const { queryRows } = await import('./functions')
+        const { data } = await queryRows<{ big: number; at: string }>(serviceScope(), sql`select 42::int8 as big, '2026-11-11 10:00:00.123456+00'::timestamptz as at`)
+        expect(data).toEqual([{ big: 42, at: '2026-11-11T10:00:00.123456+00:00' }])
+    })
+})

@@ -8,7 +8,8 @@
         ".": "./src/index.ts",
         "./types": "./src/database.types.ts",
         "./helpers": "./src/helpers.ts",
-        "./schema": "./src/schema/index.ts"
+        "./schema": "./src/schema/index.ts",
+        "./testing": "./src/testing/database.ts"
     },
     "scripts": {
         "ts-check": "tsc --noEmit",

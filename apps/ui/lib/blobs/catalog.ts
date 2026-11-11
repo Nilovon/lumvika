@@ -1,3 +1,4 @@
+import { publicUrl } from '@lumvika/storage/s3'
 import { ILLUSTRATION_ENTRIES } from '@lumvika/cloud/illustrations'
 
 export type BlobColor =
@@ -22,10 +23,8 @@ export type BlobIllustration = {
     url: string
 }
 
-const BLOB_BUCKET = 'blob-illustrations'
-
 export function blobUrl(file: string): string {
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BLOB_BUCKET}/${file}`
+    return publicUrl('blob-illustrations', file)
 }
 
 export type BlobEntry = Omit<BlobIllustration, 'url'>

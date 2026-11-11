@@ -33,3 +33,15 @@ export async function resetTestDatabase(): Promise<void> {
         await client.end()
     }
 }
+
+// Whether the local Postgres of `pnpm db:start` answers, so a test that needs it can skip without it.
+export async function testDatabaseReachable(): Promise<boolean> {
+    const client = new pg.Client({ connectionString: ADMIN_URL, connectionTimeoutMillis: 1000 })
+    try {
+        await client.connect()
+        await client.end()
+        return true
+    } catch {
+        return false
+    }
+}

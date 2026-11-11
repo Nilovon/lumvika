@@ -27,7 +27,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 // The labs are work in progress, so they answer 404 unless the request carries the shared design
 // system token, as `?key=` or in the cookie that grants it. Same token and same cookie as the
 // landing, set on `.lumvika.com`: unlocking once opens both hosts. The UI kit next to them is public.
-// No Supabase session is read here, so a capture of these pages still provisions nothing, which is
+// No session is read here, so a capture of these pages still provisions nothing, which is
 // what excluding `render/` from the matcher below exists for.
 function brandGate(request: NextRequest): NextResponse {
     const secret = process.env.BRAND_GATE_TOKEN

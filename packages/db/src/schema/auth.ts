@@ -5,7 +5,7 @@ import { bigint, boolean, index, integer, pgSchema, text, timestamp, uuid } from
 export const authSchema = pgSchema('auth')
 
 export const authUsers = authSchema.table('users', {
-    id: uuid('id').primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
     email: text('email').notNull().unique('users_email_unique'),
     emailVerified: boolean('email_verified').notNull().default(false),
@@ -18,7 +18,7 @@ export const authUsers = authSchema.table('users', {
 export const authSessions = authSchema.table(
     'sessions',
     {
-        id: uuid('id').primaryKey(),
+        id: uuid('id').primaryKey().defaultRandom(),
         expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
         token: text('token').notNull().unique('sessions_token_unique'),
         createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -35,7 +35,7 @@ export const authSessions = authSchema.table(
 export const authAccounts = authSchema.table(
     'accounts',
     {
-        id: uuid('id').primaryKey(),
+        id: uuid('id').primaryKey().defaultRandom(),
         accountId: text('account_id').notNull(),
         providerId: text('provider_id').notNull(),
         userId: uuid('user_id')
@@ -57,7 +57,7 @@ export const authAccounts = authSchema.table(
 export const authVerifications = authSchema.table(
     'verifications',
     {
-        id: uuid('id').primaryKey(),
+        id: uuid('id').primaryKey().defaultRandom(),
         identifier: text('identifier').notNull(),
         value: text('value').notNull(),
         expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),

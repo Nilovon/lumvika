@@ -112,8 +112,9 @@ export function listObjects(bucket: Bucket, prefix = '', { limit = 1000 }: { lim
     })
 }
 
+// Also called in the browser, where only NEXT_PUBLIC_STORAGE_URL is inlined by Next.
 export function publicUrl(bucket: Bucket, path: string): string {
-    const base = (process.env.S3_PUBLIC_URL ?? process.env.S3_ENDPOINT ?? '').replace(/\/$/, '')
+    const base = (process.env.NEXT_PUBLIC_STORAGE_URL ?? process.env.S3_PUBLIC_URL ?? process.env.S3_ENDPOINT ?? '').replace(/\/$/, '')
     return `${base}/${bucketName(bucket)}/${path.split('/').map(encodeURIComponent).join('/')}`
 }
 
