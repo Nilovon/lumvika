@@ -13,21 +13,21 @@ export type ExpertImageFolder = 'photo' | 'banner'
 export type ExpertImagePrefix = 'admin' | 'claimed'
 export type ExpertImageUploadResult = { ok: true; url: string } | { ok: false; error: string }
 
-export async function uploadExpertImage(
-    supabase: SupabaseClient<Database>,
-    { expertId, file, folder, prefix }: { expertId: string; file: unknown; folder: ExpertImageFolder; prefix: ExpertImagePrefix },
-): Promise<ExpertImageUploadResult> {
+export async function uploadExpertImage(supabase: SupabaseClient<Database>, { expertId, file, folder, prefix }: { expertId: string; file: unknown; folder: ExpertImageFolder; prefix: ExpertImagePrefix }): Promise<ExpertImageUploadResult> {
     if (!(file instanceof File)) return { ok: false, error: 'No file provided.' }
     if (!file.type.startsWith('image/')) return { ok: false, error: 'Please choose an image file.' }
     if (file.size > MAX_IMAGE_BYTES) return { ok: false, error: 'Image is too large (max 8MB).' }
 
     await supabase.storage.createBucket(EXPERT_PHOTOS_BUCKET, { public: true }).catch(() => {})
 
-    const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png'
+    const extension =
+        file.name
+            .split('.')
+            .pop()
+            ?.toLowerCase()
+            .replace(/[^a-z0-9]/g, '') || 'png'
     const path = `${prefix}/${expertId}/${folder}/${crypto.randomUUID()}.${extension}`
-    const { error } = await supabase.storage
-        .from(EXPERT_PHOTOS_BUCKET)
-        .upload(path, new Uint8Array(await file.arrayBuffer()), { contentType: file.type, upsert: true })
+    const { error } = await supabase.storage.from(EXPERT_PHOTOS_BUCKET).upload(path, new Uint8Array(await file.arrayBuffer()), { contentType: file.type, upsert: true })
     if (error) throw new Error(error.message)
 
     return { ok: true, url: supabase.storage.from(EXPERT_PHOTOS_BUCKET).getPublicUrl(path).data.publicUrl }

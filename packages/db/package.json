@@ -7,18 +7,24 @@
     "exports": {
         ".": "./src/index.ts",
         "./types": "./src/database.types.ts",
-        "./client": "./src/client.ts",
-        "./helpers": "./src/helpers.ts"
+        "./helpers": "./src/helpers.ts",
+        "./schema": "./src/schema/index.ts"
     },
     "scripts": {
-        "ts-check": "tsc --noEmit"
-    },
-    "peerDependencies": {
-        "@supabase/supabase-js": "^2.106.1"
+        "ts-check": "tsc --noEmit",
+        "test": "vitest run",
+        "generate": "drizzle-kit generate",
+        "migrate": "drizzle-kit migrate"
     },
     "devDependencies": {
-        "@supabase/supabase-js": "^2.106.2",
         "@types/node": "^20",
-        "typescript": "^5"
+        "@types/pg": "8.23.1",
+        "drizzle-kit": "0.31.11",
+        "typescript": "^5",
+        "vitest": "^4.1.8"
+    },
+    "dependencies": {
+        "drizzle-orm": "0.45.4",
+        "pg": "8.23.1"
     }
 }

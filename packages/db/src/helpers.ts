@@ -1,354 +1,175 @@
-import { Database } from './database.types'
-import { SupabaseClient } from '@supabase/supabase-js'
+import { asc, count, desc, getTableName } from 'drizzle-orm'
+import { getTableConfig, type PgColumn, type PgTable } from 'drizzle-orm/pg-core'
 
-export type TableName = keyof Database['public']['Tables']
-export type TableRow<T extends TableName> = Database['public']['Tables'][T]['Row']
+import { columnOf, whereOf, type Filters, type OrderBy } from './filters'
+import { NOT_ONE_ROW, settle, type DbResult } from './result'
+import type { DbScope } from './scope'
+import { tableOf, type TableName, type TableRow } from './tables'
 
-// A bare null is not a valid filter: PostgREST needs `is.null`, so use `{ isNull: true }`.
-export type FilterValue<T> =
-    | T
-    | T[]
-    | { in: T[] }
-    | { eq: T }
-    | { neq: T }
-    | { gt: T }
-    | { gte: T }
-    | { lt: T }
-    | { lte: T }
-    | { like: string }
-    | { ilike: string }
-    | { notNull: true }
-    | { isNull: true }
+export type { FilterValue, Filters, OrFilters, OrderBy } from './filters'
+export type { DbError, DbResult } from './result'
+export type { TableName, TableRow } from './tables'
 
-// Columns listed inside `or` are combined with OR (the rest of the filters stay ANDed), e.g.
-// `{ enabled: true, or: { name: { ilike }, slug: { ilike } } }` → enabled AND (name OR slug).
-export type OrFilters<T extends TableName> = {
-    [K in keyof TableRow<T>]?: FilterValue<TableRow<T>[K]>
+type Picked<T extends TableName, S extends readonly (keyof TableRow<T>)[]> = Pick<TableRow<T>, S[number]>
+
+function selectionOf(table: PgTable, columns: readonly string[]): Record<string, PgColumn> {
+    return Object.fromEntries(columns.map(name => [name, columnOf(table, name)]))
 }
 
-export type Filters<T extends TableName> = {
-    [K in keyof TableRow<T>]?: FilterValue<TableRow<T>[K]>
-} & {
-    or?: OrFilters<T>
+type ReadOptions<T extends TableName> = { orderBy?: OrderBy<T>; limit?: number; offset?: number }
+
+function readRows<T extends TableName>(scope: DbScope, name: T, columns: readonly string[], filters: Filters<T>, { orderBy, limit, offset }: ReadOptions<T>) {
+    const table = tableOf(name) as PgTable
+    return scope.run(async db => {
+        let query = db
+            .select(selectionOf(table, columns))
+            .from(table)
+            .where(whereOf(table, filters as Record<string, unknown>))
+            .$dynamic()
+        if (orderBy) {
+            const column = columnOf(table, orderBy.column)
+            query = query.orderBy(orderBy.ascending === false ? desc(column) : asc(column))
+        }
+        if (limit !== undefined) query = query.limit(limit)
+        if (offset !== undefined) query = query.offset(offset)
+        return (await query) as Record<string, unknown>[]
+    })
 }
 
-// Types pour les jointures
+function exactlyOne<R>(rows: R[], table: string): R {
+    if (rows.length !== 1) throw Object.assign(new Error(`Expected one row from ${table}, got ${rows.length}.`), { code: NOT_ONE_ROW })
+    return rows[0]
+}
+
+export function selectSingle<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[]>(scope: DbScope, table: T, selection: S, filters: Filters<T>, orderBy?: OrderBy<T>): Promise<DbResult<Picked<T, S>>> {
+    return settle(async () => exactlyOne(await readRows(scope, table, selection, filters, { orderBy, limit: 2 }), table) as Picked<T, S>)
+}
+
+export function selectMaybeSingle<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[]>(scope: DbScope, table: T, selection: S, filters: Filters<T>, orderBy?: OrderBy<T>): Promise<DbResult<Picked<T, S> | null>> {
+    return settle(async () => {
+        const rows = await readRows(scope, table, selection, filters, { orderBy, limit: 2 })
+        return rows.length === 0 ? null : (exactlyOne(rows, table) as Picked<T, S>)
+    })
+}
+
+export function selectFirst<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[]>(scope: DbScope, table: T, selection: S, filters: Filters<T>, orderBy?: OrderBy<T>): Promise<DbResult<Picked<T, S> | null>> {
+    return settle(async () => ((await readRows(scope, table, selection, filters, { orderBy, limit: 1 }))[0] as Picked<T, S> | undefined) ?? null)
+}
+
+export function selectMany<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[]>(scope: DbScope, table: T, selection: S, filters: Filters<T>, orderBy?: OrderBy<T>, limit?: number, offset?: number): Promise<DbResult<Picked<T, S>[]>> {
+    return settle(async () => (await readRows(scope, table, selection, filters, { orderBy, limit: offset !== undefined ? (limit ?? 50) : limit, offset })) as Picked<T, S>[])
+}
+
+export function selectAll<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[]>(scope: DbScope, table: T, selection: S, filters: Filters<T>, orderBy?: OrderBy<T>): Promise<DbResult<Picked<T, S>[]>> {
+    return selectMany(scope, table, selection, filters, orderBy)
+}
+
+export function selectCount<T extends TableName>(scope: DbScope, name: T, filters: Filters<T>): Promise<DbResult<number>> {
+    const table = tableOf(name) as PgTable
+    return settle(() =>
+        scope.run(async db => {
+            const [row] = await db
+                .select({ total: count() })
+                .from(table)
+                .where(whereOf(table, filters as Record<string, unknown>))
+            return row?.total ?? 0
+        })
+    )
+}
+
+// A row of another table this one points at, read by the foreign key named in `foreignKey`: the
+// target table's name, or `table!constraint` when the table is pointed at by more than one key.
 export type JoinConfig<TJ extends TableName, Cols extends readonly (keyof TableRow<TJ>)[]> = {
     table: TJ
     foreignKey: string
     columns: Cols
 }
 
-// Type final avec jointures typées
-export type WithJoins<T extends TableName, J extends Record<string, JoinConfig<any, any>> = Record<string, never>> = Pick<TableRow<T>, keyof TableRow<T>> & {
+type AnyJoins = Record<string, JoinConfig<any, readonly any[]>>
+
+export type WithJoins<J extends AnyJoins> = {
     [K in keyof J]: J[K] extends JoinConfig<infer TJ, infer Cols> ? Pick<TableRow<TJ>, Cols[number]> : never
 }
 
-// Type pour les filtres de jointures
-export type JoinFilters<J extends Record<string, JoinConfig<any, any>>> = {
+export type JoinFilters<J extends AnyJoins> = {
     [K in keyof J]?: J[K] extends JoinConfig<infer TJ, any> ? Filters<TJ> : never
 }
 
-// Wrap a value for a PostgREST filter string, quoting when it holds characters that would
-// otherwise break the `or=(...)` grammar (comma, parentheses, dot, quotes, whitespace).
-function quoteOrValue(v: unknown): string {
-    const s = String(v)
-    if (!/[,.()"\s]/.test(s)) return s
-    return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+type ResolvedJoin = { alias: string; target: PgTable; localColumns: string[]; foreignColumns: string[]; columns: string[]; filters?: Record<string, unknown> }
+
+function propertyOf(table: PgTable, column: PgColumn): string {
+    const entry = Object.entries(table as unknown as Record<string, unknown>).find(([, value]) => value === column)
+    if (!entry) throw new Error(`Column ${column.name} is not on ${getTableName(table)}.`)
+    return entry[0]
 }
 
-// Turn one column filter into a PostgREST condition string for use inside `.or(...)`.
-function orCondition(column: string, value: unknown): string {
-    if (Array.isArray(value)) return `${column}.in.(${value.map(quoteOrValue).join(',')})`
-    if (value !== null && typeof value === 'object') {
-        if ('in' in value) return `${column}.in.(${(value.in as unknown[]).map(quoteOrValue).join(',')})`
-        if ('eq' in value) return `${column}.eq.${quoteOrValue(value.eq)}`
-        if ('neq' in value) return `${column}.neq.${quoteOrValue(value.neq)}`
-        if ('gt' in value) return `${column}.gt.${quoteOrValue(value.gt)}`
-        if ('gte' in value) return `${column}.gte.${quoteOrValue(value.gte)}`
-        if ('lt' in value) return `${column}.lt.${quoteOrValue(value.lt)}`
-        if ('lte' in value) return `${column}.lte.${quoteOrValue(value.lte)}`
-        if ('like' in value) return `${column}.like.${quoteOrValue(value.like)}`
-        if ('ilike' in value) return `${column}.ilike.${quoteOrValue(value.ilike)}`
-        if ('notNull' in value) return `${column}.not.is.null`
-        if ('isNull' in value) return `${column}.is.null`
+function resolveJoin(source: PgTable, alias: string, config: JoinConfig<any, readonly any[]>, filters?: Record<string, unknown>): ResolvedJoin {
+    const [targetName, constraint] = config.foreignKey.split('!')
+    const candidates = getTableConfig(source).foreignKeys.filter(foreignKey => {
+        const reference = foreignKey.reference()
+        return getTableName(reference.foreignTable) === targetName && (!constraint || foreignKey.getName() === constraint)
+    })
+    if (candidates.length !== 1) throw new Error(`Join ${alias}: ${candidates.length} foreign keys of ${getTableName(source)} match ${config.foreignKey}.`)
+    const reference = candidates[0].reference()
+    return {
+        alias,
+        target: reference.foreignTable,
+        localColumns: reference.columns.map(column => propertyOf(source, column)),
+        foreignColumns: reference.foreignColumns.map(column => propertyOf(reference.foreignTable, column)),
+        columns: config.columns as string[],
+        filters,
     }
-    return `${column}.eq.${quoteOrValue(value)}`
 }
 
-function applyFilters<T extends TableName>(query: any, filters: Filters<T>) {
-    for (const [key, value] of Object.entries(filters)) {
-        if (value === undefined) continue
+const keyOf = (row: Record<string, unknown>, columns: string[]) => JSON.stringify(columns.map(column => row[column]))
 
-        if (key === 'or' && value !== null && typeof value === 'object' && !Array.isArray(value)) {
-            const conditions = Object.entries(value as Record<string, unknown>)
-                .filter(([, v]) => v !== undefined)
-                .map(([col, v]) => orCondition(col, v))
-            if (conditions.length > 0) query = query.or(conditions.join(','))
-            continue
-        }
-
-        if (Array.isArray(value)) {
-            // Support direct array as IN clause
-            query = query.in(key, value)
-        } else if (typeof value === 'object' && value !== null) {
-            // Support object-based filters. The range bounds are applied independently, so
-            // `{ gte, lte }` keeps both ends instead of silently dropping the second one.
-            if ('gt' in value) query = query.gt(key, value.gt)
-            if ('gte' in value) query = query.gte(key, value.gte)
-            if ('lt' in value) query = query.lt(key, value.lt)
-            if ('lte' in value) query = query.lte(key, value.lte)
-
-            if ('in' in value) {
-                query = query.in(key, value.in)
-            } else if ('eq' in value) {
-                query = query.eq(key, value.eq)
-            } else if ('neq' in value) {
-                query = query.neq(key, value.neq)
-            } else if ('like' in value) {
-                query = query.like(key, value.like)
-            } else if ('ilike' in value) {
-                query = query.ilike(key, value.ilike)
-            } else if ('notNull' in value) {
-                query = query.not(key, 'is', null)
-            } else if ('isNull' in value) {
-                query = query.is(key, null)
-            }
-        } else {
-            // Simple equality
-            query = query.eq(key, value)
-        }
+// One query per join, like the embedding PostgREST did: a row whose join has no match gets null,
+// and is dropped when that join carries filters.
+async function attachJoins(scope: DbScope, rows: Record<string, unknown>[], joins: ResolvedJoin[]) {
+    let kept = rows
+    for (const join of joins) {
+        const firstLocal = join.localColumns[0]
+        const values = [...new Set(kept.map(row => row[firstLocal]).filter(value => value !== null && value !== undefined))]
+        const readColumns = [...new Set([...join.columns, ...join.foreignColumns])]
+        const targets =
+            values.length === 0
+                ? []
+                : await scope.run(
+                      async db =>
+                          (await db
+                              .select(selectionOf(join.target, readColumns))
+                              .from(join.target)
+                              .where(whereOf(join.target, { ...join.filters, [join.foreignColumns[0]]: { in: values } }))) as Record<string, unknown>[]
+                  )
+        const byKey = new Map(targets.map(target => [keyOf(target, join.foreignColumns), target]))
+        kept = kept
+            .map(row => {
+                const target = byKey.get(keyOf(row, join.localColumns))
+                return { ...row, [join.alias]: target ? Object.fromEntries(join.columns.map(column => [column, target[column]])) : null }
+            })
+            .filter(row => !join.filters || row[join.alias] !== null)
     }
-    return query
+    return kept
 }
 
-function applyJoinFilters<J extends Record<string, JoinConfig<any, any>>>(joinSelections: string[], joins: J, joinFilters?: JoinFilters<J>): string[] {
-    if (!joinFilters) return joinSelections
+function readWithJoins<T extends TableName>(scope: DbScope, name: T, selection: readonly string[], joins: AnyJoins, filters: Filters<T>, joinFilters: Record<string, unknown> | undefined, options: ReadOptions<T>) {
+    const source = tableOf(name) as PgTable
+    const resolved = Object.entries(joins).map(([alias, config]) => resolveJoin(source, alias, config, joinFilters?.[alias] as Record<string, unknown> | undefined))
+    const localColumns = [...new Set([...selection, ...resolved.flatMap(join => join.localColumns)])]
+    return readRows(scope, name, localColumns, filters, options).then(rows => attachJoins(scope, rows, resolved).then(joined => joined.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => selection.includes(key) || key in joins)))))
+}
 
-    return joinSelections.map(selection => {
-        const [alias, rest] = selection.split(':')
-        const filters = joinFilters[alias as keyof J]
+export function selectSingleWithJoins<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[], const J extends AnyJoins>(scope: DbScope, table: T, selection: S, joins: J, filters: Filters<T>, joinFilters?: JoinFilters<J>, orderBy?: OrderBy<T>): Promise<DbResult<Picked<T, S> & WithJoins<J>>> {
+    return settle(async () => exactlyOne(await readWithJoins(scope, table, selection, joins, filters, joinFilters, { orderBy, limit: 2 }), table) as Picked<T, S> & WithJoins<J>)
+}
 
-        if (!filters || Object.keys(filters).length === 0) return selection
-
-        // Construire les filtres pour cette jointure
-        const filterParts: string[] = []
-        for (const [key, value] of Object.entries(filters)) {
-            if (value === undefined) continue
-
-            if (Array.isArray(value)) {
-                filterParts.push(`${key}.in.(${value.join(',')})`)
-            } else if (typeof value === 'object' && value !== null) {
-                if ('in' in value) {
-                    filterParts.push(`${key}.in.(${(value.in as any[]).join(',')})`)
-                } else if ('eq' in value) {
-                    filterParts.push(`${key}.eq.${value.eq}`)
-                } else if ('neq' in value) {
-                    filterParts.push(`${key}.neq.${value.neq}`)
-                } else if ('gt' in value) {
-                    filterParts.push(`${key}.gt.${value.gt}`)
-                } else if ('gte' in value) {
-                    filterParts.push(`${key}.gte.${value.gte}`)
-                } else if ('lt' in value) {
-                    filterParts.push(`${key}.lt.${value.lt}`)
-                } else if ('lte' in value) {
-                    filterParts.push(`${key}.lte.${value.lte}`)
-                } else if ('like' in value) {
-                    filterParts.push(`${key}.like.${value.like}`)
-                } else if ('ilike' in value) {
-                    filterParts.push(`${key}.ilike.${value.ilike}`)
-                }
-            } else {
-                filterParts.push(`${key}.eq.${value}`)
-            }
-        }
-
-        // Ajouter les filtres à la sélection avec !inner pour forcer une jointure interne
-        if (filterParts.length > 0) {
-            const [tablePart, columnsPart] = rest.split('(')
-            const columns = columnsPart.replace(')', '')
-            // Syntaxe PostgREST correcte pour les filtres de relation
-            return `${alias}:${tablePart}!inner(${columns}).${filterParts.join('.')}`
-        }
-
-        return selection
+export function selectMaybeSingleWithJoins<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[], const J extends AnyJoins>(scope: DbScope, table: T, selection: S, joins: J, filters: Filters<T>, joinFilters?: JoinFilters<J>, orderBy?: OrderBy<T>): Promise<DbResult<(Picked<T, S> & WithJoins<J>) | null>> {
+    return settle(async () => {
+        const rows = await readWithJoins(scope, table, selection, joins, filters, joinFilters, { orderBy, limit: 2 })
+        return rows.length === 0 ? null : (exactlyOne(rows, table) as Picked<T, S> & WithJoins<J>)
     })
 }
 
-export async function selectSingle<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[]>(supabase: SupabaseClient<Database>, table: T, selection: S, filters: Filters<T>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }) {
-    let query = supabase.from(table).select(selection.join(','))
-    query = applyFilters(query, filters)
-
-    if (orderBy) {
-        query = query.order(orderBy.column as string, { ascending: orderBy.ascending ?? true })
-    }
-
-    const { data, error } = await query.single()
-    return { data: data as Pick<TableRow<T>, S[number]> | null, error }
-}
-
-export async function selectMaybeSingle<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[]>(supabase: SupabaseClient<Database>, table: T, selection: S, filters: Filters<T>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }) {
-    let query = supabase.from(table).select(selection.join(','))
-    query = applyFilters(query, filters)
-
-    if (orderBy) {
-        query = query.order(orderBy.column as string, { ascending: orderBy.ascending ?? true })
-    }
-
-    const { data, error } = await query.maybeSingle()
-    return { data: data as Pick<TableRow<T>, S[number]> | null, error }
-}
-
-export async function selectMany<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[]>(supabase: SupabaseClient<Database>, table: T, selection: S, filters: Filters<T>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }, limit?: number, offset?: number) {
-    let query = supabase.from(table).select(selection.join(','))
-    query = applyFilters(query, filters)
-
-    if (orderBy) {
-        query = query.order(orderBy.column as string, { ascending: orderBy.ascending ?? true })
-    }
-
-    if (offset !== undefined) {
-        const endRange = offset + (limit || 50) - 1
-        query = query.range(offset, endRange)
-    } else if (limit) {
-        query = query.limit(limit)
-    }
-
-    const { data, error } = await query
-    return { data: data as Pick<TableRow<T>, S[number]>[] | null, error }
-}
-
-export async function selectAll<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[]>(supabase: SupabaseClient<Database>, table: T, selection: S, filters: Filters<T>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }) {
-    const allData: Pick<TableRow<T>, S[number]>[] = []
-    let offset = 0
-    const limit = 1000
-
-    while (true) {
-        const { data, error } = await selectMany(supabase, table, selection, filters, orderBy, limit, offset)
-
-        if (error) return { data: null, error }
-        if (!data || data.length === 0) break
-
-        allData.push(...data)
-
-        // Si on a moins que la limite, on a tout récupéré
-        if (data.length < limit) break
-
-        offset += limit
-    }
-
-    return { data: allData, error: null }
-}
-
-// `*` by default: a head count selects nothing, and a table without an `id` column (workspace_members,
-// services, ...) answers an error on `id` that every caller would read as a count of zero.
-export async function selectCount<T extends TableName>(supabase: SupabaseClient<Database>, table: T, filters: Filters<T>, column: string = '*') {
-    let query = supabase.from(table).select(column, { count: 'exact', head: true })
-    query = applyFilters(query, filters)
-
-    const { error, count } = await query
-    return { data: count as number | null, error }
-}
-
-// ===== FONCTIONS AVEC JOINTURES =====
-
-export async function selectSingleWithJoins<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[], J extends Record<string, JoinConfig<any, any>>>(supabase: SupabaseClient<Database>, table: T, selection: S, joins: J, filters: Filters<T>, joinFilters?: JoinFilters<J>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }) {
-    // Construire la sélection avec jointures
-    let joinSelections = Object.entries(joins).map(([alias, config]) => `${alias}:${config.foreignKey}(${Array.isArray(config.columns) ? config.columns.join(',') : config.columns})`)
-
-    // Appliquer les filtres de jointures
-    joinSelections = applyJoinFilters(joinSelections, joins, joinFilters)
-
-    const fullSelection = [...selection, ...joinSelections].join(',')
-
-    let query = supabase.from(table).select(fullSelection)
-    query = applyFilters(query, filters)
-
-    if (orderBy) {
-        query = query.order(orderBy.column as string, { ascending: orderBy.ascending ?? true })
-    }
-
-    const { data, error } = await query.single()
-    return { data: data as (Pick<TableRow<T>, S[number]> & WithJoins<T, J>) | null, error }
-}
-
-export async function selectMaybeSingleWithJoins<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[], J extends Record<string, JoinConfig<any, any>>>(supabase: SupabaseClient<Database>, table: T, selection: S, joins: J, filters: Filters<T>, joinFilters?: JoinFilters<J>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }) {
-    // Construire la sélection avec jointures
-    let joinSelections = Object.entries(joins).map(([alias, config]) => `${alias}:${config.foreignKey}(${Array.isArray(config.columns) ? config.columns.join(',') : config.columns})`)
-
-    // Appliquer les filtres de jointures
-    joinSelections = applyJoinFilters(joinSelections, joins, joinFilters)
-
-    const fullSelection = [...selection, ...joinSelections].join(',')
-
-    let query = supabase.from(table).select(fullSelection)
-    query = applyFilters(query, filters)
-
-    if (orderBy) {
-        query = query.order(orderBy.column as string, { ascending: orderBy.ascending ?? true })
-    }
-
-    const { data, error } = await query.maybeSingle()
-    return { data: data as (Pick<TableRow<T>, S[number]> & WithJoins<T, J>) | null, error }
-}
-
-export async function selectManyWithJoins<T extends TableName, K extends keyof TableRow<T>, S extends readonly K[], J extends Record<string, JoinConfig<any, any>>>(supabase: SupabaseClient<Database>, table: T, selection: S, joins: J, filters: Filters<T>, joinFilters?: JoinFilters<J>, orderBy?: { column: keyof TableRow<T>; ascending?: boolean }, limit?: number, offset?: number) {
-    // Construire la sélection avec jointures
-    let joinSelections = Object.entries(joins).map(([alias, config]) => `${alias}:${config.foreignKey}(${Array.isArray(config.columns) ? config.columns.join(',') : config.columns})`)
-
-    // Appliquer les filtres de jointures
-    joinSelections = applyJoinFilters(joinSelections, joins, joinFilters)
-
-    const fullSelection = [...selection, ...joinSelections].join(',')
-
-    let query = supabase.from(table).select(fullSelection)
-    query = applyFilters(query, filters)
-
-    // Appliquer les filtres de jointures directement sur la requête
-    if (joinFilters) {
-        for (const [joinAlias, joinFilter] of Object.entries(joinFilters)) {
-            for (const [column, value] of Object.entries(joinFilter)) {
-                const filterKey = `${joinAlias}.${column}` as any
-                if (Array.isArray(value)) {
-                    query = query.in(filterKey, value)
-                } else if (typeof value === 'object' && value !== null) {
-                    if ('in' in value) {
-                        query = query.in(filterKey, value.in as any[])
-                    } else if ('eq' in value) {
-                        query = query.eq(filterKey, value.eq as any)
-                    } else if ('neq' in value) {
-                        query = query.neq(filterKey, value.neq as any)
-                    } else if ('gt' in value) {
-                        query = query.gt(filterKey, value.gt as any)
-                    } else if ('gte' in value) {
-                        query = query.gte(filterKey, value.gte as any)
-                    } else if ('lt' in value) {
-                        query = query.lt(filterKey, value.lt as any)
-                    } else if ('lte' in value) {
-                        query = query.lte(filterKey, value.lte as any)
-                    } else if ('like' in value) {
-                        query = query.like(filterKey, value.like as string)
-                    } else if ('ilike' in value) {
-                        query = query.ilike(filterKey, value.ilike as string)
-                    }
-                } else {
-                    query = query.eq(filterKey, value as any)
-                }
-            }
-        }
-    }
-
-    if (orderBy) {
-        query = query.order(orderBy.column as string, { ascending: orderBy.ascending ?? true })
-    }
-
-    if (offset !== undefined) {
-        const endRange = offset + (limit || 50) - 1
-        query = query.range(offset, endRange)
-    } else if (limit) {
-        query = query.limit(limit)
-    }
-
-    const { data, error } = await query
-    return { data: data as (Pick<TableRow<T>, S[number]> & WithJoins<T, J>)[] | null, error }
+export function selectManyWithJoins<T extends TableName, const S extends readonly (keyof TableRow<T> & string)[], const J extends AnyJoins>(scope: DbScope, table: T, selection: S, joins: J, filters: Filters<T>, joinFilters?: JoinFilters<J>, orderBy?: OrderBy<T>, limit?: number, offset?: number): Promise<DbResult<(Picked<T, S> & WithJoins<J>)[]>> {
+    return settle(async () => (await readWithJoins(scope, table, selection, joins, filters, joinFilters, { orderBy, limit: offset !== undefined ? (limit ?? 50) : limit, offset })) as (Picked<T, S> & WithJoins<J>)[])
 }

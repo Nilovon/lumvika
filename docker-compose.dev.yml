@@ -1,0 +1,47 @@
+# The services the web app needs while you develop it: `pnpm db:start` runs them, `pnpm db:stop` stops them.
+#
+#   Postgres  localhost:54432   lumvika / lumvika, database lumvika
+#   Mailpit   localhost:54435   SMTP, every email the app sends lands here
+#             localhost:54436   the inbox in a browser
+#   RustFS    localhost:54437   S3 API, buckets created by `pnpm db:start`
+#             localhost:54438   the console in a browser
+name: lumvika-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_USER: lumvika
+      POSTGRES_PASSWORD: lumvika
+      POSTGRES_DB: lumvika
+    ports:
+      - "54432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lumvika -d lumvika"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    ports:
+      - "54435:1025"
+      - "54436:8025"
+
+  storage:
+    image: rustfs/rustfs:1.0.4
+    environment:
+      RUSTFS_ACCESS_KEY: lumvika
+      RUSTFS_SECRET_KEY: lumvika-secret
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      - "54437:9000"
+      - "54438:9001"
+    volumes:
+      - storage-data:/data
+
+volumes:
+  postgres-data:
+  storage-data:
