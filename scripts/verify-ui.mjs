@@ -316,6 +316,7 @@ function toBrowserCookie(header) {
 // Mailpit. Better Auth keeps its rate limits in the database: back-to-back runs start from zero.
 async function signIn(context, base, db, account) {
     await db.query(`update auth.rate_limits set count = 0, last_request = 0 where key like '%/email-otp/%' or key like '%/sign-in/%'`)
+    await db.query(`delete from public.email_sign_up_limits where scope = $1`, [`ip:mail:${account.email}`])
     await mailpit(`search?query=${encodeURIComponent(`to:"${account.email}"`)}`, { method: 'DELETE' })
     await postAuth(base, 'email-otp/send-verification-otp', { email: account.email, type: 'sign-in' })
     const otp = await readSignInCode(account.email)

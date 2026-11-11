@@ -8,10 +8,10 @@ export { sendIncidentResolvedEmail, sendNotificationEmail, sendPublishedAccessCo
 export { BANNER_WARM_BACKGROUND_MS, BANNER_WARM_INLINE_MS, emailBoardBanner } from '@/lib/email/board-banner'
 export { buildUnsubscribeUrl, verifyUnsubscribeToken } from '@/lib/email/unsubscribeToken'
 
-// A self-hosted install sends its emails through its own Resend account (RESEND_API_KEY, RESEND_FROM).
-// Without one nothing is sent: an invitation hands its link to the person who sent it, and a
-// published page cannot invite by code.
-export const EMAIL_DELIVERY = Boolean(process.env.RESEND_API_KEY)
+// A self-hosted install sends its emails through its own Resend account (RESEND_API_KEY, RESEND_FROM)
+// or its own SMTP server (SMTP_URL). Without either nothing is sent: an invitation hands its link to
+// the person who sent it, and a published page cannot invite by code.
+export const EMAIL_DELIVERY = Boolean(process.env.RESEND_API_KEY || process.env.SMTP_URL)
 
 export type PushContext = {
     workspaceId: number

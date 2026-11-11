@@ -22,7 +22,7 @@ export type Bucket = keyof typeof BUCKETS
 
 export type StorageResult<T> = { data: T; error: null } | { data: null; error: { message: string } }
 
-type Holder = { client: S3Client }
+type Holder = { client: S3Client; presigner: S3Client }
 const holder = globalThis as typeof globalThis & { __lumvikaStorage?: Holder }
 
 function required(name: string): string {
@@ -31,17 +31,25 @@ function required(name: string): string {
     return value
 }
 
+function s3Client(endpoint: string | undefined): S3Client {
+    return new S3Client({
+        endpoint,
+        region: process.env.S3_REGION ?? 'auto',
+        // Path-style addressing (`<endpoint>/<bucket>/<key>`) works with RustFS, MinIO, R2 and AWS alike.
+        forcePathStyle: true,
+        credentials: { accessKeyId: required('S3_ACCESS_KEY_ID'), secretAccessKey: required('S3_SECRET_ACCESS_KEY') },
+    })
+}
+
+function clients(): Holder {
+    // A signed URL is opened by the browser, which reaches the store at S3_PUBLIC_ENDPOINT when the
+    // server talks to it on an internal address (`http://storage:9000` in docker compose).
+    holder.__lumvikaStorage ??= { client: s3Client(process.env.S3_ENDPOINT), presigner: s3Client(process.env.S3_PUBLIC_ENDPOINT ?? process.env.S3_ENDPOINT) }
+    return holder.__lumvikaStorage
+}
+
 function client(): S3Client {
-    holder.__lumvikaStorage ??= {
-        client: new S3Client({
-            endpoint: process.env.S3_ENDPOINT,
-            region: process.env.S3_REGION ?? 'auto',
-            // Path-style addressing (`<endpoint>/<bucket>/<key>`) works with RustFS, MinIO, R2 and AWS alike.
-            forcePathStyle: true,
-            credentials: { accessKeyId: required('S3_ACCESS_KEY_ID'), secretAccessKey: required('S3_SECRET_ACCESS_KEY') },
-        }),
-    }
-    return holder.__lumvikaStorage.client
+    return clients().client
 }
 
 // A deployment sharing one S3 account with others names its buckets `<prefix><bucket>`.
@@ -121,7 +129,7 @@ export function publicUrl(bucket: Bucket, path: string): string {
 export function signedUrl(bucket: Bucket, path: string, expiresInSeconds: number, options: { download?: string | boolean } = {}): Promise<StorageResult<string>> {
     return settle(() => {
         const disposition = options.download ? `attachment${typeof options.download === 'string' ? `; filename="${options.download.replace(/"/g, '')}"` : ''}` : undefined
-        return getSignedUrl(client(), new GetObjectCommand({ Bucket: bucketName(bucket), Key: path, ResponseContentDisposition: disposition }), { expiresIn: expiresInSeconds })
+        return getSignedUrl(clients().presigner, new GetObjectCommand({ Bucket: bucketName(bucket), Key: path, ResponseContentDisposition: disposition }), { expiresIn: expiresInSeconds })
     })
 }
 
