@@ -6,9 +6,9 @@ import type { StoredNotification } from './inbound'
 import { pushCopyOf } from './push-copy'
 
 const englishMessages = await loadMessages('en')
-const frenchMessages = await loadMessages('fr')
+const germanMessages = await loadMessages('de')
 const english = { t: createTranslator({ locale: 'en', messages: englishMessages, namespace: 'push' }), tErrors: createTranslator({ locale: 'en', messages: englishMessages, namespace: 'chatErrors' }) }
-const french = { t: createTranslator({ locale: 'fr', messages: frenchMessages, namespace: 'push' }), tErrors: createTranslator({ locale: 'fr', messages: frenchMessages, namespace: 'chatErrors' }) }
+const german = { t: createTranslator({ locale: 'de', messages: germanMessages, namespace: 'push' }), tErrors: createTranslator({ locale: 'de', messages: germanMessages, namespace: 'chatErrors' }) }
 
 const notification = (patch: Partial<StoredNotification>): StoredNotification => ({
     event: 'agent.notification',
@@ -25,8 +25,8 @@ const CODEX_REFUSAL = `Error: {"type":"error","status":400,"error":{"type":"inva
 
 describe('pushCopyOf', () => {
     it('reads the routine name the engine sends on its own, and writes in the reader\'s language', () => {
-        const copy = copyOf({ event: 'agent.schedule.completed', kind: 'done', message: 'Schedule "daily" completed', metadata: { scheduleSlug: 'daily', sourceName: 'Morning brief' } }, french)
-        expect(copy.subtitle).toBe('Morning brief · Terminé')
+        const copy = copyOf({ event: 'agent.schedule.completed', kind: 'done', message: 'Schedule "daily" completed', metadata: { scheduleSlug: 'daily', sourceName: 'Morning brief' } }, german)
+        expect(copy.subtitle).toBe('Morning brief · Erledigt')
     })
 
     it('names the trigger and says what broke in words, not the provider JSON', () => {
@@ -43,13 +43,13 @@ describe('pushCopyOf', () => {
     })
 
     it('says what broke in the reader\'s language', () => {
-        const copy = copyOf({ event: 'agent.trigger.completed', kind: 'error', message: `Trigger "LinkedIn events" failed: ${CODEX_REFUSAL}`, metadata: { triggerSlug: 'linkedin-events', error: CODEX_REFUSAL } }, french)
-        expect(copy.subtitle).toBe('LinkedIn events · Échec')
-        expect(copy.body).toMatch(/^Votre forfait ChatGPT n'inclut pas .+\. Choisissez un autre modèle pour continuer\.$/)
+        const copy = copyOf({ event: 'agent.trigger.completed', kind: 'error', message: `Trigger "LinkedIn events" failed: ${CODEX_REFUSAL}`, metadata: { triggerSlug: 'linkedin-events', error: CODEX_REFUSAL } }, german)
+        expect(copy.subtitle).toBe('LinkedIn events · Fehlgeschlagen')
+        expect(copy.body).toMatch(/^Dein ChatGPT-Tarif enthält .+ nicht\. Wähle ein anderes Modell, um weiterzumachen\.$/)
     })
 
     it('keeps an error no kind explains as the provider wrote it, in any language', () => {
-        expect(copyOf({ event: 'agent.message.completed', kind: 'error', message: 'Message failed: AI_APICallError: Disk is full' }, french).body).toBe('Disk is full')
+        expect(copyOf({ event: 'agent.message.completed', kind: 'error', message: 'Message failed: AI_APICallError: Disk is full' }, german).body).toBe('Disk is full')
     })
 
     it('reads the error from the message when the metadata has none', () => {

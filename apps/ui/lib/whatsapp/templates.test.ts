@@ -11,7 +11,6 @@ import {
     trialNeedsYourOkMessage,
     trialNoFirstJobMessage,
     trialWeekRecapMessage,
-    whatsappLanguage,
 } from './templates'
 
 const IMAGE = 'https://app.lumvika.com/og/board?scene=x'
@@ -91,20 +90,5 @@ describe('teamLabel', () => {
         [['Lead Scout', 'Inbox Assistant', 'Meeting Booker', 'Researcher'], 'Lead Scout, Inbox Assistant and 2 others'],
     ])('names %j as %s', (names, label) => {
         expect(teamLabel(names)).toBe(label)
-    })
-})
-
-describe('whatsappLanguage', () => {
-    it.each([
-        ['fr', 'fr'],
-        ['fr-BE', 'fr'],
-        ['pt', 'pt-BR'],
-        ['pt_PT', 'pt-BR'],
-        ['en-US', 'en'],
-        ['de', 'en'],
-        [null, 'en'],
-        [undefined, 'en'],
-    ])('reads %s as %s', (locale, expected) => {
-        expect(whatsappLanguage(locale)).toBe(expected)
     })
 })

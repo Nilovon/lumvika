@@ -17,7 +17,7 @@ const lastCall = () => {
 const COMPONENTS: SendWhatsAppInput['components'] = [{ type: 'button', parameters: [{ type: 'text', text: 'w/acme' }] }]
 
 function input(overrides: Partial<SendWhatsAppInput> = {}): SendWhatsAppInput {
-    return { to: '+32492000000', slug: 'lumvika_access_ends_help', language: 'fr', components: COMPONENTS, idempotencyKey: 'whatsapp:row-1', ...overrides }
+    return { to: '+32492000000', slug: 'lumvika_access_ends_help', language: 'en', components: COMPONENTS, idempotencyKey: 'whatsapp:row-1', ...overrides }
 }
 
 beforeEach(() => {
@@ -76,7 +76,7 @@ describe('sendWhatsAppTemplate', () => {
             body: {
                 to: '+32492000000',
                 from: '+15550100000',
-                template: { slug: 'lumvika_access_ends_help', language: 'fr', components: COMPONENTS },
+                template: { slug: 'lumvika_access_ends_help', language: 'en', components: COMPONENTS },
                 tags: [{ name: 'template', value: 'access_ends_help' }],
                 metadata: { message_id: 'row-1' },
             },

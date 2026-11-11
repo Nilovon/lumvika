@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `pnpm i18n:translate [--locale fr] [--ns chat] [--accept] [--dry-run] [--max-usd 20]`
+// `pnpm i18n:translate [--locale de] [--ns chat] [--accept] [--dry-run] [--max-usd 20]`
 //
 // Translates the strings of the English source that are new or changed since the last run (the
 // lock keeps a hash of each source string) into every pack, with Claude, then checks each answer:

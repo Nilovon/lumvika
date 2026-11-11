@@ -4,9 +4,6 @@ export type LocaleStatus = 'stable' | 'beta'
 
 export const SUPPORTED_LOCALES = {
     en: 'stable',
-    fr: 'stable',
-    es: 'stable',
-    pt: 'stable',
     de: 'stable',
 } as const satisfies Record<string, LocaleStatus>
 
@@ -43,7 +40,7 @@ export function stableLocales(): Locale[] {
     return LOCALES.filter(locale => SUPPORTED_LOCALES[locale] === 'stable')
 }
 
-// "fr-CA" and "FR" both land on "fr": the packs are per language, never per region.
+// "de-AT" and "DE" both land on "de": the packs are per language, never per region.
 export function matchLocale(tag: string | null | undefined): Locale | null {
     if (!tag) return null
     const language = tag.trim().split(/[-_]/)[0]?.toLowerCase()
@@ -77,14 +74,14 @@ export function resolveLocale({ userLocale, cookie, acceptLanguage }: { userLoca
     return parseAcceptLanguage(acceptLanguage) ?? DEFAULT_LOCALE
 }
 
-// Each language is shown in its own words ("Français", "Español"), so whoever cannot read the
+// Each language is shown in its own words ("Deutsch", "English"), so whoever cannot read the
 // current one still finds theirs.
 export function localeNativeName(locale: Locale): string {
     const name = new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale
     return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1)
 }
 
-// The language as the prompts of a model name it ("French"), whatever the language of the reader.
+// The language as the prompts of a model name it ("German"), whatever the language of the reader.
 export function languageName(locale: string): string {
     try {
         return new Intl.DisplayNames(['en'], { type: 'language' }).of(locale) ?? locale

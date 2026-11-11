@@ -26,7 +26,7 @@ describe('template prices', () => {
 
     it('writes the amount the way the reader writes it', () => {
         expect(formatAmount(2900, 'usd')).toBe('$29')
-        expect(formatAmount(2900, 'usd', 'fr')).toBe('29 $US')
+        expect(formatAmount(2900, 'usd', 'de')).toBe('29 $')
     })
 })
 

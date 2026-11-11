@@ -23,13 +23,13 @@ describe('coworker language', () => {
         state.agents = []
     })
 
-    // Every workspace made before the column reads 'en': pinning them would turn a French team's
+    // Every workspace made before the column reads 'en': pinning them would turn a German team's
     // routines to English.
     it('pins a new coworker only to a language other than English', async () => {
         state.locale = 'en'
         expect(await coworkerLanguageFor(supabase, 1)).toBeNull()
-        state.locale = 'fr'
-        expect(await coworkerLanguageFor(supabase, 1)).toBe('fr')
+        state.locale = 'de'
+        expect(await coworkerLanguageFor(supabase, 1)).toBe('de')
         state.locale = 'xx'
         expect(await coworkerLanguageFor(supabase, 1)).toBeNull()
     })

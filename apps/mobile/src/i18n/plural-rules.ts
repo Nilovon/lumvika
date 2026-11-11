@@ -5,25 +5,11 @@ import { DEFAULT_LOCALE, matchLocale, type Locale } from '@lumvika/i18n'
 // (CLDR): this stands in for the platform until Hermes has its own.
 type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other'
 
-const MILLION = 1_000_000
-
-function cardinal(locale: Locale, value: number): PluralCategory {
-    const absolute = Math.abs(value)
-    const integer = Number.isInteger(absolute)
-    const largeRound = integer && absolute !== 0 && absolute % MILLION === 0
-    if (locale === 'fr' || locale === 'pt') {
-        if (Math.floor(absolute) === 0 || Math.floor(absolute) === 1) return 'one'
-        return largeRound ? 'many' : 'other'
-    }
-    if (locale === 'es') {
-        if (absolute === 1) return 'one'
-        return largeRound ? 'many' : 'other'
-    }
-    return absolute === 1 && integer ? 'one' : 'other'
+function cardinal(value: number): PluralCategory {
+    return Math.abs(value) === 1 ? 'one' : 'other'
 }
 
 function ordinal(locale: Locale, value: number): PluralCategory {
-    if (locale === 'fr') return value === 1 ? 'one' : 'other'
     if (locale !== 'en') return 'other'
     const tens = value % 100
     if (value % 10 === 1 && tens !== 11) return 'one'
@@ -55,11 +41,11 @@ class PackPluralRules {
     }
 
     select(value: number): PluralCategory {
-        return this.type === 'ordinal' ? ordinal(this.locale, value) : cardinal(this.locale, value)
+        return this.type === 'ordinal' ? ordinal(this.locale, value) : cardinal(value)
     }
 
     resolvedOptions() {
-        return { locale: this.locale, type: this.type, pluralCategories: ['one', 'many', 'other'] as PluralCategory[], minimumIntegerDigits: 1, minimumFractionDigits: 0, maximumFractionDigits: 3 }
+        return { locale: this.locale, type: this.type, pluralCategories: ['one', 'other'] as PluralCategory[], minimumIntegerDigits: 1, minimumFractionDigits: 0, maximumFractionDigits: 3 }
     }
 }
 

@@ -9,7 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 // The language a new coworker of this workspace is given, null to leave it on the language of its
 // instructions. A workspace that never left English is not pinned: the ones made before the column
-// all read 'en', and pinning them would turn a French team's routines to English overnight.
+// all read 'en', and pinning them would turn a German team's routines to English overnight.
 export async function coworkerLanguageFor(supabase: SupabaseClient<Database>, workspaceId: number): Promise<string | null> {
     const { data } = await selectMaybeSingle(supabase, 'workspaces', ['locale'] as const, { id: workspaceId })
     return isStableLocale(data?.locale) && data.locale !== DEFAULT_LOCALE ? data.locale : null

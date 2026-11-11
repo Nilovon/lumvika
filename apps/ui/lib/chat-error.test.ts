@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { chatErrorTitle as titleIn, classifyChatError, describeSubscriptionLimit, friendlyError as friendlyIn, isBudgetExhausted, stripErrorPrefix, installInFlightOf, subscriptionLimitMessage, subscriptionLimitTitle, teammateRunOf, unwrapChatError, type ChatErrorKind, type SubscriptionLimit } from './chat-error'
 
 const english = englishTranslator('chatErrors')
-const french = createTranslator({ locale: 'fr', messages: await loadMessages('fr'), namespace: 'chatErrors' })
+const german = createTranslator({ locale: 'de', messages: await loadMessages('de'), namespace: 'chatErrors' })
 const friendlyError = (message: string) => friendlyIn(message, english)
 const chatErrorTitle = (kind: ChatErrorKind, message: string) => titleIn(kind, message, english)
 
@@ -348,9 +348,9 @@ describe('the English copy of a spent subscription', () => {
 
 describe('in the reader\'s language', () => {
     it('translates what it explains and keeps the provider\'s own words otherwise', () => {
-        expect(titleIn('usage_limit', "You've hit your weekly limit", french)).toBe('Limite hebdomadaire Claude atteinte')
-        expect(friendlyIn("AI_APICallError: You've hit your session limit · resets 6:50pm (UTC)", french)).toContain('Elle se recharge à 6:50pm (UTC)')
-        expect(friendlyIn('', french)).toBe('Une erreur est survenue. Essayez de renvoyer votre message.')
-        expect(friendlyIn('Error: ECONNRESET', french)).toBe('ECONNRESET')
+        expect(titleIn('usage_limit', "You've hit your weekly limit", german)).toBe('Claude: Wochenlimit erreicht')
+        expect(friendlyIn("AI_APICallError: You've hit your session limit · resets 6:50pm (UTC)", german)).toContain('Es füllt sich um 6:50pm (UTC) wieder auf')
+        expect(friendlyIn('', german)).toBe('Etwas ist schiefgelaufen. Versuch, deine Nachricht erneut zu senden.')
+        expect(friendlyIn('Error: ECONNRESET', german)).toBe('ECONNRESET')
     })
 })

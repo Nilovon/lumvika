@@ -2,8 +2,8 @@
 // template is authored and approved in Bird: the slug, the named body variables and the single URL
 // button below have to match it exactly, or Bird refuses the send with a parameter mismatch.
 
-export const WHATSAPP_LANGUAGES = ['en', 'fr', 'pt-BR'] as const
-export type WhatsAppLanguage = (typeof WHATSAPP_LANGUAGES)[number]
+// The only language with templates approved in Bird.
+export type WhatsAppLanguage = 'en'
 
 export type WhatsAppCategory = 'marketing' | 'utility'
 
@@ -121,11 +121,4 @@ export function teamLabel(names: string[]): string {
     if (names.length <= 2) return names.join(' and ')
     const others = names.length - 2
     return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? 'other' : 'others'}`
-}
-
-export function whatsappLanguage(locale: string | null | undefined): WhatsAppLanguage {
-    const language = locale?.toLowerCase().split(/[-_]/)[0]
-    if (language === 'fr') return 'fr'
-    if (language === 'pt') return 'pt-BR'
-    return 'en'
 }

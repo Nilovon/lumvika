@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { brainAuthorLabel as authorIn, brainSlugify, brainSourceLabel as sourceIn, brainSourceLabels as sourcesIn } from './labels'
 
 const english = englishTranslator('brain')
-const french = createTranslator({ locale: 'fr', messages: await loadMessages('fr'), namespace: 'brain' })
+const german = createTranslator({ locale: 'de', messages: await loadMessages('de'), namespace: 'brain' })
 const brainSourceLabel = (tag: string) => sourceIn(tag, english)
 const brainSourceLabels = (tags: string[]) => sourcesIn(tags, english)
 const brainAuthorLabel = (author: string) => authorIn(author, english)
@@ -28,9 +28,9 @@ describe('brainSourceLabel', () => {
     })
 
     it('names the sources in the reader\'s language and keeps a cited source as written', () => {
-        expect(sourceIn('site:pricing', french)).toBe('Page Tarifs')
-        expect(sourceIn('Call with Marie', french)).toBe('Call with Marie')
-        expect(authorIn('seed', french)).toBe("Lumvika, d'après votre site web")
+        expect(sourceIn('site:pricing', german)).toBe('Preisseite')
+        expect(sourceIn('Call with Marie', german)).toBe('Call with Marie')
+        expect(authorIn('seed', german)).toBe('Lumvika, aus deiner Website')
     })
 
     it('shows a link by its host and path, shortened', () => {

@@ -6,7 +6,7 @@ import { englishTranslator } from '@/lib/i18n/english-translator'
 import { humanCron, nextRunAt, routineFrequency, scheduleSummary } from '@/lib/schedules/cron'
 
 const english = englishTranslator('agent')
-const french = createTranslator({ locale: 'fr', messages: await loadMessages('fr'), namespace: 'agent' })
+const german = createTranslator({ locale: 'de', messages: await loadMessages('de'), namespace: 'agent' })
 
 const NOW = new Date('2026-09-30T10:00:00.000Z')
 const RECURRING = { enabled: true, cron: '0 9 * * *', runAt: null, timezone: 'Europe/Paris', lastRunAt: null }
@@ -56,14 +56,12 @@ describe('routineFrequency', () => {
 })
 
 describe('in the reader\'s language', () => {
-    it('reads the same shapes in French, cronstrue included', () => {
-        const cron = (expression: string) => routineFrequency({ cron: expression, runAt: null }, french, 'fr')
-        expect(cron('15 8 * * *')).toBe('Tous les jours à 8:15')
-        expect(cron('0 9 * * 1')).toBe('Chaque lundi à 9:00')
-        expect(cron('30 10 * * 1-5')).toBe('En semaine à 10:30')
-        expect(cron('0 9-17 * * *')).toBe('Toutes les heures, de 09:00 à 17:00')
-        expect(humanCron('0 9 * * *', 'es')).toBe('A las 09:00')
-        expect(humanCron('0 9 * * *', 'pt')).toBe('Às 09:00')
+    it('reads the same shapes in German, cronstrue included', () => {
+        const cron = (expression: string) => routineFrequency({ cron: expression, runAt: null }, german, 'de')
+        expect(cron('15 8 * * *')).toBe('Jeden Tag um 8:15')
+        expect(cron('0 9 * * 1')).toBe('Jeden Montag um 9:00')
+        expect(cron('30 10 * * 1-5')).toBe('Werktags um 10:30')
+        expect(cron('0 9-17 * * *')).toBe('Jede Stunde, zwischen 09:00 und 17:00')
         expect(humanCron('0 9 * * *', 'de')).toBe('Um 09:00')
     })
 

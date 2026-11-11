@@ -5,8 +5,8 @@ import { AccessDeniedError } from '@/app/api/_auth/access'
 import { AuthorizationError } from '@/app/api/_auth/errors'
 import { failure, failureOf, refusalOf } from './action-error'
 
-async function translatorFor(locale: 'fr' | 'es') {
-    return createTranslator({ locale, messages: await loadMessages(locale), namespace: 'errors' })
+async function germanTranslator() {
+    return createTranslator({ locale: 'de', messages: await loadMessages('de'), namespace: 'errors' })
 }
 
 describe('a refusal sent back by an action', () => {
@@ -31,7 +31,6 @@ describe('a refusal sent back by an action', () => {
 
     it('reads in the language of the person who sees it', async () => {
         const { code, params } = failure('tooManyActiveKeys', { max: 20 })
-        expect((await translatorFor('fr'))(code!, params as never)).toBe('Ce workspace a déjà 20 clés actives. Révoquez-en une pour en créer une autre.')
-        expect((await translatorFor('es'))(code!, params as never)).toBe('Este workspace ya tiene 20 claves activas. Revoca una para crear otra.')
+        expect((await germanTranslator())(code!, params as never)).toBe('Dieser Workspace hat bereits 20 aktive Schlüssel. Widerrufe einen, um einen neuen zu erstellen.')
     })
 })

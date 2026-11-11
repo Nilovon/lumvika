@@ -16,25 +16,27 @@ const DAY = 24 * HOUR
 
 describe('resolveLocale', () => {
     it('takes the account first, then the cookie, then the browser', () => {
-        expect(resolveLocale({ userLocale: 'es', cookie: 'fr', acceptLanguage: 'en' })).toBe('es')
-        expect(resolveLocale({ userLocale: null, cookie: 'fr', acceptLanguage: 'es' })).toBe('fr')
-        expect(resolveLocale({ acceptLanguage: 'it-IT,es;q=0.8,fr;q=0.9' })).toBe('fr')
+        expect(resolveLocale({ userLocale: 'de', cookie: 'en', acceptLanguage: 'en' })).toBe('de')
+        expect(resolveLocale({ userLocale: null, cookie: 'de', acceptLanguage: 'en' })).toBe('de')
+        expect(resolveLocale({ acceptLanguage: 'it-IT,en;q=0.8,de;q=0.9' })).toBe('de')
         expect(resolveLocale({ acceptLanguage: 'it-IT' })).toBe('en')
         expect(resolveLocale({})).toBe('en')
     })
 
     it('ignores what it does not ship', () => {
-        expect(resolveLocale({ userLocale: 'it', cookie: 'xx', acceptLanguage: 'es-MX' })).toBe('es')
-        expect(matchLocale('FR-ca')).toBe('fr')
-        expect(matchLocale('pt-PT')).toBe('pt')
+        expect(resolveLocale({ userLocale: 'it', cookie: 'xx', acceptLanguage: 'de-AT' })).toBe('de')
+        expect(matchLocale('DE-at')).toBe('de')
         expect(matchLocale('de-CH')).toBe('de')
-        expect(parseAcceptLanguage('*, fr;q=0')).toBeNull()
+        expect(parseAcceptLanguage('*, de;q=0')).toBeNull()
+    })
+
+    it('falls back for a language whose pack was removed, wherever it is still stored', () => {
+        expect(matchLocale('fr')).toBeNull()
+        expect(resolveLocale({ userLocale: 'fr' })).toBe('en')
+        expect(resolveLocale({ userLocale: 'fr', cookie: 'es', acceptLanguage: 'pt-BR,de;q=0.5' })).toBe('de')
     })
 
     it('names each language in its own words', () => {
-        expect(localeNativeName('fr')).toBe('Français')
-        expect(localeNativeName('es')).toBe('Español')
-        expect(localeNativeName('pt')).toBe('Português')
         expect(localeNativeName('de')).toBe('Deutsch')
         expect(localeNativeName('en')).toBe('English')
     })
@@ -54,13 +56,12 @@ describe('format', () => {
         expect(weekdayNames('en')).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     })
 
-    it('speaks French and Spanish', () => {
-        expect(shortRelativeTime(ago(30_000), 'fr', NOW)).toBe('maintenant')
-        expect(shortRelativeTime(ago(2 * DAY), 'fr', NOW)).toBe('2j')
-        expect(shortRelativeTime(ago(30_000), 'es', NOW)).toBe('ahora')
-        expect(plain(shortUntil(ahead(3 * HOUR + 1000), 'fr', NOW))).toBe('dans 3 h')
-        expect(shortDate('2026-03-05T12:00:00Z', 'fr')).toBe('5 mars')
-        expect(plain(formatBytes(1536, 'fr'))).toBe('1,5 ko')
+    it('speaks German', () => {
+        expect(shortRelativeTime(ago(30_000), 'de', NOW)).toBe('jetzt')
+        expect(plain(shortRelativeTime(ago(2 * DAY), 'de', NOW))).toBe('2 T')
+        expect(plain(shortUntil(ahead(3 * HOUR + 1000), 'de', NOW))).toBe('in 3 Std.')
+        expect(shortDate('2026-03-05T12:00:00Z', 'de')).toBe('5. März')
+        expect(plain(formatBytes(1536, 'de'))).toBe('1,5 kB')
     })
 
     it('labels the days of a conversation', () => {
@@ -68,8 +69,8 @@ describe('format', () => {
         const yesterday = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - 1, 10).toISOString()
         expect(messageDayLabel(today, 'en', NOW)).toBe('Today')
         expect(messageDayLabel(yesterday, 'en', NOW)).toBe('Yesterday')
-        expect(messageDayLabel(today, 'fr', NOW)).toBe('Aujourd’hui')
-        expect(messageDayLabel(yesterday, 'es', NOW)).toBe('Ayer')
+        expect(messageDayLabel(today, 'de', NOW)).toBe('Heute')
+        expect(messageDayLabel(yesterday, 'de', NOW)).toBe('Gestern')
     })
 })
 
@@ -81,13 +82,13 @@ describe('pseudoLocalize', () => {
 
 describe('messages', () => {
     it('falls back to English for a key a pack lacks', () => {
-        expect(mergeMessages({ a: 'A', b: { c: 'C', d: 'D' } }, { b: { c: 'C fr' } })).toEqual({ a: 'A', b: { c: 'C fr', d: 'D' } })
+        expect(mergeMessages({ a: 'A', b: { c: 'C', d: 'D' } }, { b: { c: 'C de' } })).toEqual({ a: 'A', b: { c: 'C de', d: 'D' } })
     })
 
     it('loads the packs without the translator notes', async () => {
-        const fr = await loadMessages('fr')
-        expect(fr.account.title).toBe('Compte')
-        expect('_context' in fr.account).toBe(false)
+        const german = await loadMessages('de')
+        expect(german.account.title).toBe('Konto')
+        expect('_context' in german.account).toBe(false)
         expect((await loadMessages('en-XA')).common.save).toBe('[Šáṽé ~~]')
     })
 })

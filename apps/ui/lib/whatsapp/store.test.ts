@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeSupabase, writeMethodOf } from '@/test/supabase-fake'
 import { applyWhatsAppFailure, applyWhatsAppProgress, claimWhatsAppMessage, markWhatsAppMessageAccepted, releaseWhatsAppMessage, type ClaimInput } from './store'
 
-const CLAIM: ClaimInput = { userId: 'user-1', workspaceId: 7, agentId: null, phone: '+32492000000', message: { key: 'payment_failed', category: 'utility' }, language: 'fr', dedupeKey: 'payment_failed:in_1' }
+const CLAIM: ClaimInput = { userId: 'user-1', workspaceId: 7, agentId: null, phone: '+32492000000', message: { key: 'payment_failed', category: 'utility' }, language: 'en', dedupeKey: 'payment_failed:in_1' }
 
 beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -23,7 +23,7 @@ describe('claimWhatsAppMessage', () => {
             agent_id: null,
             phone: '+32492000000',
             template_key: 'payment_failed',
-            language: 'fr',
+            language: 'en',
             category: 'utility',
             dedupe_key: 'payment_failed:in_1',
         })

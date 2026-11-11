@@ -62,10 +62,10 @@ describe('pushNotification', () => {
     })
 
     it('writes in the language the recipient picked', async () => {
-        userLocale = 'es'
+        userLocale = 'de'
         await pushNotification(supabase, context())
         const [, init] = expo.mock.calls[0]
-        expect(JSON.parse(init.body)[0].subtitle).toBe('Pregunta')
+        expect(JSON.parse(init.body)[0].subtitle).toBe('Frage')
     })
 
     it('lands a finished run without a sound', async () => {

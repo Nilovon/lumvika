@@ -7,7 +7,7 @@ import type { Refusal } from '@/hooks/useErrorText'
 vi.mock('next-intl', async () => {
     const { createTranslator } = await import('use-intl')
     const { loadMessages } = await import('@lumvika/i18n/messages')
-    const translator = createTranslator({ locale: 'fr', messages: await loadMessages('fr'), namespace: 'errors' })
+    const translator = createTranslator({ locale: 'de', messages: await loadMessages('de'), namespace: 'errors' })
     return { useTranslations: () => translator }
 })
 
@@ -28,8 +28,8 @@ function textOf(refusal: Refusal, fallback?: string): string {
 
 describe('useErrorText', () => {
     it('says a refusal with a code in the reader language', () => {
-        expect(textOf({ error: 'This workspace has no active plan.', code: 'noActivePlan' })).toBe("Ce workspace n'a pas d'abonnement actif.")
-        expect(textOf({ error: 'Keep the name under 40 characters', code: 'nameTooLong', params: { max: 40 } })).toBe('Le nom doit faire moins de 40 caractères')
+        expect(textOf({ error: 'This workspace has no active plan.', code: 'noActivePlan' })).toBe('Dieser Workspace hat keinen aktiven Tarif.')
+        expect(textOf({ error: 'Keep the name under 40 characters', code: 'nameTooLong', params: { max: 40 } })).toBe('Der Name darf höchstens 40 Zeichen haben')
     })
 
     it('keeps the server text for a refusal without a code, or with a code the catalog does not know', () => {
@@ -39,6 +39,6 @@ describe('useErrorText', () => {
 
     it('falls back when the refusal carries no text', () => {
         expect(textOf({}, 'Could not save')).toBe('Could not save')
-        expect(textOf({})).toBe('Une erreur est survenue. Veuillez réessayer.')
+        expect(textOf({})).toBe('Etwas ist schiefgelaufen. Bitte versuch es erneut.')
     })
 })

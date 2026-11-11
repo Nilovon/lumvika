@@ -1,6 +1,6 @@
 ---
 name: i18n-strings
-description: Put every user-facing string of Lumvika through the language packs (next-intl, ICU, packages/i18n) and keep the French and Spanish packs in step. Use whenever you add or change visible text in apps/ui or packages/ui (a label, a button, a toast, an error, an empty state, a zod message), format a date or a number for the screen, extract an existing screen into a namespace, or add a language. Triggers: "translate", "i18n", "add a string", "language pack", « traduis », « ajoute une langue ».
+description: Put every user-facing string of Lumvika through the language packs (next-intl, ICU, packages/i18n) and keep the German pack in step. Use whenever you add or change visible text in apps/ui or packages/ui (a label, a button, a toast, an error, an empty state, a zod message), format a date or a number for the screen, extract an existing screen into a namespace, or add a language. Triggers: "translate", "i18n", "add a string", "language pack", « traduis », « ajoute une langue ».
 ---
 
 # Strings through the language packs
@@ -55,18 +55,18 @@ t('composer.placeholder', { name })
 
 ```bash
 pnpm i18n:translate --ns chat --dry-run   # what it will translate and the estimated cost
-pnpm i18n:translate --ns chat             # Claude writes fr and es, checks placeholders, length, glossary
+pnpm i18n:translate --ns chat             # Claude writes de, checks placeholders, length, glossary
 pnpm i18n:check                           # must be green before the pull request
 ```
 
-Read the generated `fr/*.json` and `es/*.json` in the diff. Fix a wrong word by hand in the pack, then
+Read the generated `de/*.json` in the diff. Fix a wrong word by hand in the pack, then
 `pnpm i18n:translate --accept`. Terms that must not move go in `packages/i18n/glossary.json`.
 
 ## 6. See it
 
-`pnpm verify:ui --locale fr` (then `es`, then `en-XA`, the pseudo-locale that stretches every string
+`pnpm verify:ui --locale de` (then `en-XA`, the pseudo-locale that stretches every string
 by a third and accents it: an English string left in the code shows up unaccented). Look at every
-width: French and Spanish run longer than English.
+width: German runs longer than English.
 
 The language picker (Account → Language) only shows while the `i18n` flag is open for you
 (`I18N_RELEASED` in `apps/ui/lib/features.ts`, admins and early access before that).

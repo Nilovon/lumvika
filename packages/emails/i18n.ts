@@ -1,18 +1,12 @@
 import { DEFAULT_LOCALE, mergeMessages, type Locale } from "@lumvika/i18n";
 import german from "@lumvika/i18n/messages/de/emails.json";
 import english from "@lumvika/i18n/messages/en/emails.json";
-import spanish from "@lumvika/i18n/messages/es/emails.json";
-import french from "@lumvika/i18n/messages/fr/emails.json";
-import portuguese from "@lumvika/i18n/messages/pt/emails.json";
 import { createTranslator } from "use-intl/core";
 
 export type { Locale as EmailLocale };
 
 const PACKS: Record<Locale, typeof english | Partial<typeof english>> = {
   en: english,
-  fr: french,
-  es: spanish,
-  pt: portuguese,
   de: german,
 };
 

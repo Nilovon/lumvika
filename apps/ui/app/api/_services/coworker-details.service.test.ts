@@ -85,8 +85,8 @@ describe('coworker details', () => {
         ])
         expect(mocks.recipientLocale).toHaveBeenCalledWith(ctx.supabase, 'u1', 7)
 
-        mocks.recipientLocale.mockResolvedValueOnce('fr')
-        expect((await listCoworkerRoutines(ctx, 'a1')).routines[0].cronLabel).toBe('À 09:00')
+        mocks.recipientLocale.mockResolvedValueOnce('de')
+        expect((await listCoworkerRoutines(ctx, 'a1')).routines[0].cronLabel).toBe('Um 09:00')
     })
 
     it('switches a schedule or a trigger with nothing but its enabled flag', async () => {

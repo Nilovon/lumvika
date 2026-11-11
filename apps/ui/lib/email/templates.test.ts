@@ -95,31 +95,32 @@ describe('email templates', () => {
 })
 
 describe('email templates in the reader\'s language', () => {
-    it('renders an email in French, footer included', async () => {
+    it('renders an email in German, footer included', async () => {
         const { html, text } = await renderEmail(
             React.createElement(TrialEnded, {
                 reason: 'no_card',
                 workspaceName: 'Acme',
-                trialEndedLabel: '12 mars',
-                pausedLabel: '12 mars à 16:00 UTC',
-                keptUntilLabel: '10 juin',
+                trialEndedLabel: '12. März',
+                pausedLabel: '12. März um 16:00 UTC',
+                keptUntilLabel: '10. Juni',
                 summary: { agents: 3, runs: 41 },
                 billingUrl: 'https://app.lumvika.com/?billing=1',
                 appUrl: 'https://app.lumvika.com',
                 unsubscribeUrl: 'https://app.lumvika.com/unsubscribe?token=test',
-                locale: 'fr',
+                locale: 'de',
             }),
         )
-        expect(html).toContain('lang="fr"')
-        expect(text).toContain('VOTRE ESSAI EST TERMINÉ')
-        expect(text).toContain("L'essai de Acme s'est terminé le 12 mars, et vos coworkers se sont arrêtés.")
-        expect(text).toContain('Démarrer mon abonnement')
-        expect(text).toContain('Se désabonner')
+        expect(html).toContain('lang="de"')
+        expect(text).toContain('DEINE TESTPHASE IST BEENDET')
+        expect(text).toContain('Die Testphase für Acme endete am 12. März, und deine Coworker haben gestoppt.')
+        expect(text).toContain('Meinen Tarif starten')
+        expect(text).toContain('Abmelden')
         expect(text).not.toContain('YOUR TRIAL HAS ENDED')
     })
 
     // A key missing from a pack, or a message the ICU parser refuses, would print its key path.
-    it.each(['fr', 'es', 'pt', 'de'] as const)('renders every preview in %s with no missing or broken message', async locale => {
+    it('renders every preview in German with no missing or broken message', async () => {
+        const locale = 'de'
         const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
         for (const preview of EMAIL_PREVIEWS) {
             const { html, text } = await renderEmail(React.cloneElement(preview.element as React.ReactElement<{ locale?: string }>, { locale }))

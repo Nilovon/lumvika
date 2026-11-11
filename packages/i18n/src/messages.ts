@@ -7,9 +7,6 @@ export type Messages = typeof englishMessages
 
 const PACKS: Record<Locale, () => Promise<{ default: MessageTree }>> = {
     en: () => import('../messages/en/index'),
-    fr: () => import('../messages/fr/index'),
-    es: () => import('../messages/es/index'),
-    pt: () => import('../messages/pt/index'),
     de: () => import('../messages/de/index'),
 }
 

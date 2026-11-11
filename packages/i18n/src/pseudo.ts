@@ -5,7 +5,7 @@ const ACCENTED: Record<string, string> = {
     N: 'Ñ', O: 'Ó', P: 'Þ', Q: 'Ǫ', R: 'Ŕ', S: 'Š', T: 'Ţ', U: 'Ú', V: 'Ṽ', W: 'Ŵ', X: 'Ẋ', Y: 'Ý', Z: 'Ž',
 }
 
-// About what German or French add to an English string.
+// About what German adds to an English string.
 const STRETCH = 0.35
 
 type Output = { parts: string[]; letters: number }

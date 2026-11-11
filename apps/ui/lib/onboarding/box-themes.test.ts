@@ -1,4 +1,4 @@
-import frBuilder from '@lumvika/i18n/messages/fr/builder.json'
+import deBuilder from '@lumvika/i18n/messages/de/builder.json'
 import { SUGGESTION_CARDS } from '@lumvika/ui/new-agent'
 import { createTranslator } from 'use-intl'
 import { describe, expect, it } from 'vitest'
@@ -88,10 +88,10 @@ describe('boxCtaLabel', () => {
     })
 
     it('measures the translated pill, not the English one', () => {
-        const t = createTranslator({ locale: 'fr', messages: { builder: frBuilder }, namespace: 'builder.isoBoard' })
-        expect(boxCtaLabel('Marketing', t)).toBe('Explorer les templates Marketing')
+        const t = createTranslator({ locale: 'de', messages: { builder: deBuilder }, namespace: 'builder.isoBoard' })
+        expect(boxCtaLabel('Marketing', t)).toBe('Vorlagen für Marketing entdecken')
         expect(boxCtaLabel('Customer Care', englishTranslator('builder.isoBoard'))).toBe('Explore Customer Care templates')
-        expect(boxCtaLabel('Customer Care', t)).toBe('Explorer les templates')
+        expect(boxCtaLabel('Customer Care', t)).toBe('Vorlagen entdecken')
     })
 })
 

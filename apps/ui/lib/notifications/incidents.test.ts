@@ -38,6 +38,6 @@ describe('announcesRecovery', () => {
     })
 
     it('names the source in the language of the email', () => {
-        expect(emailSourceLabel('agt_1:trigger:run', emailTranslator('fr'))).toBe('Un déclencheur')
+        expect(emailSourceLabel('agt_1:trigger:run', emailTranslator('de'))).toBe('Ein Trigger')
     })
 })
