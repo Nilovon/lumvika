@@ -29,12 +29,13 @@ const INSET_END: Record<ChromeInset, string> = {
     text: 'pr-[15px]',
 }
 
-const SURFACE = 'relative rounded-full border border-border bg-card/95 text-sm font-medium text-foreground shadow-2xl'
+// Floating over the board is the one real elevation in the app, hence the only large shadow.
+const SURFACE = 'relative rounded-xl border border-border bg-card text-sm font-medium text-foreground shadow-lg'
 
 type ChromeBeamProps = { beamTone?: 'white' | 'brand'; beamAnimated?: boolean }
 
 function ChromeBeam({ beamTone = 'white', beamAnimated = false }: ChromeBeamProps) {
-    return <BorderBeam pattern="arcs" tone={beamTone} animated={beamAnimated} glow angle={53} outset={1} className={beamTone === 'brand' ? 'opacity-50' : 'opacity-30'} />
+    return <BorderBeam pattern="arcs" tone={beamTone} animated={beamAnimated} angle={53} outset={1} className={beamTone === 'brand' ? 'opacity-50' : 'opacity-30'} />
 }
 
 export type ChromePillProps = ComponentProps<'button'> & ChromeBeamProps & { start?: ChromeInset; end?: ChromeInset }
@@ -79,16 +80,16 @@ export type ChromeButtonProps = ComponentProps<'button'> & {
     disabledReason?: string | null
 }
 
-/** A control inside a `ChromeBar`: a round icon button, or a labelled one. */
+/** A control inside a `ChromeBar`: an icon button, or a labelled one. */
 export function ChromeButton({ icon: Icon, label, disabledReason, disabled, className, children, ...props }: ChromeButtonProps) {
     const labelled = label !== undefined || children !== undefined
     return (
-        <TooltipDisabledReason reason={disabledReason ?? undefined} side="top" className="rounded-full">
+        <TooltipDisabledReason reason={disabledReason ?? undefined} side="top" className="rounded-lg">
             <button
                 type="button"
                 disabled={disabled || !!disabledReason}
                 className={cn(
-                    'relative flex h-(--chrome-control) shrink-0 items-center justify-center gap-1.5 rounded-full text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground disabled:pointer-events-none disabled:opacity-50',
+                    'relative flex h-(--chrome-control) shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground disabled:pointer-events-none disabled:opacity-50',
                     labelled ? 'px-3' : 'w-(--chrome-control)',
                     className
                 )}

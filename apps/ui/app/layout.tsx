@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
@@ -17,17 +17,9 @@ import { getLocale, getMessages } from "next-intl/server";
 import { TimeZoneCookie } from "@/components/layout/TimeZoneCookie";
 import { UiLocaleProvider } from "@lumvika/ui/locale";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const sans = Instrument_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
 
 export const metadata: Metadata = {
   title: {
@@ -87,7 +79,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      className={cn("h-full", "antialiased", mono.variable, "font-sans", sans.variable)}
     >
       <body className="min-h-full flex flex-col">
         <DomMutationGuard />

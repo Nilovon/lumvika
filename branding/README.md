@@ -52,7 +52,23 @@ A Lime fill always carries Black ink, never white. On mobile the same roles are 
 The wordmark is drawn, not set: lowercase monoline letters with square ends, 17 units wide on a 56 unit
 x-height, with no font needed to render it. The dot of the i is a Lime square.
 
-The interface uses Inter and Geist, with Geist Mono for code, as loaded in `apps/ui/app/layout.tsx`.
+The interface uses Instrument Sans, with IBM Plex Mono for code, as loaded in `apps/ui/app/layout.tsx`.
+Instrument Sans is narrow and slightly squared, so dense panels and long German strings fit, and its
+flat terminals sit next to the square-ended wordmark. IBM Plex Mono has the same square ends.
+
+## Interface
+
+The interface is built from the plates of the mark.
+
+- Corners are tight: `--radius` is `0.375rem` in `packages/ui/src/theme.css`, and every other radius is
+  a multiple of it. Round shapes are kept for avatars, the Steward and status dots.
+- A filled button is a plate seen from the front: its bottom 2px show the side of the plate (the
+  `--relief-*` tokens). No gloss, no glow.
+- The floating blocks over the board (`packages/ui/src/chrome/ChromeSurface.tsx`) are plates with the
+  one large shadow of the app, because they are the one thing that floats.
+- A badge is a small plate with a thin ring in its tone. The ring glows only when a caller asks for it.
+- Lime marks one thing per screen: the Steward, or the state that needs the eye. A Lime fill carries
+  Black ink.
 
 ## Characters
 

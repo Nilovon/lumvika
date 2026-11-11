@@ -56,100 +56,21 @@
   --border: oklch(0.905 0 0);
   --input: oklch(0.905 0 0);
   --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
+  --radius: 0.375rem;
 
-  /* Famille « relief » : lumière venue d'en haut, donc liseré interne clair sur le haut et
-     les deux côtés, voile diffus sous l'arête haute, ombre portée dessous. Tout passe par
-     box-shadow, seule propriété du lot qui s'interpole : un background-image est discret et
-     sauterait en une frame au hover. Trois intensités, indexées sur la taille du bouton et
-     sur son remplissage : `cta` (gros bouton plein de la landing), `solid` (bouton plein de
-     l'app, deux fois plus court : liseré 1px et voile resserrés), `subtle` (remplissages
-     translucides ou clairs, qui ne portent qu'un liseré et une ombre au ras).
-     En clair les remplissages pleins sont quasi noirs et acceptent un voile blanc. */
-  --relief-cta:
-    inset 0 2px 0 0 rgb(255 255 255 / 0.2),
-    inset 2px 0 0 0 rgb(255 255 255 / 0.09),
-    inset -2px 0 0 0 rgb(255 255 255 / 0.09),
-    inset 0 12px 14px -10px rgb(255 255 255 / 0.14),
-    inset 14px 0 16px -14px rgb(255 255 255 / 0.18),
-    inset -14px 0 16px -14px rgb(255 255 255 / 0.18),
-    inset 0 22px 22px -20px rgb(255 255 255 / 0.3),
-    0 1px 2px 0 rgb(0 0 0 / 0.22),
-    0 5px 14px -8px rgb(0 0 0 / 0.3);
-  --relief-cta-hover:
-    inset 0 2px 0 0 rgb(255 255 255 / 0.26),
-    inset 2px 0 0 0 rgb(255 255 255 / 0.12),
-    inset -2px 0 0 0 rgb(255 255 255 / 0.12),
-    inset 0 12px 14px -10px rgb(255 255 255 / 0.2),
-    inset 14px 0 16px -14px rgb(255 255 255 / 0.25),
-    inset -14px 0 16px -14px rgb(255 255 255 / 0.25),
-    inset 0 22px 22px -20px rgb(255 255 255 / 0.42),
-    0 1px 2px 0 rgb(0 0 0 / 0.26),
-    0 8px 20px -10px rgb(0 0 0 / 0.35);
-
-  --relief-solid:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.18),
-    inset 1px 0 0 0 rgb(255 255 255 / 0.08),
-    inset -1px 0 0 0 rgb(255 255 255 / 0.08),
-    inset 0 8px 10px -8px rgb(255 255 255 / 0.16),
-    inset 0 14px 14px -13px rgb(255 255 255 / 0.26),
-    0 1px 2px 0 rgb(0 0 0 / 0.18),
-    0 3px 8px -5px rgb(0 0 0 / 0.24);
-  --relief-solid-hover:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.24),
-    inset 1px 0 0 0 rgb(255 255 255 / 0.11),
-    inset -1px 0 0 0 rgb(255 255 255 / 0.11),
-    inset 0 8px 10px -8px rgb(255 255 255 / 0.22),
-    inset 0 14px 14px -13px rgb(255 255 255 / 0.36),
-    0 1px 2px 0 rgb(0 0 0 / 0.22),
-    0 5px 12px -6px rgb(0 0 0 / 0.28);
-
-  --relief-subtle:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.85),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.04),
-    0 1px 1px 0 rgb(0 0 0 / 0.05),
-    0 2px 6px -4px rgb(0 0 0 / 0.12);
-  --relief-subtle-hover:
-    inset 0 1px 0 0 rgb(255 255 255 / 1),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.05),
-    0 1px 1px 0 rgb(0 0 0 / 0.06),
-    0 3px 8px -4px rgb(0 0 0 / 0.16);
-
-  /* Destructif teinté (remplissage `destructive/10`, donc un rose très clair) : PAS de liseré
-     lumineux ici. Sur un fond déjà presque blanc, la lumière d'en haut n'a nulle part où aller
-     et retombe en bandeau rose pâle sur rose pâle. Le relief vient donc uniquement d'en bas,
-     par une arête et une ombre interne rouges, plus l'ombre portée. Le détourage est laissé à
-     la bordure du variant (`border-destructive/15`), qui tombe pile sur l'arête. */
-  --relief-destructive:
-    inset 0 -1px 0 0 rgb(150 20 20 / 0.12),
-    inset 0 -8px 8px -8px rgb(150 20 20 / 0.1),
-    0 1px 1px 0 rgb(150 20 20 / 0.06),
-    0 2px 5px -4px rgb(180 25 25 / 0.14);
-  --relief-destructive-hover:
-    inset 0 -1px 0 0 rgb(150 20 20 / 0.16),
-    inset 0 -8px 8px -8px rgb(150 20 20 / 0.14),
-    0 1px 1px 0 rgb(150 20 20 / 0.08),
-    0 3px 8px -4px rgb(210 35 35 / 0.2);
-
-  /* Destructif plein : là un remplissage rouge saturé porte une lumière, à condition qu'elle
-     soit ROUGE CLAIR et pas blanche. Un liseré blanc pur sur du rouge fait un reflet plastique
-     et désature l'arête haute. */
-  --relief-destructive-solid:
-    inset 0 1px 0 0 rgb(255 190 190 / 0.5),
-    inset 1px 0 0 0 rgb(255 180 180 / 0.2),
-    inset -1px 0 0 0 rgb(255 180 180 / 0.2),
-    inset 0 10px 12px -9px rgb(255 205 205 / 0.26),
-    inset 0 -1px 0 0 rgb(110 8 8 / 0.35),
-    0 1px 2px 0 rgb(140 15 15 / 0.18),
-    0 3px 8px -6px rgb(190 25 25 / 0.24);
-  --relief-destructive-solid-hover:
-    inset 0 1px 0 0 rgb(255 205 205 / 0.65),
-    inset 1px 0 0 0 rgb(255 190 190 / 0.28),
-    inset -1px 0 0 0 rgb(255 190 190 / 0.28),
-    inset 0 10px 12px -9px rgb(255 215 215 / 0.36),
-    inset 0 -1px 0 0 rgb(110 8 8 / 0.3),
-    0 1px 2px 0 rgb(140 15 15 / 0.2),
-    0 5px 12px -6px rgb(220 35 35 / 0.3);
+  /* Plate edge: a filled control is one plate of the logo seen from the front, so its bottom 2px
+     show the side of the plate. Inset, so it is never clipped by a parent and never shifts layout.
+     Hover changes the fill, not the edge, which is why each hover token repeats its base. */
+  --relief-cta: inset 0 -3px 0 0 rgb(255 255 255 / 0.3);
+  --relief-cta-hover: inset 0 -3px 0 0 rgb(255 255 255 / 0.3);
+  --relief-solid: inset 0 -2px 0 0 rgb(255 255 255 / 0.28);
+  --relief-solid-hover: inset 0 -2px 0 0 rgb(255 255 255 / 0.28);
+  --relief-subtle: inset 0 -2px 0 0 rgb(0 0 0 / 0.08);
+  --relief-subtle-hover: inset 0 -2px 0 0 rgb(0 0 0 / 0.12);
+  --relief-destructive: inset 0 -2px 0 0 rgb(180 25 25 / 0.18);
+  --relief-destructive-hover: inset 0 -2px 0 0 rgb(180 25 25 / 0.26);
+  --relief-destructive-solid: inset 0 -2px 0 0 rgb(0 0 0 / 0.25);
+  --relief-destructive-solid-hover: inset 0 -2px 0 0 rgb(0 0 0 / 0.25);
 }
 
 .dark {
@@ -172,98 +93,17 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
 
-  /* Les remplissages pleins sont blancs en sombre : un voile blanc de plus ne rendrait rien.
-     Le relief vient donc de l'inverse, un voile sombre sur le bas, qui laisse le haut et
-     les côtés en blanc pur. Au hover ce voile s'efface : c'est ce qui fait « s'allumer »
-     le bouton, là où en clair c'est le voile blanc qui se renforce. `subtle` est le seul à
-     garder la polarité du clair, puisqu'il habille un remplissage sombre translucide. */
-  --relief-cta:
-    inset 0 2px 0 0 rgb(255 255 255 / 0.9),
-    inset 2px 0 0 0 rgb(255 255 255 / 0.5),
-    inset -2px 0 0 0 rgb(255 255 255 / 0.5),
-    inset 0 12px 14px -10px rgb(255 255 255 / 0.45),
-    inset 14px 0 16px -14px rgb(255 255 255 / 0.55),
-    inset -14px 0 16px -14px rgb(255 255 255 / 0.55),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.14),
-    inset 0 -22px 22px -18px rgb(0 0 0 / 0.16),
-    0 1px 2px 0 rgb(0 0 0 / 0.5),
-    0 6px 18px -8px rgb(0 0 0 / 0.55);
-  --relief-cta-hover:
-    inset 0 2px 0 0 rgb(255 255 255 / 1),
-    inset 2px 0 0 0 rgb(255 255 255 / 0.65),
-    inset -2px 0 0 0 rgb(255 255 255 / 0.65),
-    inset 0 12px 14px -10px rgb(255 255 255 / 0.6),
-    inset 14px 0 16px -14px rgb(255 255 255 / 0.7),
-    inset -14px 0 16px -14px rgb(255 255 255 / 0.7),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.08),
-    inset 0 -22px 22px -18px rgb(0 0 0 / 0.07),
-    0 1px 2px 0 rgb(0 0 0 / 0.5),
-    0 8px 24px -10px rgb(255 255 255 / 0.15);
-
-  --relief-solid:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.85),
-    inset 1px 0 0 0 rgb(255 255 255 / 0.45),
-    inset -1px 0 0 0 rgb(255 255 255 / 0.45),
-    inset 0 8px 10px -8px rgb(255 255 255 / 0.4),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.12),
-    inset 0 -14px 14px -12px rgb(0 0 0 / 0.14),
-    0 1px 2px 0 rgb(0 0 0 / 0.45),
-    0 4px 12px -6px rgb(0 0 0 / 0.5);
-  --relief-solid-hover:
-    inset 0 1px 0 0 rgb(255 255 255 / 1),
-    inset 1px 0 0 0 rgb(255 255 255 / 0.6),
-    inset -1px 0 0 0 rgb(255 255 255 / 0.6),
-    inset 0 8px 10px -8px rgb(255 255 255 / 0.55),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.06),
-    inset 0 -14px 14px -12px rgb(0 0 0 / 0.06),
-    0 1px 2px 0 rgb(0 0 0 / 0.45),
-    0 5px 14px -6px rgb(255 255 255 / 0.12);
-
-  --relief-subtle:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.08),
-    inset 0 8px 10px -8px rgb(255 255 255 / 0.05),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.2),
-    0 1px 2px 0 rgb(0 0 0 / 0.4),
-    0 3px 8px -5px rgb(0 0 0 / 0.45);
-  --relief-subtle-hover:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.14),
-    inset 0 8px 10px -8px rgb(255 255 255 / 0.08),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.22),
-    0 1px 2px 0 rgb(0 0 0 / 0.45),
-    0 4px 12px -6px rgb(0 0 0 / 0.5);
-
-  /* En sombre le remplissage destructif teinté est un rouge profond, pas un rose délavé : il
-     supporte une lumière, à condition qu'elle soit rouge clair. L'ombre portée vire au rouge
-     pour que le bouton diffuse sa propre couleur au lieu d'un halo gris. */
-  --relief-destructive:
-    inset 0 1px 0 0 rgb(255 150 150 / 0.32),
-    inset 0 8px 10px -8px rgb(255 130 130 / 0.14),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.25),
-    0 1px 2px 0 rgb(0 0 0 / 0.3),
-    0 3px 8px -6px rgb(190 30 30 / 0.24);
-  --relief-destructive-hover:
-    inset 0 1px 0 0 rgb(255 170 170 / 0.5),
-    inset 0 8px 10px -8px rgb(255 140 140 / 0.22),
-    inset 0 -1px 0 0 rgb(0 0 0 / 0.28),
-    0 1px 2px 0 rgb(0 0 0 / 0.35),
-    0 4px 12px -6px rgb(240 50 50 / 0.28);
-
-  --relief-destructive-solid:
-    inset 0 1px 0 0 rgb(255 205 205 / 0.45),
-    inset 1px 0 0 0 rgb(255 190 190 / 0.18),
-    inset -1px 0 0 0 rgb(255 190 190 / 0.18),
-    inset 0 10px 12px -9px rgb(255 210 210 / 0.22),
-    inset 0 -1px 0 0 rgb(80 0 0 / 0.35),
-    0 1px 2px 0 rgb(0 0 0 / 0.3),
-    0 3px 10px -6px rgb(200 35 35 / 0.26);
-  --relief-destructive-solid-hover:
-    inset 0 1px 0 0 rgb(255 220 220 / 0.6),
-    inset 1px 0 0 0 rgb(255 200 200 / 0.26),
-    inset -1px 0 0 0 rgb(255 200 200 / 0.26),
-    inset 0 10px 12px -9px rgb(255 220 220 / 0.3),
-    inset 0 -1px 0 0 rgb(80 0 0 / 0.3),
-    0 1px 2px 0 rgb(0 0 0 / 0.35),
-    0 5px 14px -6px rgb(245 60 60 / 0.3);
+  /* Solid fills are white here, so the side of the plate is a darker band. */
+  --relief-cta: inset 0 -3px 0 0 rgb(0 0 0 / 0.3);
+  --relief-cta-hover: inset 0 -3px 0 0 rgb(0 0 0 / 0.3);
+  --relief-solid: inset 0 -2px 0 0 rgb(0 0 0 / 0.28);
+  --relief-solid-hover: inset 0 -2px 0 0 rgb(0 0 0 / 0.28);
+  --relief-subtle: inset 0 -2px 0 0 rgb(0 0 0 / 0.35);
+  --relief-subtle-hover: inset 0 -2px 0 0 rgb(0 0 0 / 0.45);
+  --relief-destructive: inset 0 -2px 0 0 rgb(0 0 0 / 0.3);
+  --relief-destructive-hover: inset 0 -2px 0 0 rgb(0 0 0 / 0.38);
+  --relief-destructive-solid: inset 0 -2px 0 0 rgb(0 0 0 / 0.3);
+  --relief-destructive-solid-hover: inset 0 -2px 0 0 rgb(0 0 0 / 0.3);
 }
 
 /* Hauteur de la barre de consentement quand elle occupe le bas de l'écran, publiée par

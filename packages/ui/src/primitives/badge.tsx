@@ -5,7 +5,7 @@ import { cn } from '../cn'
 import { BorderBeam, type BorderBeamProps } from '../BorderBeam'
 import { TextShimmer } from '../TextShimmer'
 
-const badgeVariants = cva('badge-beam relative inline-flex items-center justify-center rounded-full font-normal whitespace-nowrap', {
+const badgeVariants = cva('badge-beam relative inline-flex items-center justify-center rounded-sm font-normal whitespace-nowrap', {
     variants: {
         size: {
             xs: 'gap-1 px-2 py-0.5 text-[10px]',
@@ -32,7 +32,6 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
     pattern?: BorderBeamProps['pattern']
     /** Fait tourner l'anneau. Défaut false (statique). */
     animated?: boolean
-    /** Glow autour de l'anneau. Défaut true. */
     glow?: boolean
     /** Applique le balayage TextShimmer sur le texte (children string uniquement). Défaut false. */
     shimmer?: boolean
@@ -45,17 +44,12 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
     className?: string
 }
 
-/**
- * Pill « themed » : anneau BorderBeam + texte teinté au ton, avec fond soft,
- * transparent ou contrasté pour les médias. Décline les tons du BorderBeam en tailles sm/md/lg. Le shimmer
- * animé (héritage de ShinyText) est optionnel via `shimmer`.
- */
 export function Badge({
     children,
     tone = 'brand',
     pattern = 'ring',
     animated = false,
-    glow = true,
+    glow = false,
     shimmer = false,
     spread = 16,
     leading,
