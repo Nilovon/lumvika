@@ -30,7 +30,7 @@ const AGENTS: MentionAgent[] = [
     { id: 'pulse', name: 'Pulse', handle: 'pulse', preferred: true },
 ]
 const ATTACHMENTS: ComposerAttachment[] = [
-    { uri: `${environment.supabaseUrl}/storage/v1/object/public/blob-illustrations/green-energy-blob.webp`, name: 'IMG_2041.jpg', mimeType: 'image/jpeg' },
+    { uri: `${environment.apiUrl}/og-image.png`, name: 'IMG_2041.jpg', mimeType: 'image/jpeg' },
     { uri: 'file:///lab/Q3-board-review-final-version.pdf', name: 'Q3-board-review-final-version.pdf', mimeType: 'application/pdf' },
     { uri: 'file:///lab/renewals.csv', name: 'renewals.csv', mimeType: 'text/csv' },
 ]

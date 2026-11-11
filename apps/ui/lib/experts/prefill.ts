@@ -1,6 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/app/api/database.types'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, updateRows, type DbScope } from '@/lib/db'
 import { enrichExpert, type EnrichedExpert } from './enrich'
 import { rehostAvatar } from './rehost'
 import { scrapeProfile } from './scrape'
@@ -82,8 +81,8 @@ export function prefillPatch(
     return patch
 }
 
-export async function prefillExpertFromProfile(supabase: SupabaseClient<Database>, expertId: string): Promise<PrefillResult> {
-    const { data: expert } = await selectMaybeSingle(supabase, 'experts', PREFILL_COLUMNS, { id: expertId })
+export async function prefillExpertFromProfile(scope: DbScope, expertId: string): Promise<PrefillResult> {
+    const { data: expert } = await selectMaybeSingle(scope, 'experts', PREFILL_COLUMNS, { id: expertId })
     if (!expert) return { ok: false, reason: 'not-found' }
 
     const picked = pickProfileUrl(expert)
@@ -92,7 +91,7 @@ export async function prefillExpertFromProfile(supabase: SupabaseClient<Database
     const scraped = await scrapeProfile(picked.url, picked.source)
     const enriched = await enrichExpert(picked.source, scraped.raw)
 
-    const avatarUrl = !expert.avatar_url && scraped.photoUrl ? await rehostAvatar(supabase, scraped.photoUrl, expert.slug) : null
+    const avatarUrl = !expert.avatar_url && scraped.photoUrl ? await rehostAvatar(scraped.photoUrl, expert.slug) : null
 
     // The banner is left alone: the application already got one from the illustrations bucket, and
     // an X header is rarely better than it.
@@ -100,7 +99,7 @@ export async function prefillExpertFromProfile(supabase: SupabaseClient<Database
     if (Object.keys(patch).length === 0) return { ok: true, slug: expert.slug, source: picked.source }
 
     const payload: Database['public']['Tables']['experts']['Update'] = { ...patch, updated_at: new Date().toISOString() }
-    const { error } = await supabase.from('experts').update<Database['public']['Tables']['experts']['Update']>(payload).eq('id', expertId)
+    const { error } = await updateRows(scope, 'experts', payload, { id: expertId })
     if (error) throw new Error(error.message)
 
     return { ok: true, slug: expert.slug, source: picked.source }

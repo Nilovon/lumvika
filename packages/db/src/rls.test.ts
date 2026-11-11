@@ -89,3 +89,14 @@ describe('raw SQL', () => {
         expect(data).toEqual([{ big: 42, at: '2026-11-11T10:00:00.123456+00:00' }])
     })
 })
+
+describe('SQL functions', () => {
+    afterAll(closeDb)
+
+    it('passes a JS array as one Postgres array', async () => {
+        const { callScalar } = await import('./functions')
+        const { data, error } = await callScalar<boolean>(serviceScope(), 'claim_app_quota', { p_scope: 'test', p_action: 'probe', p_periods: ['day:1', 'month:1'], p_maxes: [5, 50] })
+        expect(error).toBeNull()
+        expect(data).toBe(true)
+    })
+})

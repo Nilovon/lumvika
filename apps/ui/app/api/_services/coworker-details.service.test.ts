@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { WorkspaceContext } from '@/app/api/_auth/ownership'
 import { normalizeNotificationPrefs } from '@/lib/notifications/prefs'
+import { fakeScope } from '@/test/db-fake'
 
 vi.mock('server-only', () => ({}))
 const mocks = vi.hoisted(() => ({
@@ -29,7 +30,7 @@ const { AccessDeniedError } = await import('@/app/api/_auth/access')
 const { AuthorizationError } = await import('@/app/api/_auth/ownership')
 const { deleteCoworker, listCoworkerFiles, listCoworkerRoutines, readCoworkerNotifications, renameCoworker, setCoworkerNotifications, setCoworkerRoutineEnabled } = await import('./coworker-details.service')
 
-const ctx = { userId: 'u1', role: 'member', boxScope: 'all', workspace: { id: 7 }, supabase: {} } as unknown as WorkspaceContext
+const ctx = { userId: 'u1', role: 'member', boxScope: 'all', workspace: { id: 7 }, scope: fakeScope() } as unknown as WorkspaceContext
 const actor = { kind: 'user', userId: 'u1', workspaceId: 7, role: 'member', boxScope: 'all' }
 
 // What the caller reaches on the coworker's Box: `none` stands for a coworker of another workspace,
@@ -83,7 +84,7 @@ describe('coworker details', () => {
             { kind: 'schedule', slug: 'once', name: 'Reminder', enabled: false, cronLabel: null, runAt: '2026-11-01T08:00:00.000Z', timezone: null },
             { kind: 'trigger', slug: 'stripe', name: 'Stripe webhook', enabled: true, cronLabel: null, runAt: null, timezone: null },
         ])
-        expect(mocks.recipientLocale).toHaveBeenCalledWith(ctx.supabase, 'u1', 7)
+        expect(mocks.recipientLocale).toHaveBeenCalledWith(ctx.scope, 'u1', 7)
 
         mocks.recipientLocale.mockResolvedValueOnce('de')
         expect((await listCoworkerRoutines(ctx, 'a1')).routines[0].cronLabel).toBe('Um 09:00')

@@ -21,7 +21,7 @@ import { STEWARD_COLUMN_QUERY } from '@/lib/steward-open'
 import { cn } from '@/lib/utils'
 import { useControlCenterStore } from '@/stores/control-center.store'
 import { stewardOrbState, selectStewardOpen, selectStewardVisible, useStewardStore } from '@/stores/steward.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // `fixed` et pas `absolute` : l'orbe n'appartient à aucun cadre, elle est posée sur le viewport.
 // C'est ce qui l'affranchit des `overflow-hidden` qui coupaient son halo. Le prix du `fixed`, c'est

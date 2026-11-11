@@ -1,5 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/app/api/database.types'
+import type { DbScope } from '@/lib/db'
 import { sendWhatsAppTemplate } from './client'
 import { loadWhatsAppRecipient } from './recipient'
 import { applyWhatsAppFailure, claimWhatsAppMessage, markWhatsAppMessageAccepted, releaseWhatsAppMessage } from './store'
@@ -24,11 +23,11 @@ export const MESSAGE_ID_METADATA = 'message_id'
  * The one way a WhatsApp message leaves Lumvika. A `sent` answer means Bird accepted it, nothing
  * more: whether it reached the phone is written on the row later, by the webhook.
  */
-export async function deliverWhatsApp(supabase: SupabaseClient<Database>, input: DeliverWhatsAppInput): Promise<DeliverWhatsAppResult> {
-    const recipient = await loadWhatsAppRecipient(supabase, input.userId, input.message.category)
+export async function deliverWhatsApp(scope: DbScope, input: DeliverWhatsAppInput): Promise<DeliverWhatsAppResult> {
+    const recipient = await loadWhatsAppRecipient(scope, input.userId, input.message.category)
     if (!recipient.ok) return { sent: false, reason: recipient.reason }
 
-    const claim = await claimWhatsAppMessage(supabase, {
+    const claim = await claimWhatsAppMessage(scope, {
         userId: input.userId,
         workspaceId: input.workspaceId ?? null,
         agentId: input.agentId ?? null,
@@ -50,16 +49,16 @@ export async function deliverWhatsApp(supabase: SupabaseClient<Database>, input:
     })
 
     if (result.ok && result.id) {
-        await markWhatsAppMessageAccepted(supabase, claim.id, result.id)
+        await markWhatsAppMessageAccepted(scope, claim.id, result.id)
         return { sent: true, id: claim.id }
     }
 
     // Nothing left in either case, so the row and its dedupe key are given back for a later try.
     if (result.ok || result.error === 'rate_limited') {
-        await releaseWhatsAppMessage(supabase, claim.id)
+        await releaseWhatsAppMessage(scope, claim.id)
         return { sent: false, reason: result.ok ? 'delivery_disabled' : 'rate_limited' }
     }
 
-    await applyWhatsAppFailure(supabase, claim.id, { status: 'rejected', at: new Date().toISOString(), code: result.error, metaCode: null, description: result.detail })
+    await applyWhatsAppFailure(scope, claim.id, { status: 'rejected', at: new Date().toISOString(), code: result.error, metaCode: null, description: result.detail })
     return { sent: false, reason: result.error }
 }

@@ -1,10 +1,8 @@
 import 'server-only'
 import type Stripe from 'stripe'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { PLAN_PRICES_CENTS, TRIAL_DAYS } from '@lumvika/contracts'
 import { assertAgentInWorkspace } from '@/app/api/_auth/access'
 import { AuthorizationError, requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import type { Database } from '@/app/api/database.types'
 import { getWorkspaceConnection } from '@/app/api/_services/workspace-engine.service'
 import { reportWorkspaceEvent } from '@/lib/apps/analytics'
 import { dropWakeTrigger, unbindAgent } from '@/lib/apps/bindings'
@@ -25,15 +23,8 @@ import { intervalOfItems, stripe } from '@/lib/billing/no-billing'
 import { createTrigger as engineCreateTrigger } from '@/lib/engine/client'
 import { site } from '@/lib/site'
 import { AppError, type ErrorCode, type ErrorParams } from '@/lib/i18n/action-error'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { deleteRows, insertRow, insertRows, selectMany, selectMaybeSingle, updateRows, type DbScope } from '@/lib/db'
 
-type Client = SupabaseClient<Database>
-type ConnectionInsert = Database['public']['Tables']['app_connections']['Insert']
-type WorkspaceAppInsert = Database['public']['Tables']['workspace_apps']['Insert']
-type WorkspaceAppUpdate = Database['public']['Tables']['workspace_apps']['Update']
-type TrialClaimInsert = Database['public']['Tables']['app_trial_claims']['Insert']
-type BindingInsert = Database['public']['Tables']['app_connection_agents']['Insert']
-type BindingUpdate = Database['public']['Tables']['app_connection_agents']['Update']
 
 // Every account carries the environment it was created from: one Linkup key serves them all, and
 // each reconciliation only judges its own.
@@ -73,12 +64,12 @@ type SlotState = {
     subscriptionStatus: string | null
 }
 
-async function readSlotState(supabase: Client, workspaceId: number, slug: AppSlug): Promise<SlotState> {
+async function readSlotState(scope: DbScope, workspaceId: number, slug: AppSlug): Promise<SlotState> {
     const [{ data: workspace }, { data: app }, { data: holding }, { data: claim }] = await Promise.all([
-        selectMaybeSingle(supabase, 'workspaces', ['stripe_subscription_id', 'subscription_status', 'boxes_archived_at'] as const, { id: workspaceId }),
-        selectMaybeSingle(supabase, 'workspace_apps', ['slots', 'status', 'trial_ends_at', 'trial_settled_at'] as const, { workspace_id: workspaceId, app_slug: slug }),
-        selectMany(supabase, 'app_connections', ['id', 'status', 'pause_reason'] as const, { workspace_id: workspaceId, app_slug: slug, status: [...SLOT_HOLDING_STATUSES] }),
-        selectMaybeSingle(supabase, 'app_trial_claims', ['id'] as const, { workspace_id: workspaceId, app_slug: slug }),
+        selectMaybeSingle(scope, 'workspaces', ['stripe_subscription_id', 'subscription_status', 'boxes_archived_at'] as const, { id: workspaceId }),
+        selectMaybeSingle(scope, 'workspace_apps', ['slots', 'status', 'trial_ends_at', 'trial_settled_at'] as const, { workspace_id: workspaceId, app_slug: slug }),
+        selectMany(scope, 'app_connections', ['id', 'status', 'pause_reason'] as const, { workspace_id: workspaceId, app_slug: slug, status: [...SLOT_HOLDING_STATUSES] }),
+        selectMaybeSingle(scope, 'app_trial_claims', ['id'] as const, { workspace_id: workspaceId, app_slug: slug }),
     ])
     const subscription = workspace?.stripe_subscription_id ? await stripe.subscriptions.retrieve(workspace.stripe_subscription_id) : null
     return {
@@ -134,12 +125,12 @@ export type AppsOverview = {
 }
 
 export async function getAppsOverview(slug: AppSlug): Promise<AppsOverview> {
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const state = await readSlotState(supabase, workspace.id, slug)
-    const { data: rows } = await selectMany(supabase, 'app_connections', APP_CONNECTION_COLUMNS, { workspace_id: workspace.id, app_slug: slug, status: [...SLOT_HOLDING_STATUSES] }, { column: 'created_at', ascending: true })
+    const { workspace, scope } = await requireWorkspaceContext()
+    const state = await readSlotState(scope, workspace.id, slug)
+    const { data: rows } = await selectMany(scope, 'app_connections', APP_CONNECTION_COLUMNS, { workspace_id: workspace.id, app_slug: slug, status: [...SLOT_HOLDING_STATUSES] }, { column: 'created_at', ascending: true })
     const connections = rows ?? []
-    const { data: bindings } = connections.length ? await selectMany(supabase, 'app_connection_agents', ['agent_id', 'connection_id'] as const, { connection_id: connections.map(connection => connection.id) }) : { data: [] }
-    const { data: agents } = bindings?.length ? await selectMany(supabase, 'agents', ['id', 'name'] as const, { id: bindings.map(binding => binding.agent_id) }) : { data: [] }
+    const { data: bindings } = connections.length ? await selectMany(scope, 'app_connection_agents', ['agent_id', 'connection_id'] as const, { connection_id: connections.map(connection => connection.id) }) : { data: [] }
+    const { data: agents } = bindings?.length ? await selectMany(scope, 'agents', ['id', 'name'] as const, { id: bindings.map(binding => binding.agent_id) }) : { data: [] }
     const nameOf = new Map((agents ?? []).map(agent => [agent.id, agent.name]))
     const interval = state.subscription ? intervalOfItems(state.subscription.items.data) : 'monthly'
     const slotsInUse = Math.max(0, state.holding.filter(connection => !(connection.status === 'paused' && (SLOT_PAUSE_REASONS as readonly string[]).includes(connection.pause_reason ?? ''))).length - (subscriberTrialOpen(state.app) ? 1 : 0))
@@ -175,8 +166,8 @@ export async function getAppsOverview(slug: AppSlug): Promise<AppsOverview> {
 // Through the same terms as the billing dialog: a paid workspace is charged the prorated slot now,
 // a workspace on its trial gets its one slot at $0, billed with the plan.
 export async function addAppSlot(slug: AppSlug, requestId: string): Promise<{ trialSlot: boolean }> {
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const state = await readSlotState(supabase, workspace.id, slug)
+    const { workspace, scope } = await requireWorkspaceContext()
+    const state = await readSlotState(scope, workspace.id, slug)
     const app = appDefinition(slug)
     if (!state.subscription || !isMachineEntitled(state.subscriptionStatus)) throw new AppActionError('not_entitled', 'appSubscribeToAddSlot', { provider: app.providerLabel })
     if (state.boxesArchived) throw new AppActionError('paused', 'workspacePaused')
@@ -184,11 +175,11 @@ export async function addAppSlot(slug: AppSlug, requestId: string): Promise<{ tr
     if (state.workspaceTrialing) {
         if (state.stripeSlots > 0) throw new AppActionError('needs_slot', 'appTrialOneSlot', { provider: app.providerLabel })
         await addTrialSlot(state.subscription, app.addonKey, `trial-slot-${requestId}`)
-        await reportWorkspaceEvent(supabase, workspace.id, 'app_slot_added', { app: slug, trial_slot: true })
+        await reportWorkspaceEvent(scope, workspace.id, 'app_slot_added', { app: slug, trial_slot: true })
         return { trialSlot: true }
     }
     await addPaidSlot(state.subscription, app.addonKey, `slot-${requestId}`)
-    await reportWorkspaceEvent(supabase, workspace.id, 'app_slot_added', { app: slug, trial_slot: false })
+    await reportWorkspaceEvent(scope, workspace.id, 'app_slot_added', { app: slug, trial_slot: false })
     return { trialSlot: false }
 }
 
@@ -219,16 +210,16 @@ function assertCanConnect(state: SlotState, slug: AppSlug): void {
     if (state.boxesArchived || state.app?.status === 'frozen') throw new AppActionError('paused', 'workspacePaused')
 }
 
-async function openConnection(supabase: Client, workspaceId: number, userId: string, slug: AppSlug): Promise<string> {
-    const { data, error } = await supabase.from('app_connections').insert<ConnectionInsert>({ workspace_id: workspaceId, app_slug: slug, connected_by: userId, status: 'connecting' }).select('id').single()
+async function openConnection(scope: DbScope, workspaceId: number, userId: string, slug: AppSlug): Promise<string> {
+    const { data, error } = await insertRow(scope, 'app_connections', { workspace_id: workspaceId, app_slug: slug, connected_by: userId, status: 'connecting' }, ['id'])
     if (error || !data) throw new Error(error?.message ?? 'Could not open the connection')
     return data.id
 }
 
 // Each call is one attempt at somebody's LinkedIn password, or one account opened at Linkup: the
 // form must not become a way to test a list of them.
-async function claimLoginAttempt(supabase: Client, workspaceId: number, slug: AppSlug): Promise<void> {
-    if (!(await claimQuota(supabase, workspaceScope(workspaceId), `login_attempt:${slug}`, [dayKey(new Date())], [DAILY_LOGIN_ATTEMPT_LIMIT]))) {
+async function claimLoginAttempt(scope: DbScope, workspaceId: number, slug: AppSlug): Promise<void> {
+    if (!(await claimQuota(scope, workspaceScope(workspaceId), `login_attempt:${slug}`, [dayKey(new Date())], [DAILY_LOGIN_ATTEMPT_LIMIT]))) {
         throw new AppActionError('too_many_attempts', 'tooManySignInAttempts')
     }
 }
@@ -236,8 +227,8 @@ async function claimLoginAttempt(supabase: Client, workspaceId: number, slug: Ap
 // Opens or reopens the connection row, then signs in at Linkup with what `signIn` sends. Shared by
 // every app: only what is sent to Linkup differs.
 async function startConnection(slug: AppSlug, reconnectId: string | undefined, signIn: (accountName: string) => Promise<LinkupLoginResult>): Promise<ConnectOutcome> {
-    const { workspace, userId, supabase } = await requireWorkspaceContext()
-    const state = await readSlotState(supabase, workspace.id, slug)
+    const { workspace, userId, scope } = await requireWorkspaceContext()
+    const state = await readSlotState(scope, workspace.id, slug)
     assertCanConnect(state, slug)
 
     const reconnecting = reconnectId ? state.holding.find(connection => connection.id === reconnectId) : undefined
@@ -246,19 +237,19 @@ async function startConnection(slug: AppSlug, reconnectId: string | undefined, s
     // slot back through Billing, never through a new sign-in.
     if (reconnecting && reconnecting.status !== 'needs_reconnect') throw new AppActionError('needs_slot', 'appAccountAwaitingSlot')
     if (!reconnecting && allowanceOf(state) === 'buy_slot') throw new AppActionError('needs_slot', 'appSlotsTaken', { provider: appDefinition(slug).providerLabel })
-    await claimLoginAttempt(supabase, workspace.id, slug)
+    await claimLoginAttempt(scope, workspace.id, slug)
 
-    const connectionId = reconnecting?.id ?? (await openConnection(supabase, workspace.id, userId, slug))
-    if (reconnecting) await updateConnection(supabase, connectionId, { status: 'connecting', paused_until: null })
+    const connectionId = reconnecting?.id ?? (await openConnection(scope, workspace.id, userId, slug))
+    if (reconnecting) await updateConnection(scope, connectionId, { status: 'connecting', paused_until: null })
 
     let result: LinkupLoginResult
     try {
         result = await signIn(linkupAccountName(connectionId))
     } catch (err) {
-        await updateConnection(supabase, connectionId, reconnecting ? { status: 'needs_reconnect', pause_reason: reconnecting.pause_reason } : { status: 'deleted' })
+        await updateConnection(scope, connectionId, reconnecting ? { status: 'needs_reconnect', pause_reason: reconnecting.pause_reason } : { status: 'deleted' })
         throw refusal(slug, err)
     }
-    return advance(supabase, slug, workspace.id, userId, connectionId, result, !!reconnecting)
+    return advance(scope, slug, workspace.id, userId, connectionId, result, !!reconnecting)
 }
 
 export type LinkedinConnectInput = { connectionId?: string; country: string } & LinkedinCredentials
@@ -276,20 +267,20 @@ export async function connectWhatsapp(input: WhatsappConnectInput): Promise<Conn
 
 type ConnectingRow = { slug: AppSlug; providerAccountId: string; label: string | null }
 
-async function connectingRow(supabase: Client, workspaceId: number, slug: AppSlug, connectionId: string): Promise<ConnectingRow> {
-    const { data: connection } = await selectMaybeSingle(supabase, 'app_connections', ['provider_account_id', 'status', 'label'] as const, { id: connectionId, workspace_id: workspaceId, app_slug: slug })
+async function connectingRow(scope: DbScope, workspaceId: number, slug: AppSlug, connectionId: string): Promise<ConnectingRow> {
+    const { data: connection } = await selectMaybeSingle(scope, 'app_connections', ['provider_account_id', 'status', 'label'] as const, { id: connectionId, workspace_id: workspaceId, app_slug: slug })
     if (!connection?.provider_account_id || connection.status !== 'connecting') throw new AuthorizationError('accountNotFound')
     return { slug, providerAccountId: connection.provider_account_id, label: connection.label }
 }
 
 export async function submitAppCheckpoint(slug: AppSlug, connectionId: string, code?: string): Promise<ConnectOutcome> {
-    const { workspace, userId, supabase } = await requireWorkspaceContext()
-    const connection = await connectingRow(supabase, workspace.id, slug, connectionId)
+    const { workspace, userId, scope } = await requireWorkspaceContext()
+    const connection = await connectingRow(scope, workspace.id, slug, connectionId)
     try {
         const result = await submitCheckpoint(connection.providerAccountId, code?.trim() || undefined)
         // Only an account that once finished connecting has a label: a reconnect goes back to
         // needs_reconnect on failure, a first connection is deleted.
-        return advance(supabase, connection.slug, workspace.id, userId, connectionId, result, connection.label !== null)
+        return advance(scope, connection.slug, workspace.id, userId, connectionId, result, connection.label !== null)
     } catch (err) {
         throw refusal(connection.slug, err)
     }
@@ -297,8 +288,8 @@ export async function submitAppCheckpoint(slug: AppSlug, connectionId: string, c
 
 // A new code sent by LinkedIn, or a new QR code for WhatsApp, which comes back in the answer.
 export async function resendAppCode(slug: AppSlug, connectionId: string): Promise<LinkupLinkCode | null> {
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const connection = await connectingRow(supabase, workspace.id, slug, connectionId)
+    const { workspace, scope } = await requireWorkspaceContext()
+    const connection = await connectingRow(scope, workspace.id, slug, connectionId)
     try {
         const result = await resendCheckpointCode(connection.providerAccountId)
         return result.status === 'checkpoint_required' ? result.link : null
@@ -309,21 +300,21 @@ export async function resendAppCode(slug: AppSlug, connectionId: string): Promis
 
 // Abandoning the dialog halfway leaves an account at Linkup that nobody will finish connecting.
 export async function cancelAppConnect(slug: AppSlug, connectionId: string): Promise<void> {
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const { data: connection } = await selectMaybeSingle(supabase, 'app_connections', ['provider_account_id', 'status', 'label'] as const, { id: connectionId, workspace_id: workspace.id, app_slug: slug })
+    const { workspace, scope } = await requireWorkspaceContext()
+    const { data: connection } = await selectMaybeSingle(scope, 'app_connections', ['provider_account_id', 'status', 'label'] as const, { id: connectionId, workspace_id: workspace.id, app_slug: slug })
     if (!connection || connection.status !== 'connecting') return
     const reconnecting = connection.label !== null
     if (connection.provider_account_id && !reconnecting) await deleteAccount(connection.provider_account_id).catch(err => console.warn(`[apps:${slug}] could not delete an abandoned account`, err))
-    await updateConnection(supabase, connectionId, { status: reconnecting ? 'needs_reconnect' : 'deleted' })
+    await updateConnection(scope, connectionId, { status: reconnecting ? 'needs_reconnect' : 'deleted' })
 }
 
-async function advance(supabase: Client, slug: AppSlug, workspaceId: number, userId: string, connectionId: string, result: LinkupLoginResult, reconnecting: boolean): Promise<ConnectOutcome> {
-    const { data: previous } = await selectMaybeSingle(supabase, 'app_connections', ['provider_account_id', 'provider_webhook_id'] as const, { id: connectionId })
+async function advance(scope: DbScope, slug: AppSlug, workspaceId: number, userId: string, connectionId: string, result: LinkupLoginResult, reconnecting: boolean): Promise<ConnectOutcome> {
+    const { data: previous } = await selectMaybeSingle(scope, 'app_connections', ['provider_account_id', 'provider_webhook_id'] as const, { id: connectionId })
     const sameAccount = previous?.provider_account_id === result.accountId
     if (!sameAccount) {
-        const { error } = await supabase.from('app_connections').update<Database['public']['Tables']['app_connections']['Update']>({ provider_account_id: result.accountId, provider_webhook_id: null, provider_webhook_secret: null }).eq('id', connectionId)
+        const { error } = await updateRows(scope, 'app_connections', { provider_account_id: result.accountId, provider_webhook_id: null, provider_webhook_secret: null }, { id: connectionId })
         if (error?.code === '23505') {
-            await updateConnection(supabase, connectionId, { status: reconnecting ? 'needs_reconnect' : 'deleted' })
+            await updateConnection(scope, connectionId, { status: reconnecting ? 'needs_reconnect' : 'deleted' })
             throw new AppActionError('duplicate', 'appAccountAlreadyConnected', { provider: appDefinition(slug).providerLabel })
         }
         if (error) throw new Error(error.message)
@@ -334,22 +325,22 @@ async function advance(supabase: Client, slug: AppSlug, workspaceId: number, use
     if (result.status === 'checkpoint_required') return { status: 'checkpoint', connectionId, checkpointType: result.checkpointType, sentTo: result.sentTo, link: result.link }
 
     try {
-        return await finishConnection(supabase, slug, workspaceId, userId, connectionId, result.accountId, reconnecting, sameAccount && !!previous?.provider_webhook_id)
+        return await finishConnection(scope, slug, workspaceId, userId, connectionId, result.accountId, reconnecting, sameAccount && !!previous?.provider_webhook_id)
     } catch (err) {
         if (!reconnecting) await deleteAccount(result.accountId).catch(cleanup => console.warn(`[apps:${slug}] could not delete the account of a failed connection`, cleanup))
-        await updateConnection(supabase, connectionId, { status: reconnecting ? 'needs_reconnect' : 'deleted' })
+        await updateConnection(scope, connectionId, { status: reconnecting ? 'needs_reconnect' : 'deleted' })
         throw refusal(slug, err)
     }
 }
 
-async function finishConnection(supabase: Client, slug: AppSlug, workspaceId: number, userId: string, connectionId: string, accountId: string, reconnecting: boolean, webhookKept: boolean): Promise<ConnectOutcome> {
+async function finishConnection(scope: DbScope, slug: AppSlug, workspaceId: number, userId: string, connectionId: string, accountId: string, reconnecting: boolean, webhookKept: boolean): Promise<ConnectOutcome> {
     const app = appDefinition(slug)
     const { label, memberId } = await app.profile(accountId)
 
-    const { data: twin } = await selectMany(supabase, 'app_connections', ['id'] as const, { workspace_id: workspaceId, app_slug: slug, provider_member_id: memberId, status: [...SLOT_HOLDING_STATUSES], id: { neq: connectionId } }, undefined, 1)
+    const { data: twin } = await selectMany(scope, 'app_connections', ['id'] as const, { workspace_id: workspaceId, app_slug: slug, provider_member_id: memberId, status: [...SLOT_HOLDING_STATUSES], id: { neq: connectionId } }, undefined, 1)
     if (twin?.length) throw new AppActionError('duplicate', 'appLabelAlreadyConnected', { label })
 
-    const state = reconnecting ? null : await readSlotState(supabase, workspaceId, slug)
+    const state = reconnecting ? null : await readSlotState(scope, workspaceId, slug)
     const allowance: ConnectAllowance | 'reconnect' = state ? allowanceOf(state, connectionId) : 'reconnect'
     if (allowance === 'buy_slot') throw new AppActionError('needs_slot', 'appSlotsTaken', { provider: app.providerLabel })
 
@@ -357,41 +348,37 @@ async function finishConnection(supabase: Client, slug: AppSlug, workspaceId: nu
     // is on Stripe, and nothing left can throw but a write to our own database.
     if (!webhookKept) {
         const webhook = await createWebhook(accountId, webhookUrl(), app.webhookEvents)
-        await updateConnection(supabase, connectionId, { provider_webhook_id: webhook.webhookId, provider_webhook_secret: webhook.secret })
+        await updateConnection(scope, connectionId, { provider_webhook_id: webhook.webhookId, provider_webhook_secret: webhook.secret })
     }
 
     let trialEndsAt: string | null = null
     if (state) {
-        if (allowance === 'subscriber_trial') trialEndsAt = await claimSubscriberTrial(supabase, slug, workspaceId, memberId)
+        if (allowance === 'subscriber_trial') trialEndsAt = await claimSubscriberTrial(scope, slug, workspaceId, memberId)
         if (allowance === 'workspace_trial_slot' && state.subscription) await addTrialSlot(state.subscription, app.addonKey, `trial-slot-${connectionId}`)
-        await ensureWorkspaceApp(supabase, slug, workspaceId, trialEndsAt)
+        await ensureWorkspaceApp(scope, slug, workspaceId, trialEndsAt)
     }
-    await updateConnection(supabase, connectionId, { status: 'connected', label, provider_member_id: memberId, connected_by: userId, pause_reason: null, paused_until: null })
-    await reportWorkspaceEvent(supabase, workspaceId, 'app_connected', { app: slug, allowance, reconnect: reconnecting })
-    if (trialEndsAt) await reportWorkspaceEvent(supabase, workspaceId, 'app_trial_started', { app: slug })
+    await updateConnection(scope, connectionId, { status: 'connected', label, provider_member_id: memberId, connected_by: userId, pause_reason: null, paused_until: null })
+    await reportWorkspaceEvent(scope, workspaceId, 'app_connected', { app: slug, allowance, reconnect: reconnecting })
+    if (trialEndsAt) await reportWorkspaceEvent(scope, workspaceId, 'app_trial_started', { app: slug })
     return { status: 'connected', connectionId, label, trialEndsAt }
 }
 
-async function claimSubscriberTrial(supabase: Client, slug: AppSlug, workspaceId: number, memberId: string): Promise<string> {
-    const { error } = await supabase.from('app_trial_claims').insert<TrialClaimInsert>({ app_slug: slug, workspace_id: workspaceId, provider_member_id: memberId })
+async function claimSubscriberTrial(scope: DbScope, slug: AppSlug, workspaceId: number, memberId: string): Promise<string> {
+    const { error } = await insertRows(scope, 'app_trial_claims', { app_slug: slug, workspace_id: workspaceId, provider_member_id: memberId })
     if (error?.code === '23505') throw new AppActionError('trial_used', 'appTrialUsed', { provider: appDefinition(slug).providerLabel })
     if (error) throw new Error(error.message)
     return new Date(Date.now() + TRIAL_DAYS * 86_400_000).toISOString()
 }
 
-async function ensureWorkspaceApp(supabase: Client, slug: AppSlug, workspaceId: number, trialEndsAt: string | null): Promise<void> {
-    const { data: existing } = await selectMaybeSingle(supabase, 'workspace_apps', ['status'] as const, { workspace_id: workspaceId, app_slug: slug })
+async function ensureWorkspaceApp(scope: DbScope, slug: AppSlug, workspaceId: number, trialEndsAt: string | null): Promise<void> {
+    const { data: existing } = await selectMaybeSingle(scope, 'workspace_apps', ['status'] as const, { workspace_id: workspaceId, app_slug: slug })
     const now = new Date().toISOString()
     if (!existing) {
-        const { error } = await supabase.from('workspace_apps').insert<WorkspaceAppInsert>({ workspace_id: workspaceId, app_slug: slug, status: 'active', trial_ends_at: trialEndsAt })
+        const { error } = await insertRows(scope, 'workspace_apps', { workspace_id: workspaceId, app_slug: slug, status: 'active', trial_ends_at: trialEndsAt })
         if (error) throw new Error(error.message)
         return
     }
-    const { error } = await supabase
-        .from('workspace_apps')
-        .update<WorkspaceAppUpdate>({ status: 'active', updated_at: now, ...(trialEndsAt ? { trial_ends_at: trialEndsAt } : {}) })
-        .eq('workspace_id', workspaceId)
-        .eq('app_slug', slug)
+    const { error } = await updateRows(scope, 'workspace_apps', { status: 'active', updated_at: now, ...(trialEndsAt ? { trial_ends_at: trialEndsAt } : {}) }, { workspace_id: workspaceId, app_slug: slug })
     if (error) throw new Error(error.message)
 }
 
@@ -400,18 +387,18 @@ async function ensureWorkspaceApp(supabase: Client, slug: AppSlug, workspaceId: 
 // The account is deleted at Linkup straight away, so it stops costing. The slot stays on the bill
 // until it is removed from Billing: a slot is what is sold, not an account.
 export async function disconnectConnection(slug: AppSlug, connectionId: string): Promise<void> {
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const { data: connection } = await selectMaybeSingle(supabase, 'app_connections', ['provider_account_id', 'status'] as const, { id: connectionId, workspace_id: workspace.id, app_slug: slug })
+    const { workspace, scope } = await requireWorkspaceContext()
+    const { data: connection } = await selectMaybeSingle(scope, 'app_connections', ['provider_account_id', 'status'] as const, { id: connectionId, workspace_id: workspace.id, app_slug: slug })
     if (!connection || connection.status === 'deleted') throw new AuthorizationError('accountNotFound')
     if (connection.provider_account_id) await deleteAccount(connection.provider_account_id)
-    await removeBindingsOf(supabase, workspace.id, slug, [connectionId])
-    await updateConnection(supabase, connectionId, { status: 'deleted', pause_reason: null, paused_until: null })
+    await removeBindingsOf(scope, workspace.id, slug, [connectionId])
+    await updateConnection(scope, connectionId, { status: 'deleted', pause_reason: null, paused_until: null })
 }
 
-async function removeBindingsOf(supabase: Client, workspaceId: number, slug: AppSlug, connectionIds: string[]): Promise<void> {
-    const { data: bindings } = await selectMany(supabase, 'app_connection_agents', ['agent_id'] as const, { connection_id: connectionIds })
-    for (const binding of bindings ?? []) await dropWakeTrigger(supabase, workspaceId, binding.agent_id, slug)
-    const { error } = await supabase.from('app_connection_agents').delete().in('connection_id', connectionIds)
+async function removeBindingsOf(scope: DbScope, workspaceId: number, slug: AppSlug, connectionIds: string[]): Promise<void> {
+    const { data: bindings } = await selectMany(scope, 'app_connection_agents', ['agent_id'] as const, { connection_id: connectionIds })
+    for (const binding of bindings ?? []) await dropWakeTrigger(scope, workspaceId, binding.agent_id, slug)
+    const { error } = await deleteRows(scope, 'app_connection_agents', { connection_id: connectionIds })
     if (error) throw new Error(error.message)
 }
 
@@ -421,48 +408,48 @@ export type AgentAppBinding = { connectionId: string; label: string | null; stat
 
 export async function getAgentAppBinding(slug: AppSlug, agentId: string): Promise<AgentAppBinding> {
     await assertAgentInWorkspace(agentId)
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const { data: binding } = await selectMaybeSingle(supabase, 'app_connection_agents', ['connection_id', 'wake_on_events'] as const, { agent_id: agentId, app_slug: slug })
+    const { workspace, scope } = await requireWorkspaceContext()
+    const { data: binding } = await selectMaybeSingle(scope, 'app_connection_agents', ['connection_id', 'wake_on_events'] as const, { agent_id: agentId, app_slug: slug })
     if (!binding) return null
-    const { data: connection } = await selectMaybeSingle(supabase, 'app_connections', ['label', 'status', 'workspace_id'] as const, { id: binding.connection_id })
+    const { data: connection } = await selectMaybeSingle(scope, 'app_connections', ['label', 'status', 'workspace_id'] as const, { id: binding.connection_id })
     if (!connection || connection.workspace_id !== workspace.id) return null
     return { connectionId: binding.connection_id, label: connection.label, status: connection.status, wakeOnEvents: binding.wake_on_events.filter(event => isWakeEventOf(slug, event)) }
 }
 
 export async function attachAgentToConnection(slug: AppSlug, agentId: string, connectionId: string): Promise<void> {
     await assertAgentInWorkspace(agentId, 'manage')
-    const { workspace, supabase } = await requireWorkspaceContext()
-    const { data: connection } = await selectMaybeSingle(supabase, 'app_connections', ['status'] as const, { id: connectionId, workspace_id: workspace.id, app_slug: slug })
+    const { workspace, scope } = await requireWorkspaceContext()
+    const { data: connection } = await selectMaybeSingle(scope, 'app_connections', ['status'] as const, { id: connectionId, workspace_id: workspace.id, app_slug: slug })
     if (!connection || connection.status === 'deleted') throw new AuthorizationError('accountNotFound')
 
-    const { data: existing } = await selectMaybeSingle(supabase, 'app_connection_agents', ['connection_id'] as const, { agent_id: agentId, app_slug: slug })
+    const { data: existing } = await selectMaybeSingle(scope, 'app_connection_agents', ['connection_id'] as const, { agent_id: agentId, app_slug: slug })
     if (existing?.connection_id === connectionId) return
     if (existing) {
-        const { error } = await supabase.from('app_connection_agents').update<BindingUpdate>({ connection_id: connectionId, updated_at: new Date().toISOString() }).eq('agent_id', agentId).eq('app_slug', slug)
+        const { error } = await updateRows(scope, 'app_connection_agents', { connection_id: connectionId, updated_at: new Date().toISOString() }, { agent_id: agentId, app_slug: slug })
         if (error) throw new Error(error.message)
         return
     }
-    const { error } = await supabase.from('app_connection_agents').insert<BindingInsert>({ agent_id: agentId, app_slug: slug, connection_id: connectionId })
+    const { error } = await insertRows(scope, 'app_connection_agents', { agent_id: agentId, app_slug: slug, connection_id: connectionId })
     if (error) throw new Error(error.message)
 }
 
 export async function detachAgent(slug: AppSlug, agentId: string): Promise<void> {
     await assertAgentInWorkspace(agentId, 'manage')
-    const { workspace, supabase } = await requireWorkspaceContext()
-    await unbindAgent(supabase, workspace.id, agentId, slug)
+    const { workspace, scope } = await requireWorkspaceContext()
+    await unbindAgent(scope, workspace.id, agentId, slug)
 }
 
 // The hub creates the trigger on the engine, and only it knows its token: the webhook fires it as
 // any caller of its public URL would. Turning every event off removes the trigger altogether.
 export async function setAgentWakeEvents(slug: AppSlug, agentId: string, events: string[]): Promise<void> {
     const owned = await assertAgentInWorkspace(agentId, 'manage')
-    const { workspace, supabase } = await requireWorkspaceContext()
+    const { workspace, scope } = await requireWorkspaceContext()
     const app = appDefinition(slug)
     const wanted = [...new Set(events.filter(event => isWakeEventOf(slug, event)))]
-    const { data: binding } = await selectMaybeSingle(supabase, 'app_connection_agents', ['trigger_slug'] as const, { agent_id: agentId, app_slug: slug })
+    const { data: binding } = await selectMaybeSingle(scope, 'app_connection_agents', ['trigger_slug'] as const, { agent_id: agentId, app_slug: slug })
     if (!binding) throw new AppActionError('unknown', 'appPickAccountFirst', { provider: app.providerLabel })
 
-    if (wanted.length === 0) return dropWakeTrigger(supabase, workspace.id, agentId, slug)
+    if (wanted.length === 0) return dropWakeTrigger(scope, workspace.id, agentId, slug)
 
     let trigger = binding.trigger_slug ? { slug: binding.trigger_slug } : null
     let token: string | null = null
@@ -474,10 +461,6 @@ export async function setAgentWakeEvents(slug: AppSlug, agentId: string, events:
         token = created.token
     }
 
-    const { error } = await supabase
-        .from('app_connection_agents')
-        .update<BindingUpdate>({ wake_on_events: wanted, trigger_slug: trigger.slug, ...(token ? { trigger_token: token } : {}), updated_at: new Date().toISOString() })
-        .eq('agent_id', agentId)
-        .eq('app_slug', slug)
+    const { error } = await updateRows(scope, 'app_connection_agents', { wake_on_events: wanted, trigger_slug: trigger.slug, ...(token ? { trigger_token: token } : {}), updated_at: new Date().toISOString() }, { agent_id: agentId, app_slug: slug })
     if (error) throw new Error(error.message)
 }

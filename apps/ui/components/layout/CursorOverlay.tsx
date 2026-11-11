@@ -1,6 +1,6 @@
 'use client'
 
-import type { TeamCursor } from '@/supabase/useTeamCursors'
+import type { TeamCursor } from '@/lib/live/useTeamCursors'
 import { CursorOverlay as SharedCursorOverlay } from '@lumvika/ui/cursors'
 
 export function CursorOverlay({ cursors, zoom }: { cursors: TeamCursor[]; zoom: number }) {

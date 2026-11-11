@@ -1,8 +1,6 @@
 // The WhatsApp sequence between the start and the end of a trial: one message a day at most, in
 // the voice of a coworker, to bring its owner back to what their coworkers are doing. No
 // 'server-only', like the rest of this folder: a Trigger.dev task runs it.
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/app/api/database.types'
 import { findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
 import { transformEngineMessages } from '@/lib/chat/engine-history'
 import { getSessionMessages } from '@/lib/engine/client'
@@ -11,7 +9,7 @@ import { loadFirstName } from '@/lib/notifications/recipient'
 import type { StoredAgentIdeas } from '@/lib/agent-ideas/stored'
 import { loadTeam, type TeamMember, type TeamStatus } from '@/lib/og/team-board'
 import { companyNameFromAnswers } from '@/lib/onboarding/box-name'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, type DbScope } from '@/lib/db'
 import { loadWhatsAppRecipient } from './recipient'
 import { deliverWhatsApp } from './send'
 import { teamBoardUrl } from './team'
@@ -27,8 +25,6 @@ import {
     trialWeekRecapMessage,
     type WhatsAppMessage,
 } from './templates'
-
-type Client = SupabaseClient<Database>
 
 const RUN_LOG_LIMIT = 500
 const HOME_PATH = ''
@@ -50,7 +46,7 @@ type TrialWorkspace = { id: number; trial_started_at: string | null; trial_ends_
 type Run = { id: string; agent_id: string | null; engine_agent_id: string | null; engine_session_id: string | null; event: string; kind: string; source: string | null; message: string; created_at: string }
 
 type Context = {
-    supabase: Client
+    scope: DbScope
     workspaceId: number
     team: TeamMember[]
     firstName: string | null
@@ -58,30 +54,29 @@ type Context = {
     waiting: Run | null
 }
 
-async function ownerOf(supabase: Client, workspaceId: number): Promise<string | null> {
-    const { data } = await selectMany(supabase, 'workspace_members', ['user_id'] as const, { workspace_id: workspaceId }, { column: 'created_at', ascending: true }, 1)
+async function ownerOf(scope: DbScope, workspaceId: number): Promise<string | null> {
+    const { data } = await selectMany(scope, 'workspace_members', ['user_id'] as const, { workspace_id: workspaceId }, { column: 'created_at', ascending: true }, 1)
     return data?.[0]?.user_id ?? null
 }
 
 // The request a coworker is waiting on: the newest question, approval or connection it asked for
 // on a session that is still blocked on it.
-async function waitingRequest(supabase: Client, team: TeamMember[], runs: Run[]): Promise<Run | null> {
+async function waitingRequest(scope: DbScope, team: TeamMember[], runs: Run[]): Promise<Run | null> {
     if (!team.length) return null
-    const { data: sessions } = await selectMany(supabase, 'sessions', ['engine_session_id'] as const, { agent_id: team.map(agent => agent.id), status: [...BLOCKING_STATUSES] })
+    const { data: sessions } = await selectMany(scope, 'sessions', ['engine_session_id'] as const, { agent_id: team.map(agent => agent.id), status: [...BLOCKING_STATUSES] })
     const blocked = new Set((sessions ?? []).map(session => session.engine_session_id))
     return runs.find(run => (WAITING_KINDS as readonly string[]).includes(run.kind) && run.engine_session_id && blocked.has(run.engine_session_id)) ?? null
 }
 
-async function signalsOf(supabase: Client, workspace: { id: number; startedAt: Date; cancelled: boolean }, userId: string, team: TeamMember[], runs: Run[], waiting: Run | null): Promise<TrialSignals> {
-    const [{ data: phone }, { data: sent }, { data: schedule }] = await Promise.all([
-        selectMaybeSingle(supabase, 'user_phones', ['whatsapp_replied_at'] as const, { user_id: userId }),
-        selectMany(supabase, 'whatsapp_messages', ['created_at', 'template_key'] as const, { user_id: userId, created_at: { gte: workspace.startedAt.toISOString() } }, { column: 'created_at', ascending: false }),
-        selectMaybeSingle(supabase, 'workspace_getting_started', ['item'] as const, { workspace_id: workspace.id, item: 'schedule' }),
+async function signalsOf(scope: DbScope, workspace: { id: number; startedAt: Date; cancelled: boolean }, userId: string, team: TeamMember[], runs: Run[], waiting: Run | null): Promise<TrialSignals> {
+    const [{ data: sent }, { data: schedule }] = await Promise.all([
+        selectMany(scope, 'whatsapp_messages', ['created_at', 'template_key'] as const, { user_id: userId, created_at: { gte: workspace.startedAt.toISOString() } }, { column: 'created_at', ascending: false }),
+        selectMaybeSingle(scope, 'workspace_getting_started', ['item'] as const, { workspace_id: workspace.id, item: 'schedule' }),
     ])
 
     return {
         cancelled: workspace.cancelled,
-        repliedAt: phone?.whatsapp_replied_at ? new Date(phone.whatsapp_replied_at) : null,
+        repliedAt: null,
         lastWhatsAppAt: sent?.[0] ? new Date(sent[0].created_at) : null,
         askedForOk: (sent ?? []).some(row => row.template_key === 'trial_needs_your_ok'),
         recapSent: (sent ?? []).some(row => row.template_key === 'trial_week_recap'),
@@ -118,7 +113,7 @@ function agentPath(agentId: string | null, tab?: string): string {
 }
 
 async function ideaContext(ctx: Context): Promise<{ company: string; context: string }> {
-    const { data } = await selectMaybeSingle(ctx.supabase, 'workspace_onboarding', ['answers', 'agent_ideas'] as const, { workspace_id: ctx.workspaceId })
+    const { data } = await selectMaybeSingle(ctx.scope, 'workspace_onboarding', ['answers', 'agent_ideas'] as const, { workspace_id: ctx.workspaceId })
     const answers = (data?.answers ?? {}) as StewardAnswers
     const ideas = (data?.agent_ideas as StoredAgentIdeas | null)?.ideas ?? []
     const company = companyNameFromAnswers(answers)
@@ -186,22 +181,22 @@ async function messageFor(ctx: Context, key: TrialMessageKey): Promise<WhatsAppM
     }
 }
 
-async function sweepWorkspace(supabase: Client, workspace: TrialWorkspace, now: Date): Promise<{ sent: TrialMessageKey } | { skipped: string } | null> {
+async function sweepWorkspace(scope: DbScope, workspace: TrialWorkspace, now: Date): Promise<{ sent: TrialMessageKey } | { skipped: string } | null> {
     if (!workspace.trial_started_at || !workspace.trial_ends_at) return null
     const slot = openTrialSlot(new Date(workspace.trial_started_at), new Date(workspace.trial_ends_at), now)
     if (!slot) return null
 
-    const userId = await ownerOf(supabase, workspace.id)
+    const userId = await ownerOf(scope, workspace.id)
     if (!userId) return { skipped: 'no_owner' }
     // Checked before any model or engine is asked anything: most refusals are a missing number.
-    const recipient = await loadWhatsAppRecipient(supabase, userId, 'marketing')
+    const recipient = await loadWhatsAppRecipient(scope, userId, 'marketing')
     if (!recipient.ok) return { skipped: recipient.reason }
 
-    const team = await loadTeam(supabase, workspace.id)
+    const team = await loadTeam(scope, workspace.id)
     if (!team.length) return { skipped: 'no_coworker' }
 
     const { data: runLog } = await selectMany(
-        supabase,
+        scope,
         'notifications',
         RUN_COLUMNS,
         { workspace_id: workspace.id, agent_id: { notNull: true }, created_at: { gte: slot.startedAt.toISOString() } },
@@ -209,19 +204,19 @@ async function sweepWorkspace(supabase: Client, workspace: TrialWorkspace, now: 
         RUN_LOG_LIMIT,
     )
     const runs: Run[] = runLog ?? []
-    const waiting = await waitingRequest(supabase, team, runs)
+    const waiting = await waitingRequest(scope, team, runs)
 
-    const signals = await signalsOf(supabase, { id: workspace.id, startedAt: slot.startedAt, cancelled: !!workspace.subscription_cancel_at }, userId, team, runs, waiting)
+    const signals = await signalsOf(scope, { id: workspace.id, startedAt: slot.startedAt, cancelled: !!workspace.subscription_cancel_at }, userId, team, runs, waiting)
     const pick = pickTrialMessage(signals, slot, now)
     if ('skip' in pick) return pick.skip === 'nothing_to_say' || pick.skip === 'daily_cap' ? null : { skipped: pick.skip }
 
-    const ctx: Context = { supabase, workspaceId: workspace.id, team, firstName: await loadFirstName(supabase, userId), runs, waiting }
+    const ctx: Context = { scope, workspaceId: workspace.id, team, firstName: await loadFirstName(scope, userId), runs, waiting }
     const message = await messageFor(ctx, pick.key)
     if (!message) return { skipped: `${pick.key}: no_phrase` }
 
     // One message per trial day, and one trial per workspace: `trial_ends_at` is never cleared and
     // gates a second one in basePlanCheckoutParams.
-    const result = await deliverWhatsApp(supabase, { userId, workspaceId: workspace.id, message, language: 'en', dedupeKey: `trial:${workspace.id}:day${pick.day}` })
+    const result = await deliverWhatsApp(scope, { userId, workspaceId: workspace.id, message, language: 'en', dedupeKey: `trial:${workspace.id}:day${pick.day}` })
     if (result.sent) return { sent: pick.key }
     return result.reason === 'duplicate' ? null : { skipped: `${pick.key}: ${result.reason}` }
 }
@@ -230,9 +225,9 @@ async function sweepWorkspace(supabase: Client, workspace: TrialWorkspace, now: 
  * Every workspace still in its trial whose daily slot is open gets at most one message, to its
  * owner. `only` narrows the sweep to a few workspaces, which is how it is tried by hand.
  */
-export async function sweepTrialSequence(supabase: Client, now: Date, only?: number[]): Promise<TrialSequenceReport> {
+export async function sweepTrialSequence(scope: DbScope, now: Date, only?: number[]): Promise<TrialSequenceReport> {
     const { data } = await selectMany(
-        supabase,
+        scope,
         'workspaces',
         ['id', 'trial_started_at', 'trial_ends_at', 'subscription_cancel_at'] as const,
         {
@@ -249,7 +244,7 @@ export async function sweepTrialSequence(supabase: Client, now: Date, only?: num
 
     for (const workspace of workspaces) {
         try {
-            const outcome = await sweepWorkspace(supabase, workspace, now)
+            const outcome = await sweepWorkspace(scope, workspace, now)
             if (!outcome) continue
             if ('sent' in outcome) report.sent.push({ workspaceId: workspace.id, key: outcome.sent })
             else report.skipped.push(`${workspace.id}: ${outcome.skipped}`)

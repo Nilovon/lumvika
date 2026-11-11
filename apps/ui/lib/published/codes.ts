@@ -1,14 +1,12 @@
 import 'server-only'
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
-import type { Database } from '@/app/api/database.types'
 import { sendPublishedAccessCodeEmail } from '@lumvika/cloud/email'
 import { callerRateKey } from '@/lib/auth/caller-ip'
 import { inviteAllows } from '@/lib/published/access'
 import { workspaceLocale } from '@/lib/i18n/recipient-locale'
 import type { PublishedEntry } from '@/lib/published/gate'
 import { loadWorkspaceBrand } from '@/lib/published/gate'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { callScalar, deleteRows, insertRows, selectMany, serviceScope, updateRows } from '@/lib/db'
 import { emailTranslator } from '@lumvika/emails/i18n'
 
 const CODE_TTL_MINUTES = 10
@@ -45,7 +43,7 @@ function codeHash(fileId: string, email: string, code: string): string {
 }
 
 async function claim(scopes: string[], max: number, windowSeconds: number): Promise<boolean> {
-    const { data, error } = await createServiceRoleClient().rpc('claim_published_gate_attempt', { p_scopes: scopes, p_max: max, p_window_seconds: windowSeconds })
+    const { data, error } = await callScalar<boolean>(serviceScope(), 'claim_published_gate_attempt', { p_scopes: scopes, p_max: max, p_window_seconds: windowSeconds })
     if (error) throw new Error(`Gate limit check failed: ${error.message}`)
     return data === true
 }
@@ -71,9 +69,9 @@ export async function sendAccessCode(entry: PublishedEntry, email: string, ip: s
     if (entry.access !== 'invited' || !inviteAllows(entry.invited, email)) return 'silent'
 
     const code = String(randomInt(0, 10 ** CODE_DIGITS)).padStart(CODE_DIGITS, '0')
-    const supabase = createServiceRoleClient()
-    await supabase.from('published_access_codes').delete().eq('published_file_id', entry.id).eq('email', email)
-    const { error } = await supabase.from('published_access_codes').insert<Database['public']['Tables']['published_access_codes']['Insert']>({
+    const scope = serviceScope()
+    await deleteRows(scope, 'published_access_codes', { published_file_id: entry.id, email })
+    const { error } = await insertRows(scope, 'published_access_codes', {
         published_file_id: entry.id,
         email,
         code_hash: codeHash(entry.id, email, code),
@@ -82,7 +80,7 @@ export async function sendAccessCode(entry: PublishedEntry, email: string, ip: s
     if (error) throw new Error(`Failed to store the access code: ${error.message}`)
 
     const brand = await loadWorkspaceBrand(entry.workspace_id)
-    const locale = await workspaceLocale(supabase, entry.workspace_id)
+    const locale = await workspaceLocale(scope, entry.workspace_id)
     const pageTitle = entry.title ?? emailTranslator(locale)('publishedAccessCode.untitledPage')
     await sendPublishedAccessCodeEmail({ to: email, code, workspaceName: brand.name, pageTitle, expiresInMinutes: CODE_TTL_MINUTES, locale })
     return 'sent'
@@ -94,21 +92,18 @@ export async function verifyAccessCode(entry: PublishedEntry, email: string, cod
     if (!(await claim([`code-verify:${entry.slug}:${callerRateKey(ip)}`], VERIFIES_PER_CALLER, VERIFY_WINDOW_SECONDS))) return 'limited'
     if (entry.access !== 'invited' || !inviteAllows(entry.invited, email)) return 'wrong'
 
-    const supabase = createServiceRoleClient()
-    const { data: rows } = await selectMany(supabase, 'published_access_codes', ['id', 'code_hash', 'attempts', 'expires_at'] as const, { published_file_id: entry.id, email })
+    const scope = serviceScope()
+    const { data: rows } = await selectMany(scope, 'published_access_codes', ['id', 'code_hash', 'attempts', 'expires_at'] as const, { published_file_id: entry.id, email })
     const row = rows?.[0]
     if (!row || new Date(row.expires_at).getTime() < Date.now() || row.attempts >= MAX_CODE_ATTEMPTS) return 'wrong'
 
     const expected = Buffer.from(row.code_hash)
     const given = Buffer.from(codeHash(entry.id, email, code.replace(/\D/g, '')))
     if (expected.length !== given.length || !timingSafeEqual(expected, given)) {
-        await supabase
-            .from('published_access_codes')
-            .update<Database['public']['Tables']['published_access_codes']['Update']>({ attempts: row.attempts + 1 })
-            .eq('id', row.id)
+        await updateRows(scope, 'published_access_codes', { attempts: row.attempts + 1 }, { id: row.id })
         return 'wrong'
     }
 
-    await supabase.from('published_access_codes').delete().eq('id', row.id)
+    await deleteRows(scope, 'published_access_codes', { id: row.id })
     return 'ok'
 }

@@ -1,6 +1,5 @@
 import { connectorSkillReadOnlyError, isSetupAnswered, MAX_TEXT_WRITE_CHARS, providerSchema, triggerMethodSchema, verbositySchema } from '@lumvika/contracts'
 import { AccessDeniedError, assertAgentInWorkspace, callableEngineAgentIds, isAdminActor, keepVisible, manageableSpaceIds, spaceAccessMap, visibleAgentIds, visibleSpaceIds, type Actor } from '@/app/api/_auth/access'
-import type { Database } from '@/app/api/database.types'
 import {
     chat as engineChat,
     createSchedule as engineCreateSchedule,
@@ -48,8 +47,7 @@ import { describeSkillFiles, normalizeSkillFilePath, planSkillFileRemovals, read
 import { connectorSkillOwners, readRegistry } from '@/lib/services/registry'
 import { slugify } from '@/lib/slugify'
 import { MAX_TRIGGER_BODY_BYTES, triggerWebhookUrl } from '@/lib/triggers/webhook'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectCount, selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectCount, selectMany, selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 import { changeAgentHandle, createAgent, deleteAgent, moveAgentToBox, renameAgent } from './agent.service'
 import { declareService, installServiceSlugs } from './agent-setup.service'
 import { LOCKED_NOTICE, LOCKED_WRITE_ERROR } from './agent-content.service'
@@ -254,8 +252,8 @@ async function waitForRun(conn: EngineConnection, engineAgentId: string, runId: 
 
 // Only the Boxes the caller manages are candidates: a coworker is created where it can be set up.
 async function resolveSpaceId(actor: Actor, requested?: string): Promise<string> {
-    const supabase = createServiceRoleClient()
-    const [{ data: all }, manageable] = await Promise.all([selectMany(supabase, 'spaces', ['id', 'name'] as const, { workspace_id: actor.workspaceId }), manageableSpaceIds(actor)])
+    const scope = serviceScope()
+    const [{ data: all }, manageable] = await Promise.all([selectMany(scope, 'spaces', ['id', 'name'] as const, { workspace_id: actor.workspaceId }), manageableSpaceIds(actor)])
     const spaces = keepVisible(all ?? [], manageable, space => space.id)
 
     if (spaces.length === 0) throw new Error(all?.length ? 'You manage no Box in this workspace. Create one first, or ask an admin to make you a manager of one.' : 'This account has no Box yet — create one in the Lumvika app first.')
@@ -271,8 +269,8 @@ async function resolveSpaceId(actor: Actor, requested?: string): Promise<string>
 // installServiceSlugs silently skips a slug the catalog doesn't know, which would otherwise
 // read as "connector installed" to the caller. Fail on it instead, before touching the agent.
 async function assertCatalogService(slug: string): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'services', ['enabled'] as const, { slug })
+    const scope = serviceScope()
+    const { data } = await selectMaybeSingle(scope, 'services', ['enabled'] as const, { slug })
     if (!data?.enabled) throw new Error(`Unknown app "${slug}". Use search_connectors to find the right slug.`)
 }
 
@@ -282,9 +280,9 @@ function connectorView({ key, slug, name, label, status }: InstalledService) {
 }
 
 async function listWorkspaceAgents(workspaceId: number, spaceId?: string) {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const { data } = await selectMany(
-        supabase,
+        scope,
         'agents',
         ['id', 'name', 'handle', 'description', 'status', 'space_id', 'created_at'] as const,
         spaceId ? { workspace_id: workspaceId, space_id: spaceId } : { workspace_id: workspaceId },
@@ -317,8 +315,8 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
     if (typeof args.model === 'string') await assertModelEntitled(args.model, workspaceId)
     switch (name) {
         case 'list_spaces': {
-            const supabase = createServiceRoleClient()
-            const [{ data: spaces }, agents, visible] = await Promise.all([selectMany(supabase, 'spaces', ['id', 'name', 'created_at'] as const, { workspace_id: workspaceId }), listWorkspaceAgents(workspaceId), spaceAccessMap(actor)])
+            const scope = serviceScope()
+            const [{ data: spaces }, agents, visible] = await Promise.all([selectMany(scope, 'spaces', ['id', 'name', 'created_at'] as const, { workspace_id: workspaceId }), listWorkspaceAgents(workspaceId), spaceAccessMap(actor)])
             return {
                 spaces: (spaces ?? []).filter(space => (visible.get(space.id) ?? 'none') !== 'none').map(space => ({
                     id: space.id,
@@ -463,8 +461,7 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
             if (Object.keys(patch).length > 0) {
                 patched = await enginePatchAgent(conn, engineAgentId, patch)
                 if (description !== undefined) {
-                    const supabase = createServiceRoleClient()
-                    await supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ description }).eq('id', agentId)
+                    await updateRows(serviceScope(), 'agents', { description }, { id: agentId })
                 }
             }
 
@@ -900,10 +897,10 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
             const offset = Math.max(Math.trunc(asNumber(args.offset) ?? 0), 0)
             const category = asString(args.category)
 
-            const supabase = createServiceRoleClient()
+            const scope = serviceScope()
             const [results, { data: total }] = await Promise.all([
                 listCatalogServices({ category, limit, offset }),
-                selectCount(supabase, 'services', category ? { enabled: true, category } : { enabled: true }),
+                selectCount(scope, 'services', category ? { enabled: true, category } : { enabled: true }),
             ])
 
             return {

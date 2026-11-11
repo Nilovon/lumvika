@@ -1,6 +1,6 @@
 import { logger, queue, schedules, task } from '@trigger.dev/sdk/v3'
 import { sweepAccessEnding } from '@/lib/whatsapp/access-ending'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 
 type AccessEndingPayload = {
     // Narrows the whole sweep to a few workspaces, for trying the message end to end.
@@ -10,7 +10,7 @@ type AccessEndingPayload = {
 const accessEndingQueue = queue({ name: 'whatsapp-access-ending', concurrencyLimit: 1 })
 
 async function sweep(payload: AccessEndingPayload) {
-    const report = await sweepAccessEnding(createServiceRoleClient(), new Date(), payload.workspaceIds)
+    const report = await sweepAccessEnding(serviceScope(), new Date(), payload.workspaceIds)
     logger.log('whatsapp access ending sweep', report)
     return report
 }
@@ -31,8 +31,8 @@ export const whatsappAccessEndingSchedule = schedules.task({
     // The next tick is the retry: a message that left is already on its row.
     retry: { maxAttempts: 1 },
     run: async (_payload, { ctx }) => {
-        // apps/ui/.env holds the production Supabase credentials, so a local `pnpm trigger:dev`
-        // session would otherwise read real accounts every fifteen minutes.
+        // A local `pnpm trigger:dev` session may point at a copy of production data, and would
+        // otherwise read real accounts every fifteen minutes.
         if (ctx.environment.type === 'DEVELOPMENT') {
             logger.log('whatsapp access ending: skipped, dev environment')
             return null

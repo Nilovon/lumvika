@@ -1,6 +1,6 @@
 import { logger, queue, schedules } from '@trigger.dev/sdk/v3'
 import { SEARCH_CACHE_TTL_MS } from '@/lib/search/cache'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { deleteRows, serviceScope } from '@/lib/db'
 
 const purgeQueue = queue({ name: 'purge-web-search-cache', concurrencyLimit: 1 })
 
@@ -8,10 +8,10 @@ const purgeQueue = queue({ name: 'purge-web-search-cache', concurrencyLimit: 1 }
 // the queries asked once from piling up.
 export async function purgeWebSearchCache(): Promise<{ purged: number }> {
     const cutoff = new Date(Date.now() - SEARCH_CACHE_TTL_MS).toISOString()
-    const { count, error } = await createServiceRoleClient().from('web_search_cache').delete({ count: 'exact' }).lt('fetched_at', cutoff)
+    const { data, error } = await deleteRows(serviceScope(), 'web_search_cache', { fetched_at: { lt: cutoff } }, ['query_key'])
     if (error) throw new Error(error.message)
 
-    const purged = count ?? 0
+    const purged = data.length
     logger.log('web search cache purged', { purged, cutoff })
     return { purged }
 }

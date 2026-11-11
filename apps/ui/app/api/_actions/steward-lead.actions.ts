@@ -4,7 +4,7 @@ import { actorFromContext, assertAgentInWorkspace } from '@/app/api/_auth/access
 import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { PLAIN_KICKOFF } from '@/lib/steward/build-team'
 import { startAgentSetup, type HandoffResult } from '@/lib/steward/setup-handoff'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany } from '@/lib/db'
 import { failure, failureOf, type ActionFailure } from '@/lib/i18n/action-error'
 
 export type StartLeadSetupResult = { ok: true; conversationId: string; runId: string | null } | (ActionFailure & { inactive?: boolean })
@@ -12,7 +12,7 @@ export type StartLeadSetupResult = { ok: true; conversationId: string; runId: st
 type WorkspaceContext = Awaited<ReturnType<typeof requireWorkspaceContext>>
 
 async function latestConversationId(ctx: WorkspaceContext, agentId: string): Promise<string | null> {
-    const { data: sessions } = await selectMany(ctx.supabase, 'sessions', ['id'] as const, { agent_id: agentId }, { column: 'created_at', ascending: false }, 1)
+    const { data: sessions } = await selectMany(ctx.scope, 'sessions', ['id'] as const, { agent_id: agentId }, { column: 'created_at', ascending: false }, 1)
     return sessions?.[0]?.id ?? null
 }
 

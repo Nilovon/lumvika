@@ -6,13 +6,13 @@ import { ensureSessionRow } from '@/app/api/_services/chat.service'
 import { sendIncidentResolvedEmail, sendNotificationEmail } from '@lumvika/cloud/email'
 import { loadPresence } from '@/app/api/_services/presence.service'
 import { captureServer } from '@lumvika/analytics/server'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { generateRunTitle } from '@/lib/ai/generate-run-title'
-import { fakeSupabase, writeMethodOf, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 import { POST } from './route'
 
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@trigger.dev/sdk/v3', async () => (await import('@/test/trigger-sdk')).triggerSdkMock())
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@lumvika/analytics/server', () => ({ captureServer: vi.fn(), deterministicUuid: vi.fn((seed: string) => seed) }))
 vi.mock('@/app/api/_services/workspace-owner.service', () => ({ resolveWorkspaceOwner: vi.fn().mockResolvedValue(null), resolveWorkspaceMemberEmail: vi.fn().mockResolvedValue(null) }))
 vi.mock('@lumvika/cloud/billing.server', () => ({ extendTrial: vi.fn(), subscriptionHasCard: vi.fn() }))
@@ -48,9 +48,24 @@ const AGENTS: AgentRow[] = [
     { id: 'agent-foreign', name: 'Spy', space_id: 'space-9', workspace_id: OTHER_WORKSPACE_ID, engine_agent_id: 'engine-foreign' },
 ]
 
-function eqValue(calls: readonly SupabaseCall[], column: string): unknown {
-    return calls.find(call => call.method === 'eq' && call.args[0] === column)?.args[1]
+const WRITES: ReadonlySet<DbCall['helper']> = new Set(['insertRows', 'insertRow', 'updateRows', 'upsertRows', 'deleteRows'])
+const isWrite = (call: DbCall) => WRITES.has(call.helper)
+
+// The filters a call carries, wherever its helper takes them.
+function filtersOf(call: DbCall): Record<string, unknown> {
+    if (call.helper === 'deleteRows') return call.args[0] as Record<string, unknown>
+    if (call.helper === 'updateRows') return call.args[1] as Record<string, unknown>
+    if (call.helper.endsWith('WithJoins')) return call.args[2] as Record<string, unknown>
+    return (call.args[1] ?? {}) as Record<string, unknown>
 }
+
+const callsOn = (table: string) => db.calls.filter(call => call.table === table)
+const readsOn = (table: string) => callsOn(table).filter(call => !isWrite(call))
+// The payload of every insert/update/upsert made on `table`, and the filters of every delete.
+const writes = (table: string) =>
+    callsOn(table)
+        .filter(isWrite)
+        .map(call => ({ helper: call.helper, payload: call.helper === 'deleteRows' ? undefined : call.args[0], filters: call.helper === 'deleteRows' || call.helper === 'updateRows' ? filtersOf(call) : undefined }))
 
 const MEMBERS = ['user-1', 'user-2']
 let session: { id: string; source: string; title?: string; automation_name?: string | null } | null = null
@@ -59,33 +74,43 @@ let prefsOf: Record<string, unknown> = {}
 let incidentOpens = true
 let resolvedUsers: string[] = []
 
-function resolve(table: string, calls: readonly SupabaseCall[]) {
+function resolve(call: DbCall) {
+    const { table } = call
+    const filters = filtersOf(call)
     if (table === 'engine_pool') {
-        if (eqValue(calls, 'engine_api_key') !== BOX_KEY) return { data: null }
+        if (filters.engine_api_key !== BOX_KEY) return { data: null }
         return { data: { claimed_by_workspace_id: WORKSPACE_ID, workspace: { id: WORKSPACE_ID, is_sandbox: sandbox } } }
     }
     if (table === 'agents') {
-        const match = AGENTS.find(agent => agent.workspace_id === eqValue(calls, 'workspace_id') && agent.engine_agent_id === eqValue(calls, 'engine_agent_id'))
+        const match = AGENTS.find(agent => agent.workspace_id === filters.workspace_id && agent.engine_agent_id === filters.engine_agent_id)
         return { data: match ? { id: match.id, name: match.name, space_id: match.space_id } : null }
     }
-    if (table === 'notifications') return { data: { id: 'notification-1' } }
-    if (table === 'sessions' && !writeMethodOf(calls)) return { data: session }
-    if (table === 'session_participants') return { data: participants.map(user_id => ({ user_id })) }
+    if (table === 'notifications') return { data: call.helper === 'insertRow' ? { id: 'notification-1' } : [{ id: 'notification-1' }] }
+    if (table === 'sessions') {
+        if (call.helper === 'updateRows') return { data: session ? [{ id: session.id }] : [] }
+        if (!isWrite(call)) return { data: session }
+    }
+    if (table === 'session_participants' && !isWrite(call)) return { data: participants.map(user_id => ({ user_id })) }
     if (table === 'workspace_members') {
-        const asked = eqValue(calls, 'user_id')
+        const asked = filters.user_id
         if (asked) return { data: MEMBERS.includes(asked as string) ? { user_id: asked } : null }
         return { data: MEMBERS.map(user_id => ({ user_id, role: 'member', box_scope: 'all' })) }
     }
     if (table === 'spaces') return { data: { workspace_id: WORKSPACE_ID, visibility: 'workspace' } }
     if (table === 'space_members') return { data: [] }
-    if (table === 'users' && !writeMethodOf(calls)) {
-        const asked = eqValue(calls, 'id')
-        if (asked) return { data: { email_notification_prefs: prefsOf[asked as string] ?? null } }
+    if (table === 'users' && !isWrite(call)) {
+        const asked = filters.id
+        if (typeof asked === 'string') return { data: { email_notification_prefs: prefsOf[asked] ?? null } }
         return { data: MEMBERS.map(id => ({ id, email_notification_prefs: prefsOf[id] ?? null })) }
     }
-    if (table === 'rpc:open_notification_incident') return { data: incidentOpens }
-    if (table === 'rpc:resolve_notification_incidents') return { data: resolvedUsers }
+    if (table === 'open_notification_incident') return { data: incidentOpens }
+    if (table === 'resolve_notification_incidents') return { data: resolvedUsers }
     if (table === 'workspace_getting_started') return { data: [] }
+    // The email of an auth user, read with raw SQL: the one string bound into it is the user id.
+    if (call.helper === 'queryRows') {
+        const userId = (call.args[0] as { queryChunks: unknown[] }).queryChunks.find(chunk => typeof chunk === 'string')
+        return { data: userId ? [{ email: `${userId}@lumvika.test`, is_anonymous: false }] : [] }
+    }
     return undefined
 }
 
@@ -100,8 +125,6 @@ function notification(overrides: Record<string, unknown> = {}) {
 }
 
 describe('POST /api/webhooks/engine', () => {
-    let db: FakeSupabase
-
     beforeEach(() => {
         vi.clearAllMocks()
         sandbox = true
@@ -111,9 +134,8 @@ describe('POST /api/webhooks/engine', () => {
         incidentOpens = true
         resolvedUsers = []
         emailFlags.paused = false
-        db = fakeSupabase(resolve)
-        Object.assign(db.client, { auth: { admin: { getUserById: async (id: string) => ({ data: { user: { email: `${id}@lumvika.test` } } }) } } })
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
+        db.reset()
+        db.answer(resolve)
         vi.mocked(sendNotificationEmail).mockResolvedValue({ ok: true, id: 'email-1' })
     })
 
@@ -138,7 +160,7 @@ describe('POST /api/webhooks/engine', () => {
         const response = await POST(request(notification({ message: '' })))
 
         expect(response.status).toBe(400)
-        expect(db.chainsOn('notifications')).toHaveLength(0)
+        expect(callsOn('notifications')).toHaveLength(0)
     })
 
     describe('getting-started events', () => {
@@ -146,15 +168,15 @@ describe('POST /api/webhooks/engine', () => {
             const response = await POST(request({ event: 'agent.schedule.created' }, 'Bearer forged-key'))
 
             expect(response.status).toBe(401)
-            expect(eqValue(db.chainsOn('engine_pool')[0], 'engine_api_key')).toBe('forged-key')
-            expect(db.writes('workspace_getting_started')).toHaveLength(0)
+            expect(filtersOf(readsOn('engine_pool')[0]).engine_api_key).toBe('forged-key')
+            expect(writes('workspace_getting_started')).toHaveLength(0)
         })
 
         it('makes the member who asked for a schedule in a chat follow its coworker', async () => {
             const response = await POST(request({ event: 'agent.schedule.created', agentId: 'engine-own', metadata: { scheduleSlug: 'weekly', authorId: 'user-2' } }))
 
             expect(response.status).toBe(202)
-            expect(db.writes('users')).toEqual([expect.objectContaining({ payload: { email_notification_prefs: expect.objectContaining({ coworkers: { 'agent-own': { mode: 'default', follow: true } } }) } })])
+            expect(writes('users')).toEqual([expect.objectContaining({ payload: { email_notification_prefs: expect.objectContaining({ coworkers: { 'agent-own': { mode: 'default', follow: true } } }) } })])
         })
 
         it('never overrides a member who stopped following, nor follows for someone outside the workspace', async () => {
@@ -162,16 +184,16 @@ describe('POST /api/webhooks/engine', () => {
             await POST(request({ event: 'agent.trigger.created', agentId: 'engine-own', metadata: { triggerSlug: 'lead', authorId: 'user-2' } }))
             await POST(request({ event: 'agent.trigger.created', agentId: 'engine-own', metadata: { triggerSlug: 'lead', authorId: 'stranger' } }))
 
-            expect(db.writes('users')).toEqual([])
+            expect(writes('users')).toEqual([])
         })
 
         it('records the step on the workspace the token names', async () => {
             const response = await POST(request({ event: 'box.connection.connected' }))
 
             expect(response.status).toBe(202)
-            const [written, reported] = db.writes('workspace_getting_started')
-            expect(written).toEqual(expect.objectContaining({ method: 'upsert', payload: [{ workspace_id: WORKSPACE_ID, item: 'ai_provider' }] }))
-            expect(reported).toEqual(expect.objectContaining({ method: 'update', payload: { reported_at: expect.any(String) } }))
+            const [written, reported] = writes('workspace_getting_started')
+            expect(written).toEqual(expect.objectContaining({ helper: 'upsertRows', payload: [{ workspace_id: WORKSPACE_ID, item: 'ai_provider' }] }))
+            expect(reported).toEqual(expect.objectContaining({ helper: 'updateRows', payload: { reported_at: expect.any(String) } }))
         })
     })
 
@@ -180,25 +202,24 @@ describe('POST /api/webhooks/engine', () => {
             const response = await POST(request(notification(), 'Bearer forged-key'))
 
             expect(response.status).toBe(401)
-            expect(db.chainsOn('agents')).toHaveLength(0)
-            expect(db.writes('notifications')).toHaveLength(0)
+            expect(callsOn('agents')).toHaveLength(0)
+            expect(writes('notifications')).toHaveLength(0)
         })
 
         it('looks the agent up inside the workspace the token names', async () => {
             const response = await POST(request(notification()))
 
             expect(response.status).toBe(202)
-            const [lookup] = db.chainsOn('agents')
-            expect(eqValue(lookup, 'workspace_id')).toBe(WORKSPACE_ID)
-            expect(eqValue(lookup, 'engine_agent_id')).toBe('engine-own')
-            expect(db.writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ workspace_id: WORKSPACE_ID, agent_id: 'agent-own', space_id: 'space-1' }) })])
+            const [lookup] = readsOn('agents')
+            expect(filtersOf(lookup)).toMatchObject({ workspace_id: WORKSPACE_ID, engine_agent_id: 'engine-own' })
+            expect(writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ workspace_id: WORKSPACE_ID, agent_id: 'agent-own', space_id: 'space-1' }) })])
         })
 
         it('never attaches an agent of another workspace to the notification', async () => {
             const response = await POST(request(notification({ agentId: 'engine-foreign' })))
 
             expect(response.status).toBe(202)
-            expect(db.writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ workspace_id: WORKSPACE_ID, agent_id: null, space_id: null }) })])
+            expect(writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ workspace_id: WORKSPACE_ID, agent_id: null, space_id: null }) })])
         })
 
         it('never mirrors a session for an agent of another workspace', async () => {
@@ -212,8 +233,8 @@ describe('POST /api/webhooks/engine', () => {
             const response = await POST(request(notification({ event: 'agent.session.created', originAgentId: 'engine-foreign', source: 'delegate' })))
 
             expect(response.status).toBe(202)
-            const originLookup = db.chainsOn('agents')[1]
-            expect(eqValue(originLookup, 'workspace_id')).toBe(WORKSPACE_ID)
+            const originLookup = readsOn('agents')[1]
+            expect(filtersOf(originLookup).workspace_id).toBe(WORKSPACE_ID)
             expect(ensureSessionRow).toHaveBeenCalledWith('agent-own', 'engine-session', 'Scheduled run', expect.objectContaining({ originAgentId: null }))
         })
 
@@ -244,7 +265,7 @@ describe('POST /api/webhooks/engine', () => {
 
             await POST(request(notification({ kind: 'question' })))
 
-            expect(db.writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ source: 'dashboard', recipients: { 'user-2': 'mine' } }) })])
+            expect(writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ source: 'dashboard', recipients: { 'user-2': 'mine' } }) })])
         })
 
         it('hands a scheduled task nobody follows to the owner, who keeps it', async () => {
@@ -254,8 +275,8 @@ describe('POST /api/webhooks/engine', () => {
 
             await POST(request(notification({ event: 'agent.schedule.completed', kind: 'error', source: 'schedule', metadata: { scheduleSlug: 'weekly' } })))
 
-            expect(db.writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ recipients: { 'user-1': 'followed' } }) })])
-            expect(db.writes('users')).toEqual([expect.objectContaining({ payload: { email_notification_prefs: expect.objectContaining({ coworkers: { 'agent-own': { mode: 'default', follow: true } } }) } })])
+            expect(writes('notifications')).toEqual([expect.objectContaining({ payload: expect.objectContaining({ recipients: { 'user-1': 'followed' } }) })])
+            expect(writes('users')).toEqual([expect.objectContaining({ payload: { email_notification_prefs: expect.objectContaining({ coworkers: { 'agent-own': { mode: 'default', follow: true } } }) } })])
         })
 
         it('emails a member who is away once per incident, saying why', async () => {
@@ -269,7 +290,7 @@ describe('POST /api/webhooks/engine', () => {
 
             expect(sendNotificationEmail).toHaveBeenCalledTimes(1)
             expect(sendNotificationEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-2@lumvika.test', kind: 'question', reason: 'You started this run.' }))
-            expect(db.chainsOn('rpc:open_notification_incident')[0][0].args[1]).toEqual({ p_user_id: 'user-2', p_source_key: 'engine-own:session:engine-session' })
+            expect(callsOn('open_notification_incident')[0].args[0]).toEqual({ p_user_id: 'user-2', p_source_key: 'engine-own:session:engine-session' })
         })
 
         it('emails nobody while notification emails are paused, and still writes the notification', async () => {
@@ -280,9 +301,9 @@ describe('POST /api/webhooks/engine', () => {
 
             await POST(request(notification({ kind: 'question' })))
 
-            expect(db.writes('notifications')).toHaveLength(1)
+            expect(writes('notifications')).toHaveLength(1)
             expect(sendNotificationEmail).not.toHaveBeenCalled()
-            expect(db.chainsOn('rpc:open_notification_incident')).toHaveLength(0)
+            expect(callsOn('open_notification_incident')).toHaveLength(0)
         })
 
         it('drops the incident when its email never left, so the next failure can try again', async () => {
@@ -293,10 +314,9 @@ describe('POST /api/webhooks/engine', () => {
 
             await POST(request(notification({ kind: 'question' })))
 
-            const dropped = db.chainsOn('notification_incidents').filter(chain => writeMethodOf(chain) === 'delete')
+            const dropped = writes('notification_incidents').filter(write => write.helper === 'deleteRows')
             expect(dropped).toHaveLength(1)
-            expect(eqValue(dropped[0], 'user_id')).toBe('user-2')
-            expect(eqValue(dropped[0], 'source_key')).toBe('engine-own:session:engine-session')
+            expect(dropped[0].filters).toMatchObject({ user_id: 'user-2', source_key: 'engine-own:session:engine-session' })
         })
 
         it('keeps the incident open once its email left', async () => {
@@ -307,7 +327,7 @@ describe('POST /api/webhooks/engine', () => {
             await POST(request(notification({ kind: 'question' })))
 
             expect(sendNotificationEmail).toHaveBeenCalledTimes(1)
-            expect(db.chainsOn('notification_incidents')).toHaveLength(0)
+            expect(callsOn('notification_incidents')).toHaveLength(0)
         })
 
         it('emails nobody who has the app open', async () => {
@@ -319,7 +339,7 @@ describe('POST /api/webhooks/engine', () => {
             await POST(request(notification({ kind: 'question' })))
 
             expect(sendNotificationEmail).not.toHaveBeenCalled()
-            expect(db.chainsOn('rpc:open_notification_incident')).toHaveLength(0)
+            expect(callsOn('open_notification_incident')).toHaveLength(0)
         })
 
         it('titles a finished scheduled run after what it did and keeps the routine name', async () => {
@@ -330,7 +350,7 @@ describe('POST /api/webhooks/engine', () => {
             await afterResponse()
 
             expect(generateRunTitle).toHaveBeenCalledWith('Daily missions apply', 'I sent 4 applications…', false)
-            const update = db.writes('sessions').find(write => write.payload && 'outcome' in (write.payload as object))
+            const update = writes('sessions').find(write => write.payload && 'outcome' in (write.payload as object))
             expect(update?.payload).toEqual({ automation_name: 'Daily missions apply', outcome: 'done', title: '4 applications sent: Doctolib, Qonto' })
         })
 
@@ -342,7 +362,7 @@ describe('POST /api/webhooks/engine', () => {
             await POST(request(notification({ event: 'agent.schedule.completed', kind: 'error', source: 'schedule', metadata: { scheduleSlug: 'daily', error: 'LinkedIn session expired' } })))
             await afterResponse()
 
-            const outcomes = db.writes('sessions').filter(write => write.payload && 'outcome' in (write.payload as object)).map(write => write.payload)
+            const outcomes = writes('sessions').filter(write => write.payload && 'outcome' in (write.payload as object)).map(write => write.payload)
             expect(outcomes).toEqual([
                 { automation_name: 'Daily missions apply', outcome: 'nothing', title: 'No new mission' },
                 { automation_name: 'Daily missions apply', outcome: 'failed' },
@@ -356,7 +376,7 @@ describe('POST /api/webhooks/engine', () => {
             await afterResponse()
 
             expect(generateRunTitle).not.toHaveBeenCalled()
-            expect(db.writes('sessions').map(write => write.payload)).toContainEqual({ automation_name: 'Daily missions apply', outcome: 'done' })
+            expect(writes('sessions').map(write => write.payload)).toContainEqual({ automation_name: 'Daily missions apply', outcome: 'done' })
         })
 
         it('tells whoever was emailed about a broken schedule that it works again', async () => {
@@ -366,7 +386,7 @@ describe('POST /api/webhooks/engine', () => {
 
             await POST(request(notification({ event: 'agent.schedule.completed', kind: 'done', source: 'schedule', metadata: { scheduleSlug: 'weekly' } })))
 
-            expect(db.chainsOn('rpc:resolve_notification_incidents').map(chain => chain[0].args[1])).toEqual([{ p_source_key: 'engine-own:schedule:weekly' }, { p_source_key: 'engine-own:session:engine-session' }])
+            expect(callsOn('resolve_notification_incidents').map(call => call.args[0])).toEqual([{ p_source_key: 'engine-own:schedule:weekly' }, { p_source_key: 'engine-own:session:engine-session' }])
             expect(sendIncidentResolvedEmail).toHaveBeenCalledTimes(1)
             expect(sendIncidentResolvedEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'user-1@lumvika.test', sourceLabel: 'Schedule "weekly"' }))
         })
@@ -397,9 +417,9 @@ describe('POST /api/webhooks/engine', () => {
             const response = await POST(request(notification({ agentId: STEWARD_AGENT_ID, event: 'agent.message.completed', kind: 'done' })))
 
             expect(response.status).toBe(202)
-            expect(db.chainsOn('agents')).toHaveLength(0)
-            expect(db.chainsOn('notifications')).toHaveLength(0)
-            expect(db.chainsOn('sessions')).toHaveLength(0)
+            expect(callsOn('agents')).toHaveLength(0)
+            expect(callsOn('notifications')).toHaveLength(0)
+            expect(callsOn('sessions')).toHaveLength(0)
         })
     })
 })

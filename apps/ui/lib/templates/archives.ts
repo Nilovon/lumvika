@@ -23,7 +23,7 @@ export const templateAgentArchiveSchema = z.object({
     // Files the admin dropped in the security review.
     excludedPaths: z.array(z.string()).default([]),
     // The archive ships `.env` with its key names and no values, so installing this template
-    // means asking for these again. Names only: a value never reaches Supabase.
+    // means asking for these again. Names only: a value never reaches the database.
     envKeys: z.array(z.string()).default([]),
     // MCP servers whose OAuth bundle stayed on the source engine.
     mcpAuth: z.array(agentArchiveMcpAuthSchema).default([]),

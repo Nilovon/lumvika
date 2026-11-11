@@ -5,11 +5,10 @@ import type { WorkspaceContext } from '@/app/api/_auth/ownership'
 import { analyzeCompanyProfile } from '@/lib/company/profile'
 import { asString, requireString } from '@/lib/mcp/args'
 import { installAgentShare, type AgentShareInstallOutcome } from '@/lib/agents/share-install'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { selectMany, selectMaybeSingle, serviceScope } from '@/lib/db'
 import { installTemplate, type TemplateInstallOutcome } from '@/lib/templates/install'
 import { hasTemplateEntitlement, templateAccessByWorkspace } from '@/lib/templates/entitlement'
 import { LIBRARY_COLUMNS, toLibraryTemplates, type LibraryRow, type LibraryTemplate } from '@/lib/templates/library'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { revisedJob, type RevisedJob } from './needs'
 import { readPlanBoxes, readPlanItems } from './plan-items'
 import { mergeSteward, saveStewardProfile } from './profile'
@@ -34,7 +33,7 @@ const TEMPLATE_LIMIT = 8
 // them with no session behind it, as the account owner.
 // `actor` is whose access an install runs with: the member behind a steward turn, or, left out, the
 // workspace itself.
-export type WorkspaceActor = Pick<WorkspaceContext, 'supabase' | 'userId'> & { workspace: Pick<WorkspaceContext['workspace'], 'id'>; actor?: Actor }
+export type WorkspaceActor = Pick<WorkspaceContext, 'scope' | 'userId'> & { workspace: Pick<WorkspaceContext['workspace'], 'id'>; actor?: Actor }
 
 async function saveProfile(ctx: WorkspaceContext, args: Record<string, unknown>): Promise<unknown> {
     const profile = await saveStewardProfile(ctx, args)
@@ -68,7 +67,7 @@ async function listTemplates(ctx: WorkspaceActor, args: Record<string, unknown>)
     const category = asString(args.category)
     const query = asString(args.query)?.toLowerCase()
 
-    const [{ data }, access] = await Promise.all([selectMany(ctx.supabase, 'templates', LIBRARY_COLUMNS, { status: 'published', show_in_library: true }, { column: 'published_at', ascending: false }), templateAccessByWorkspace(ctx.supabase, ctx.workspace.id)])
+    const [{ data }, access] = await Promise.all([selectMany(ctx.scope, 'templates', LIBRARY_COLUMNS, { status: 'published', show_in_library: true }, { column: 'published_at', ascending: false }), templateAccessByWorkspace(ctx.scope, ctx.workspace.id)])
 
     const templates = toLibraryTemplates((data ?? []) as LibraryRow[], ctx.userId, access)
         .filter(template => template.owned && template.archiveAgentNames.length > 0)
@@ -104,19 +103,19 @@ export async function installFromLibrary(ctx: WorkspaceActor, args: Record<strin
     const slug = requireString(args.slug, 'slug')
     const boxId = requireString(args.boxId, 'boxId')
 
-    const { data: space } = await selectMaybeSingle(ctx.supabase, 'spaces', ['id'] as const, { id: boxId, workspace_id: ctx.workspace.id })
+    const { data: space } = await selectMaybeSingle(ctx.scope, 'spaces', ['id'] as const, { id: boxId, workspace_id: ctx.workspace.id })
     if (!space) throw new Error(`No Box with id ${boxId} in this workspace.`)
 
-    const { data: template } = await selectMaybeSingle(ctx.supabase, 'templates', ['id', 'pricing_model', 'creator_id'] as const, { slug })
+    const { data: template } = await selectMaybeSingle(ctx.scope, 'templates', ['id', 'pricing_model', 'creator_id'] as const, { slug })
     if (!template) throw new Error(`No template found with slug "${slug}"`)
     if (template.pricing_model !== 'free') {
         if (!purchased) throw new Error(`"${slug}" is a paid template. Build the coworkers yourself with create_agent instead of installing it.`)
-        if (!(await hasTemplateEntitlement(ctx.supabase, ctx.workspace.id, template, ctx.userId))) throw new Error(`"${slug}" has not been bought for this workspace yet.`)
+        if (!(await hasTemplateEntitlement(ctx.scope, ctx.workspace.id, template, ctx.userId))) throw new Error(`"${slug}" has not been bought for this workspace yet.`)
     }
 
     // Reported whole: a template that lands three agents out of four is a sentence the steward has
     // to say, not a failure to swallow.
-    return installTemplate(ctx.supabase, slug, { workspaceId: ctx.workspace.id, spaceId: boxId, actor: ctx.actor ?? workspaceActor(ctx.workspace.id) })
+    return installTemplate(ctx.scope, slug, { workspaceId: ctx.workspace.id, spaceId: boxId, actor: ctx.actor ?? workspaceActor(ctx.workspace.id) })
 }
 
 // The mirror of install_template, for a link that carries one agent. installAgentShare re-checks
@@ -125,10 +124,10 @@ export async function installFromShare(ctx: WorkspaceActor, args: Record<string,
     const token = requireString(args.token, 'token')
     const boxId = requireString(args.boxId, 'boxId')
 
-    const { data: space } = await selectMaybeSingle(ctx.supabase, 'spaces', ['id'] as const, { id: boxId, workspace_id: ctx.workspace.id })
+    const { data: space } = await selectMaybeSingle(ctx.scope, 'spaces', ['id'] as const, { id: boxId, workspace_id: ctx.workspace.id })
     if (!space) throw new Error(`No Box with id ${boxId} in this workspace.`)
 
-    return installAgentShare(createServiceRoleClient(), token, { workspaceId: ctx.workspace.id, spaceId: boxId, actor: ctx.actor ?? workspaceActor(ctx.workspace.id) })
+    return installAgentShare(serviceScope(), token, { workspaceId: ctx.workspace.id, spaceId: boxId, actor: ctx.actor ?? workspaceActor(ctx.workspace.id) })
 }
 
 export async function dispatchWorkspaceOnboardingTool(ctx: WorkspaceActor, name: string, args: Record<string, unknown>): Promise<unknown> {

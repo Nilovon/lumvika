@@ -7,9 +7,8 @@ const mocks = vi.hoisted(() => ({
     rows: {} as Record<string, unknown>,
 }))
 
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: () => ({}) }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectSingle: vi.fn(), selectMaybeSingle: mocks.selectMaybeSingle, selectMany: mocks.selectMany }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectSingle: vi.fn(), selectMaybeSingle: mocks.selectMaybeSingle, selectMany: mocks.selectMany }))
 
 const { AuthorizationError } = await import('./ownership')
 const { assertTemplateOwnedBy, hasPendingCreatorTerms, isExpertAccount, requireExpertUserId, requireSandboxAuthorKey, requireSandboxAuthorSession } = await import('./expert')
@@ -22,7 +21,7 @@ beforeEach(() => {
         templates: { id: 't1', slug: 'slug', status: 'draft' },
     }
     mocks.getServerSession.mockReset().mockResolvedValue({ user: { id: 'u1', workspace_id: 1 }, workspaceRefused: false })
-    mocks.selectMaybeSingle.mockReset().mockImplementation(async (_client, table: string) => ({ data: mocks.rows[table] ?? null, error: null }))
+    mocks.selectMaybeSingle.mockReset().mockImplementation(async (_scope, table: string) => ({ data: mocks.rows[table] ?? null, error: null }))
     mocks.selectMany.mockReset().mockResolvedValue({ data: [{ user_id: 'founder' }], error: null })
 })
 

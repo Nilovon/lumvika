@@ -10,8 +10,7 @@ import { getSpaceConnection } from '../app/api/_services/space.service'
 import { deleteAgent as engineDeleteAgent, getAgent as engineGetAgent, listSkills, listTriggers } from '../lib/engine/client'
 import { installTemplate } from '../lib/templates/install'
 import { workspaceActor } from '../app/api/_auth/access'
-import { createServiceRoleClient } from '../supabase/serviceRole'
-import { selectMany } from '@lumvika/db/helpers'
+import { deleteRows, selectMany, serviceScope } from '@lumvika/db'
 
 // Defaults to the local `dev` space, whose engine_host is 127.0.0.1, so the run stays on the
 // engine started above rather than on someone's real box.
@@ -32,10 +31,10 @@ function check(label: string, ok: boolean, detail?: string) {
     }
 }
 
-const supabase = createServiceRoleClient()
+const scope = serviceScope()
 
 async function agentsInSpace() {
-    const { data } = await selectMany(supabase, 'agents', ['id', 'name', 'handle', 'engine_agent_id', 'col', 'row'] as const, { space_id: SPACE_ID })
+    const { data } = await selectMany(scope, 'agents', ['id', 'name', 'handle', 'engine_agent_id', 'col', 'row'] as const, { space_id: SPACE_ID })
     return data ?? []
 }
 
@@ -44,12 +43,12 @@ const created: { id: string; engineAgentId: string | null }[] = []
 
 try {
     console.log(`\ninstallTemplate("${SLUG}") — first pass`)
-    const first = await installTemplate(supabase, SLUG, { workspaceId: WORKSPACE_ID, spaceId: SPACE_ID, actor: workspaceActor(WORKSPACE_ID) })
+    const first = await installTemplate(scope, SLUG, { workspaceId: WORKSPACE_ID, spaceId: SPACE_ID, actor: workspaceActor(WORKSPACE_ID) })
     check('every agent imported', first.failed.length === 0, JSON.stringify(first.failed))
     check('at least one agent imported', first.imported > 0)
 
     console.log(`\ninstallTemplate("${SLUG}") — second pass, same space`)
-    const second = await installTemplate(supabase, SLUG, { workspaceId: WORKSPACE_ID, spaceId: SPACE_ID, actor: workspaceActor(WORKSPACE_ID) })
+    const second = await installTemplate(scope, SLUG, { workspaceId: WORKSPACE_ID, spaceId: SPACE_ID, actor: workspaceActor(WORKSPACE_ID) })
     check('every agent imported again', second.failed.length === 0, JSON.stringify(second.failed))
 
     const after = (await agentsInSpace()).filter(a => !before.has(a.id))
@@ -86,7 +85,7 @@ try {
     const conn = await getSpaceConnection(SPACE_ID).catch(() => null)
     for (const agent of created) {
         if (conn && agent.engineAgentId) await engineDeleteAgent(conn, agent.engineAgentId).catch(() => {})
-        await supabase.from('agents').delete().eq('id', agent.id)
+        await deleteRows(scope, 'agents', { id: agent.id })
     }
     console.log(`  removed ${created.length} agent(s)`)
 }

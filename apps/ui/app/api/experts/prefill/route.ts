@@ -1,6 +1,5 @@
 import { secretMatches } from '@/lib/secure-compare'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 import { triggerTask } from '@lumvika/cloud/tasks'
 import type { prefillExpertApplicationTask } from '@/trigger/prefill-expert-application'
 
@@ -23,8 +22,7 @@ export async function POST(req: Request) {
 
     // Only a fiche that came from the public form is fair game: the endpoint can never be used to
     // re-scrape (and silently rewrite the blanks of) a marketplace expert.
-    const supabase = createServiceRoleClient()
-    const { data: expert } = await selectMaybeSingle(supabase, 'experts', ['id', 'source'] as const, { id: expertId })
+    const { data: expert } = await selectMaybeSingle(serviceScope(), 'experts', ['id', 'source'] as const, { id: expertId })
     if (!expert || expert.source !== 'application') return Response.json({ error: 'Not an application' }, { status: 404 })
 
     await triggerTask<typeof prefillExpertApplicationTask>('prefill-expert-application', { expertId })

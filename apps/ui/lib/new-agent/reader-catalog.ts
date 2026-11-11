@@ -1,5 +1,5 @@
 import { loadServiceCatalog, type CatalogEntry } from '@/lib/templates/catalog'
-import { createClient } from '@/supabase/server'
+import { getRequestScope } from '@/lib/auth/session/request'
 
 // The catalogue rides in every prompt of the job reader, which reads the description at each pause
 // in the typing: kept a few minutes per server instance rather than read again each time. The rows
@@ -9,7 +9,7 @@ let cachedCatalog: { entries: CatalogEntry[]; at: number } | null = null
 
 export async function readerCatalog(): Promise<CatalogEntry[]> {
     if (cachedCatalog && Date.now() - cachedCatalog.at < CATALOG_TTL_MS) return cachedCatalog.entries
-    const entries = [...(await loadServiceCatalog(await createClient())).values()]
+    const entries = [...(await loadServiceCatalog(await getRequestScope())).values()]
     if (entries.length > 0) cachedCatalog = { entries, at: Date.now() }
     return entries
 }

@@ -1,10 +1,10 @@
 import { task } from '@trigger.dev/sdk/v3'
 import { taskLogger as logger } from '@lumvika/cloud/tasks'
 
-import type { Database, Json } from '@/app/api/database.types'
+import type { Json } from '@/app/api/database.types'
 import { MAX_STORED_IDEAS, toStoredIdeas, type StoredAgentIdeas } from '@/lib/agent-ideas/stored'
 import { suggestAgents } from '@/lib/agent-ideas/suggest'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope, upsertRows } from '@/lib/db'
 
 export type SuggestAgentIdeasPayload = { workspaceId: number }
 
@@ -20,18 +20,16 @@ export const suggestAgentIdeasTask = task({
 })
 
 export async function suggestAgentIdeasRun({ workspaceId }: SuggestAgentIdeasPayload) {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
     async function write(row: StoredAgentIdeas) {
-        const { error } = await supabase
-            .from('workspace_onboarding')
-            .upsert<Database['public']['Tables']['workspace_onboarding']['Insert']>({ workspace_id: workspaceId, agent_ideas: row as unknown as Json }, { onConflict: 'workspace_id' })
+        const { error } = await upsertRows(scope, 'workspace_onboarding', { workspace_id: workspaceId, agent_ideas: row as unknown as Json }, { onConflict: ['workspace_id'] })
         if (error) logger.warn('agent ideas: not written', { workspaceId, error: error.message })
     }
 
     await write({ status: 'running', generatedAt: new Date().toISOString(), ideas: [] })
 
-    const selection = await suggestAgents(supabase, workspaceId, event => {
+    const selection = await suggestAgents(scope, workspaceId, event => {
         if (event.type === 'error') logger.warn('agent ideas: step failed', { workspaceId, step: event.step, error: event.error })
     })
     const ideas = selection ? toStoredIdeas(selection.eligible) : []

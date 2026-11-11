@@ -2,7 +2,7 @@
 
 import { accountLabel } from '@/lib/auth/placeholder-email'
 import { getBlobByFile } from '@/lib/blobs/catalog'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { cn } from '@/lib/utils'
 import { BorderBeam } from '@lumvika/ui'
 import { useTranslations } from 'next-intl'

@@ -17,12 +17,11 @@ import { contextStatsOf } from '@/lib/chat/context-stats'
 import { historyCovers, needsReconcile } from '@/lib/chat/transcript-reconcile'
 import { isWorkspaceApiEntitled } from '@lumvika/cloud/billing'
 import { lastUserText } from '@/lib/chat-payload'
-import { PHONE_REQUIRED_MESSAGE } from '@lumvika/cloud/phone'
 import { findPendingEngineHitl, findPendingWidget, resumesAfterAnswer } from '@/lib/steward/pending-widget'
 import type { StewardBackend } from '@/lib/steward/phase'
 import { sealPendingWidgets, withTypedAnswer } from '@/lib/steward/seal-pending'
 import { selectStewardBackend, selectStewardOpen, useStewardStore } from '@/stores/steward.store'
-import { useIsWorkspaceAdmin, useSession } from '@/supabase/session/SessionProvider'
+import { useIsWorkspaceAdmin, useSession } from '@/lib/auth/session/SessionProvider'
 
 // The steward's chat, on whichever loop serves the conversation.
 //
@@ -53,7 +52,7 @@ export function useStewardChat() {
     const setActivity = useStewardStore(state => state.setActivity)
     const open = useStewardStore(selectStewardOpen)
     const engaged = useStewardStore(state => state.engaged)
-    const { workspace, refreshPhoneStep } = useSession()
+    const { workspace } = useSession()
     const isAdmin = useIsWorkspaceAdmin()
 
     // A client tool that opens a locked panel has to know it is locked, and the session is a React
@@ -298,12 +297,6 @@ export function useStewardChat() {
     useEffect(() => {
         if (turnedAway) void refreshStewardSurface()
     }, [turnedAway])
-
-    // Same on a tab that missed the phone wall: asked again, the wall comes back up.
-    const owesPhone = [hubChat.error, engineChat.error].some(err => !!err && err.message.includes(PHONE_REQUIRED_MESSAGE))
-    useEffect(() => {
-        if (owesPhone) void refreshPhoneStep()
-    }, [owesPhone, refreshPhoneStep])
 
     // The server holds the conversation, so the column asks for the last one at mount, of the steward
     // the workspace talks to now: the onboarding's never comes back once the engine took over.

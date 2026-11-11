@@ -151,8 +151,7 @@ export interface AnalyticsEventMap {
     signup_gate_viewed: { surface: SignupSurface }
     signup_started: { surface?: SignupSurface; in_app_browser?: string }
     signup_method_selected: { method: SignupMethod; in_app_browser?: string }
-    // A provider sign-in that came back failed. Supabase sends these returns to `/`, not to
-    // `/auth/callback`: `bad_oauth_state` is a state older than its five minutes.
+    // A provider sign-in that came back failed.
     oauth_sign_in_failed: { code: string; provider: SignupMethod | null }
     signup_field_error: { field: string; error_type: string }
     email_verification_sent: Record<string, never>

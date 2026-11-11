@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 
 import { PUBLISHED_ACCESS_MODES, type PublishedAccess } from '@/lib/published/access'
 import { GlobeIcon, KeyIcon, MailIcon, UsersIcon, type LucideIcon } from '@/lib/icons'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 export const ACCESS_ORDER: readonly PublishedAccess[] = PUBLISHED_ACCESS_MODES
 

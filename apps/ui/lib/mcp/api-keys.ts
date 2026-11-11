@@ -1,9 +1,7 @@
 import 'server-only'
 
-import type { Database } from '@/app/api/database.types'
 import { isWorkspaceApiEntitled } from '@lumvika/cloud/billing'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { queryRows, selectMaybeSingle, serviceScope, sql, updateRows } from '@/lib/db'
 import { createHash, randomBytes } from 'node:crypto'
 
 const KEY_PREFIX = 'rk_'
@@ -47,35 +45,29 @@ export function apiKeyPrefix(key: string): string {
 async function stampSandboxActivity(workspaceId: number): Promise<void> {
     try {
         const staleBefore = new Date(Date.now() - ACTIVITY_STAMP_INTERVAL_MS).toISOString()
-        await createServiceRoleClient()
-            .from('workspaces')
-            .update<Database['public']['Tables']['workspaces']['Update']>({ last_active_at: new Date().toISOString() })
-            .eq('id', workspaceId)
-            .eq('is_sandbox', true)
-            .or(`last_active_at.is.null,last_active_at.lt.${staleBefore}`)
+        await queryRows(
+            serviceScope(),
+            sql`update public.workspaces set last_active_at = ${new Date().toISOString()} where id = ${workspaceId} and is_sandbox = true and (last_active_at is null or last_active_at < ${staleBefore})`,
+        )
     } catch {}
 }
 
 export async function authenticateApiKey(token: string): Promise<AuthenticatedApiKey | null> {
     if (!token.startsWith(KEY_PREFIX)) return null
 
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'api_keys', API_KEY_AUTH_COLUMNS, { key_hash: hashApiKey(token) })
+    const service = serviceScope()
+    const { data } = await selectMaybeSingle(service, 'api_keys', API_KEY_AUTH_COLUMNS, { key_hash: hashApiKey(token) })
     if (!data || data.revoked_at) return null
     if (data.expires_at && Date.parse(data.expires_at) <= Date.now()) return null
 
-    const { data: workspace } = await selectMaybeSingle(supabase, 'workspaces', ['subscription_status', 'is_sandbox'] as const, { id: data.workspace_id })
+    const { data: workspace } = await selectMaybeSingle(service, 'workspaces', ['subscription_status', 'is_sandbox'] as const, { id: data.workspace_id })
     if (!workspace || !isWorkspaceApiEntitled(workspace)) return null
 
     // Best-effort freshness marker: never let it fail or slow down the call it authenticates.
-    supabase
-        .from('api_keys')
-        .update<Database['public']['Tables']['api_keys']['Update']>({ last_used_at: new Date().toISOString() })
-        .eq('id', data.id)
-        .then(
-            () => undefined,
-            () => undefined,
-        )
+    updateRows(service, 'api_keys', { last_used_at: new Date().toISOString() }, { id: data.id }).then(
+        () => undefined,
+        () => undefined,
+    )
 
     void stampSandboxActivity(data.workspace_id)
 
@@ -91,13 +83,7 @@ export async function authenticateApiKey(token: string): Promise<AuthenticatedAp
 // Conditional on the key still being unbound, so of two create_agent racing on one import key
 // only the first is kept: false tells the loser to undo the coworker it just created.
 export async function bindImportKey(keyId: string, agentId: string): Promise<boolean> {
-    const { data, error } = await createServiceRoleClient()
-        .from('api_keys')
-        .update<Database['public']['Tables']['api_keys']['Update']>({ bound_agent_id: agentId })
-        .eq('id', keyId)
-        .eq('scope', 'agent_import')
-        .is('bound_agent_id', null)
-        .select('id')
+    const { data, error } = await updateRows(serviceScope(), 'api_keys', { bound_agent_id: agentId }, { id: keyId, scope: 'agent_import', bound_agent_id: { isNull: true } }, ['id'])
     if (error) throw new Error(error.message)
     return (data ?? []).length > 0
 }

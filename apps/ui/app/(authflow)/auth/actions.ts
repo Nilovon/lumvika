@@ -1,41 +1,32 @@
 'use server'
 
 import { claimEmailCodeAsk, ensureEmailAccount, lookupEmailForSignUp } from '@/app/api/_services/email-sign-up.service'
-import { resendSignInCodeIfLive } from '@/app/api/_services/sign-in-code.service'
 import { provisionUser } from '@/app/api/_services/user-provisioning.service'
+import { getAuth } from '@/lib/auth/auth'
 import { callerIp } from '@/lib/auth/caller-ip'
 import { EMAIL_PREPARATION_CODES, type EmailPreparationFailure } from '@/lib/auth/email-sign-in-messages'
 import { failure, type ActionFailure } from '@/lib/i18n/action-error'
-import { PENDING_INVITE_COOKIE } from '@/lib/auth/pending-invite'
 import { verifyCaptcha } from '@/lib/auth/captcha'
 import { captchaProofSchema, type CaptchaProof } from '@/lib/auth/captcha-proof'
+import { userScope } from '@/lib/db'
 import { drawPriceArm } from '@lumvika/cloud/billing'
 import { normalizeEmail } from '@/lib/email'
-import { createClient } from '@/supabase/server'
+import { realEmail } from '@/lib/auth/placeholder-email'
 import { EXPERIMENT_COOKIE } from '@lumvika/analytics/experiments'
 import { CONSENT_COOKIE } from '@lumvika/contracts'
 import { LOCALE_COOKIE, resolveLocale } from '@lumvika/i18n'
 import { cookies, headers } from 'next/headers'
 import { z } from 'zod'
 
-// Asked before every new code: Supabase voids the previous code each time it mints one, so while
-// the last one is still good it is mailed again instead. `resent: false` means ask Supabase, `held`
-// that the last one left less than a minute ago and nothing new was mailed.
-export async function resendLiveSignInCode(email: string): Promise<{ resent: boolean; held: boolean }> {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser()
-    const outcome = await resendSignInCodeIfLive(normalizeEmail(email), data.user?.id ?? null)
-    return { resent: outcome !== null, held: outcome === 'held' }
-}
-
-const prepareSchema = z.object({ email: z.string().trim().email().max(320), captcha: captchaProofSchema.optional() })
+// An address on one of the reserved domains (anonymous visitors, deleted accounts) is never a real one.
+const prepareSchema = z.object({ email: z.string().trim().email().max(320).refine(email => !!realEmail(normalizeEmail(email))), captcha: captchaProofSchema.optional() })
 
 export type EmailSignInPreparation = { ok: true; created: boolean } | (ActionFailure & { reason: EmailPreparationFailure })
 
 const preparationRefused = (reason: EmailPreparationFailure) => ({ ...failure(EMAIL_PREPARATION_CODES[reason]), reason })
 
-// What every ask for a code goes through before Supabase hears of it: the robot check, then the pace
-// of the network behind the caller. `null` when the caller may go on.
+// What every ask for a code goes through before the auth layer hears of it: the robot check, then the
+// pace of the network behind the caller. `null` when the caller may go on.
 async function refuseCodeAsk(captcha: CaptchaProof | undefined): Promise<{ ip: string; refusal: EmailPreparationFailure | null }> {
     const ip = callerIp(await headers())
     if (!(await verifyCaptcha(captcha, ip))) return { ip, refusal: 'captcha_failed' }
@@ -43,7 +34,8 @@ async function refuseCodeAsk(captcha: CaptchaProof | undefined): Promise<{ ip: s
     return { ip, refusal: null }
 }
 
-// Called before Supabase is asked for a new code, which it then mails to an account that exists.
+// Called before the auth page asks for a sign-in code, which is only ever mailed to an account that
+// exists: a new address gets its account here first.
 export async function prepareEmailSignIn(input: z.input<typeof prepareSchema>): Promise<EmailSignInPreparation> {
     const parsed = prepareSchema.safeParse(input)
     if (!parsed.success) return preparationRefused('invalid_email')
@@ -77,20 +69,21 @@ export type SignupCompletion = { ok: true; signedUp: boolean } | { ok: false }
 // The browser converts the anonymous session on its own, and the server stamps the signup on
 // whichever request comes next. This is that request, made so the signup form can wait for the
 // stamp instead of leaving the tab to learn it from realtime. Same inputs as the middleware's
-// provisioning; from `/` alone, so the invite paths are not looked at.
+// provisioning. The session is read past its cached copy, which still says anonymous for a few
+// minutes after the address was claimed.
 export async function completeSignupAction(): Promise<SignupCompletion> {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser()
-    if (!data.user || data.user.is_anonymous) return { ok: false }
+    const requestHeaders = await headers()
+    const session = await getAuth().api.getSession({ headers: requestHeaders, query: { disableCookieCache: true } })
+    const user = session?.user as (NonNullable<typeof session>['user'] & { isAnonymous?: boolean | null }) | undefined
+    if (!user || user.isAnonymous) return { ok: false }
     const cookieStore = await cookies()
-    const provisioned = await provisionUser(supabase, data.user, {
-        phoneStep: !cookieStore.has(PENDING_INVITE_COOKIE),
+    const provisioned = await provisionUser(userScope(user.id), { id: user.id, isAnonymous: false }, {
         priceArm: drawPriceArm({
             experimentCookie: cookieStore.get(EXPERIMENT_COOKIE)?.value,
             consentCookie: cookieStore.get(CONSENT_COOKIE)?.value,
-            userAgent: (await headers()).get('user-agent'),
+            userAgent: requestHeaders.get('user-agent'),
         }),
-        locale: resolveLocale({ cookie: cookieStore.get(LOCALE_COOKIE)?.value, acceptLanguage: (await headers()).get('accept-language') }),
+        locale: resolveLocale({ cookie: cookieStore.get(LOCALE_COOKIE)?.value, acceptLanguage: requestHeaders.get('accept-language') }),
     })
     return provisioned ? { ok: true, signedUp: provisioned.signedUp } : { ok: false }
 }

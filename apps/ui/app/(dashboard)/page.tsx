@@ -2,8 +2,9 @@ import { HomeContent } from '@/components/layout/HomeContent'
 import { AppLoader } from '@/components/layout/AppLoader'
 import { hasPendingCreatorTerms } from '@/app/api/_auth/expert'
 import { resolveCreatorLandingWorkspace } from '@/app/api/_services/sandbox.service'
-import { createClient } from '@/supabase/server'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getAuthUser } from '@/lib/auth/session/getServerSession'
+import { getRequestScope } from '@/lib/auth/session/request'
+import { selectMany, selectMaybeSingle } from '@/lib/db'
 import type { SpacePublic } from '@/lib/board/types'
 import { WORKSPACE_PARAM } from '@/lib/workspace/workspace-header'
 import { redirect } from 'next/navigation'
@@ -15,13 +16,11 @@ export default async function Home() {
     let initialSpaces: SpacePublic[] = []
     let initialWorkspaceId: number | null = null
 
-    const supabase = await createClient()
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthUser()
 
     if (user) {
-        const { data: userRow } = await selectMaybeSingle(supabase, 'users', ['workspace_id', 'account_role'] as const, { id: user.id })
+        const scope = await getRequestScope()
+        const { data: userRow } = await selectMaybeSingle(scope, 'users', ['workspace_id', 'account_role'] as const, { id: user.id })
 
         // Un creator accepté qui n'a pas encore signé les conditions du programme n'entre pas :
         // la vérification passe AVANT resolveCreatorLandingWorkspace, qui lui provisionnerait
@@ -35,7 +34,7 @@ export default async function Home() {
             const workspaceId = await resolveCreatorLandingWorkspace(user.id, userRow.workspace_id, userRow.account_role === 'expert')
             if (workspaceId !== userRow.workspace_id) redirect(`/?${WORKSPACE_PARAM}=${workspaceId}`)
             initialWorkspaceId = workspaceId
-            const { data: spaces } = await selectMany(supabase, 'spaces', ['id', 'workspace_id', 'name', 'col_start', 'row_start', 'col_end', 'row_end', 'created_at'] as const, { workspace_id: workspaceId })
+            const { data: spaces } = await selectMany(scope, 'spaces', ['id', 'workspace_id', 'name', 'col_start', 'row_start', 'col_end', 'row_end', 'created_at'] as const, { workspace_id: workspaceId })
             initialSpaces = (spaces ?? []) as SpacePublic[]
         }
     }

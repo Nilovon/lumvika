@@ -55,7 +55,7 @@ function substituteRecord(rec: Record<string, string>, ctx: SubstituteContext): 
 }
 
 // Turn an mcpServer template into a concrete engine server config. Secret values are kept
-// out of config.json (only ${VAR} refs remain) — never in Supabase, never in cleartext.
+// out of config.json (only ${VAR} refs remain) — never in the database, never in cleartext.
 function compileMcpServer(tpl: McpServerTemplate, ctx: SubstituteContext, name: string): EngineMcpServer {
     return {
         name,
@@ -131,7 +131,7 @@ export async function compileService(
     })
     const compiledSkills = manifest.skills.map(s => ({ ...s, body: substitute(s.body, ctx) }))
 
-    // 1. Secrets → engine .env (never Supabase, never cleartext in config.json). Union of
+    // 1. Secrets → engine .env (never the database, never cleartext in config.json). Union of
     //    the method's explicit envKeys, any secret input referenced by an mcp template, and
     //    the Basic credentials derived from them.
     const envSet: Record<string, string> = {}

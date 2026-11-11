@@ -13,18 +13,17 @@ Lumvika is free software under the [AGPL-3.0](LICENSE). See [NOTICE.md](NOTICE.m
 | `apps/engine` | Runs the coworkers, their tools, browser and screen (Hono) |
 | `apps/mobile` | iPhone app (Expo) |
 | `apps/docs` | Documentation (Mintlify) |
-| `packages/*` | Contracts, design system, emails, i18n, analytics, database helpers |
-| `supabase/` | Database schema, seed and local configuration |
+| `packages/*` | Contracts, design system, emails, i18n, analytics, storage, database (`packages/db`: schema, migrations, helpers) |
 | `branding/` | Logo, favicons, colors and type |
 
 ## Setup
 
-You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and a model key such as
-OpenRouter.
+You need Node 22, pnpm 8 (`corepack enable`), Docker for the local stack (Postgres, Mailpit and an S3
+store), and a model key such as OpenRouter.
 
 ```bash
 pnpm install
-npx supabase start
+pnpm db:start
 pnpm --filter @lumvika/contracts build
 cp .env.example apps/ui/.env
 cp apps/engine/.env.example apps/engine/.env
@@ -40,7 +39,7 @@ pnpm dev:engine    # http://localhost:3000
 pnpm dev:ui        # http://localhost:3050
 ```
 
-Sign-in codes land in Mailpit at <http://localhost:54424>.
+Sign-in codes land in Mailpit at <http://localhost:54436>.
 
 ## Checks and build
 

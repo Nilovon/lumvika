@@ -4,12 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { dismissGettingStartedAction, restoreGettingStartedAction } from '@/app/api/_actions/getting-started.actions'
 import { GETTING_STARTED_STEPS, isComplete, progressOf, rewardOf, type GettingStartedState, type GettingStartedStepId } from '@/lib/onboarding/getting-started'
-import { isPhoneStepDone } from '@lumvika/cloud/phone'
 import { useStewardStore } from '@/stores/steward.store'
-import { createClient } from '@/supabase/client'
-import { useSession } from '@/supabase/session/SessionProvider'
-import { selectMany } from '@/supabase/supabase-helpers'
-import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
+import { listGettingStartedItemsAction } from '@/app/api/_actions/getting-started-reads.actions'
+import { useSession } from '@/lib/auth/session/SessionProvider'
+import { useRealtimeSubscription } from '@/lib/live/useRealtimeSubscription'
 
 const STEP_IDS = new Set<string>(GETTING_STARTED_STEPS.map(step => step.id))
 
@@ -27,25 +25,22 @@ async function syncGettingStarted(): Promise<SyncResult> {
  * The board's checklist, ticked by realtime: every row of `workspace_getting_started` is written by
  * the server the moment the thing exists, wherever it came from. The sync route runs once on
  * mount (it is what says whether the pill is for this user at all) and once more when a live step
- * completes the list, because granting the trial days is the server's call alone. The phone step
- * follows the session's read of `user_phones` instead, the account dialog verifying it.
+ * completes the list, because granting the trial days is the server's call alone.
  *
  * `onLiveStep` fires from the realtime handler, for a step that lands while the board is open, so
  * the pill can celebrate it; the rows loaded on mount are not news.
  */
 export function useGettingStarted({ enabled, onLiveStep }: { enabled: boolean; onLiveStep?: (live: LiveStep) => void }) {
-    const { workspace, phoneStatus } = useSession()
+    const { workspace } = useSession()
     const workspaceId = workspace?.id
     const [items, setItems] = useState<ReadonlySet<string> | null>(null)
     const [visible, setVisible] = useState(false)
     const [dismissed, setDismissed] = useState(false)
     const itemsRef = useRef<ReadonlySet<string>>(new Set())
-    const phoneRef = useRef(phoneStatus)
 
     const load = useCallback(async () => {
         if (!workspaceId) return
-        const { data } = await selectMany(createClient(), 'workspace_getting_started', ['item'] as const, { workspace_id: workspaceId })
-        const next = new Set((data ?? []).map(row => row.item))
+        const next = new Set(await listGettingStartedItemsAction(workspaceId))
         itemsRef.current = next
         setItems(next)
     }, [workspaceId])
@@ -87,7 +82,7 @@ export function useGettingStarted({ enabled, onLiveStep }: { enabled: boolean; o
                 setDismissed(true)
             }
             if (!STEP_IDS.has(row.item)) return
-            const complete = isComplete(progressOf(next, phoneRef.current))
+            const complete = isComplete(progressOf(next))
             onLiveStep?.({ step: row.item as GettingStartedStepId, complete })
             if (complete && !next.has('reward')) void syncGettingStarted()
         },
@@ -101,18 +96,6 @@ export function useGettingStarted({ enabled, onLiveStep }: { enabled: boolean; o
         },
         onResync: () => void load(),
     })
-
-    // The number verified from the account dialog is a live step too, hidden list or not: the ref
-    // only moves once the items are in, so a verification that lands before them is not swallowed.
-    useEffect(() => {
-        if (!enabled || !items) return
-        const previous = phoneRef.current
-        phoneRef.current = phoneStatus
-        if (!phoneStatus || !isPhoneStepDone(phoneStatus) || (previous !== 'skipped' && previous !== 'pending')) return
-        const complete = isComplete(progressOf(items, phoneStatus))
-        onLiveStep?.({ step: 'phone', complete })
-        if (complete && !items.has('reward')) void syncGettingStarted()
-    }, [phoneStatus, enabled, items, onLiveStep])
 
     const dismiss = useCallback(() => {
         setVisible(false)
@@ -130,8 +113,8 @@ export function useGettingStarted({ enabled, onLiveStep }: { enabled: boolean; o
 
     const state = useMemo<GettingStartedState | null>(() => {
         if (!items || !workspace) return null
-        return { progress: progressOf(items, phoneStatus), reward: rewardOf(items, workspace) }
-    }, [items, workspace, phoneStatus])
+        return { progress: progressOf(items), reward: rewardOf(items, workspace) }
+    }, [items, workspace])
 
     return { state: visible ? state : null, dismiss, restore }
 }

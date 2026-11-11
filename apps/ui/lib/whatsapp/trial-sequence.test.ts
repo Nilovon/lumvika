@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fakeSupabase, type SupabaseResult } from '@/test/supabase-fake'
-import { loadWhatsAppRecipient } from './recipient'
-import { deliverWhatsApp } from './send'
-import { firstResultPhrase, pendingActionPhrase } from './trial-phrases'
-import { sweepTrialSequence } from './trial-sequence'
+
+import { fakeScope, type DbAnswer } from '@/test/db-fake'
+
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 
 vi.mock('./send', () => ({ deliverWhatsApp: vi.fn() }))
 vi.mock('./recipient', () => ({ loadWhatsAppRecipient: vi.fn() }))
@@ -18,7 +18,12 @@ vi.mock('@/lib/notifications/recipient', () => ({ loadFirstName: vi.fn(async () 
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ findWorkspaceEngine: vi.fn(async () => null) }))
 vi.mock('@/lib/og/board-image', () => ({ boardImageUrl: vi.fn((scene: unknown) => `https://app.lumvika.com/og/board?scene=${JSON.stringify(scene)}`) }))
 
-type Tables = Partial<Record<'workspaces' | 'workspace_members' | 'agents' | 'notifications' | 'sessions' | 'user_phones' | 'whatsapp_messages' | 'workspace_getting_started', SupabaseResult>>
+const { loadWhatsAppRecipient } = await import('./recipient')
+const { deliverWhatsApp } = await import('./send')
+const { firstResultPhrase, pendingActionPhrase } = await import('./trial-phrases')
+const { sweepTrialSequence } = await import('./trial-sequence')
+
+type Tables = Partial<Record<'workspaces' | 'workspace_members' | 'agents' | 'notifications' | 'sessions' | 'whatsapp_messages' | 'workspace_getting_started', DbAnswer>>
 
 const HOUR = 60 * 60_000
 const START = new Date('2026-10-10T14:00:00.000Z')
@@ -45,12 +50,13 @@ function database(overrides: Tables = {}) {
         agents: { data: [{ id: 'agent-1', name: 'Lead Scout' }, { id: 'agent-2', name: 'Meeting Booker' }] },
         notifications: { data: [FIRST_JOB] },
         sessions: { data: [] },
-        user_phones: { data: { whatsapp_replied_at: null } },
         whatsapp_messages: { data: [] },
         workspace_getting_started: { data: null },
         ...overrides,
     }
-    return fakeSupabase(table => tables[table as keyof Tables])
+    db.reset()
+    db.answer(call => tables[call.table as keyof Tables])
+    return fakeScope()
 }
 
 const delivered = () => vi.mocked(deliverWhatsApp).mock.calls[0][1]
@@ -65,19 +71,18 @@ describe('sweepTrialSequence', () => {
     })
 
     it('reads the trials still running, sandboxes left out', async () => {
-        const db = database()
+        await sweepTrialSequence(database(), DAY_ZERO_EVENING)
 
-        await sweepTrialSequence(db.client, DAY_ZERO_EVENING)
-
-        const filters = db.chainsOn('workspaces')[0].map(call => [call.method, ...call.args])
-        expect(filters).toContainEqual(['eq', 'subscription_status', 'trialing'])
-        expect(filters).toContainEqual(['eq', 'is_sandbox', false])
-        expect(filters).toContainEqual(['gt', 'trial_ends_at', DAY_ZERO_EVENING.toISOString()])
-        expect(filters).toContainEqual(['not', 'trial_started_at', 'is', null])
+        expect(db.callsTo('selectMany', 'workspaces')[0].args[1]).toEqual({
+            subscription_status: 'trialing',
+            is_sandbox: false,
+            trial_started_at: { notNull: true },
+            trial_ends_at: { gt: DAY_ZERO_EVENING.toISOString() },
+        })
     })
 
     it('celebrates the first job on day 0, pointing at the schedules of the coworker who did it', async () => {
-        const report = await sweepTrialSequence(database().client, DAY_ZERO_EVENING)
+        const report = await sweepTrialSequence(database(), DAY_ZERO_EVENING)
 
         expect(report).toEqual({ considered: 1, sent: [{ workspaceId: 7, key: 'trial_first_job_done' }], skipped: [] })
         expect(firstResultPhrase).toHaveBeenCalledWith('I found 12 founders hiring in Paris.')
@@ -101,7 +106,7 @@ describe('sweepTrialSequence', () => {
     it('sends nothing when the model finds nothing true to say', async () => {
         vi.mocked(firstResultPhrase).mockResolvedValueOnce(null)
 
-        const report = await sweepTrialSequence(database().client, DAY_ZERO_EVENING)
+        const report = await sweepTrialSequence(database(), DAY_ZERO_EVENING)
 
         expect(deliverWhatsApp).not.toHaveBeenCalled()
         expect(report.skipped).toEqual(['7: trial_first_job_done: no_phrase'])
@@ -110,7 +115,7 @@ describe('sweepTrialSequence', () => {
     it('asks for the OK a coworker is waiting on, in place of the day’s message', async () => {
         const question = { ...FIRST_JOB, id: 'notif-2', event: 'agent.notification', kind: 'approval', engine_session_id: 'session-2', message: 'Can I send these 12 messages?' }
 
-        await sweepTrialSequence(database({ notifications: { data: [question, FIRST_JOB] }, sessions: { data: [{ engine_session_id: 'session-2' }] } }).client, DAY_ZERO_EVENING)
+        await sweepTrialSequence(database({ notifications: { data: [question, FIRST_JOB] }, sessions: { data: [{ engine_session_id: 'session-2' }] } }), DAY_ZERO_EVENING)
 
         expect(pendingActionPhrase).toHaveBeenCalledWith('Can I send these 12 messages?')
         expect(delivered().message.slug).toBe('lumvika_trial_needs_your_ok')
@@ -120,18 +125,15 @@ describe('sweepTrialSequence', () => {
     it('asks nothing of a model or an engine for someone WhatsApp cannot reach', async () => {
         vi.mocked(loadWhatsAppRecipient).mockResolvedValueOnce({ ok: false, reason: 'no_phone' })
 
-        const report = await sweepTrialSequence(database().client, DAY_ZERO_EVENING)
+        const report = await sweepTrialSequence(database(), DAY_ZERO_EVENING)
 
         expect(vi.mocked(loadWhatsAppRecipient).mock.calls[0][2]).toBe('marketing')
         expect(firstResultPhrase).not.toHaveBeenCalled()
         expect(report.skipped).toEqual(['7: no_phone'])
     })
 
-    it('stays quiet between two slots and after a reply', async () => {
-        expect(await sweepTrialSequence(database().client, new Date(START.getTime() + 12 * HOUR))).toEqual({ considered: 1, sent: [], skipped: [] })
-
-        const report = await sweepTrialSequence(database({ user_phones: { data: { whatsapp_replied_at: '2026-10-10T16:00:00.000Z' } } }).client, DAY_ZERO_EVENING)
-        expect(report.skipped).toEqual(['7: replied'])
+    it('stays quiet between two slots', async () => {
+        expect(await sweepTrialSequence(database(), new Date(START.getTime() + 12 * HOUR))).toEqual({ considered: 1, sent: [], skipped: [] })
         expect(deliverWhatsApp).not.toHaveBeenCalled()
     })
 
@@ -140,7 +142,7 @@ describe('sweepTrialSequence', () => {
         const trial = { trial_started_at: TRIAL_STARTED_AT, trial_ends_at: TRIAL_ENDS_AT, subscription_cancel_at: null }
         const workspaces = { data: [{ id: 7, ...trial }, { id: 8, ...trial }] }
 
-        const report = await sweepTrialSequence(database({ workspaces }).client, DAY_ZERO_EVENING)
+        const report = await sweepTrialSequence(database({ workspaces }), DAY_ZERO_EVENING)
 
         expect(report).toEqual({ considered: 2, sent: [{ workspaceId: 8, key: 'trial_first_job_done' }], skipped: ['7: bird down'] })
     })

@@ -11,7 +11,7 @@ import { TooltipLabeled } from '@/components/ui/tooltip'
 import type { StewardPlacement } from '@/lib/steward-layout'
 import { LogInIcon, PanelLeftIcon, PanelRightIcon, PictureInPicture2Icon, PlusIcon } from '@/lib/icons'
 import { stewardOrbState, selectStewardOpen, useStewardStore } from '@/stores/steward.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { type StewardAnchor, StewardHeaderBar } from '@lumvika/ui/steward'
 
 type PositionChoice = StewardAnchor

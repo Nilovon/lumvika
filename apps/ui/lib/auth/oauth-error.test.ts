@@ -7,7 +7,7 @@ const t = englishTranslator('auth.oauthRetry')
 const FAILED = 'https://app.lumvika.com/?error=invalid_request&error_code=bad_oauth_state&error_description=OAuth+state+not+found+or+expired'
 
 describe('oauthErrorCode', () => {
-    it('reads the code Supabase put in the query', () => {
+    it('reads the code the sign-in callback put in the query', () => {
         expect(oauthErrorCode(new URL(FAILED))).toBe('bad_oauth_state')
     })
 

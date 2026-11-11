@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { AuthShell } from '@/components/auth/AuthShell'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // The wall an account meets when the pool has no machine left for it. Same frame and same locks as
 // the welcome wall: nothing behind it is actionable, and there is nothing to click through, because

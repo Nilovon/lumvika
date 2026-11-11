@@ -13,6 +13,7 @@ import { getCookie, setSharedCookie, track } from '@lumvika/analytics/client'
 import { StepTransition } from '@lumvika/ui/steps'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
 import { CaptchaError } from '@/components/auth/captcha/captcha-error'
+import { isRateLimited, isWrongCode } from '@/lib/auth/auth-client'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
@@ -26,10 +27,8 @@ export type EmailCodeStep = 'email' | 'code'
 export type EmailCodePurpose = 'sign-in' | 'change'
 
 export const SIGN_IN_CODE_LENGTH = 6
-// Supabase refuses a second code for the same address within a minute (auth.email.max_frequency).
+// Each new code voids the one before it, and the auth layer only lets a few through a minute.
 const RESEND_COOLDOWN_SECONDS = 60
-
-export type EmailSendOutcome = 'held' | void
 
 type EmailTranslator = ReturnType<typeof useTranslations<'auth.email'>>
 
@@ -48,11 +47,7 @@ function markVerificationCompleted() {
 
 const analyticsMessage = (error: unknown) => (error instanceof Error ? error.message : 'Something went wrong. Please try again.')
 
-// Supabase answers a wrong code and an expired one with the same error, so the copy covers both.
-const isInvalidCode = (error: unknown) => error instanceof Error && /expired|invalid/i.test(error.message)
-
-// Passwordless sign-in: an email, then the code mailed to it. The email also carries a button that
-// signs in on its own through /auth/confirm, so this form is only one of the two ways through.
+// Passwordless sign-in: an email, then the code mailed to it.
 export function EmailCodeForm({
     defaultEmail = '',
     sendCode,
@@ -63,8 +58,7 @@ export function EmailCodeForm({
     initialSentTo,
 }: {
     defaultEmail?: string
-    // `held`: the last code left less than a minute ago, so none was mailed.
-    sendCode: (email: string) => Promise<EmailSendOutcome>
+    sendCode: (email: string) => Promise<void>
     verifyCode: (email: string, code: string) => Promise<void>
     onStepChange?: (step: EmailCodeStep) => void
     beforeEmail?: ReactNode
@@ -77,6 +71,7 @@ export function EmailCodeForm({
     const codeSchema = useMemo(() => codeSchemaFor(t), [t])
     const errorMessage = (error: unknown) => {
         if (error instanceof CaptchaError) return tCaptcha(error.inAppBrowser ? 'failedInApp' : 'failed')
+        if (isRateLimited(error)) return t('errors.tooManyCodes')
         return error instanceof Error ? error.message : t('errors.generic')
     }
     const [step, setStep] = useState<EmailCodeStep>(initialSentTo ? 'code' : 'email')
@@ -125,18 +120,18 @@ export function EmailCodeForm({
             if (signingIn) markVerificationCompleted()
         } catch (error) {
             if (signingIn) track('signup_field_error', { field: 'code', error_type: analyticsMessage(error) })
-            codeForm.setError('code', { message: isInvalidCode(error) ? t('errors.invalidCode') : errorMessage(error) })
+            codeForm.setError('code', { message: isWrongCode(error) ? t('errors.invalidCode') : errorMessage(error) })
         }
     })
 
     const resend = async () => {
         setResending(true)
         try {
-            const outcome = await sendCode(email)
+            await sendCode(email)
             if (signingIn) markVerificationSent()
             codeForm.reset({ code: '' })
             setCooldown(RESEND_COOLDOWN_SECONDS)
-            toast.success(outcome === 'held' ? t('code.held') : t('code.resent'))
+            toast.success(t('code.resent'))
         } catch (error) {
             toast.error(errorMessage(error))
         } finally {
@@ -178,7 +173,7 @@ export function EmailCodeForm({
                 <Form {...codeForm}>
                     <form onSubmit={submitCode} className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            {t.rich(signingIn ? 'code.sentSignIn' : 'code.sent', {
+                            {t.rich('code.sent', {
                                 length: SIGN_IN_CODE_LENGTH,
                                 email,
                                 address: chunks => <span className="font-medium text-foreground">{chunks}</span>,

@@ -16,8 +16,7 @@ import { stripAttachmentsRef } from '@/lib/chat/attachments-marker'
 import { dedupeMessagesById } from '@/lib/steward/dedupe-messages'
 import { isKickoffText } from '@/lib/steward/kickoff-marker'
 import { stripVoiceMarker } from '@/lib/voice/marker'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { insertRows, selectMany, selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 
 // One row per conversation. A hub conversation is rewritten whole at the end of each turn: onFinish
 // hands back the updated UIMessage list, and replacing it is both simpler and more faithful than
@@ -35,7 +34,6 @@ const NO_RUN_STATE: StewardRunState = { usage: null, lastError: null, activeRunI
 const CONVERSATION_COLUMNS = ['id', 'title', 'messages', 'backend', 'engine_session_id'] as const
 
 type ConversationUpdate = Database['public']['Tables']['steward_conversations']['Update']
-type ConversationInsert = Database['public']['Tables']['steward_conversations']['Insert']
 
 const UNIQUE_VIOLATION = '23505'
 
@@ -70,8 +68,8 @@ function withMessageIds(sessionId: string, messages: UIMessage[]): UIMessage[] {
 // engine has taken over. A workspace with no conversation yet gets none back: the client opens on an
 // empty column and names the session itself.
 export async function loadStewardConversation(ctx: WorkspaceContext, backend: StewardBackend): Promise<StewardConversation | null> {
-    const supabase = createServiceRoleClient()
-    const { data: rows } = await selectMany(supabase, 'steward_conversations', CONVERSATION_COLUMNS, { workspace_id: ctx.workspace.id, user_id: ctx.userId, backend }, { column: 'updated_at', ascending: false }, 1)
+    const scope = serviceScope()
+    const { data: rows } = await selectMany(scope, 'steward_conversations', CONVERSATION_COLUMNS, { workspace_id: ctx.workspace.id, user_id: ctx.userId, backend }, { column: 'updated_at', ascending: false }, 1)
     const data = rows?.[0]
     if (!data) return null
 
@@ -118,15 +116,15 @@ export async function cancelStewardSessionRuns(ctx: WorkspaceContext, sessionId:
 // The engine session a conversation continues, or null for one that has not started yet. A row that
 // exists on the hub side cannot be continued on the engine: it answers 'hub'.
 export async function engineSessionOf(ctx: WorkspaceContext, sessionId: string): Promise<{ backend: StewardBackend; engineSessionId: string | null } | null> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'steward_conversations', ['backend', 'engine_session_id'] as const, { id: sessionId, workspace_id: ctx.workspace.id, user_id: ctx.userId })
+    const scope = serviceScope()
+    const { data } = await selectMaybeSingle(scope, 'steward_conversations', ['backend', 'engine_session_id'] as const, { id: sessionId, workspace_id: ctx.workspace.id, user_id: ctx.userId })
     if (!data) return null
     return { backend: data.backend === 'engine' ? 'engine' : 'hub', engineSessionId: data.engine_session_id }
 }
 
 export async function startEngineConversation(ctx: WorkspaceContext, sessionId: string, engineSessionId: string, firstText: string): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { error } = await supabase.from('steward_conversations').insert<ConversationInsert>({
+    const scope = serviceScope()
+    const { error } = await insertRows(scope, 'steward_conversations', {
         id: sessionId,
         workspace_id: ctx.workspace.id,
         user_id: ctx.userId,
@@ -140,25 +138,25 @@ export async function startEngineConversation(ctx: WorkspaceContext, sessionId: 
     if (!seed) return
     void generateSessionTitle(seed)
         .then(async title => {
-            if (title) await supabase.from('steward_conversations').update<ConversationUpdate>({ title }).eq('id', sessionId)
+            if (title) await updateRows(scope, 'steward_conversations', { title }, { id: sessionId })
         })
         .catch(() => {})
 }
 
 // What "reopen my last conversation" sorts on, so it has to move on every turn.
 export async function touchStewardConversation(sessionId: string): Promise<void> {
-    const supabase = createServiceRoleClient()
-    await supabase.from('steward_conversations').update<ConversationUpdate>({ updated_at: new Date().toISOString() }).eq('id', sessionId)
+    const scope = serviceScope()
+    await updateRows(scope, 'steward_conversations', { updated_at: new Date().toISOString() }, { id: sessionId })
 }
 
 export async function saveStewardConversation(ctx: WorkspaceContext, sessionId: string, messages: UIMessage[]): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data: existing } = await selectMaybeSingle(supabase, 'steward_conversations', ['id', 'title'] as const, { id: sessionId, workspace_id: ctx.workspace.id, user_id: ctx.userId })
+    const scope = serviceScope()
+    const { data: existing } = await selectMaybeSingle(scope, 'steward_conversations', ['id', 'title'] as const, { id: sessionId, workspace_id: ctx.workspace.id, user_id: ctx.userId })
 
     const payload = messages as unknown as ConversationUpdate['messages']
 
     if (!existing) {
-        const { error } = await supabase.from('steward_conversations').insert<ConversationInsert>({
+        const { error } = await insertRows(scope, 'steward_conversations', {
             id: sessionId,
             workspace_id: ctx.workspace.id,
             user_id: ctx.userId,
@@ -167,19 +165,11 @@ export async function saveStewardConversation(ctx: WorkspaceContext, sessionId: 
         // Two requests of the same conversation finishing together both find no row and both insert.
         // The later one writes over the earlier, scoped to its owner: the id comes from the browser.
         if (error?.code === UNIQUE_VIOLATION) {
-            const { error: updateError } = await supabase
-                .from('steward_conversations')
-                .update<ConversationUpdate>({ messages: payload, updated_at: new Date().toISOString() })
-                .eq('id', sessionId)
-                .eq('workspace_id', ctx.workspace.id)
-                .eq('user_id', ctx.userId)
+            const { error: updateError } = await updateRows(scope, 'steward_conversations', { messages: payload, updated_at: new Date().toISOString() }, { id: sessionId, workspace_id: ctx.workspace.id, user_id: ctx.userId })
             if (updateError) throw new Error(updateError.message)
         } else if (error) throw new Error(error.message)
     } else {
-        const { error } = await supabase
-            .from('steward_conversations')
-            .update<ConversationUpdate>({ messages: payload, updated_at: new Date().toISOString() })
-            .eq('id', sessionId)
+        const { error } = await updateRows(scope, 'steward_conversations', { messages: payload, updated_at: new Date().toISOString() }, { id: sessionId })
         if (error) throw new Error(error.message)
     }
 
@@ -188,5 +178,5 @@ export async function saveStewardConversation(ctx: WorkspaceContext, sessionId: 
     if (!seed) return
     const title = await generateSessionTitle(seed).catch(() => null)
     if (!title) return
-    await supabase.from('steward_conversations').update<ConversationUpdate>({ title }).eq('id', sessionId)
+    await updateRows(scope, 'steward_conversations', { title }, { id: sessionId })
 }

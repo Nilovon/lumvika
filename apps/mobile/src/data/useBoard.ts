@@ -1,12 +1,12 @@
 import type { Box } from '@lumvika/contracts'
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
 import { fetchBoard, type BoardRead } from '@/api/board'
 import { useAuth } from '@/auth/AuthProvider'
-import { supabase } from '@/auth/supabase'
 import { toHomeCoworkers, type HomeCoworker } from '@/components/home/board'
 import { cachedBoard } from '@/data/local-cache'
+import { subscribeLive, type LiveSubscription } from '@/lib/live'
 
 // `fresh`: read from the hub since the screen opened, not the copy the phone kept from the last visit.
 type Board = { state: 'loading' } | { state: 'error' } | { state: 'ready'; coworkers: HomeCoworker[]; boxes: Box[]; fresh: boolean }
@@ -17,8 +17,8 @@ const boardOf = ({ agents, overview, boxes }: BoardRead, fresh: boolean): Board 
 const BURST_MS = 400
 
 // The coworkers of the active workspace with their latest conversation, read again whenever an agent
-// or a session changes in Realtime, and when the app comes back to the foreground, where Realtime
-// may have missed what happened while iOS held the app.
+// or a session changes on the live stream, and when the app comes back to the foreground, where the
+// stream may have missed what happened while iOS held the app.
 export function useBoard(): Board & { reload: () => void } {
     const { session, me } = useAuth()
     const accessToken = session?.access_token
@@ -61,26 +61,21 @@ export function useBoard(): Board & { reload: () => void } {
         return () => foreground.remove()
     }, [reload])
 
-    // The coworker list can be mounted twice for a moment (the Home leaving the stack as the sidebar of a
-    // wide window takes over): supabase.channel() hands back the instance of a topic already taken.
-    const channelId = useId()
     useEffect(() => {
-        if (!workspaceId) return
-        const channel = supabase
-            .channel(`home:${workspaceId}:${channelId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'agents', filter: `workspace_id=eq.${workspaceId}` }, reloadSoon)
-            // A delete only carries the primary key, so the workspace filter above never lets one through.
-            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'agents' }, reloadSoon)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, reloadSoon)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'spaces', filter: `workspace_id=eq.${workspaceId}` }, reloadSoon)
+        if (!accessToken || !workspaceId) return
+        const subscriptions: LiveSubscription[] = [
+            { table: 'agents', filter: { workspace_id: workspaceId } },
+            { table: 'sessions' },
+            { table: 'spaces', filter: { workspace_id: workspaceId } },
+        ]
         // A Box named to the caller or taken back from them: its coworkers appear or leave the home.
-        if (userId) channel.on('postgres_changes', { event: '*', schema: 'public', table: 'space_members', filter: `user_id=eq.${userId}` }, reloadSoon)
-        channel.subscribe()
+        if (userId) subscriptions.push({ table: 'space_members', filter: { user_id: userId } })
+        const unsubscribe = subscribeLive(accessToken, subscriptions, { onChange: reloadSoon, onResync: reloadSoon })
         return () => {
-            supabase.removeChannel(channel)
+            unsubscribe()
             if (timer.current) clearTimeout(timer.current)
         }
-    }, [workspaceId, userId, reloadSoon, channelId])
+    }, [accessToken, workspaceId, userId, reloadSoon])
 
     // A workspace already read opens on its rows, the hub's copy replaces them when it lands.
     const kept = useMemo(() => {

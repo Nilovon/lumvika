@@ -1,6 +1,6 @@
 import { claimDelivery, connectionForAccount, handleLinkupEnvelope, markDeliveryProcessed, releaseDelivery } from '@/lib/apps/inbound'
 import { eventIdOf, parseEnvelope, verifyLinkupSignature } from '@/lib/apps/linkup/envelope'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 
 // Linkup's deliveries for every account a paid app connected: messages, invitations, sign-outs. Each
 // webhook is signed with a secret of its own, stored on its connection, so the account is looked up
@@ -14,23 +14,23 @@ export async function POST(req: Request): Promise<Response> {
     const envelope = parseEnvelope(rawBody)
     if (!envelope) return Response.json({ error: 'Not a Linkup event' }, { status: 400 })
 
-    const supabase = createServiceRoleClient()
-    const connection = await connectionForAccount(supabase, envelope.account_id)
+    const scope = serviceScope()
+    const connection = await connectionForAccount(scope, envelope.account_id)
     if (!connection?.provider_webhook_secret) return Response.json({ ignored: true })
 
     const signed = verifyLinkupSignature(connection.provider_webhook_secret, req.headers.get('x-linkup-timestamp') ?? '', req.headers.get('x-linkup-signature') ?? '', rawBody, Math.floor(Date.now() / 1000))
     if (!signed) return Response.json({ error: 'Invalid signature' }, { status: 401 })
 
     const eventId = eventIdOf(envelope, rawBody, req.headers.get('x-linkup-event-id'))
-    if (!(await claimDelivery(supabase, eventId, connection.app_slug))) return Response.json({ duplicate: true })
+    if (!(await claimDelivery(scope, eventId, connection.app_slug))) return Response.json({ duplicate: true })
 
     try {
-        await handleLinkupEnvelope(supabase, connection, envelope)
-        await markDeliveryProcessed(supabase, eventId)
+        await handleLinkupEnvelope(scope, connection, envelope)
+        await markDeliveryProcessed(scope, eventId)
         return Response.json({ ok: true })
     } catch (err) {
         console.error(`[webhooks:linkup] ${eventId} failed`, err)
-        await releaseDelivery(supabase, eventId)
+        await releaseDelivery(scope, eventId)
         return Response.json({ error: 'Retry later' }, { status: 500 })
     }
 }

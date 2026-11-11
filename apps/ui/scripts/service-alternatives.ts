@@ -1,8 +1,7 @@
 import { writeFileSync } from 'node:fs'
 import type { Database } from '@/app/api/database.types'
 import { ALTERNATIVE_THRESHOLD, MANUAL_ALTERNATIVE_MODEL } from '../lib/services/alternatives'
-import { createServiceRoleClient } from '../supabase/serviceRole'
-import { selectAll, selectMany } from '../supabase/supabase-helpers'
+import { closeDb, deleteRows, insertRows, selectAll, selectMany, serviceScope } from '../lib/db'
 
 // Maps each catalogue service to its alternatives (connectors that do the same job) with
 // TypeSafe's Jev decision model, called through OpenRouter's decisions endpoint.
@@ -45,8 +44,7 @@ type ServiceAlternativeInsert = Database['public']['Tables']['service_alternativ
 type ServiceReport = { slug: string; alternatives: RatedCandidate[]; rejected: RatedCandidate[]; cost: number; tokens: number }
 
 async function loadCatalog(): Promise<CatalogService[]> {
-    const supabase = createServiceRoleClient()
-    const { data, error } = await selectAll(supabase, 'services', ['slug', 'name', 'category', 'summary', 'manifest'] as const, { enabled: true }, { column: 'slug' })
+    const { data, error } = await selectAll(serviceScope(), 'services', ['slug', 'name', 'category', 'summary', 'manifest'] as const, { enabled: true }, { column: 'slug' })
     if (error) throw error
     return data.map(row => ({
         slug: row.slug,
@@ -124,11 +122,11 @@ function formatCandidate(candidate: RatedCandidate) {
 }
 
 async function writeAlternatives(report: ServiceReport) {
-    const supabase = createServiceRoleClient()
-    const { data: manualRows, error: manualError } = await selectMany(supabase, 'service_alternatives', ['alternative_slug'] as const, { service_slug: report.slug, model: MANUAL_ALTERNATIVE_MODEL })
+    const scope = serviceScope()
+    const { data: manualRows, error: manualError } = await selectMany(scope, 'service_alternatives', ['alternative_slug'] as const, { service_slug: report.slug, model: MANUAL_ALTERNATIVE_MODEL })
     if (manualError) throw manualError
     const manualSlugs = new Set((manualRows ?? []).map(row => row.alternative_slug))
-    const { error: deleteError } = await supabase.from('service_alternatives').delete().eq('service_slug', report.slug).neq('model', MANUAL_ALTERNATIVE_MODEL)
+    const { error: deleteError } = await deleteRows(scope, 'service_alternatives', { service_slug: report.slug, model: { neq: MANUAL_ALTERNATIVE_MODEL } })
     if (deleteError) throw deleteError
     const rows = [...report.alternatives, ...report.rejected]
         .filter(candidate => candidate.sameJob >= STORED_FLOOR && !manualSlugs.has(candidate.slug))
@@ -142,7 +140,7 @@ async function writeAlternatives(report: ServiceReport) {
             }),
         )
     if (!rows.length) return
-    const { error } = await supabase.from('service_alternatives').insert<ServiceAlternativeInsert>(rows)
+    const { error } = await insertRows(scope, 'service_alternatives', rows)
     if (error) throw error
 }
 
@@ -171,7 +169,9 @@ async function main() {
     process.exit(1)
 }
 
-main().catch(error => {
-    console.error(error)
-    process.exit(1)
-})
+main()
+    .then(closeDb)
+    .catch(error => {
+        console.error(error)
+        process.exit(1)
+    })

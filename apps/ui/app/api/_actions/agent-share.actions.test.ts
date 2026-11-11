@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeSupabase, type FakeSupabase } from '@/test/supabase-fake'
 
 const mocks = vi.hoisted(() => ({
     getAdminEmail: vi.fn(),
@@ -12,13 +11,13 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/auth/admin', () => ({ getAdminEmail: mocks.getAdminEmail }))
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
 vi.mock('@/lib/agents/share-create', () => ({ createAgentShare: mocks.createAgentShare, planAgentShare: vi.fn() }))
 vi.mock('@/lib/agents/share-install', () => ({ installAgentShare: mocks.installAgentShare }))
 vi.mock('@/lib/agents/share-read', () => ({ listWorkspaceShares: mocks.listWorkspaceShares, readAgentShare: vi.fn(), revokeAgentShare: mocks.revokeAgentShare }))
 
-const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const { createAgentShareAction, installSharedAgentAction, listAgentSharesAction, revokeAgentShareAction } = await import('./agent-share.actions')
 
 const WORKSPACE_ID = 7
@@ -31,10 +30,12 @@ type Owners = { agentWorkspace?: number; spaceWorkspace?: number; subscriptionSt
 const OTHER_AGENT_ID = '44444444-4444-4444-8444-444444444444'
 const OTHER_SPACE_ID = '55555555-5555-4555-8555-555555555555'
 
-function database({ agentWorkspace = WORKSPACE_ID, spaceWorkspace = WORKSPACE_ID, subscriptionStatus = 'active', role = 'admin', grant = null, shareAgentId = AGENT_ID }: Owners = {}): FakeSupabase {
+const SINGLE_READS = new Set(['selectSingle', 'selectMaybeSingle', 'selectFirst', 'selectSingleWithJoins', 'selectMaybeSingleWithJoins'])
+
+function database({ agentWorkspace = WORKSPACE_ID, spaceWorkspace = WORKSPACE_ID, subscriptionStatus = 'active', role = 'admin', grant = null, shareAgentId = AGENT_ID }: Owners = {}) {
     mocks.getServerSession.mockResolvedValue({ ...SESSION, membership: { role, box_scope: 'all' } })
-    const db = fakeSupabase((table, calls) => {
-        const single = calls.some(call => call.method === 'maybeSingle' || call.method === 'single')
+    db.answer(({ helper, table }) => {
+        const single = SINGLE_READS.has(helper)
         if (table === 'workspace_members') return { data: { user_id: 'user-1', role, box_scope: 'all' } }
         if (table === 'agents') return single ? { data: { workspace_id: agentWorkspace, space_id: SPACE_ID, engine_agent_id: 'engine-1' } } : { data: [{ id: AGENT_ID }] }
         if (table === 'spaces') {
@@ -52,8 +53,6 @@ function database({ agentWorkspace = WORKSPACE_ID, spaceWorkspace = WORKSPACE_ID
         if (table === 'workspaces') return { data: { subscription_status: subscriptionStatus } }
         return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
-    return db
 }
 
 const SESSION = {
@@ -65,6 +64,7 @@ const SESSION = {
 
 beforeEach(() => {
     vi.clearAllMocks()
+    db.reset()
     mocks.getAdminEmail.mockResolvedValue(null)
     mocks.createAgentShare.mockResolvedValue({ url: 'https://app.lumvika.com/s/tok', warnings: [], reused: false })
     mocks.installAgentShare.mockResolvedValue({ agentId: 'new-agent' })
@@ -145,10 +145,10 @@ describe('installSharedAgentAction', () => {
 
     it('lets an admin install without a plan', async () => {
         mocks.getAdminEmail.mockResolvedValue('admin@lumvika.com')
-        const db = database({ subscriptionStatus: null })
+        database({ subscriptionStatus: null })
 
         await expect(installSharedAgentAction({ token: 'tok', spaceId: SPACE_ID })).resolves.toEqual({ ok: true, agentId: 'new-agent' })
-        expect(db.chainsOn('workspaces')).toHaveLength(0)
+        expect(db.calls.filter(call => call.table === 'workspaces')).toHaveLength(0)
     })
 
     it('installs on a trialing workspace, into the Box it was asked for', async () => {

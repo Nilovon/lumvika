@@ -84,5 +84,5 @@ variable (prod, local), la porte n'existe pas. Logique dans `lib/staging-gate.ts
 ## Stack
 
 - **Frontend**: Next.js, isometric grid UI
-- **Backend**: Supabase (auth, DB, realtime)
+- **Backend**: Postgres + Drizzle (`@/lib/db`, `packages/db`), Better Auth (`@/lib/auth`), S3 storage (`@lumvika/storage`), realtime over Postgres LISTEN/NOTIFY + SSE (`@/lib/live`), email via Resend (Mailpit locally)
 - **Agents**: lumvika-engine (HTTP), self-hostable — voir `apps/engine`

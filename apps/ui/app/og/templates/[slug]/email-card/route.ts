@@ -1,8 +1,7 @@
 import { captureOgCard, OG_VERSION, ogFallbackResponse, readOgRequest } from '@/lib/og/capture'
 import { EMAIL_CARD_HEIGHT, EMAIL_CARD_SCALE, EMAIL_CARD_WIDTH } from '@/lib/og/email-card-size'
 import { templateCardStamp } from '@/lib/templates/email-card'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
@@ -12,8 +11,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     const { slug } = await params
     const { format, fresh } = readOgRequest(req)
 
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'templates', STAMP_COLUMNS, { slug })
+    const { data } = await selectMaybeSingle(serviceScope(), 'templates', STAMP_COLUMNS, { slug })
     if (!data) return ogFallbackResponse(req)
 
     const version = `${OG_VERSION}.${templateCardStamp(data)}`

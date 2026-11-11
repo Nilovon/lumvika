@@ -43,11 +43,6 @@
             "title": "E-Mail",
             "empty": "Nicht verbunden. Füge eine hinzu, um dich mit einem Code per E-Mail anzumelden."
         },
-        "phone": {
-            "title": "Telefon",
-            "empty": "Nicht verbunden. Füge eine Nummer hinzu, um dich mit einem Code per WhatsApp oder SMS anzumelden.",
-            "otherAccount": "Mit dieser Nummer meldest du dich bei einem anderen Lumvika-Konto an. Ändere sie, um dich hier per Telefon anzumelden."
-        },
         "change": "Ändern",
         "add": "Hinzufügen",
         "connect": "Verbinden",

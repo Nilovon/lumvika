@@ -48,7 +48,7 @@ import { invalidateAgentSkillSummaries } from '@/hooks/useAgentSkillSummaries'
 import { useSkillProposals } from '@/hooks/useSkillProposals'
 import { useModelPickerStore } from '@/stores/model-picker.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useUnseenRunsStore } from '@/stores/unseen-runs.store'
 import { stepGroupShowsActivity } from '@/lib/agent-chat-loader'
@@ -70,8 +70,7 @@ import { modelContextWindow } from '@/lib/engine/models'
 import { lumvikaCreditOf } from '@/lib/engine/ai-sources'
 import { toGroup } from '@/lib/engine/model-groups'
 import { isLifetimePlan, isPremiumModelEntitled } from '@lumvika/cloud/billing'
-import { createClient } from '@/supabase/client'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getSessionUpdatedAtAction } from '@/app/api/_actions/session-reads.actions'
 import { useChat } from '@ai-sdk/react'
 import { COWORKER_STARTER_SUGGESTIONS, paidDataSourcesByTurn, LUMVIKA_CONNECTION_ID, runUsesScreen, screenSite } from '@lumvika/contracts'
 import { track } from '@lumvika/analytics/client'
@@ -380,9 +379,11 @@ export function AgentChat({ uid, active, agentId, agentName, sessionId, onSessio
     useEffect(() => {
         if (!alertPending || !sessionId) return
         let cancelled = false
-        void selectMaybeSingle(createClient(), 'sessions', ['updated_at'] as const, { id: sessionId }).then(({ data }) => {
-            if (!cancelled) setAlertAt({ sessionId, at: data?.updated_at ?? null })
-        })
+        void getSessionUpdatedAtAction(sessionId)
+            .catch(() => null)
+            .then(at => {
+                if (!cancelled) setAlertAt({ sessionId, at })
+            })
         return () => {
             cancelled = true
         }

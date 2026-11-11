@@ -1,42 +1,55 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeSupabase, writeMethodOf, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 
-const mocks = vi.hoisted(() => ({ getServerSession: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const mocks = vi.hoisted(() => ({ getServerSession: vi.fn(), emails: {} as Record<string, string> }))
 
-const { createServiceRoleClient } = await import('@/supabase/serviceRole')
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
+vi.mock('@/app/api/_services/members.service', async importOriginal => ({
+    ...(await importOriginal<object>()),
+    resolveMemberIdentities: async (_scope: unknown, ids: string[]) => new Map(ids.filter(id => mocks.emails[id]).map(id => [id, { email: mocks.emails[id], name: null, avatarUrl: null }])),
+}))
+
 const { getSpaceAccessAction, grantSpaceAccessAction, listMemberAccessAction, revokeSpaceAccessAction, setSpaceVisibilityAction } = await import('./space-access.actions')
 
 type Row = Record<string, unknown>
+type Write = { method: 'upsert' | 'update' | 'delete'; payload?: unknown; filters?: Row }
 
 const WORKSPACE_ID = 7
 const ME = 'user-me'
 const ADMIN_ONLY = { ok: false, error: 'Only an admin can change who can access a Box', code: 'adminOnlyBoxAccess' }
 
+const READS = new Set<DbCall['helper']>(['selectSingle', 'selectMaybeSingle', 'selectFirst', 'selectMany', 'selectAll'])
+
+function matches(row: Row, filters: Row): boolean {
+    return Object.entries(filters).every(([column, value]) => (Array.isArray(value) ? value.includes(row[column]) : row[column] === value))
+}
+
 function tableResolver(rows: Record<string, Row[]>) {
-    return (table: string, calls: readonly SupabaseCall[]) => {
-        if (writeMethodOf(calls)) return undefined
-        const matching = (rows[table] ?? []).filter(row =>
-            calls.every(call => {
-                if (call.method === 'eq') return row[call.args[0] as string] === call.args[1]
-                if (call.method === 'in') return (call.args[1] as unknown[]).includes(row[call.args[0] as string])
-                return true
-            }),
-        )
-        if (calls.some(call => call.method === 'maybeSingle' || call.method === 'single')) return { data: matching[0] ?? null }
-        return { data: matching }
+    return (call: DbCall) => {
+        if (!READS.has(call.helper)) return undefined
+        const matching = (rows[call.table] ?? []).filter(row => matches(row, call.args[1] as Row))
+        if (call.helper === 'selectMany' || call.helper === 'selectAll') return { data: matching }
+        return { data: matching[0] ?? null }
     }
 }
 
-function database(rows: Record<string, Row[]>, emails: Record<string, string> = {}): FakeSupabase {
-    const db = fakeSupabase(tableResolver(rows))
-    Object.assign(db.client, { auth: { admin: { getUserById: async (id: string) => ({ data: { user: emails[id] ? { email: emails[id] } : null } }) } } })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
-    return db
+function database(rows: Record<string, Row[]>, emails: Record<string, string> = {}) {
+    mocks.emails = emails
+    db.answer(tableResolver(rows))
 }
+
+function writeOf(call: DbCall): Write | null {
+    if (call.helper === 'upsertRows') return { method: 'upsert', payload: call.args[0] }
+    if (call.helper === 'updateRows') return { method: 'update', payload: call.args[0], filters: call.args[1] as Row }
+    if (call.helper === 'deleteRows') return { method: 'delete', filters: call.args[0] as Row }
+    return null
+}
+
+const writes = (table?: string): Write[] => db.calls.filter(call => table === undefined || call.table === table).flatMap(call => writeOf(call) ?? [])
 
 function member(userId: string, role: 'admin' | 'member' = 'member', boxScope: 'all' | 'assigned' = 'all', workspaceId = WORKSPACE_ID): Row {
     return { user_id: userId, workspace_id: workspaceId, role, box_scope: boxScope }
@@ -52,6 +65,7 @@ function grant(spaceId: string, userId: string, access: 'use' | 'manage', grante
 
 beforeEach(() => {
     vi.clearAllMocks()
+    db.reset()
     mocks.getServerSession.mockResolvedValue({
         user: { id: ME, workspace_id: WORKSPACE_ID },
         workspace: { id: WORKSPACE_ID, name: 'Acme', max_seats: null },
@@ -62,13 +76,13 @@ beforeEach(() => {
 
 describe('a member', () => {
     it('cannot read nor change who can access a Box', async () => {
-        const db = database({ workspace_members: [member(ME), member('user-2')], spaces: [space('box-1')] })
+        database({ workspace_members: [member(ME), member('user-2')], spaces: [space('box-1')] })
 
         await expect(getSpaceAccessAction('box-1')).resolves.toEqual(ADMIN_ONLY)
         await expect(setSpaceVisibilityAction('box-1', 'restricted')).resolves.toEqual(ADMIN_ONLY)
         await expect(grantSpaceAccessAction('box-1', ['user-2'], 'use')).resolves.toEqual(ADMIN_ONLY)
         await expect(revokeSpaceAccessAction('box-1', 'user-2')).resolves.toEqual(ADMIN_ONLY)
-        expect(db.chains.filter(chain => writeMethodOf(chain))).toHaveLength(0)
+        expect(writes()).toHaveLength(0)
     })
 })
 
@@ -113,41 +127,39 @@ describe('getSpaceAccessAction', () => {
 
 describe('setSpaceVisibilityAction', () => {
     it('restricts a Box of the workspace', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1')] })
+        database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1')] })
 
         await expect(setSpaceVisibilityAction('box-1', 'restricted')).resolves.toEqual({ ok: true })
 
-        const [write] = db.writes('spaces')
+        const [write] = writes('spaces')
         expect(write).toMatchObject({ method: 'update', payload: { visibility: 'restricted' } })
-        expect(write.filters.map(call => call.args)).toEqual([
-            ['id', 'box-1'],
-            ['workspace_id', WORKSPACE_ID],
-        ])
+        expect(write.filters).toEqual({ id: 'box-1', workspace_id: WORKSPACE_ID })
     })
 
     it('leaves a Box of another workspace alone', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1', 'workspace', 99)] })
+        database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1', 'workspace', 99)] })
 
         await expect(setSpaceVisibilityAction('box-1', 'restricted')).resolves.toEqual({ ok: false, error: 'Box not found', code: 'boxNotFound' })
-        expect(db.writes('spaces')).toHaveLength(0)
+        expect(writes('spaces')).toHaveLength(0)
     })
 
     it('refuses a visibility it does not know', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1')] })
+        database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1')] })
 
         await expect(setSpaceVisibilityAction('box-1', 'public' as never)).resolves.toEqual({ ok: false, error: 'Unknown visibility', code: 'unknownVisibility' })
-        expect(db.writes('spaces')).toHaveLength(0)
+        expect(writes('spaces')).toHaveLength(0)
     })
 })
 
 describe('grantSpaceAccessAction', () => {
     it('names members on the Box, once each', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin'), member('user-2'), member('user-3')], spaces: [space('box-1')] })
+        database({ workspace_members: [member(ME, 'admin'), member('user-2'), member('user-3')], spaces: [space('box-1')] })
 
         await expect(grantSpaceAccessAction('box-1', ['user-2', 'user-3', 'user-2'], 'use')).resolves.toEqual({ ok: true })
 
-        const [write] = db.writes('space_members')
+        const [write] = writes('space_members')
         expect(write.method).toBe('upsert')
+        expect(db.callsTo('upsertRows', 'space_members')[0].args[1]).toEqual({ onConflict: ['space_id', 'user_id'] })
         expect(write.payload).toEqual([
             { space_id: 'box-1', user_id: 'user-2', workspace_id: WORKSPACE_ID, access: 'use', granted_by: ME },
             { space_id: 'box-1', user_id: 'user-3', workspace_id: WORKSPACE_ID, access: 'use', granted_by: ME },
@@ -155,56 +167,52 @@ describe('grantSpaceAccessAction', () => {
     })
 
     it('changes a level without forgetting who created the Box', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin'), member('user-2')], spaces: [space('box-1')], space_members: [grant('box-1', 'user-2', 'manage', 'user-2')] })
+        database({ workspace_members: [member(ME, 'admin'), member('user-2')], spaces: [space('box-1')], space_members: [grant('box-1', 'user-2', 'manage', 'user-2')] })
 
         await expect(grantSpaceAccessAction('box-1', ['user-2'], 'use')).resolves.toEqual({ ok: true })
 
-        expect(db.writes('space_members')[0].payload).toEqual([{ space_id: 'box-1', user_id: 'user-2', workspace_id: WORKSPACE_ID, access: 'use', granted_by: 'user-2' }])
+        expect(writes('space_members')[0].payload).toEqual([{ space_id: 'box-1', user_id: 'user-2', workspace_id: WORKSPACE_ID, access: 'use', granted_by: 'user-2' }])
     })
 
     it('refuses an admin, who already reaches every Box', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin'), member('user-2', 'admin'), member('user-3')], spaces: [space('box-1')] })
+        database({ workspace_members: [member(ME, 'admin'), member('user-2', 'admin'), member('user-3')], spaces: [space('box-1')] })
 
         await expect(grantSpaceAccessAction('box-1', ['user-3', 'user-2'], 'manage')).resolves.toEqual({ ok: false, error: 'Admins always have access to every Box', code: 'adminsAlwaysReachBoxes' })
-        expect(db.writes('space_members')).toHaveLength(0)
+        expect(writes('space_members')).toHaveLength(0)
     })
 
     it('refuses someone outside the workspace', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin'), member('user-2', 'member', 'all', 99)], spaces: [space('box-1')] })
+        database({ workspace_members: [member(ME, 'admin'), member('user-2', 'member', 'all', 99)], spaces: [space('box-1')] })
 
         await expect(grantSpaceAccessAction('box-1', ['user-2'], 'use')).resolves.toEqual({ ok: false, error: 'This user is not a member of the workspace.', code: 'userNotMember' })
-        expect(db.writes('space_members')).toHaveLength(0)
+        expect(writes('space_members')).toHaveLength(0)
     })
 
     it('refuses a Box of another workspace and a level it does not know', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin'), member('user-2')], spaces: [space('box-1', 'workspace', 99), space('box-2')] })
+        database({ workspace_members: [member(ME, 'admin'), member('user-2')], spaces: [space('box-1', 'workspace', 99), space('box-2')] })
 
         await expect(grantSpaceAccessAction('box-1', ['user-2'], 'use')).resolves.toEqual({ ok: false, error: 'Box not found', code: 'boxNotFound' })
         await expect(grantSpaceAccessAction('box-2', ['user-2'], 'owner' as never)).resolves.toEqual({ ok: false, error: 'Unknown access level', code: 'unknownAccessLevel' })
-        expect(db.writes('space_members')).toHaveLength(0)
+        expect(writes('space_members')).toHaveLength(0)
     })
 })
 
 describe('revokeSpaceAccessAction', () => {
     it('removes the row of that person on that Box', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin'), member('user-2')], spaces: [space('box-1')], space_members: [grant('box-1', 'user-2', 'use')] })
+        database({ workspace_members: [member(ME, 'admin'), member('user-2')], spaces: [space('box-1')], space_members: [grant('box-1', 'user-2', 'use')] })
 
         await expect(revokeSpaceAccessAction('box-1', 'user-2')).resolves.toEqual({ ok: true })
 
-        const [write] = db.writes('space_members')
+        const [write] = writes('space_members')
         expect(write.method).toBe('delete')
-        expect(write.filters.map(call => call.args)).toEqual([
-            ['space_id', 'box-1'],
-            ['user_id', 'user-2'],
-            ['workspace_id', WORKSPACE_ID],
-        ])
+        expect(write.filters).toEqual({ space_id: 'box-1', user_id: 'user-2', workspace_id: WORKSPACE_ID })
     })
 
     it('leaves a Box of another workspace alone', async () => {
-        const db = database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1', 'workspace', 99)] })
+        database({ workspace_members: [member(ME, 'admin')], spaces: [space('box-1', 'workspace', 99)] })
 
         await expect(revokeSpaceAccessAction('box-1', 'user-2')).resolves.toEqual({ ok: false, error: 'Box not found', code: 'boxNotFound' })
-        expect(db.writes('space_members')).toHaveLength(0)
+        expect(writes('space_members')).toHaveLength(0)
     })
 })
 

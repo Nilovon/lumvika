@@ -11,10 +11,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 // A visitor with no session gets an anonymous user so they can explore the app without
 // signing up. We only mint one for real top-level navigations (a document GET outside /auth), never
 // for prefetches, RSC fetches, assets or API calls, to avoid spawning throwaway users on every hit.
+// A provider sending the browser back to /api/auth/callback is a document GET too, and the session it
+// is about to open must not race an anonymous one.
 function shouldStartAnonymousSession(request: NextRequest): boolean {
     if (request.method !== 'GET') return false
     if (request.headers.get('sec-fetch-dest') !== 'document') return false
     if (request.nextUrl.pathname.startsWith(routes.auth)) return false
+    if (request.nextUrl.pathname.startsWith('/api/')) return false
     return true
 }
 
@@ -24,7 +27,7 @@ function redirectKeepingSession(request: NextRequest, pathname: string, sessionR
     const url = request.nextUrl.clone()
     url.pathname = pathname
     const response = NextResponse.redirect(url)
-    sessionResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+    for (const cookie of sessionResponse.headers.getSetCookie()) response.headers.append('set-cookie', cookie)
     return response
 }
 
@@ -72,7 +75,7 @@ const PROVISIONED_MAX_AGE = 30 * 24 * 60 * 60
 export function provisioningNeeded(cookie: string | undefined, identity: Identity): boolean {
     const [id, stamped] = (cookie ?? '').split('.')
     if (id !== identity.id) return true
-    // An anonymous visitor has nothing left to stamp; the conversion to an account flips the JWT
+    // An anonymous visitor has nothing left to stamp; the conversion to an account flips the session
     // and brings the provisioning back for the one request that stamps it.
     if (identity.isAnonymous) return false
     return stamped !== '1'
@@ -87,8 +90,11 @@ export async function updateSession(request: NextRequest) {
     const response = NextResponse.next({ request })
 
     // The cookie cache answers without a database read for five minutes; a page load reads the
-    // session itself, which is where a revoked one gets caught.
-    let session = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: isPageLoad(request) } })
+    // session itself, which is where a revoked one gets caught, and writes the cache again from it:
+    // an address claimed or a name changed a moment ago reaches every request after it.
+    const read = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: isPageLoad(request) }, returnHeaders: true })
+    if (isPageLoad(request)) for (const cookie of read.headers.getSetCookie()) response.headers.append('set-cookie', cookie)
+    let session = read.response
 
     if (!session && shouldStartAnonymousSession(request)) {
         try {

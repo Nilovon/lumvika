@@ -1,11 +1,10 @@
 import { callableEngineAgentIds, requireLightSessionActor, type Actor } from '@/app/api/_auth/access'
 import { createSessionRow, resolveAgentTarget, updateSessionStatus } from '@/app/api/_services/chat.service'
 import { recordSessionParticipant } from '@/app/api/_services/notification-audience.service'
-import type { Database } from '@/app/api/database.types'
 import { generateSessionTitle } from '@/lib/ai/generate-title'
 import { reformulateKickoff } from '@/lib/ai/reformulate-kickoff'
 import { chat } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope, updateRows } from '@/lib/db'
 import type { MessageAuthor } from '@lumvika/contracts'
 
 export type KickoffResult = { ok: true; sessionId: string; runId: string | null } | { ok: false; error: string; agentGone: boolean }
@@ -47,8 +46,7 @@ export async function startKickoff(agentId: string, input: { kickoff?: string; d
 
         generateSessionTitle(message)
             .then(async title => {
-                const supabase = createServiceRoleClient()
-                await supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ title }).eq('id', sessionId)
+                await updateRows(serviceScope(), 'sessions', { title }, { id: sessionId })
             })
             .catch(() => {})
 

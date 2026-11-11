@@ -1,10 +1,8 @@
-import type { Database } from '@/app/api/database.types'
 import { BASE_PLAN_SLUG, MICROS_PER_USD } from '@lumvika/cloud/billing'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { ensureWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
 import { isSandboxLocked } from '@/lib/sandbox-idle/lock'
 import { loadSandboxArchive } from '@/lib/sandbox-idle/store'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { insertRow, insertRows, selectMany, serviceScope, updateRows } from '@/lib/db'
 import { failure, type ActionFailure } from '@/lib/i18n/action-error'
 
 import type { ActionResult } from '@/app/api/_actions/space.actions'
@@ -50,12 +48,12 @@ export async function resolveCreatorLandingWorkspace(userId: string, workspaceId
     if (!isExpert) return workspaceId
 
     try {
-        const supabase = createServiceRoleClient()
+        const scope = serviceScope()
 
-        const { data: workspaces } = await selectMany(supabase, 'workspaces', ['id', 'is_sandbox'] as const, { id: workspaceId })
+        const { data: workspaces } = await selectMany(scope, 'workspaces', ['id', 'is_sandbox'] as const, { id: workspaceId })
         if (workspaces?.[0]?.is_sandbox) return workspaceId
 
-        const { data: spaces } = await selectMany(supabase, 'spaces', ['id'] as const, { workspace_id: workspaceId })
+        const { data: spaces } = await selectMany(scope, 'spaces', ['id'] as const, { workspace_id: workspaceId })
         if ((spaces ?? []).length > 0) return workspaceId
 
         if (await findSandboxWorkspaceId(userId)) return workspaceId
@@ -73,31 +71,31 @@ export async function resolveCreatorLandingWorkspace(userId: string, workspaceId
 }
 
 async function setActiveWorkspace(userId: string, workspaceId: number): Promise<string | null> {
-    const supabase = createServiceRoleClient()
-    const { error } = await supabase.from('users').update<Database['public']['Tables']['users']['Update']>({ workspace_id: workspaceId }).eq('id', userId)
+    const { error } = await updateRows(serviceScope(), 'users', { workspace_id: workspaceId }, { id: userId })
     return error?.message ?? null
 }
 
 async function isSandboxLockedById(workspaceId: number): Promise<boolean> {
-    return isSandboxLocked(await loadSandboxArchive(createServiceRoleClient(), workspaceId))
+    return isSandboxLocked(await loadSandboxArchive(serviceScope(), workspaceId))
 }
 
 async function findSandboxWorkspaceId(userId: string): Promise<number | null> {
-    const supabase = createServiceRoleClient()
-    const { data: memberships } = await selectMany(supabase, 'workspace_members', ['workspace_id'] as const, { user_id: userId })
+    const scope = serviceScope()
+    const { data: memberships } = await selectMany(scope, 'workspace_members', ['workspace_id'] as const, { user_id: userId })
     const ids = (memberships ?? []).map(m => m.workspace_id)
     if (ids.length === 0) return null
 
-    const { data: sandboxes } = await selectMany(supabase, 'workspaces', ['id'] as const, { id: ids, is_sandbox: true })
+    const { data: sandboxes } = await selectMany(scope, 'workspaces', ['id'] as const, { id: ids, is_sandbox: true })
     return sandboxes?.[0]?.id ?? null
 }
 
 async function createSandboxWorkspace(userId: string): Promise<number | ActionFailure> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: workspace, error: workspaceError } = await supabase
-        .from('workspaces')
-        .insert<Database['public']['Tables']['workspaces']['Insert']>({
+    const { data: workspace, error: workspaceError } = await insertRow(
+        scope,
+        'workspaces',
+        {
             name: 'Sandbox',
             icon_url: SANDBOX_ICON_URL,
             plan: BASE_PLAN_SLUG,
@@ -111,15 +109,15 @@ async function createSandboxWorkspace(userId: string): Promise<number | ActionFa
             subscription_status: 'active',
             // A sandbox has no onboarding: the funnel never runs there, so nothing would ever stamp it.
             onboarded_at: new Date().toISOString(),
-        })
-        .select('id')
-        .single()
+        },
+        ['id']
+    )
 
     if (workspaceError || !workspace) return workspaceError ? { ok: false, error: workspaceError.message } : failure('sandboxCreateFailed')
 
-    const workspaceId = (workspace as { id: number }).id
+    const workspaceId = workspace.id
 
-    const { error: membershipError } = await supabase.from('workspace_members').insert<Database['public']['Tables']['workspace_members']['Insert']>({
+    const { error: membershipError } = await insertRows(scope, 'workspace_members', {
         user_id: userId,
         workspace_id: workspaceId,
         role: 'admin',
@@ -134,19 +132,19 @@ async function createSandboxWorkspace(userId: string): Promise<number | ActionFa
 // success or when the sandbox is already set up. Self-healing: the machine is looked up by
 // workspace, so a Box row lost on its own does not leave the engine stranded.
 export async function ensureSandboxSpace(workspaceId: number): Promise<(ActionFailure & { locked?: true }) | null> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
     // Before any claim, and not left to `ensureWorkspaceEngine`: once an expired archive is purged
     // the workspace is no longer flagged archived, and this is the only door still shut.
-    if (isSandboxLocked(await loadSandboxArchive(supabase, workspaceId))) return { ...failure('sandboxLocked'), locked: true }
+    if (isSandboxLocked(await loadSandboxArchive(scope, workspaceId))) return { ...failure('sandboxLocked'), locked: true }
 
     const engine = await ensureWorkspaceEngine(workspaceId)
     if (!engine.ok) return engine
 
-    const { data: spaces } = await selectMany(supabase, 'spaces', ['id'] as const, { workspace_id: workspaceId })
+    const { data: spaces } = await selectMany(scope, 'spaces', ['id'] as const, { workspace_id: workspaceId })
     if ((spaces ?? []).length > 0) return null
 
-    const { error } = await supabase.from('spaces').insert<Database['public']['Tables']['spaces']['Insert']>({
+    const { error } = await insertRows(scope, 'spaces', {
         workspace_id: workspaceId,
         col_start: 0,
         row_start: 0,

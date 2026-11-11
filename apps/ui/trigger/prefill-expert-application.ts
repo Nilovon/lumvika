@@ -1,7 +1,7 @@
 import { task } from '@trigger.dev/sdk/v3'
 import { taskLogger as logger } from '@lumvika/cloud/tasks'
 import { prefillExpertFromProfile } from '@/lib/experts/prefill'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 import { expertScrapeQueue } from './expert-queue'
 
 type PrefillExpertApplicationPayload = { expertId: string }
@@ -19,8 +19,7 @@ export const prefillExpertApplicationTask = task({
 })
 
 export async function prefillExpertApplicationRun({ expertId }: PrefillExpertApplicationPayload) {
-    const supabase = createServiceRoleClient()
-    const result = await prefillExpertFromProfile(supabase, expertId)
+    const result = await prefillExpertFromProfile(serviceScope(), expertId)
 
     // Nothing to scrape is an outcome, not a failure: retrying would scrape the same nothing.
     if (!result.ok) {

@@ -55,7 +55,7 @@ function isSameOrigin(input: RequestInfo | URL) {
 const WRAPPED = Symbol.for('lumvika.workspace-header')
 
 // Server actions and RSC navigations go through the global fetch, so this is the one place every
-// request to our own server can name the tab's workspace. Same-origin only: Supabase and third
+// request to our own server can name the tab's workspace. Same-origin only: third
 // parties never see the header, nor pay a CORS preflight for it.
 export function installWorkspaceHeader() {
     if (typeof window === 'undefined') return

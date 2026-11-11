@@ -27,8 +27,8 @@ describe.skipIf(!reachable)('Better Auth on Postgres', () => {
     let provisionUser: typeof import('@/app/api/_services/user-provisioning.service').provisionUser
 
     beforeAll(async () => {
-        await resetTestDatabase()
-        process.env.DATABASE_URL = testDatabaseUrl()
+        await resetTestDatabase('lumvika_test_auth')
+        process.env.DATABASE_URL = testDatabaseUrl('lumvika_test_auth')
         process.env.BETTER_AUTH_SECRET = 'test-secret-test-secret-test-secret'
         auth = (await import('./auth')).getAuth()
         provisionUser = (await import('@/app/api/_services/user-provisioning.service')).provisionUser
@@ -58,6 +58,7 @@ describe.skipIf(!reachable)('Better Auth on Postgres', () => {
         expect(stored.email).toBe(email)
         expect(stored.isAnonymous).toBe(false)
         expect(stored.emailVerified).toBe(true)
+        expect(stored.name).toBe('')
     })
 
     it('signs an existing address in with a code and resolves its bearer token', async () => {
@@ -72,6 +73,20 @@ describe.skipIf(!reachable)('Better Auth on Postgres', () => {
 
         const session = await auth.api.getSession({ headers: new Headers({ authorization: `Bearer ${signedIn.token}` }) })
         expect(session?.user.email).toBe(email)
+    })
+
+    it('signs into an account the hub opened unverified for a new address, and verifies it', async () => {
+        const email = `opened-${Date.now()}@example.com`
+        const id = crypto.randomUUID()
+        await getDb().insert(authUsers).values({ id, name: '', email, emailVerified: false })
+
+        await auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } })
+        const signedIn = await auth.api.signInEmailOTP({ body: { email, otp: sentCodes.get(email)! } })
+        expect(signedIn.user.id).toBe(id)
+
+        const [stored] = await getDb().select().from(authUsers).where((await import('@lumvika/db')).eq(authUsers.id, id))
+        expect(stored.emailVerified).toBe(true)
+        expect(stored.isAnonymous).toBe(false)
     })
 
     it('refuses to create an account for an unknown address by code', async () => {

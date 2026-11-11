@@ -8,7 +8,7 @@ import { create } from 'zustand'
 
 import { updateNotificationPrefsAction } from '@/app/api/_actions/notifications.actions'
 import { coworkerRuleOf, mergeNotificationPrefs, normalizeNotificationPrefs, type CoworkerRule, type NotificationPrefs, type NotificationPrefsPatch } from '@/lib/notifications/prefs'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // What was just changed, shown before the users row comes back over realtime. Shared, so the bell,
 // the dialog and the inbox menu never disagree for the second the write takes. `basis` is the stored

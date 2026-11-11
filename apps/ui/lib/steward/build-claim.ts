@@ -1,11 +1,7 @@
 import 'server-only'
 
-import type { Database, Json } from '@/app/api/database.types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-
-type BuildInsert = Database['public']['Tables']['steward_builds']['Insert']
-type BuildUpdate = Database['public']['Tables']['steward_builds']['Update']
+import type { Json } from '@/app/api/database.types'
+import { insertRows, selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 
 // A hub that died in the middle of a build never releases its claim. Long enough for the slowest
 // template install, short enough that the user is not locked out of their own team for good.
@@ -26,36 +22,32 @@ export type BuildClaim = { previous: Json | null; claimedAt: string }
  * re-reads the row after the first commits, finds it running, and matches nothing.
  */
 export async function claimBuild(workspaceId: number): Promise<BuildClaim | null> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const now = Date.now()
     const claimedAt = new Date(now).toISOString()
-    const { error } = await supabase.from('steward_builds').insert<BuildInsert>({ workspace_id: workspaceId, started_at: claimedAt })
+    const { error } = await insertRows(scope, 'steward_builds', { workspace_id: workspaceId, started_at: claimedAt })
     if (!error) return { previous: null, claimedAt }
     if (error.code !== UNIQUE_VIOLATION) throw new Error(`Could not claim the team build: ${error.message}`)
 
     const staleBefore = new Date(now - STALE_AFTER_MS).toISOString()
-    const { data, error: takeError } = await supabase
-        .from('steward_builds')
-        .update<BuildUpdate>({ started_at: claimedAt, finished_at: null })
-        .eq('workspace_id', workspaceId)
-        .or(`finished_at.not.is.null,started_at.lt.${staleBefore}`)
-        .select('result')
+    const { data, error: takeError } = await updateRows(
+        scope,
+        'steward_builds',
+        { started_at: claimedAt, finished_at: null },
+        { workspace_id: workspaceId, or: { finished_at: { notNull: true }, started_at: { lt: staleBefore } } },
+        ['result']
+    )
     if (takeError) throw new Error(`Could not claim the team build: ${takeError.message}`)
     return data?.length ? { previous: data[0].result, claimedAt } : null
 }
 
 export async function releaseBuild(workspaceId: number, claimedAt: string, result: Json | null): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { error } = await supabase
-        .from('steward_builds')
-        .update<BuildUpdate>({ finished_at: new Date().toISOString(), result })
-        .eq('workspace_id', workspaceId)
-        .eq('started_at', claimedAt)
+    const { error } = await updateRows(serviceScope(), 'steward_builds', { finished_at: new Date().toISOString(), result }, { workspace_id: workspaceId, started_at: claimedAt })
     if (error) throw new Error(`Could not release the team build: ${error.message}`)
 }
 
 /** What the last finished build of the workspace handed back, `null` while one is running or none ever ran. */
 export async function finishedBuild(workspaceId: number): Promise<{ result: Json | null } | null> {
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'steward_builds', ['finished_at', 'result'] as const, { workspace_id: workspaceId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'steward_builds', ['finished_at', 'result'] as const, { workspace_id: workspaceId })
     return data?.finished_at ? { result: data.result } : null
 }

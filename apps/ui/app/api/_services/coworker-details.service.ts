@@ -24,7 +24,7 @@ export async function deleteCoworker(ctx: WorkspaceContext, agentId: string): Pr
 
 export async function listCoworkerRoutines(ctx: WorkspaceContext, agentId: string): Promise<RoutinesView> {
     const { conn, engineAgentId } = await resolveAgentTarget(agentId, actorFromContext(ctx))
-    const [schedules, triggers, locale] = await Promise.all([listSchedules(conn, engineAgentId), listTriggers(conn, engineAgentId), recipientLocale(ctx.supabase, ctx.userId, ctx.workspace.id)])
+    const [schedules, triggers, locale] = await Promise.all([listSchedules(conn, engineAgentId), listTriggers(conn, engineAgentId), recipientLocale(ctx.scope, ctx.userId, ctx.workspace.id)])
     return {
         routines: [
             ...schedules.map(schedule => ({

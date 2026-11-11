@@ -15,7 +15,7 @@ import { PanelSteps } from '@/components/ui/panel-steps'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { useLumvikaCredit } from '@/hooks/useLumvikaCredit'
-import { useIsWorkspaceAdmin } from '@/supabase/session/SessionProvider'
+import { useIsWorkspaceAdmin } from '@/lib/auth/session/SessionProvider'
 import { useWorkspaceConnections } from '@/hooks/useWorkspaceConnections'
 import {
     keyProviders,

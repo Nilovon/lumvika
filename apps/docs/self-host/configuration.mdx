@@ -3,7 +3,7 @@ title: "Configuration"
 description: "Every variable of .env, what it does, and what happens when it is empty."
 ---
 
-Lumvika reads its settings from `.env` at the root of your clone. `.env.example` lists every variable with a comment, in the groups below. Four values are required, three are generated for you by `node scripts/self-host-check.mjs`, which also checks that Supabase answers with the schema in place, and the rest are optional.
+Lumvika reads its settings from `.env` at the root of your clone. `.env.example` lists every variable with a comment, in the groups below. `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_STORAGE_URL` and one way of sending email are required, the secrets are generated for you by `node scripts/self-host-check.mjs`, and the rest are optional.
 
 <Note>
   Variables starting with `NEXT_PUBLIC_` are read by the browser, so they are baked into the app when its image is built. After changing one, run `docker compose up -d --build`. Any other change only needs `docker compose up -d`.
@@ -16,13 +16,57 @@ Lumvika reads its settings from `.env` at the root of your clone. `.env.example`
 | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | **Required.** The address people open in their browser, without a trailing slash. Sign-in links, invitations and the servers you pair all point there. |
 | `LUMVIKA_APP_PORT` | `3000` | The port of this machine docker compose publishes the app on. |
 
-## Supabase
+## Postgres
+
+docker compose runs Postgres 17 with pgvector, in the `postgres-data` volume, and does not publish it outside Docker.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | empty | **Required.** The project URL from **Project settings > API**, or `http://localhost:54421` for the local stack. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | empty | **Required.** The publishable key (anon key on older projects). Safe in the browser. |
-| `SUPABASE_SECRET_KEY` | empty | **Required.** The secret key (service_role on older projects). It never reaches the browser. |
+| `POSTGRES_PASSWORD` | generated | The password of that Postgres. Set once: Postgres keeps the password it was created with, so changing it later locks the app out. |
+| `DATABASE_URL` | empty | A Postgres of your own instead, 17 with the `vector` extension available, as `postgres://user:password@host:5432/database`. Empty means the one docker compose runs. |
+| `DATABASE_POOL_MAX` | `10` | How many connections the app opens at most. Not in `.env.example`. |
+
+## Email
+
+People sign in with a code sent by email, so one of the first two is required.
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `RESEND_API_KEY` | empty | Sends every email through [Resend](https://resend.com). |
+| `SMTP_URL` | empty | Sends every email through this SMTP server when `RESEND_API_KEY` is empty, as `smtps://user:password@host:465`. |
+| `RESEND_FROM` | Resend's test sender | The sender of sign-in codes and notifications, as `Name <address>`. With Resend, an address on a domain verified there: the test sender only delivers to the address of your Resend account. |
+| `RESEND_MARKETING_FROM` | Resend's test sender | The sender of reminders and nudges, ideally on a domain of its own. |
+| `RESEND_REPLY_TO` | none | Where replies to every email go. |
+
+## File storage
+
+docker compose runs an S3-compatible store ([RustFS](https://rustfs.com)) in the `storage-data` volume. The `migrate` step creates its buckets.
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `S3_ACCESS_KEY_ID` | `lumvika` | The access key of the store. |
+| `S3_SECRET_ACCESS_KEY` | generated | Its secret key. |
+| `LUMVIKA_STORAGE_PORT` | `3002` | The port of this machine docker compose publishes the store on. |
+| `NEXT_PUBLIC_STORAGE_URL` | `http://localhost:3002` | **Required.** The address a browser loads files from: avatars, logos, template images. On a server, its `https` domain. See [On a server](/self-host/install#on-a-server). |
+| `S3_ENDPOINT` | empty | Another S3-compatible store instead (Cloudflare R2, AWS S3, MinIO): its API address. Empty means the one docker compose runs. |
+| `S3_REGION` | `auto` | The region of that store. |
+| `S3_BUCKET_PREFIX` | empty | A prefix for every bucket name, when the account holds other buckets. |
+
+## Sign-in
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `BETTER_AUTH_SECRET` | generated | Signs the sessions. Changing it signs everyone out. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | Sign-in with Google, from an OAuth client of the [Google Cloud console](https://console.cloud.google.com/apis/credentials). Its redirect URI is `<NEXT_PUBLIC_APP_URL>/api/auth/callback/google`. |
+| `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET` | empty | Sign in with Apple, from a Services ID of your Apple developer account. Its return URL is `<NEXT_PUBLIC_APP_URL>/api/auth/callback/apple`. |
+| `APPLE_APP_BUNDLE_IDENTIFIER` | empty | The bundle id of your build of the iOS app, for Sign in with Apple from the app. |
+| `NEXT_PUBLIC_OAUTH_PROVIDERS` | empty | `google`, `apple` or `google,apple` adds those buttons to the sign-in page. Set the provider's id and secret above first. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | empty | The site key of a Cloudflare Turnstile captcha on sign-up. |
+| `TURNSTILE_SECRET_KEY` | empty | Its secret key. |
+| `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` | empty | The site key of an hCaptcha puzzle, shown to a visitor Turnstile could not vouch for, or to every visitor when Turnstile is not set. |
+| `HCAPTCHA_SECRET_KEY` | empty | Its secret key. Without any captcha secret, no captcha. |
+
+The `NEXT_PUBLIC_` values are baked into the app when it is built: rebuild with `docker compose up -d --build` after changing them.
 
 ## The engine of your first workspace
 
@@ -47,13 +91,16 @@ Lumvika reads its settings from `.env` at the root of your clone. `.env.example`
 
 ## Secrets
 
-The two secrets are generated by `self-host-check.mjs` when empty. Keep them stable: changing one invalidates what it already signed.
+These secrets are generated by `self-host-check.mjs` when empty. Keep them stable: changing one invalidates what it already signed.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `STEWARD_HUB_TOKEN_SECRET` | generated | Signs the token the Steward calls the app with. |
 | `STEWARD_HUB_TOKEN_REQUIRED` | `1` | Makes the app refuse a Steward call without a valid token. `0` lets such a call through and logs it. Leave it at `1`. |
 | `BOARD_IMAGE_SECRET` | generated | Signs the board images the app captures for sharing. |
+| `UNSUBSCRIBE_SECRET` | generated | Signs the unsubscribe links of the emails. |
+| `PUBLISHED_ACCESS_SECRET` | generated | Signs the access to the sites and files the coworkers publish. |
+| `MOBILE_OAUTH_TICKET_SECRET` | generated | Signs the hand-off of a Google or Apple sign-in back to the iOS app. |
 
 ## Optional services
 
@@ -69,25 +116,15 @@ Each one switches a feature on. Empty means the feature is off, and the rest of 
 
 ## Set by docker compose
 
-`docker-compose.yml` sets these itself. You do not put them in `.env`.
+`docker-compose.yml` sets these itself. You do not put them in `.env`, except where a row says so.
 
 | Variable | Value | What it does |
 | --- | --- | --- |
+| `DATABASE_URL` | `postgres://lumvika:<POSTGRES_PASSWORD>@postgres:5432/lumvika` | Where the app and the `migrate` step reach Postgres, unless you set your own. |
+| `S3_ENDPOINT` | `http://storage:9000` | Where they reach the file store, unless you set your own. |
 | `LUMVIKA_ENGINE_URL` | `http://engine:3000` | Where the app reaches the engine of the first workspace, inside Docker. |
 | `LUMVIKA_HUB_BASE_URL` | `http://app:3000` | Where that engine calls the app back. |
 | `LUMVIKA_LOG_LEVEL` | `info` | How much the engine logs: `fatal`, `error`, `warn`, `info`, `debug` or `trace`. You can set it in `.env`. |
-
-## Sign-in
-
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `NEXT_PUBLIC_OAUTH_PROVIDERS` | empty | `google`, `apple` or `google,apple` adds those buttons to the sign-in page. Configure each provider on your Supabase project first. |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | empty | The site key of a Cloudflare Turnstile captcha on sign-up. |
-| `TURNSTILE_SECRET_KEY` | empty | Its secret key. |
-| `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` | empty | The site key of an hCaptcha puzzle, shown to a visitor Turnstile could not vouch for, or to every visitor when Turnstile is not set. |
-| `HCAPTCHA_SECRET_KEY` | empty | Its secret key. Without any captcha secret, no captcha. |
-
-The `NEXT_PUBLIC_` values are baked into the app when it is built: rebuild with `docker compose up -d --build` after changing them.
 
 ## Embeddings
 

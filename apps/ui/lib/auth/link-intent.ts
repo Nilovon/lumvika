@@ -10,6 +10,9 @@ export const ACCOUNT_PARAM = 'account'
 export const ACCOUNT_LINK_ERROR_PARAM = 'link_error'
 export const ACCOUNT_LINK_PROVIDER_PARAM = 'link_provider'
 
+// What Better Auth answers when the identity being linked already belongs to another account.
+export const IDENTITY_TAKEN = 'account_already_linked_to_different_user'
+
 export function rememberLinkIntent(provider: OAuthProvider) {
     document.cookie = `${LINK_INTENT_COOKIE}=${provider}; path=/; max-age=${LINK_INTENT_MAX_AGE_SECONDS}; samesite=lax`
 }
@@ -23,7 +26,7 @@ export type LinkErrorCopy = (key: 'identityTaken' | 'denied' | 'failed', values:
 
 export function linkErrorMessage(code: string, provider: OAuthProvider, t: LinkErrorCopy): string {
     const { label } = OAUTH_PROVIDER_CONFIG[provider]
-    if (code === 'identity_already_exists') return t('identityTaken', { provider: label })
+    if (code === IDENTITY_TAKEN) return t('identityTaken', { provider: label })
     if (code === 'access_denied') return t('denied', { provider: label })
     return t('failed', { provider: label })
 }

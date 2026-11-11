@@ -37,7 +37,7 @@ Before digging, make sure the bug is not already known or fixed:
 Production and staging are **read-only** here: read, never write, restart or redeploy.
 
 - Errors and logs around the reported time: PostHog (error tracking, session replay), Dokploy app
-  logs, Trigger.dev runs, Supabase logs.
+  logs, Trigger.dev runs, Postgres logs.
 - The rows involved in the database (through a read query, never an update).
 - What shipped in that area around that date: `git log --since=... -- <path>`, merged PRs.
 
@@ -45,10 +45,10 @@ Production and staging are **read-only** here: read, never write, restart or red
 
 Investigating on the real account is allowed, still read-only:
 
-- The workspace, its plan, its coworkers, its sessions and runs in Supabase.
+- The workspace, its plan, its coworkers, its sessions and runs in the database.
 - The engine box: find it through `engine_pool.claimed_by_workspace_id` (`engine_host`), then read
   through the engine API (`/agents/:id`, `/sessions/:sid/messages`, `/runs`, `/runs/:rid/tools`).
-  Transcripts live on the box, not in Supabase.
+  Transcripts live on the box, not in the database.
 - When the API is not enough, SSH into the box: engine logs, `journalctl`, the data-dir, disk and
   memory. Look only: no restart, no `lumvika update`, no file edited, no data deleted.
 - Read the model and provider the customer actually used before any reproduction, it changes the

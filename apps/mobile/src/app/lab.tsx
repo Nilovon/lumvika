@@ -29,7 +29,6 @@ import { SectionHeader } from '@/components/home/SectionHeader'
 import { WorkspaceMenuView } from '@/components/home/WorkspaceMenu'
 import { BUDDY_MOODS } from '@/components/buddy/look'
 import { CodeField } from '@/components/auth/CodeField'
-import { PhoneField } from '@/components/auth/PhoneField'
 import { StewardOrb } from '@/components/orb/StewardOrb'
 import { PillButton } from '@/components/ui/PillButton'
 import { UpdateRequired } from '@/components/update/UpdateRequired'
@@ -207,10 +206,10 @@ const LAB_INBOX: InboxItem[] = [
     { id: 'i-err', sessionId: 's4', sessionIds: ['s4'], agentId: 'agent-ledger', agentName: 'Ledger', status: 'error', title: 'Monthly close', message: 'The provider refused the request', updatedAt: LAB_AT, count: 1 },
     { id: 'i-done', sessionId: 's5', sessionIds: ['s5', 's6'], agentId: 'agent-recap', agentName: 'Recap', status: 'done', title: 'daily-digest', message: null, updatedAt: LAB_AT, count: 24 },
 ]
-const blobLogo = (file: string) => `${environment.supabaseUrl}/storage/v1/object/public/blob-illustrations/${file}`
+const labImage = (file: string) => `${environment.apiUrl}/${file}`
 const LAB_WORKSPACES: WorkspaceSummary[] = [
-    { id: 1, name: 'Acme Growth', iconUrl: blobLogo('green-energy-blob.webp'), plan: 'team', subscribed: true, role: 'admin' },
-    { id: 2, name: 'Lemon & Joy', iconUrl: blobLogo('amber-torus-knot.webp'), plan: 'solo', subscribed: true, role: 'admin' },
+    { id: 1, name: 'Acme Growth', iconUrl: labImage('icon-512.png'), plan: 'team', subscribed: true, role: 'admin' },
+    { id: 2, name: 'Lemon & Joy', iconUrl: labImage('icon-maskable-512.png'), plan: 'solo', subscribed: true, role: 'admin' },
     { id: 3, name: 'Northwind', iconUrl: null, plan: 'solo', subscribed: true, role: 'admin' },
     { id: 4, name: 'Broken logo', iconUrl: 'https://example.invalid/logo.png', plan: 'solo', subscribed: false, role: 'admin' },
 ]
@@ -251,7 +250,7 @@ function Voice({ scheme }: { scheme: ColorScheme }) {
                 <LabRecorderRow status="starting" />
                 <LabRecorderRow status="failed" error="silent" />
                 <VoiceUserMessage voice={LAB_VOICE_MESSAGE} owner={null} defaultTranscriptOpen />
-                <VoiceUserMessage voice={{ ...LAB_VOICE_MESSAGE, durationMs: 3_200, peaks: [], transcript: 'Perfect, send them.' }} owner={null} media={[{ url: blobLogo('green-energy-blob.webp'), name: 'Photo', image: true }]} />
+                <VoiceUserMessage voice={{ ...LAB_VOICE_MESSAGE, durationMs: 3_200, peaks: [], transcript: 'Perfect, send them.' }} owner={null} media={[{ url: labImage('icon-512.png'), name: 'Photo', image: true }]} />
                 <VoiceUserMessage voice={{ ...LAB_VOICE_MESSAGE, src: 'chat-uploads/from-chrome-voice.webm', durationMs: 64_000, transcript: '' }} owner={null} />
                 <Composer value="" onChangeText={noop} onSend={noop} onStop={noop} running={false} placeholder="Message Pulse" voice={LAB_VOICE} />
             </View>
@@ -445,10 +444,8 @@ export default function Lab() {
                     {(['light', 'dark'] as const).map(scheme => (
                         <ThemeScope key={scheme} scheme={scheme}>
                             <View style={{ gap: spacing.sm, padding: spacing.md, borderRadius: radius.lg, backgroundColor: palette[scheme].background, borderWidth: 1, borderColor: palette[scheme].border }}>
-                                <PhoneField country="FR" value="" onChangeText={noop} onPickCountry={noop} />
-                                <PhoneField country="FR" value="06 12 34 56 78" onChangeText={noop} onPickCountry={noop} invalid />
-                                <PillButton label="Send by WhatsApp" onPress={noop} />
-                                <PillButton label="Send by SMS" variant="secondary" onPress={noop} />
+                                <PillButton label="Send code" onPress={noop} />
+                                <PillButton label="Continue with email" variant="secondary" onPress={noop} />
                                 <PillButton label="Continue" loading onPress={noop} />
                                 <CodeField length={6} value="12" onChangeText={noop} onComplete={noop} disabled />
                                 <CodeField length={6} value="123456" onChangeText={noop} onComplete={noop} disabled invalid />

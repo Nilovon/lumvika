@@ -1,7 +1,7 @@
 // A "managed" service: Lumvika is the OAuth client (one app for everyone) AND the API gateway.
 // The agent's tool points at a Lumvika endpoint (/api/mcp/managed/<provider>), not the third
 // party. Lumvika runs the authenticated calls server-side, so the user never touches a
-// developer console. The OAuth token still lives on the ENGINE token store (never Supabase);
+// developer console. The OAuth token still lives on the ENGINE token store (never the database);
 // Lumvika only sees it transiently, forwarded per request in the Authorization header.
 
 export type ManagedToolDef = {

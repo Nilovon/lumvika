@@ -1,5 +1,5 @@
 // `@lumvika/ui` ships without @types/node; the URL relies on Next inlining the literal
-// `process.env.NEXT_PUBLIC_SUPABASE_URL` at build time in each consuming app.
+// `process.env.NEXT_PUBLIC_STORAGE_URL` at build time in each consuming app.
 declare const process: { env: Record<string, string | undefined> }
 
 export type BannerColor = 'amber' | 'green' | 'blue' | 'purple' | 'pink' | 'red' | 'pastel'
@@ -17,7 +17,7 @@ export type BannerIllustration = {
 const BANNER_BUCKET = 'banner-illustrations'
 
 export function bannerUrl(file: string): string {
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BANNER_BUCKET}/${file}`
+    return `${process.env.NEXT_PUBLIC_STORAGE_URL}/${BANNER_BUCKET}/${file}`
 }
 
 type BannerEntry = Omit<BannerIllustration, 'url'>

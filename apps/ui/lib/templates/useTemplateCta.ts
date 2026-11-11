@@ -13,7 +13,7 @@ import { usePriceArm, startPlan } from '@lumvika/cloud/billing.client'
 import { CreditCard, LayoutGridIcon, ShoppingBagIcon, type LucideIcon } from '@/lib/icons'
 import { useBoardStore } from '@/stores/board.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import type { LibraryTemplate } from './library'
 import { useTemplateImportFlow } from './useTemplateImportFlow'
 

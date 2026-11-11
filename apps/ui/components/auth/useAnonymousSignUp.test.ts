@@ -10,7 +10,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/app/(authflow)/auth/actions', () => ({
     completeSignupAction: vi.fn(),
     prepareAnonymousEmailStep: vi.fn(),
-    resendLiveSignInCode: vi.fn(),
 }))
 vi.mock('@/components/auth/AuthMethods', () => ({
     AuthMethods: ({ email }: { email: (beforeEmail: ReactNode) => ReactNode }) => email(null),
@@ -22,12 +21,10 @@ vi.mock('@/components/auth/OAuthSignInButton', () => ({ OAuthSignInButton: () =>
 vi.mock('@/components/auth/useSignupFunnel', () => ({
     useSignupFunnel: () => ({ setStep: vi.fn(), markConverted: vi.fn(), dismiss: vi.fn() }),
 }))
-vi.mock('@lumvika/cloud/phone', () => ({ PHONE_ENABLED: false }))
-vi.mock('@lumvika/cloud/phone.client', () => ({ PhoneSignIn: () => null }))
 vi.mock('@/lib/auth/oauth-providers', () => ({ ENABLED_OAUTH_PROVIDERS: [], isOAuthProvider: () => false }))
 vi.mock('@/stores/onboarding.store', () => ({ useOnboardingStore: (select: (s: { markResume: () => void }) => unknown) => select({ markResume: () => {} }) }))
-vi.mock('@/supabase/client', () => ({ createClient: () => ({ auth: {} }) }))
-vi.mock('@/supabase/session/SessionProvider', () => ({ useOptionalSession: () => null }))
+vi.mock('@/lib/auth/auth-client', () => ({ authClient: {}, authCall: vi.fn() }))
+vi.mock('@/lib/auth/session/SessionProvider', () => ({ useOptionalSession: () => null }))
 vi.mock('@lumvika/analytics/client', () => ({ setSharedCookie: vi.fn(), track: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 

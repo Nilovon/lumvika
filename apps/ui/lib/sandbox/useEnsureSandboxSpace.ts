@@ -5,7 +5,7 @@ import { ensureSandboxSpaceAction } from '@/app/api/_actions/workspace.actions'
 import { useSandboxArchiveStore } from '@/stores/sandbox-archive.store'
 import { useBoardStore } from '@/stores/board.store'
 import { useErrorText } from '@/hooks/useErrorText'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 

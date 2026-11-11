@@ -6,12 +6,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ATTENTION_STATUSES } from '@/lib/board/attention'
 import type { ChatErrorCopy } from '@/lib/chat-error'
 import type { SessionStatus } from '@/lib/board/types'
-import { ATTENTION_NOTIFICATION_COLUMNS, attentionDetailsOf, attentionNotificationsFilter, type AttentionDetail } from '@/lib/notifications/attention-details'
+import { loadAttentionRowsAction } from '@/app/api/_actions/session-reads.actions'
+import { attentionDetailsOf, type AttentionDetail } from '@/lib/notifications/attention-details'
 import type { NotificationReason } from '@/lib/notifications/routing'
 import { useBoardStore } from '@/stores/board.store'
-import { createClient } from '@/supabase/client'
-import { useSession } from '@/supabase/session/SessionProvider'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 export type AttentionSession = {
     id: string
@@ -70,12 +69,7 @@ export function useAttentionSessions(agentId?: string): AttentionSession[] {
 }
 
 async function loadAttentionDetails(sessionIds: string[], userId: string | undefined, tErrors: ChatErrorCopy): Promise<Record<string, AttentionDetail> | null> {
-    const supabase = createClient()
-    const { data: sessions } = await selectMany(supabase, 'sessions', ['id', 'agent_id', 'engine_session_id', 'title', 'updated_at'] as const, { id: { in: sessionIds } })
-    if (!sessions) return null
-
-    const filter = attentionNotificationsFilter(sessions)
-    const { data: notifications } = filter ? await selectMany(supabase, 'notifications', ATTENTION_NOTIFICATION_COLUMNS, filter, { column: 'created_at', ascending: false }) : { data: [] }
-
-    return attentionDetailsOf(sessions, notifications ?? [], userId, tErrors)
+    const rows = await loadAttentionRowsAction(sessionIds).catch(() => null)
+    if (!rows) return null
+    return attentionDetailsOf(rows.sessions, rows.notifications, userId, tErrors)
 }

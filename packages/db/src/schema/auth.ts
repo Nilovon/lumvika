@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { bigint, boolean, index, integer, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 // Better Auth's tables, shaped as its drizzle adapter reads them: camelCase fields on snake_case
@@ -68,7 +69,7 @@ export const authVerifications = authSchema.table(
 )
 
 export const authRateLimits = authSchema.table('rate_limits', {
-    id: text('id').primaryKey(),
+    id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
     key: text('key').notNull().unique('rate_limits_key_unique'),
     count: integer('count').notNull(),
     lastRequest: bigint('last_request', { mode: 'number' }).notNull(),

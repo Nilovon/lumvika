@@ -1,16 +1,14 @@
-// The five things a workspace does before it runs on its own, and the phone number of an account
-// whose signup asked for one. A step with a `panel` opens that settings dialog when clicked, the
-// payment method opens its card form, the phone the account dialog, and any other hands its
+// The five things a workspace does before it runs on its own. A step with a `panel` opens that
+// settings dialog when clicked, the payment method opens its card form, and any other hands its
 // `prompt` to the Steward, who walks them through.
 
-import { isPhoneStepDone, type PhoneStatus } from '@lumvika/cloud/phone'
 import type { WorkspaceDialogPanel } from '@/lib/settings/panels'
 import { BILLING_ENABLED } from '@lumvika/cloud/billing'
 
 export const GETTING_STARTED_REWARD_DAYS = 3
 
 export type GettingStartedStep = {
-    id: 'phone' | 'first_agent' | 'ai_provider' | 'invite' | 'schedule' | 'payment_method'
+    id: 'first_agent' | 'ai_provider' | 'invite' | 'schedule' | 'payment_method'
     prompt?: string
     panel?: WorkspaceDialogPanel
     // Catalog provider ids, drawn with ProviderIcon.
@@ -19,8 +17,7 @@ export type GettingStartedStep = {
 
 export type GettingStartedStepId = GettingStartedStep['id']
 
-// `phone` is null for an account that was never asked for a number: the step is not in its list.
-export type GettingStartedProgress = Record<Exclude<GettingStartedStepId, 'phone'>, boolean> & { phone: boolean | null }
+export type GettingStartedProgress = Record<GettingStartedStepId, boolean>
 
 // `null` when there is nothing to win: only a trial can be extended.
 export type GettingStartedReward = 'available' | 'granted' | null
@@ -28,7 +25,6 @@ export type GettingStartedReward = 'available' | 'granted' | null
 export type GettingStartedState = { progress: GettingStartedProgress; reward: GettingStartedReward }
 
 export const GETTING_STARTED_STEPS: readonly GettingStartedStep[] = [
-    { id: 'phone' },
     {
         id: 'first_agent',
         prompt: 'Help me create my first coworker',
@@ -51,11 +47,11 @@ export const GETTING_STARTED_STEPS: readonly GettingStartedStep[] = [
     { id: 'payment_method' },
 ]
 
-export const NO_PROGRESS: GettingStartedProgress = { phone: null, first_agent: false, ai_provider: false, invite: false, schedule: false, payment_method: false }
+export const NO_PROGRESS: GettingStartedProgress = { first_agent: false, ai_provider: false, invite: false, schedule: false, payment_method: false }
 
 // No card to add where nothing is sold.
-export function stepsOf(progress: GettingStartedProgress): readonly GettingStartedStep[] {
-    return GETTING_STARTED_STEPS.filter(step => progress[step.id] !== null && (BILLING_ENABLED || step.id !== 'payment_method'))
+export function stepsOf(_progress: GettingStartedProgress): readonly GettingStartedStep[] {
+    return GETTING_STARTED_STEPS.filter(step => BILLING_ENABLED || step.id !== 'payment_method')
 }
 
 export function doneCount(progress: GettingStartedProgress): number {
@@ -71,14 +67,12 @@ export function isComplete(progress: GettingStartedProgress): boolean {
 }
 
 // The rows of `workspace_getting_started`: the five workspace steps, the reservation of the trial
-// days, and the owner's "Hide". The phone is read off `user_phones`, it has no row here.
+// days, and the owner's "Hide".
 export const GETTING_STARTED_ITEMS = ['first_agent', 'ai_provider', 'invite', 'schedule', 'payment_method', 'reward', 'dismissed'] as const
 export type GettingStartedItem = (typeof GETTING_STARTED_ITEMS)[number]
 
-// `phone` is the status of the account looking at the list, null while it is not known yet.
-export function progressOf(items: ReadonlySet<string>, phone: PhoneStatus | null): GettingStartedProgress {
+export function progressOf(items: ReadonlySet<string>): GettingStartedProgress {
     return {
-        phone: phone === null || phone === 'none' ? null : isPhoneStepDone(phone),
         first_agent: items.has('first_agent'),
         ai_provider: items.has('ai_provider'),
         invite: items.has('invite'),

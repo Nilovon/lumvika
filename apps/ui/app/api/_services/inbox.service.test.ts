@@ -1,15 +1,15 @@
 import type { WorkspaceContext } from '@/app/api/_auth/ownership'
 import { visibleSpaceIds } from '@/app/api/_auth/access'
 import { markSessionsHandled } from '@/app/api/_services/conversation.service'
-import { createClient } from '@/supabase/server'
-import { selectCount, selectMany } from '@/supabase/supabase-helpers'
-import { fakeSupabase } from '@/test/supabase-fake'
+import { getRequestScope } from '@/lib/auth/session/request'
+import { callRows, selectCount, selectMany, upsertRows } from '@/lib/db'
+import { fakeScope } from '@/test/db-fake'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { listWorkspaceInbox, markInboxRead } from './inbox.service'
 
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany: vi.fn(), selectCount: vi.fn() }))
-vi.mock('@/supabase/server', () => ({ createClient: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany: vi.fn(), selectCount: vi.fn(), callRows: vi.fn(), upsertRows: vi.fn(async () => ({ data: [], error: null })) }))
+vi.mock('@/lib/auth/session/request', () => ({ getRequestScope: vi.fn() }))
 vi.mock('@/lib/i18n/recipient-locale', () => ({ recipientLocale: vi.fn(async () => 'en') }))
 vi.mock('@/app/api/_services/conversation.service', () => ({ markSessionsHandled: vi.fn() }))
 vi.mock('@/app/api/_auth/access', async importOriginal => {
@@ -17,17 +17,20 @@ vi.mock('@/app/api/_auth/access', async importOriginal => {
     return { ...actual, visibleSpaceIds: vi.fn(actual.visibleSpaceIds) }
 })
 
-const ctx = { userId: 'me', role: 'admin', boxScope: 'all', supabase: {}, workspace: { id: 7 } } as unknown as WorkspaceContext
+const ctx = { userId: 'me', role: 'admin', boxScope: 'all', scope: fakeScope(), workspace: { id: 7 } } as unknown as WorkspaceContext
 
 function unseenRun(sessionId: string, lastAt: string, extra: Partial<{ source: string; slug: string | null; run_count: number }> = {}) {
     return { session_id: sessionId, agent_id: 'a', title: `${sessionId} title`, source: 'dashboard', slug: null, message: `${sessionId} done`, last_at: lastAt, run_count: 1, ...extra }
 }
 
+const caller = fakeScope('user', 'me')
+
 function callerReturning(unseen: unknown[]) {
-    const db = fakeSupabase(table => (table === 'rpc:unseen_runs' ? { data: unseen } : undefined))
-    vi.mocked(createClient).mockResolvedValue(db.client as never)
-    return db
+    vi.mocked(getRequestScope).mockResolvedValue(caller)
+    vi.mocked(callRows).mockImplementation(async (scope, name) => (scope === caller && name === 'unseen_runs' ? { data: unseen, error: null } : { data: [], error: null }) as never)
 }
+
+const sessionReadsWritten = () => vi.mocked(upsertRows).mock.calls.filter(([scope, table]) => scope === caller && table === 'session_reads').map(call => call[2])
 
 describe('listWorkspaceInbox', () => {
     beforeEach(() => vi.clearAllMocks())
@@ -72,7 +75,7 @@ describe('listWorkspaceInbox', () => {
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [], error: null } as never)
 
         expect(await listWorkspaceInbox(ctx)).toEqual({ items: [], running: 0 })
-        expect(createClient).not.toHaveBeenCalled()
+        expect(getRequestScope).not.toHaveBeenCalled()
     })
 })
 
@@ -80,23 +83,23 @@ describe('markInboxRead', () => {
     beforeEach(() => vi.clearAllMocks())
 
     it('clears the waiting conversations and records the given ones as seen by the caller', async () => {
-        const db = callerReturning([])
+        callerReturning([])
 
         await markInboxRead(ctx, ['s1', 's2'])
 
         expect(markSessionsHandled).toHaveBeenCalledWith(ctx, ['s1', 's2'])
-        expect(db.writes('session_reads')[0].payload).toEqual([
+        expect(sessionReadsWritten()[0]).toEqual([
             { session_id: 's1', user_id: 'me' },
             { session_id: 's2', user_id: 'me' },
         ])
     })
 
     it('records every unseen run on all', async () => {
-        const db = callerReturning([unseenRun('s-chat', '2026-10-22T09:00:00Z')])
+        callerReturning([unseenRun('s-chat', '2026-10-22T09:00:00Z')])
 
         await markInboxRead(ctx, 'all')
 
         expect(markSessionsHandled).toHaveBeenCalledWith(ctx, 'all')
-        expect(db.writes('session_reads')[0].payload).toEqual([{ session_id: 's-chat', user_id: 'me' }])
+        expect(sessionReadsWritten()[0]).toEqual([{ session_id: 's-chat', user_id: 'me' }])
     })
 })

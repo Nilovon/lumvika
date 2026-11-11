@@ -13,7 +13,7 @@ import { useLibraryViewerSignals } from '@/lib/templates/useLibraryViewerSignals
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { isAgentShareFlowBusy, useAgentShareStore } from '@/stores/agent-share.store'
 import { isTemplateFlowBusy, useTemplateFlowStore } from '@/stores/template-flow.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useStewardStore } from '@/stores/steward.store'
 import type { SpacePublic } from '@/lib/board/types'
 

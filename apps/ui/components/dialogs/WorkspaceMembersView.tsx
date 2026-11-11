@@ -19,7 +19,7 @@ import { SkeletonList } from '@/components/ui/skeleton'
 import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import type { AuthorProfile } from '@/lib/chat/message-author'
 import { Loader2Icon } from '@/lib/icons'
-import type { WorkspaceRole } from '@/supabase/session/SessionProvider'
+import type { WorkspaceRole } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 

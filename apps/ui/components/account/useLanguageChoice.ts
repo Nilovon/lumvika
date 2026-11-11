@@ -2,7 +2,7 @@
 
 import { updateMyLocaleAction } from '@/app/api/_actions/account.actions'
 import type { LanguageChoice } from '@/components/account/LanguagePanel'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { isStableLocale, PSEUDO_LOCALE } from '@lumvika/i18n'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'

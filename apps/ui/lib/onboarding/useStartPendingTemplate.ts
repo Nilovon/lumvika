@@ -8,7 +8,7 @@ import { reportInstall } from '@/lib/templates/install-feedback'
 import { useTemplateImportFlow } from '@/lib/templates/useTemplateImportFlow'
 import { useBoardStore } from '@/stores/board.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 

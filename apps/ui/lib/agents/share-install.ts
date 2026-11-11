@@ -1,9 +1,7 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Actor } from '@/app/api/_auth/access'
-import type { Database } from '@/app/api/database.types'
 import { deriveUniqueHandle, importAgent } from '@/app/api/_services/agent.service'
 import { downloadPrivateFile } from '@/lib/storage/private'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, updateRows, type DbScope } from '@/lib/db'
 import { isOpaqueToken } from '@/lib/opaque-token'
 import type { GridPosition } from '@/lib/board/types'
 import { AppError } from '@/lib/i18n/action-error'
@@ -17,20 +15,20 @@ import { AGENT_SHARE_BUCKET, AGENT_SHARE_TOKEN_LENGTH } from './share-create'
 export type AgentShareInstallOutcome = { agentId: string; agentName: string; inactive: boolean; warnings: string[] }
 
 export async function installAgentShare(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     token: string,
     target: { workspaceId: number; spaceId: string; actor: Actor; position?: GridPosition },
 ): Promise<AgentShareInstallOutcome> {
     if (!isOpaqueToken(token, AGENT_SHARE_TOKEN_LENGTH)) throw new AppError('shareLinkGone')
 
-    const { data: share } = await selectMaybeSingle(supabase, 'agent_shares', ['id', 'archive_path', 'source_agent_name', 'install_count', 'revoked_at'] as const, { token })
+    const { data: share } = await selectMaybeSingle(scope, 'agent_shares', ['id', 'archive_path', 'source_agent_name', 'install_count', 'revoked_at'] as const, { token })
     // Revoked, swept, or never real: one message for all three, so the link cannot be used to
     // confirm that something once existed here.
     if (!share || share.revoked_at || !share.archive_path) throw new AppError('shareLinkGone')
 
     const name = share.source_agent_name
-    const handle = await deriveUniqueHandle(supabase, target.workspaceId, name)
-    const blob = await downloadPrivateFile(supabase, AGENT_SHARE_BUCKET, share.archive_path)
+    const handle = await deriveUniqueHandle(scope, target.workspaceId, name)
+    const blob = await downloadPrivateFile(scope, AGENT_SHARE_BUCKET, share.archive_path)
 
     let imported
     try {
@@ -42,10 +40,7 @@ export async function installAgentShare(
 
     // Informational only, and deliberately not a gate: the link has no install quota, so a lost
     // race here costs a wrong number on a panel, never a refused install.
-    await supabase
-        .from('agent_shares')
-        .update<Database['public']['Tables']['agent_shares']['Update']>({ install_count: share.install_count + 1 })
-        .eq('id', share.id)
+    await updateRows(scope, 'agent_shares', { install_count: share.install_count + 1 }, { id: share.id })
 
     const warnings: string[] = []
     // The engine is the only side that opened the tarball, so a refused entry is the one thing the

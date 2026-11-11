@@ -1,6 +1,6 @@
 import { logger, queue, schedules, task } from "@trigger.dev/sdk/v3";
-import { createServiceRoleClient } from "@/supabase/serviceRole";
-import { selectCount, selectMany, selectMaybeSingle } from "@/supabase/supabase-helpers";
+import { deleteAuthUser, listAnonymousUserIds } from "@/lib/auth/auth-users";
+import { deleteRows, selectCount, selectMany, selectMaybeSingle, serviceScope } from "@/lib/db";
 
 type PurgePayload = {
     createdAfter?: string;
@@ -17,10 +17,10 @@ function resolveRange({ createdAfter, createdBefore }: PurgePayload): { after: D
 
 // Deletes anonymous auth accounts created within the given range and their now-orphaned workspaces.
 // Anonymous visitors are provisioned (workspace + users + workspace_members) on first sight in
-// supabase/middleware.ts; deleting the auth user cascades public.users + workspace_members, but the
+// lib/auth/proxy-session.ts; deleting the auth user cascades public.users + workspace_members, but the
 // workspaces row is left behind, so we clean it up when nothing else references it.
 export async function purgeAnonymous(payload: PurgePayload) {
-    const supabase = createServiceRoleClient();
+    const scope = serviceScope();
     const { after, before } = resolveRange(payload);
 
     const candidateWorkspaceIds = new Set<number>();
@@ -28,38 +28,22 @@ export async function purgeAnonymous(payload: PurgePayload) {
     let deletedUsers = 0;
     let errors = 0;
 
-    // Collected before anything is deleted: a deletion shifts every later page of listUsers, so
-    // deleting while paging skips a page's worth of accounts each time.
-    const userIds: string[] = [];
-    for (let page = 1; ; page++) {
-        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
-        if (error) throw new Error(error.message);
-
-        const users = data.users;
-        if (users.length === 0) break;
-
-        for (const user of users) {
-            if (!user.is_anonymous) continue;
-            const createdAt = new Date(user.created_at);
-            if ((after && createdAt < after) || createdAt >= before) continue;
-            userIds.push(user.id);
-        }
-
-        if (users.length < 1000) break;
-    }
+    // Collected before anything is deleted, so the deletions cannot move what is left to read.
+    const userIds = await listAnonymousUserIds({ after, before });
 
     for (const userId of userIds) {
         scanned++;
 
-        const { data: memberships } = await selectMany(supabase, "workspace_members", ["workspace_id"] as const, { user_id: userId });
+        const { data: memberships } = await selectMany(scope, "workspace_members", ["workspace_id"] as const, { user_id: userId });
         for (const membership of memberships ?? []) {
             candidateWorkspaceIds.add(membership.workspace_id);
         }
 
-        const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-        if (deleteError) {
+        try {
+            await deleteAuthUser(userId);
+        } catch (deleteError) {
             errors++;
-            logger.error("failed to delete anonymous user", { userId, error: deleteError.message });
+            logger.error("failed to delete anonymous user", { userId, error: deleteError instanceof Error ? deleteError.message : String(deleteError) });
             continue;
         }
         deletedUsers++;
@@ -67,14 +51,14 @@ export async function purgeAnonymous(payload: PurgePayload) {
 
     let deletedWorkspaces = 0;
     for (const workspaceId of candidateWorkspaceIds) {
-        const { data: workspace } = await selectMaybeSingle(supabase, "workspaces", ["is_sandbox"] as const, { id: workspaceId });
+        const { data: workspace } = await selectMaybeSingle(scope, "workspaces", ["is_sandbox"] as const, { id: workspaceId });
         if (workspace?.is_sandbox) continue;
 
-        const { data: memberCount } = await selectCount(supabase, "workspace_members", { workspace_id: workspaceId });
-        const { data: spaceCount } = await selectCount(supabase, "spaces", { workspace_id: workspaceId });
+        const { data: memberCount } = await selectCount(scope, "workspace_members", { workspace_id: workspaceId });
+        const { data: spaceCount } = await selectCount(scope, "spaces", { workspace_id: workspaceId });
         if ((memberCount ?? 0) > 0 || (spaceCount ?? 0) > 0) continue;
 
-        const { error: workspaceError } = await supabase.from("workspaces").delete().eq("id", workspaceId);
+        const { error: workspaceError } = await deleteRows(scope, "workspaces", { id: workspaceId });
         if (workspaceError) {
             errors++;
             logger.error("failed to delete orphaned workspace", { workspaceId, error: workspaceError.message });

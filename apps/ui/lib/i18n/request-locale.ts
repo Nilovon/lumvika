@@ -2,18 +2,18 @@ import 'server-only'
 
 import { i18nFlag } from '@/flags'
 import { TIME_ZONE_COOKIE, validTimeZone } from '@/lib/i18n/time-zone'
-import { getSessionWorkspace } from '@/supabase/session/getServerSession'
+import { getSessionWorkspace } from '@/lib/auth/session/getServerSession'
 import { DEFAULT_LOCALE, LOCALE_COOKIE, matchLocale, PSEUDO_LOCALE, resolveLocale, type AppLocale } from '@lumvika/i18n'
 import { cookies, headers } from 'next/headers'
 import { cache } from 'react'
 
-const SUPABASE_SESSION_COOKIE = /^sb-.+-auth-token/
+const SESSION_COOKIE = /^(__Secure-)?lumvika\.session_token$/
 
 // The cookie mirrors the account's choice on the device that made it, so the account row is only
 // read on another device, and never for a visitor without a session. The users row comes from the
 // same cached read the dashboard makes anyway.
 async function storedAccountLocale(cookieStore: Awaited<ReturnType<typeof cookies>>): Promise<string | null> {
-    if (!cookieStore.getAll().some(cookie => SUPABASE_SESSION_COOKIE.test(cookie.name))) return null
+    if (!cookieStore.getAll().some(cookie => SESSION_COOKIE.test(cookie.name))) return null
     const { user } = await getSessionWorkspace()
     return user?.locale ?? null
 }

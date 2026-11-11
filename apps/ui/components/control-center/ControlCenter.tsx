@@ -24,7 +24,7 @@ import { selectStewardOpen, selectStewardVisible, useStewardStore } from '@/stor
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useShortcutsStore } from '@/stores/shortcuts.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { useIsWorkspaceAdmin, useSession } from '@/supabase/session/SessionProvider'
+import { useIsWorkspaceAdmin, useSession } from '@/lib/auth/session/SessionProvider'
 import type { BadgeTone } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'

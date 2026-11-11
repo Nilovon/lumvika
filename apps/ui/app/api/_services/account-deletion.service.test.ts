@@ -1,83 +1,109 @@
+import { authAccounts, authSessions, authUsers } from '@lumvika/db/schema'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeSupabase, writeMethodOf, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import { fakeScope, type DbCall } from '@/test/db-fake'
+
+vi.mock('server-only', () => ({}))
+
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+const auth = vi.hoisted(() => ({ writes: [] as { method: 'delete' | 'update'; table: unknown; values?: unknown }[] }))
+
+vi.mock('@/lib/db', async importOriginal => ({
+    ...(await importOriginal<object>()),
+    ...db.helpers,
+    inTransaction: async (scope: unknown, work: (scope: unknown) => Promise<unknown>) =>
+        work({
+            ...(scope as object),
+            run: (inner: (executor: unknown) => Promise<unknown>) =>
+                inner({
+                    delete: (table: unknown) => ({ where: async () => auth.writes.push({ method: 'delete', table }) }),
+                    update: (table: unknown) => ({ set: (values: unknown) => ({ where: async () => auth.writes.push({ method: 'update', table, values }) }) }),
+                }),
+        }),
+}))
 
 const mocks = vi.hoisted(() => ({
     subscriptionStillCharges: vi.fn(),
     stopWorkspaceCharges: vi.fn(),
     uninstallWorkspaceApps: vi.fn(),
-    listAvatars: vi.fn(),
-    removeAvatars: vi.fn(),
+    listObjects: vi.fn(),
+    removeObjects: vi.fn(),
 }))
 
 vi.mock('@lumvika/cloud/account', () => ({ subscriptionStillCharges: mocks.subscriptionStillCharges, stopWorkspaceCharges: mocks.stopWorkspaceCharges, uninstallWorkspaceApps: mocks.uninstallWorkspaceApps }))
+vi.mock('@lumvika/storage', () => ({ listObjects: mocks.listObjects, removeObjects: mocks.removeObjects }))
 
 const { accountDeletionBlockers, anonymizeAccount, ACCOUNT_DELETED_REASON } = await import('./account-deletion.service')
 
 const USER = 'user-leaving'
 const TEAMMATE = 'user-staying'
+const admin = fakeScope('service')
 
 type WorkspaceRow = { id: number; name: string; is_sandbox: boolean; stripe_customer_id: string | null; stripe_subscription_id: string | null; subscription_status: string | null }
 
 const SHARED: WorkspaceRow = { id: 1, name: 'Acme', is_sandbox: false, stripe_customer_id: 'cus_acme', stripe_subscription_id: 'sub_acme', subscription_status: 'active' }
 const OWN: WorkspaceRow = { id: 2, name: 'Side project', is_sandbox: false, stripe_customer_id: 'cus_side', stripe_subscription_id: 'sub_side', subscription_status: 'trialing' }
 
-const filtersOn = (calls: readonly SupabaseCall[], column: string) => calls.some(call => (call.method === 'eq' || call.method === 'in') && call.args[0] === column)
-
 type MemberRow = { workspace_id: number; user_id: string; role?: 'admin' | 'member' }
 
-function membersMatching(members: MemberRow[], calls: readonly SupabaseCall[]) {
+function matches(row: Record<string, unknown>, filters: Record<string, unknown>) {
+    return Object.entries(filters).every(([column, filter]) => {
+        if (Array.isArray(filter)) return filter.includes(row[column])
+        if (filter && typeof filter === 'object' && 'neq' in filter) return row[column] !== (filter as { neq: unknown }).neq
+        return row[column] === filter
+    })
+}
+
+function membersMatching(members: MemberRow[], call: DbCall) {
     const rows = members.map(member => ({ role: 'admin', ...member }) as Record<string, unknown>)
-    const matching = rows.filter(row =>
-        calls.every(call => {
-            if (call.method === 'eq') return row[call.args[0] as string] === call.args[1]
-            if (call.method === 'neq') return row[call.args[0] as string] !== call.args[1]
-            if (call.method === 'in') return (call.args[1] as unknown[]).includes(row[call.args[0] as string])
-            return true
-        }),
-    )
-    if ((calls.find(call => call.method === 'select')?.args[1] as { head?: boolean } | undefined)?.head) return { count: matching.length }
-    if (calls.some(call => call.method === 'maybeSingle')) return { data: matching[0] ?? null }
+    const filters = (call.helper === 'selectCount' ? call.args[0] : call.args[1]) as Record<string, unknown>
+    const matching = rows.filter(row => matches(row, filters))
+    if (call.helper === 'selectCount') return { data: matching.length }
+    if (call.helper === 'selectMaybeSingle') return { data: matching[0] ?? null }
     return { data: matching }
 }
 
-function world(workspaces: WorkspaceRow[], members: MemberRow[]): FakeSupabase {
-    const db = fakeSupabase((table, calls) => {
-        if (writeMethodOf(calls) || table.startsWith('rpc:')) return undefined
-        if (table === 'workspace_members') return membersMatching(members, calls)
-        if (table === 'workspaces') return { data: workspaces }
+const WRITES = new Set<DbCall['helper']>(['insertRows', 'insertRow', 'updateRows', 'deleteRows', 'upsertRows'])
+
+function world(workspaces: WorkspaceRow[], members: MemberRow[]) {
+    db.answer(call => {
+        if (WRITES.has(call.helper)) return undefined
+        if (call.table === 'workspace_members') return membersMatching(members, call)
+        if (call.table === 'workspaces') return { data: workspaces }
         return undefined
     })
-    Object.assign(db.client, { storage: { from: () => ({ list: mocks.listAvatars, remove: mocks.removeAvatars }) } })
-    return db
 }
+
+const writes = (table: string) => db.calls.filter(call => WRITES.has(call.helper) && call.table === table)
 
 beforeEach(() => {
     vi.clearAllMocks()
+    db.reset()
+    auth.writes = []
     mocks.stopWorkspaceCharges.mockResolvedValue(undefined)
     mocks.uninstallWorkspaceApps.mockResolvedValue(undefined)
     mocks.subscriptionStillCharges.mockResolvedValue(false)
-    mocks.listAvatars.mockResolvedValue({ data: [{ name: 'a.webp' }], error: null })
-    mocks.removeAvatars.mockResolvedValue({ data: [], error: null })
+    mocks.listObjects.mockResolvedValue({ data: [{ name: 'a.webp', size: 1, updatedAt: null }], error: null })
+    mocks.removeObjects.mockResolvedValue({ data: { removed: 1 }, error: null })
 })
 
 describe('accountDeletionBlockers', () => {
     it('names a workspace only this user is in whose plan still renews', async () => {
         mocks.subscriptionStillCharges.mockResolvedValue(true)
-        const db = world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
+        world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
 
-        await expect(accountDeletionBlockers(db.client, USER)).resolves.toEqual([{ workspaceId: OWN.id, name: OWN.name }])
+        await expect(accountDeletionBlockers(admin, USER)).resolves.toEqual([{ workspaceId: OWN.id, name: OWN.name }])
     })
 
     it('lets a workspace whose plan no longer charges go', async () => {
-        const db = world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
+        world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
 
-        await expect(accountDeletionBlockers(db.client, USER)).resolves.toEqual([])
+        await expect(accountDeletionBlockers(admin, USER)).resolves.toEqual([])
         expect(mocks.subscriptionStillCharges).toHaveBeenCalledExactlyOnceWith('sub_side')
     })
 
     it('leaves a shared workspace to its other members, whatever its plan', async () => {
-        const db = world(
+        world(
             [SHARED],
             [
                 { workspace_id: SHARED.id, user_id: USER },
@@ -85,7 +111,7 @@ describe('accountDeletionBlockers', () => {
             ]
         )
 
-        await expect(accountDeletionBlockers(db.client, USER)).resolves.toEqual([])
+        await expect(accountDeletionBlockers(admin, USER)).resolves.toEqual([])
         expect(mocks.subscriptionStillCharges).not.toHaveBeenCalled()
     })
 })
@@ -93,15 +119,16 @@ describe('accountDeletionBlockers', () => {
 describe('anonymizeAccount', () => {
     it('refuses without writing anything while a plan still renews', async () => {
         mocks.subscriptionStillCharges.mockResolvedValue(true)
-        const db = world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
+        world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
 
-        await expect(anonymizeAccount(db.client, USER)).resolves.toEqual({ ok: false, blockers: [{ workspaceId: OWN.id, name: OWN.name }] })
-        expect(db.chains.filter(chain => writeMethodOf(chain) || chain[0].method === 'rpc')).toEqual([])
+        await expect(anonymizeAccount(admin, USER)).resolves.toEqual({ ok: false, blockers: [{ workspaceId: OWN.id, name: OWN.name }] })
+        expect(db.calls.filter(call => WRITES.has(call.helper))).toEqual([])
+        expect(auth.writes).toEqual([])
         expect(mocks.stopWorkspaceCharges).not.toHaveBeenCalled()
     })
 
     it('leaves a shared workspace and shuts down an own one', async () => {
-        const db = world(
+        world(
             [SHARED, OWN],
             [
                 { workspace_id: SHARED.id, user_id: USER },
@@ -110,25 +137,22 @@ describe('anonymizeAccount', () => {
             ]
         )
 
-        await expect(anonymizeAccount(db.client, USER)).resolves.toEqual({ ok: true })
+        await expect(anonymizeAccount(admin, USER)).resolves.toEqual({ ok: true })
 
-        const [leave] = db.writes('workspace_members')
-        expect(leave.method).toBe('delete')
-        expect(leave.filters.map(call => call.args)).toEqual([
-            ['workspace_id', SHARED.id],
-            ['user_id', USER],
-        ])
+        const [leave] = writes('workspace_members')
+        expect(leave.helper).toBe('deleteRows')
+        expect(leave.args[0]).toEqual({ workspace_id: SHARED.id, user_id: USER })
 
-        expect(mocks.stopWorkspaceCharges).toHaveBeenCalledExactlyOnceWith(db.client, expect.objectContaining({ id: OWN.id, stripeCustomerId: 'cus_side', isSandbox: false }))
-        expect(mocks.uninstallWorkspaceApps).toHaveBeenCalledExactlyOnceWith(db.client, OWN.id)
-        const [agents] = db.writes('agents')
-        expect(agents.payload).toMatchObject({ disabled_reason: ACCOUNT_DELETED_REASON })
-        expect(agents.filters.map(call => call.args)).toContainEqual(['workspace_id', OWN.id])
-        expect(db.writes('workspaces').map(write => write.filters[0].args)).toEqual([['id', OWN.id]])
+        expect(mocks.stopWorkspaceCharges).toHaveBeenCalledExactlyOnceWith(admin, expect.objectContaining({ id: OWN.id, stripeCustomerId: 'cus_side', isSandbox: false }))
+        expect(mocks.uninstallWorkspaceApps).toHaveBeenCalledExactlyOnceWith(admin, OWN.id)
+        const [agents] = writes('agents')
+        expect(agents.args[0]).toMatchObject({ disabled_reason: ACCOUNT_DELETED_REASON })
+        expect(agents.args[1]).toEqual({ workspace_id: OWN.id, disabled_at: { isNull: true } })
+        expect(writes('workspaces').map(write => write.args[1])).toEqual([{ id: OWN.id }])
     })
 
     it('hands a shared workspace to the earliest teammate when its last admin leaves', async () => {
-        const db = world(
+        world(
             [SHARED],
             [
                 { workspace_id: SHARED.id, user_id: USER, role: 'admin' },
@@ -136,19 +160,16 @@ describe('anonymizeAccount', () => {
             ]
         )
 
-        await expect(anonymizeAccount(db.client, USER)).resolves.toEqual({ ok: true })
+        await expect(anonymizeAccount(admin, USER)).resolves.toEqual({ ok: true })
 
-        const [promote, leave] = db.writes('workspace_members')
-        expect(promote).toMatchObject({ method: 'update', payload: { role: 'admin' } })
-        expect(promote.filters.map(call => call.args)).toEqual([
-            ['workspace_id', SHARED.id],
-            ['user_id', TEAMMATE],
-        ])
-        expect(leave.method).toBe('delete')
+        const [promote, leave] = writes('workspace_members')
+        expect(promote.helper).toBe('updateRows')
+        expect(promote.args.slice(0, 2)).toEqual([{ role: 'admin' }, { workspace_id: SHARED.id, user_id: TEAMMATE }])
+        expect(leave.helper).toBe('deleteRows')
     })
 
     it('promotes no one when another admin stays', async () => {
-        const db = world(
+        world(
             [SHARED],
             [
                 { workspace_id: SHARED.id, user_id: USER, role: 'admin' },
@@ -156,31 +177,35 @@ describe('anonymizeAccount', () => {
             ]
         )
 
-        await expect(anonymizeAccount(db.client, USER)).resolves.toEqual({ ok: true })
+        await expect(anonymizeAccount(admin, USER)).resolves.toEqual({ ok: true })
 
-        expect(db.writes('workspace_members').map(write => write.method)).toEqual(['delete'])
+        expect(writes('workspace_members').map(write => write.helper)).toEqual(['deleteRows'])
     })
 
     it('erases what points to the person, then files the auth row under a dead address, last', async () => {
-        const db = world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
+        world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
 
-        await anonymizeAccount(db.client, USER)
+        await anonymizeAccount(admin, USER)
 
-        expect(db.writes('user_phones')).toEqual([expect.objectContaining({ method: 'delete' })])
-        expect(db.writes('sign_in_codes')).toEqual([expect.objectContaining({ method: 'delete' })])
-        expect(db.writes('users')[0].payload).toMatchObject({ onboarding_answers: null, deleted_at: expect.any(String) })
-        expect(mocks.removeAvatars).toHaveBeenCalledWith([`${USER}/a.webp`])
+        expect(writes('user_presence')).toEqual([expect.objectContaining({ helper: 'deleteRows' })])
+        expect(writes('users')[0].args[0]).toMatchObject({ onboarding_answers: null, deleted_at: expect.any(String) })
+        expect(mocks.listObjects).toHaveBeenCalledWith('user-avatars', USER)
+        expect(mocks.removeObjects).toHaveBeenCalledWith('user-avatars', [`${USER}/a.webp`])
 
-        const last = db.chains.at(-1)!
-        expect(last[0]).toEqual({ table: 'rpc:anonymize_auth_user', method: 'rpc', args: ['anonymize_auth_user', { p_user_id: USER, p_email: `${USER}@deleted.lumvika.com` }] })
+        expect(auth.writes.map(write => [write.method, write.table])).toEqual([
+            ['delete', authSessions],
+            ['delete', authAccounts],
+            ['update', authUsers],
+        ])
+        expect(auth.writes[2].values).toMatchObject({ email: `${USER}@deleted.lumvika.com`, name: '', image: null })
     })
 
     it('stops before the auth row when billing could not be stopped', async () => {
         mocks.stopWorkspaceCharges.mockRejectedValue(new Error('Stripe is down'))
-        const db = world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
+        world([OWN], [{ workspace_id: OWN.id, user_id: USER }])
 
-        await expect(anonymizeAccount(db.client, USER)).rejects.toThrow('Stripe is down')
-        expect(db.chainsOn('rpc:anonymize_auth_user')).toEqual([])
-        expect(db.writes('users')).toEqual([])
+        await expect(anonymizeAccount(admin, USER)).rejects.toThrow('Stripe is down')
+        expect(auth.writes).toEqual([])
+        expect(writes('users')).toEqual([])
     })
 })

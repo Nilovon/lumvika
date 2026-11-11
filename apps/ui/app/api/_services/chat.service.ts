@@ -1,12 +1,10 @@
 import { COWORKER_NOT_FOUND, assertSessionInWorkspace, enforce, requireLightSessionActor, spaceAccessFor, visibleSpaceIds, type AccessLevel, type Actor } from '@/app/api/_auth/access'
 import { AuthorizationError, requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import type { Database } from '@/app/api/database.types'
 import type { SessionStatus } from '@/lib/board/types'
 import { getRunSteps, listRuns } from '@/lib/engine/client'
 import type { EngineConnection, EngineRun, SessionSource } from '@/lib/engine/types'
 import { STEWARD_AGENT_ID, type SessionKind, type Usage } from '@lumvika/contracts'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectManyWithJoins, selectMaybeSingle, selectMaybeSingleWithJoins } from '@/supabase/supabase-helpers'
+import { insertRow, selectMany, selectManyWithJoins, selectMaybeSingle, selectMaybeSingleWithJoins, serviceScope, updateRows, upsertRows } from '@/lib/db'
 import { isTemplateContentLocked } from '@/lib/templates/content-lock'
 import { isPlanLimited } from './capacity.service'
 import { findWorkspaceEngine, NoEngineError, type WorkspaceEngine } from './workspace-engine.service'
@@ -21,7 +19,7 @@ export type AgentChatTarget = {
 
 // Ownership and access gate. This is the single chokepoint for the agent server actions, /api/chat,
 // the v1 routes and the MCP account server, all of which then talk to the engine/DB via the
-// service-role client (which bypasses RLS), so we re-establish object-level authz in code: the agent
+// service scope (which bypasses RLS), so we re-establish object-level authz in code: the agent
 // has to sit in the caller's workspace, and in a Box the caller reaches at the level asked (`use` to
 // talk to it and read it, `manage` to change what it is). `actor` is passed in when the caller is not
 // the browser session: a v1 route's context, an API key or a steward turn (the workspace itself).
@@ -46,7 +44,7 @@ export async function getAgentChatTarget(agentId: string, access: AccessLevel = 
 export async function resolveRunTarget(agentId: string, access: AccessLevel = 'use'): Promise<AgentChatTarget> {
     if (agentId !== STEWARD_AGENT_ID) return getAgentChatTarget(agentId, access)
     const ctx = await requireWorkspaceContext()
-    if (ctx.authUser.is_anonymous) throw new AuthorizationError('coworkerNotFound')
+    if (ctx.authUser.isAnonymous) throw new AuthorizationError('coworkerNotFound')
     const engine = await findWorkspaceEngine(ctx.workspace.id)
     if (!engine) throw new NoEngineError()
     return { conn: engine.conn, engineAgentId: STEWARD_AGENT_ID, contentLocked: false }
@@ -54,7 +52,7 @@ export async function resolveRunTarget(agentId: string, access: AccessLevel = 'u
 
 async function fetchAgentRow(agentId: string) {
     const { data } = await selectMaybeSingleWithJoins(
-        createServiceRoleClient(),
+        serviceScope(),
         'agents',
         ['workspace_id', 'space_id', 'engine_agent_id', 'template_id', 'disabled_at', 'disabled_reason'] as const,
         {
@@ -102,7 +100,7 @@ export async function resolveAgentTargetForTrigger(agentId: string): Promise<Age
     }
 }
 
-// Resolve an existing Supabase session row to its engine session id.
+// Resolve an existing session row to its engine session id.
 export async function getExistingSession(sessionId: string): Promise<{ sessionId: string; agentId: string; engineSessionId: string | null }> {
     const session = await assertSessionInWorkspace(sessionId)
     return { sessionId: session.id, agentId: session.agent_id, engineSessionId: session.engine_session_id || null }
@@ -126,14 +124,13 @@ export class GeneralAlreadyOpenError extends Error {
 // General shows a thread under the message it opened with: the hub keeps that much of it, and no more.
 export const FIRST_MESSAGE_MAX_CHARS = 300
 
-// Persist a Supabase session row pointing at the engine-created session. A `general` row is the
+// Persist a session row pointing at the engine-created session. A `general` row is the
 // coworker's main conversation: fixed title, one per coworker, and no opening message to show.
 export async function createSessionRow(agentId: string, engineSessionId: string, title: string, originAgentId?: string | null, source?: SessionSource, kind: SessionKind = 'thread', firstMessage?: string | null): Promise<string> {
-    const supabase = createServiceRoleClient()
-
-    const { data: session, error } = await supabase
-        .from('sessions')
-        .insert<Database['public']['Tables']['sessions']['Insert']>({
+    const { data: session, error } = await insertRow(
+        serviceScope(),
+        'sessions',
+        {
             agent_id: agentId,
             engine_session_id: engineSessionId,
             title: kind === 'general' ? GENERAL_SESSION_TITLE : title?.slice(0, 50) || 'New conversation',
@@ -141,9 +138,9 @@ export async function createSessionRow(agentId: string, engineSessionId: string,
             source: source ?? 'dashboard',
             kind,
             first_message: kind === 'general' ? null : firstMessage?.trim().slice(0, FIRST_MESSAGE_MAX_CHARS) || null,
-        })
-        .select('id')
-        .single()
+        },
+        ['id'],
+    )
 
     if (!session) {
         if (kind === 'general' && error?.code === UNIQUE_VIOLATION) {
@@ -158,7 +155,7 @@ export async function createSessionRow(agentId: string, engineSessionId: string,
 
 // The coworker's main conversation, once someone has spoken in it.
 export async function findGeneralSession(agentId: string): Promise<GeneralSession | null> {
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'sessions', ['id', 'engine_session_id'] as const, { agent_id: agentId, kind: 'general' })
+    const { data } = await selectMaybeSingle(serviceScope(), 'sessions', ['id', 'engine_session_id'] as const, { agent_id: agentId, kind: 'general' })
     return data ? { id: data.id, engineSessionId: data.engine_session_id } : null
 }
 
@@ -172,9 +169,9 @@ export async function findGeneralSession(agentId: string): Promise<GeneralSessio
 // moment the run reports anything: conflicting is the expected outcome, not a failure, and the row
 // already there keeps the status it earned rather than being pushed back to `working`.
 export async function ensureSessionRow(agentId: string, engineSessionId: string, title: string, options?: { source?: SessionSource; originAgentId?: string | null; status?: SessionStatus }): Promise<string | null> {
-    const supabase = createServiceRoleClient()
-
-    const { error } = await supabase.from('sessions').upsert<Database['public']['Tables']['sessions']['Insert']>(
+    const { error } = await upsertRows(
+        serviceScope(),
+        'sessions',
         {
             agent_id: agentId,
             engine_session_id: engineSessionId,
@@ -184,7 +181,7 @@ export async function ensureSessionRow(agentId: string, engineSessionId: string,
             status: options?.status ?? 'idle',
             automation_name: options?.source === 'schedule' || options?.source === 'trigger' ? title : null,
         },
-        { onConflict: 'engine_session_id', ignoreDuplicates: true },
+        { onConflict: ['engine_session_id'], ignoreDuplicates: true },
     )
     // Never thrown: the message is already on its way to the agent, and failing the caller here
     // would report a run that did start as one that never happened.
@@ -198,19 +195,17 @@ export async function ensureSessionRow(agentId: string, engineSessionId: string,
 
 // The row the agent panel opens a conversation on, for a session the engine names.
 export async function sessionRowOf(agentId: string, engineSessionId: string): Promise<string | null> {
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'sessions', ['id'] as const, { agent_id: agentId, engine_session_id: engineSessionId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'sessions', ['id'] as const, { agent_id: agentId, engine_session_id: engineSessionId })
     return data?.id ?? null
 }
 
 export async function updateSessionStatus(sessionId: string, status: SessionStatus) {
-    const supabase = createServiceRoleClient()
-    await supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ status }).eq('id', sessionId)
+    await updateRows(serviceScope(), 'sessions', { status }, { id: sessionId })
 }
 
 // Acknowledging an alert only clears that alert: a run started since then owns the status now.
 export async function clearSessionAlert(sessionId: string) {
-    const supabase = createServiceRoleClient()
-    await supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ status: 'idle' }).eq('id', sessionId).eq('status', 'awaiting_ack')
+    await updateRows(serviceScope(), 'sessions', { status: 'idle' }, { id: sessionId, status: 'awaiting_ack' })
 }
 
 // A decided skill proposal only clears the wait it raised itself. The status alone cannot tell: a
@@ -218,16 +213,16 @@ export async function clearSessionAlert(sessionId: string) {
 // an answer. What the session waits on is the latest thing its agent said that was not a `done`.
 export async function clearSkillProposalAttention(sessionId: string, agentId: string, engineSessionId: string | null) {
     if (!engineSessionId) return
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMany(supabase, 'notifications', ['metadata'] as const, { agent_id: agentId, engine_session_id: engineSessionId, kind: { neq: 'done' } }, { column: 'created_at', ascending: false }, 1)
+    const scope = serviceScope()
+    const { data } = await selectMany(scope, 'notifications', ['metadata'] as const, { agent_id: agentId, engine_session_id: engineSessionId, kind: { neq: 'done' } }, { column: 'created_at', ascending: false }, 1)
     const waitingOn = (data?.[0]?.metadata as { toolName?: unknown } | null | undefined)?.toolName
     if (waitingOn !== 'skill_propose') return
-    await supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ status: 'idle' }).eq('id', sessionId).eq('status', 'awaiting_approval')
+    await updateRows(scope, 'sessions', { status: 'idle' }, { id: sessionId, status: 'awaiting_approval' })
 }
 
 export type SessionEngineContext = { agentId: string; conn: EngineConnection; engineAgentId: string; engineSessionId: string | null }
 
-// Full engine context for a Supabase session (used to replay history).
+// Full engine context for a session (used to replay history).
 export async function getSessionEngineContext(sessionId: string): Promise<SessionEngineContext | null> {
     const actor = requireLightSessionActor()
     const [session, engine] = await Promise.all([assertSessionInWorkspace(sessionId, actor), actor.then(a => findWorkspaceEngine(a.workspaceId))])
@@ -308,7 +303,7 @@ export async function findIdleSessions(sessionIds: string[], actor?: Actor): Pro
     const callerActor = actor ? Promise.resolve(actor) : requireLightSessionActor()
     const [resolvedActor, { data: rows }, engine] = await Promise.all([
         callerActor,
-        selectManyWithJoins(createServiceRoleClient(), 'sessions', ['id', 'engine_session_id'] as const, { agent: { table: 'agents', foreignKey: 'agents!sessions_agent_id_fkey', columns: ['workspace_id', 'space_id', 'engine_agent_id'] } } as const, { id: sessionIds }),
+        selectManyWithJoins(serviceScope(), 'sessions', ['id', 'engine_session_id'] as const, { agent: { table: 'agents', foreignKey: 'agents!sessions_agent_id_fkey', columns: ['workspace_id', 'space_id', 'engine_agent_id'] } } as const, { id: sessionIds }),
         callerActor.then(a => findWorkspaceEngine(a.workspaceId)),
     ])
     const visible = await visibleSpaceIds(resolvedActor)

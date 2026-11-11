@@ -59,7 +59,7 @@ export async function findIdleSessionsAction(sessionIds: string[]): Promise<stri
 
 // Run currently in flight on a session, so a conversation opened from the history can attach to
 // its stream instead of watching a loader spin. The engine is the only source of truth here: a
-// run started by a schedule or a trigger has no run id anywhere in Supabase.
+// run started by a schedule or a trigger has no run id anywhere in the database.
 export async function fetchSessionActiveRun(sessionId: string): Promise<string | null> {
     return findSessionActiveRun(sessionId)
 }

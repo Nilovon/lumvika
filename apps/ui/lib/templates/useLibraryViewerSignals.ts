@@ -3,7 +3,7 @@
 import type { OnboardingAnswers } from '@/app/actions/onboarding'
 import type { ViewerSignals } from '@/lib/templates/library-view'
 import { workTypeTemplateCategory } from '@/lib/onboarding/work-types'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useMemo } from 'react'
 
 // What the workspace's profile says about its viewer, which ranks the library's "For you" picks.

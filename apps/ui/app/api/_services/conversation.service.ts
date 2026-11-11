@@ -9,10 +9,9 @@ import { sanitizeIlike } from '@/lib/search/ilike'
 import { cancelRun, getSession, getSessionMessages, listRuns, listSessions, listSkillProposals } from '@/lib/engine/client'
 import type { EngineSkillProposal, SessionSource } from '@/lib/engine/types'
 import { ATTENTION_STATUSES, needsHuman, sessionStatusSchema, type AgentConversationsOverview, type Conversation, type ConversationHit, type SessionKind, type SessionOutcome, type SessionStatus, type ToHandleList } from '@lumvika/contracts'
-import type { Database } from '@/app/api/database.types'
-import { createClient } from '@/supabase/server'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectCount, selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getRequestScope } from '@/lib/auth/session/request'
+import { callRows, selectCount, selectMany, selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
+import type { UnseenRun } from '@/lib/notifications/unseen-runs'
 
 export type SessionHistoryEntry = {
     id: string | null
@@ -30,42 +29,42 @@ export type SessionHistoryEntry = {
     createdAt: string
 }
 
-// Session history for an agent: Supabase-mirrored sessions merged with
+// Session history for an agent: the mirrored session rows merged with
 // engine-only sessions that were initiated by another agent (call_agent),
 // so those show up in the history like regular ones until adopted.
 export async function listAgentSessions(agentId: string, actor?: Actor): Promise<SessionHistoryEntry[]> {
     const { actor: caller } = await assertAgentAccess(agentId, 'use', actor)
 
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
     const [{ data: rows }, target] = await Promise.all([
-        selectMany(supabase, 'sessions', ['id', 'title', 'status', 'updated_at', 'created_at', 'engine_session_id', 'origin_agent_id', 'source', 'automation_name', 'outcome', 'kind'] as const, { agent_id: agentId }),
+        selectMany(scope, 'sessions', ['id', 'title', 'status', 'updated_at', 'created_at', 'engine_session_id', 'origin_agent_id', 'source', 'automation_name', 'outcome', 'kind'] as const, { agent_id: agentId }),
         resolveAgentTarget(agentId, caller).catch(() => null),
     ])
-    const supabaseRows = rows ?? []
+    const mirroredRows = rows ?? []
 
     const engineSessions = target ? await listSessions(target.conn, target.engineAgentId).catch(() => []) : []
 
-    const mirrored = new Set(supabaseRows.map(r => r.engine_session_id))
+    const mirrored = new Set(mirroredRows.map(r => r.engine_session_id))
     const unmirrored = engineSessions.filter(s => s.originAgentId && !mirrored.has(s.id))
 
     const engineOriginIds = [...new Set(unmirrored.map(s => s.originAgentId).filter((v): v is string => !!v))]
-    const supabaseOriginIds = [...new Set(supabaseRows.map(r => r.origin_agent_id).filter((v): v is string => !!v))]
+    const mirroredOriginIds = [...new Set(mirroredRows.map(r => r.origin_agent_id).filter((v): v is string => !!v))]
 
     const byEngineId = new Map<string, { id: string; name: string }>()
     if (engineOriginIds.length > 0) {
-        const { data } = await selectMany(supabase, 'agents', ['id', 'engine_agent_id', 'name'] as const, { engine_agent_id: { in: engineOriginIds } })
+        const { data } = await selectMany(scope, 'agents', ['id', 'engine_agent_id', 'name'] as const, { engine_agent_id: { in: engineOriginIds } })
         for (const a of data ?? []) if (a.engine_agent_id) byEngineId.set(a.engine_agent_id, { id: a.id, name: a.name })
     }
 
     const namesById = new Map<string, string>()
-    if (supabaseOriginIds.length > 0) {
-        const { data } = await selectMany(supabase, 'agents', ['id', 'name'] as const, { id: { in: supabaseOriginIds } })
+    if (mirroredOriginIds.length > 0) {
+        const { data } = await selectMany(scope, 'agents', ['id', 'name'] as const, { id: { in: mirroredOriginIds } })
         for (const a of data ?? []) namesById.set(a.id, a.name)
     }
 
     const entries: SessionHistoryEntry[] = [
-        ...supabaseRows.map(r => ({
+        ...mirroredRows.map(r => ({
             id: r.id,
             agentId,
             engineSessionId: r.engine_session_id,
@@ -119,16 +118,15 @@ export type ThreadRow = {
 
 export const THREAD_COLUMNS = ['id', 'title', 'status', 'source', 'created_at', 'updated_at', 'origin_agent_id', 'automation_name', 'outcome', 'first_message'] as const
 
-// PostgREST caps a select at 1000 rows: General shows the newest threads, the Threads list stays
-// the way to every older one.
+// General shows the newest threads, the Threads list stays the way to every older one.
 export const THREAD_FEED_LIMIT = 200
 
-// The threads General hangs under its messages, newest first. Read from Supabase alone: the engine
+// The threads General hangs under its messages, newest first. Read from the database alone: the engine
 // mirrors every conversation it opens on its own (`agent.session.created`), and the live state
 // comes from the board store, so there is nothing to ask the Box for here.
 export async function listAgentThreads(agentId: string, actor?: Actor): Promise<ThreadRow[]> {
     await assertAgentAccess(agentId, 'use', actor)
-    const { data, error } = await selectMany(createServiceRoleClient(), 'sessions', THREAD_COLUMNS, { agent_id: agentId, kind: 'thread' }, { column: 'created_at', ascending: false }, THREAD_FEED_LIMIT)
+    const { data, error } = await selectMany(serviceScope(), 'sessions', THREAD_COLUMNS, { agent_id: agentId, kind: 'thread' }, { column: 'created_at', ascending: false }, THREAD_FEED_LIMIT)
     if (error) throw error
     return (data ?? []).map(row => ({
         id: row.id,
@@ -151,12 +149,12 @@ export async function listAgentConversations(ctx: WorkspaceContext, agentId: str
     const waiting = entries.flatMap(entry => (entry.id && needsHuman(entry.status) ? [{ id: entry.id, agent_id: entry.agentId, engine_session_id: entry.engineSessionId, title: entry.title, updated_at: entry.updatedAt }] : []))
     const filter = attentionNotificationsFilter(waiting)
 
-    // `unseen_runs` answers for `auth.uid()`: it runs as the caller, not through the service role.
-    const asCaller = await createClient()
+    // `unseen_runs` answers for `auth.uid()`: it runs as the caller, not through the service scope.
+    const asCaller = await getRequestScope()
     const [unseen, notifications, tErrors] = await Promise.all([
-        asCaller.rpc('unseen_runs', { p_workspace_id: ctx.workspace.id }),
-        filter ? selectMany(ctx.supabase, 'notifications', ATTENTION_NOTIFICATION_COLUMNS, filter, { column: 'created_at', ascending: false }) : { data: [], error: null },
-        recipientLocale(ctx.supabase, ctx.userId, ctx.workspace.id).then(locale => translatorFor(locale, 'chatErrors')),
+        callRows<UnseenRun>(asCaller, 'unseen_runs', { p_workspace_id: ctx.workspace.id }),
+        filter ? selectMany(ctx.scope, 'notifications', ATTENTION_NOTIFICATION_COLUMNS, filter, { column: 'created_at', ascending: false }) : { data: [], error: null },
+        recipientLocale(ctx.scope, ctx.userId, ctx.workspace.id).then(locale => translatorFor(locale, 'chatErrors')),
     ])
     const unseenIds = unseen.error ? null : new Set((unseen.data ?? []).filter(run => run.agent_id === agentId).map(run => run.session_id))
     const details = notifications.error ? {} : attentionDetailsOf(waiting, notifications.data ?? [], ctx.userId, tErrors)
@@ -170,7 +168,7 @@ export async function listAgentConversations(ctx: WorkspaceContext, agentId: str
 
 // The workspace's coworkers whose Box the caller reaches: every list of conversations stops there.
 async function reachableAgents(ctx: WorkspaceContext): Promise<{ id: string; name: string }[]> {
-    const [{ data, error }, spaces] = await Promise.all([selectMany(ctx.supabase, 'agents', ['id', 'name', 'space_id'] as const, { workspace_id: ctx.workspace.id }), visibleSpaceIds(actorFromContext(ctx))])
+    const [{ data, error }, spaces] = await Promise.all([selectMany(ctx.scope, 'agents', ['id', 'name', 'space_id'] as const, { workspace_id: ctx.workspace.id }), visibleSpaceIds(actorFromContext(ctx))])
     if (error) throw error
     return keepVisible(data ?? [], spaces, agent => agent.space_id)
 }
@@ -181,9 +179,8 @@ const OVERVIEW_COLUMNS = ['id', 'agent_id', 'title', 'status', 'updated_at', 'en
 // errored one is not counted, the row says "Error" on its own.
 const PENDING_STATUSES = ['awaiting_question', 'awaiting_approval', 'awaiting_connector', 'awaiting_ack'] as const
 
-// PostgREST caps a select at 1000 rows, so the scan that finds each agent's latest conversation is
-// ordered and bounded explicitly rather than left to that cap (see the board's live sessions, same
-// trap). The pending count is a query of its own: filtered on the four statuses it is small by
+// The scan that finds each agent's latest conversation is ordered and bounded explicitly, so a
+// workspace with years of conversations does not read them all. The pending count is a query of its own: filtered on the four statuses it is small by
 // construction, and stays exact however many conversations the workspace holds.
 const LATEST_SCAN_LIMIT = 1000
 
@@ -194,10 +191,10 @@ export async function listWorkspaceConversationOverview(ctx: WorkspaceContext): 
     const agentIds = (await reachableAgents(ctx)).map(a => a.id)
     if (agentIds.length === 0) return []
 
-    const { data: recent, error: recentError } = await selectMany(ctx.supabase, 'sessions', OVERVIEW_COLUMNS, { agent_id: agentIds }, { column: 'updated_at', ascending: false }, LATEST_SCAN_LIMIT)
+    const { data: recent, error: recentError } = await selectMany(ctx.scope, 'sessions', OVERVIEW_COLUMNS, { agent_id: agentIds }, { column: 'updated_at', ascending: false }, LATEST_SCAN_LIMIT)
     if (recentError) throw recentError
 
-    const { data: pendingRows, error: pendingError } = await selectMany(ctx.supabase, 'sessions', ['agent_id'] as const, { agent_id: agentIds, status: [...PENDING_STATUSES] })
+    const { data: pendingRows, error: pendingError } = await selectMany(ctx.scope, 'sessions', ['agent_id'] as const, { agent_id: agentIds, status: [...PENDING_STATUSES] })
     if (pendingError) throw pendingError
 
     const latestByAgent = new Map<string, Conversation>()
@@ -243,7 +240,7 @@ export async function searchWorkspaceConversations(ctx: WorkspaceContext, query:
     if (agentIds.length === 0) return []
 
     const filters = { agent_id: agentIds, ...(text ? { title: { ilike: `%${text}%` } } : {}) }
-    const { data, error } = await selectMany(ctx.supabase, 'sessions', SEARCH_COLUMNS, filters, { column: 'updated_at', ascending: false }, text ? SEARCH_LIMIT : AGENT_RECENT_LIMIT)
+    const { data, error } = await selectMany(ctx.scope, 'sessions', SEARCH_COLUMNS, filters, { column: 'updated_at', ascending: false }, text ? SEARCH_LIMIT : AGENT_RECENT_LIMIT)
     if (error) throw error
 
     return (data ?? []).map(row => ({ id: row.id, agentId: row.agent_id, title: row.title, status: row.status, updatedAt: row.updated_at }))
@@ -270,9 +267,9 @@ export async function listWorkspaceToHandle(ctx: WorkspaceContext): Promise<ToHa
     const newestFirst = { column: 'updated_at', ascending: false } as const
 
     const [blocking, trailing, counted] = await Promise.all([
-        selectMany(ctx.supabase, 'sessions', TO_HANDLE_COLUMNS, { agent_id: agentIds, status: [...BLOCKING_STATUSES] }, newestFirst, TO_HANDLE_PAGE),
-        selectMany(ctx.supabase, 'sessions', TO_HANDLE_COLUMNS, { agent_id: agentIds, status: [...TRAILING_STATUSES] }, newestFirst, TO_HANDLE_PAGE),
-        selectCount(ctx.supabase, 'sessions', { agent_id: agentIds, status: [...ATTENTION_STATUSES] }),
+        selectMany(ctx.scope, 'sessions', TO_HANDLE_COLUMNS, { agent_id: agentIds, status: [...BLOCKING_STATUSES] }, newestFirst, TO_HANDLE_PAGE),
+        selectMany(ctx.scope, 'sessions', TO_HANDLE_COLUMNS, { agent_id: agentIds, status: [...TRAILING_STATUSES] }, newestFirst, TO_HANDLE_PAGE),
+        selectCount(ctx.scope, 'sessions', { agent_id: agentIds, status: [...ATTENTION_STATUSES] }),
     ])
     if (blocking.error) throw blocking.error
     if (trailing.error) throw trailing.error
@@ -299,24 +296,17 @@ export async function markSessionsHandled(ctx: WorkspaceContext, sessionIds: str
     const agentIds = (await reachableAgents(ctx)).map(a => a.id)
     if (agentIds.length === 0) return
 
-    const supabase = createServiceRoleClient()
-    let update = supabase
-        .from('sessions')
-        .update<Database['public']['Tables']['sessions']['Update']>({ status: 'idle' })
-        .in('agent_id', agentIds)
-        .in('status', [...ATTENTION_STATUSES])
-    if (sessionIds !== 'all') update = update.in('id', sessionIds)
-    await update
+    await updateRows(serviceScope(), 'sessions', { status: 'idle' }, { agent_id: agentIds, status: [...ATTENTION_STATUSES], id: sessionIds === 'all' ? undefined : sessionIds })
 }
 
-// Creates the Supabase mirror row for an engine-only session so it can be
+// Creates the mirror row for an engine-only session so it can be
 // opened and continued like a regular session. Idempotent per engine session.
 export async function adoptEngineSession(agentId: string, engineSessionId: string, title: string, actor?: Actor): Promise<string> {
     const { actor: caller, agent } = await assertAgentAccess(agentId, 'use', actor)
     const workspaceId = agent.workspace_id
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: existing } = await selectMaybeSingle(supabase, 'sessions', ['id'] as const, { agent_id: agentId, engine_session_id: engineSessionId })
+    const { data: existing } = await selectMaybeSingle(scope, 'sessions', ['id'] as const, { agent_id: agentId, engine_session_id: engineSessionId })
     if (existing) return existing.id
 
     const target = await resolveAgentTarget(agentId, caller)
@@ -327,7 +317,7 @@ export async function adoptEngineSession(agentId: string, engineSessionId: strin
 
     let originAgentId: string | null = null
     if (session?.originAgentId) {
-        const { data: origin } = await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: session.originAgentId, workspace_id: workspaceId })
+        const { data: origin } = await selectMaybeSingle(scope, 'agents', ['id'] as const, { engine_agent_id: session.originAgentId, workspace_id: workspaceId })
         originAgentId = origin?.id ?? null
     }
 

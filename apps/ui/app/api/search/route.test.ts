@@ -7,12 +7,12 @@ import { readCachedSearch, storeSearch } from '@/lib/search/cache'
 import { POST } from './route'
 
 const insert = vi.fn()
-const from = vi.fn(() => ({ insert }))
+const insertedInto = vi.fn()
 
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ authenticateEngineToken: vi.fn() }))
 vi.mock('@/lib/search/brave', () => ({ BRAVE_MAX_COUNT: 20, searchBrave: vi.fn() }))
 vi.mock('@/lib/search/cache', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/search/cache')>()), readCachedSearch: vi.fn(), storeSearch: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn(() => ({ from })) }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), insertRows: (_scope: unknown, table: string, row: unknown) => (insertedInto(table), insert(row)) }))
 
 const WORKSPACE_ID = 7
 const RESULTS = [{ title: 'Lumvika', url: 'https://lumvika.com', snippet: 'Coworkers that run' }]
@@ -71,7 +71,7 @@ describe('POST /api/search', () => {
         expect(response.status).toBe(200)
         await expect(response.json()).resolves.toEqual({ results: RESULTS })
         expect(searchBrave).toHaveBeenCalledWith('lumvika', 20)
-        expect(from).toHaveBeenCalledWith('web_search_events')
+        expect(insertedInto).toHaveBeenCalledWith('web_search_events')
         expect(insert).toHaveBeenCalledWith(expect.objectContaining({ workspace_id: WORKSPACE_ID, engine_agent_id: 'surfer', query: 'lumvika', outcome: 'ok', result_count: 1, provider_status: 200, cached: false }))
     })
 

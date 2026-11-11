@@ -3,20 +3,18 @@
 import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
 import { expertDistinctId } from '@lumvika/analytics'
 
-import type { Database } from '@/app/api/database.types'
 import { AuthorizationError } from '@/app/api/_auth/ownership'
 import { EXPERT_ACCOUNT_ROLE } from '@/app/api/_auth/expert'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { enterSandbox } from '@/app/api/_services/sandbox.service'
-import { getServerSession } from '@/supabase/session/getServerSession'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
+import { selectMaybeSingle, serviceScope, updateRows, type DbScope } from '@/lib/db'
 
 import { failure } from '@/lib/i18n/action-error'
 import type { ActionResult } from './space.actions'
 
 // The creator side of the join link. `experts.creator_token` is the capability that turns an
-// invited expert into an account with a sandbox, so it is resolved here with the service-role
-// client and never handed back to the browser beyond what the welcome screen needs to display.
+// invited expert into an account with a sandbox, so it is resolved here with the service scope
+// and never handed back to the browser beyond what the welcome screen needs to display.
 //
 // The token itself is the authorization: it is only minted when the email leaves, so holding one
 // means an admin sent it. What can still retire it is the fiche being turned down or opted out.
@@ -42,30 +40,28 @@ export type CreatorInvite = {
 
 export type LoadCreatorInviteResult = { status: 'ok'; invite: CreatorInvite } | { status: 'not_found' } | { status: 'not_accepted' }
 
-type ServiceClient = ReturnType<typeof createServiceRoleClient>
-
 async function requireUserId(): Promise<string> {
     const { user } = await getServerSession()
     if (!user?.id) throw new AuthorizationError('notAuthenticated')
     return user.id
 }
 
-async function linkedUserId(supabase: ServiceClient, expertId: string): Promise<string | null> {
-    const { data } = await selectMaybeSingle(supabase, 'users', ['id'] as const, { expert_profile_id: expertId })
+async function linkedUserId(scope: DbScope, expertId: string): Promise<string | null> {
+    const { data } = await selectMaybeSingle(scope, 'users', ['id'] as const, { expert_profile_id: expertId })
     return data?.id ?? null
 }
 
 export async function loadCreatorInviteAction(token: string): Promise<LoadCreatorInviteResult> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: expert } = await selectMaybeSingle(supabase, 'experts', INVITE_COLUMNS, { creator_token: token })
+    const { data: expert } = await selectMaybeSingle(scope, 'experts', INVITE_COLUMNS, { creator_token: token })
     if (!expert) return { status: 'not_found' }
     if (!isInviteOpen(expert)) return { status: 'not_accepted' }
 
     // The link never expires: what retires it is the fiche ending up on an account. Whose account
     // that is only matters once there is a real session, so the answer travels back as a flag and
     // the page decides between "sign in first" and "this link is spent".
-    const owner = await linkedUserId(supabase, expert.id)
+    const owner = await linkedUserId(scope, expert.id)
     const { user } = await getServerSession()
 
     return {
@@ -85,12 +81,12 @@ export async function loadCreatorInviteAction(token: string): Promise<LoadCreato
 // resolved from the account instead.
 export async function loadOwnCreatorInviteAction(): Promise<LoadCreatorInviteResult> {
     const userId = await requireUserId()
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: account } = await selectMaybeSingle(supabase, 'users', ['expert_profile_id'] as const, { id: userId })
+    const { data: account } = await selectMaybeSingle(scope, 'users', ['expert_profile_id'] as const, { id: userId })
     if (!account?.expert_profile_id) return { status: 'not_found' }
 
-    const { data: expert } = await selectMaybeSingle(supabase, 'experts', INVITE_COLUMNS, { id: account.expert_profile_id })
+    const { data: expert } = await selectMaybeSingle(scope, 'experts', INVITE_COLUMNS, { id: account.expert_profile_id })
     if (!expert) return { status: 'not_found' }
     // No token means nothing was ever sent, so there is no invitation to resume either.
     if (!expert.creator_token || !isInviteOpen(expert)) return { status: 'not_accepted' }
@@ -115,35 +111,29 @@ export async function claimCreatorSandboxAction(token?: string): Promise<ActionR
     const { user, session, isAnonymous } = await getServerSession()
     if (!user?.id || isAnonymous || !session?.email) return failure('signInToClaimCreator')
     const userId = user.id
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: account } = await selectMaybeSingle(supabase, 'users', ['expert_profile_id'] as const, { id: userId })
+    const { data: account } = await selectMaybeSingle(scope, 'users', ['expert_profile_id'] as const, { id: userId })
 
     const ownProfileId = account?.expert_profile_id ?? null
     const filter = token ? { creator_token: token } : ownProfileId ? { id: ownProfileId } : null
     if (!filter) return failure('noCreatorProfile')
 
-    const { data: expert } = await selectMaybeSingle(supabase, 'experts', ['id', 'slug', 'email', 'status', 'application_status'] as const, filter)
+    const { data: expert } = await selectMaybeSingle(scope, 'experts', ['id', 'slug', 'email', 'status', 'application_status'] as const, filter)
     if (!expert) return failure('linkInvalid')
     if (!isInviteOpen(expert)) return failure('creatorInviteClosed')
 
-    const owner = await linkedUserId(supabase, expert.id)
+    const owner = await linkedUserId(scope, expert.id)
     if (owner && owner !== userId) return failure('creatorProfileTaken')
     if (ownProfileId && ownProfileId !== expert.id) return failure('accountHasOtherCreatorProfile')
     if (!owner && expert.email?.toLowerCase() !== session.email.toLowerCase()) return failure('invitationOtherEmail')
 
     if (!owner) {
-        const { error } = await supabase
-            .from('users')
-            .update<Database['public']['Tables']['users']['Update']>({ account_role: EXPERT_ACCOUNT_ROLE, expert_profile_id: expert.id })
-            .eq('id', userId)
+        const { error } = await updateRows(scope, 'users', { account_role: EXPERT_ACCOUNT_ROLE, expert_profile_id: expert.id }, { id: userId })
         if (error) return { ok: false, error: error.message }
 
         const now = new Date().toISOString()
-        await supabase
-            .from('experts')
-            .update<Database['public']['Tables']['experts']['Update']>({ creator_joined_at: now, updated_at: now })
-            .eq('id', expert.id)
+        await updateRows(scope, 'experts', { creator_joined_at: now, updated_at: now }, { id: expert.id })
 
         await captureServer(expertDistinctId({ id: expert.id, email: expert.email }), 'creator_sandbox_claimed', { expert_id: expert.id, expert_slug: expert.slug }, {
             uuid: deterministicUuid(`creator_sandbox_claimed:${expert.id}`),
@@ -157,20 +147,17 @@ export async function claimCreatorSandboxAction(token?: string): Promise<ActionR
 // a new version of the program is announced, not re-signed retroactively.
 export async function acceptCreatorTermsAction(): Promise<ActionResult> {
     const userId = await requireUserId()
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: account } = await selectMaybeSingle(supabase, 'users', ['expert_profile_id'] as const, { id: userId })
+    const { data: account } = await selectMaybeSingle(scope, 'users', ['expert_profile_id'] as const, { id: userId })
     if (!account?.expert_profile_id) return failure('noCreatorProfile')
 
-    const { data: expert } = await selectMaybeSingle(supabase, 'experts', ['id', 'slug', 'email', 'status', 'application_status'] as const, { id: account.expert_profile_id })
+    const { data: expert } = await selectMaybeSingle(scope, 'experts', ['id', 'slug', 'email', 'status', 'application_status'] as const, { id: account.expert_profile_id })
     if (!expert) return failure('noCreatorProfile')
     if (!isInviteOpen(expert)) return failure('creatorInviteClosed')
 
     const now = new Date().toISOString()
-    const { error } = await supabase
-        .from('experts')
-        .update<Database['public']['Tables']['experts']['Update']>({ creator_terms_accepted_at: now, updated_at: now })
-        .eq('id', expert.id)
+    const { error } = await updateRows(scope, 'experts', { creator_terms_accepted_at: now, updated_at: now }, { id: expert.id })
     if (error) return { ok: false, error: error.message }
 
     await captureServer(expertDistinctId({ id: expert.id, email: expert.email }), 'creator_terms_accepted', { expert_id: expert.id, expert_slug: expert.slug }, {

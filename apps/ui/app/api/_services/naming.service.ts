@@ -1,23 +1,20 @@
-import type { Database } from '@/app/api/database.types'
 import { workspaceFounderUserId } from '@/app/api/_auth/ownership'
 import { isBlobUrl } from '@/lib/blobs/catalog'
 import { readFirstName } from '@/lib/naming/first-name'
 import { DEFAULT_WORKSPACE_NAME, workspaceNameFrom } from '@/lib/naming/workspace-name'
 import { boxNameFrom, companyNameFromAnswers, industryFromAnswers } from '@/lib/onboarding/box-name'
 import { faviconUrl, siteDomain } from '@/lib/onboarding/site-favicon'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { getServerSession } from '@/supabase/session/getServerSession'
-import { selectMaybeSingle, selectSingle } from '@/supabase/supabase-helpers'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
+import { selectMaybeSingle, selectSingle, serviceScope, updateRows } from '@/lib/db'
 
 type Profile = { companyName: string | null; companyUrl: string | null; industry: string | null; firstName: string | null }
 
-// What the workspace's onboarding knows about the company, read in service role rather than taken
+// What the workspace's onboarding knows about the company, read with the service scope rather than taken
 // from the client: a caller that acts in the same tick as the steward's `save_profile` would still
 // hold the answers from before it, which is how a Box ended up unnamed for someone whose company we
 // had just read off their site. The first name is the caller's own.
 async function onboardingProfile(workspaceId: number): Promise<Profile> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'workspace_onboarding', ['answers'] as const, { workspace_id: workspaceId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'workspace_onboarding', ['answers'] as const, { workspace_id: workspaceId })
     const answers = data?.answers ?? null
     const { session } = await getServerSession()
 
@@ -25,7 +22,7 @@ async function onboardingProfile(workspaceId: number): Promise<Profile> {
         companyName: companyNameFromAnswers(answers),
         companyUrl: (answers as { company_url?: string } | null)?.company_url ?? null,
         industry: industryFromAnswers(answers),
-        firstName: readFirstName(session?.user_metadata) || null,
+        firstName: readFirstName(session && !session.isAnonymous ? { name: session.name } : undefined) || null,
     }
 }
 
@@ -59,8 +56,8 @@ async function faviconIfServed(domain: string): Promise<string | null> {
 // engine.
 export async function ensureWorkspaceNamed(params: { workspaceId: number; userId: string }): Promise<void> {
     try {
-        const supabase = createServiceRoleClient()
-        const { data: workspace } = await selectSingle(supabase, 'workspaces', ['id', 'name', 'icon_url', 'is_sandbox'] as const, { id: params.workspaceId })
+        const scope = serviceScope()
+        const { data: workspace } = await selectSingle(scope, 'workspaces', ['id', 'name', 'icon_url', 'is_sandbox'] as const, { id: params.workspaceId })
         if (!workspace || workspace.is_sandbox) return
         // A name already on the row was either chosen in the settings dialog or written by an earlier
         // pass. Either way it is someone's answer, and nothing here overwrites it.
@@ -77,10 +74,7 @@ export async function ensureWorkspaceNamed(params: { workspaceId: number; userId
         const domain = profile.companyName && profile.companyUrl ? siteDomain(profile.companyUrl) : null
         const icon = domain && (!workspace.icon_url || isBlobUrl(workspace.icon_url)) ? await faviconIfServed(domain) : null
 
-        const { error } = await supabase
-            .from('workspaces')
-            .update<Database['public']['Tables']['workspaces']['Update']>({ name, ...(icon ? { icon_url: icon } : {}) })
-            .eq('id', params.workspaceId)
+        const { error } = await updateRows(scope, 'workspaces', { name, ...(icon ? { icon_url: icon } : {}) }, { id: params.workspaceId })
         if (error) console.error('Error naming workspace', error)
     } catch (err) {
         console.error('Error naming workspace', err)

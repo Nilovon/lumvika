@@ -2,9 +2,8 @@ import { AuthorizationError, UnauthenticatedError } from '@/app/api/_auth/errors
 import type { ErrorCode } from '@/lib/i18n/action-error'
 import { toBoxScope, type BoxScope } from '@/app/api/_auth/box-scope'
 import { requireWorkspaceContext, type WorkspaceContext, type WorkspaceRole } from '@/app/api/_auth/ownership'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { getSessionWorkspace } from '@/supabase/session/getServerSession'
-import { selectAll, selectMany, selectMaybeSingle, selectMaybeSingleWithJoins } from '@/supabase/supabase-helpers'
+import { getSessionWorkspace } from '@/lib/auth/session/getServerSession'
+import { selectAll, selectMany, selectMaybeSingle, selectMaybeSingleWithJoins, serviceScope } from '@/lib/db'
 
 // Access by Box. A person reaches a Box, and therefore every coworker in it, or does not; a coworker
 // carries no access of its own. This file is the server's copy of the rule; the database holds the
@@ -96,7 +95,7 @@ export function hasAccess(have: BoxAccess, need: AccessLevel): boolean {
 
 async function grantOf(actor: Actor, spaceId: string): Promise<AccessLevel | null> {
     if (actor.kind !== 'user' || actor.role === 'admin') return null
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'space_members', ['access'] as const, { space_id: spaceId, user_id: actor.userId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'space_members', ['access'] as const, { space_id: spaceId, user_id: actor.userId })
     return toAccessLevel(data?.access)
 }
 
@@ -106,13 +105,13 @@ export async function spaceAccessFor(actor: Actor, space: { id: string; workspac
 }
 
 export async function readSpaceAccess(actor: Actor, spaceId: string): Promise<BoxAccess> {
-    const { data: space } = await selectMaybeSingle(createServiceRoleClient(), 'spaces', ['id', 'workspace_id', 'visibility'] as const, { id: spaceId })
+    const { data: space } = await selectMaybeSingle(serviceScope(), 'spaces', ['id', 'workspace_id', 'visibility'] as const, { id: spaceId })
     if (!space) return 'none'
     return spaceAccessFor(actor, space)
 }
 
 export async function readAgentAccess(actor: Actor, agentId: string): Promise<BoxAccess> {
-    const { data: agent } = await selectMaybeSingle(createServiceRoleClient(), 'agents', ['space_id', 'workspace_id'] as const, { id: agentId })
+    const { data: agent } = await selectMaybeSingle(serviceScope(), 'agents', ['space_id', 'workspace_id'] as const, { id: agentId })
     if (!agent || agent.workspace_id !== actor.workspaceId) return 'none'
     return readSpaceAccess(actor, agent.space_id)
 }
@@ -133,8 +132,7 @@ export async function assertSpaceAccess(spaceId: string, need: AccessLevel, acto
 
 export async function assertAgentAccess(agentId: string, need: AccessLevel, actor?: Actor): Promise<{ actor: Actor; access: BoxAccess; agent: { workspace_id: number; space_id: string; engine_agent_id: string | null } }> {
     const resolved = actor ?? (await requireLightSessionActor())
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['workspace_id', 'space_id', 'engine_agent_id'] as const, { id: agentId })
+    const { data: agent } = await selectMaybeSingle(serviceScope(), 'agents', ['workspace_id', 'space_id', 'engine_agent_id'] as const, { id: agentId })
     if (!agent || agent.workspace_id !== resolved.workspaceId) throw new AuthorizationError(COWORKER_NOT_FOUND)
     const access = await readSpaceAccess(resolved, agent.space_id)
     enforce(access, need, COWORKER_NOT_FOUND)
@@ -144,9 +142,9 @@ export async function assertAgentAccess(agentId: string, need: AccessLevel, acto
 // Every Box of the workspace with the actor's level on it, in two reads. The lists and the board use
 // it; a single Box goes through spaceAccessFor.
 export async function spaceAccessMap(actor: Actor): Promise<Map<string, BoxAccess>> {
-    const supabase = createServiceRoleClient()
-    const grantsRead = actor.kind === 'user' && actor.role !== 'admin' ? selectMany(supabase, 'space_members', ['space_id', 'access'] as const, { user_id: actor.userId, workspace_id: actor.workspaceId }) : Promise.resolve({ data: [] })
-    const [{ data: spaces }, { data: grants }] = await Promise.all([selectAll(supabase, 'spaces', ['id', 'workspace_id', 'visibility'] as const, { workspace_id: actor.workspaceId }), grantsRead])
+    const scope = serviceScope()
+    const grantsRead = actor.kind === 'user' && actor.role !== 'admin' ? selectMany(scope, 'space_members', ['space_id', 'access'] as const, { user_id: actor.userId, workspace_id: actor.workspaceId }) : Promise.resolve({ data: [] })
+    const [{ data: spaces }, { data: grants }] = await Promise.all([selectAll(scope, 'spaces', ['id', 'workspace_id', 'visibility'] as const, { workspace_id: actor.workspaceId }), grantsRead])
     const grantBySpace = new Map((grants ?? []).map(row => [row.space_id, toAccessLevel(row.access)]))
     return new Map((spaces ?? []).map(space => [space.id, boxAccessOf(actor, space, grantBySpace.get(space.id) ?? null)]))
 }
@@ -168,7 +166,7 @@ export async function visibleAgentIds(actor: Actor): Promise<'all' | Set<string>
     const spaces = await visibleSpaceIds(actor)
     if (spaces === 'all') return 'all'
     if (spaces.size === 0) return new Set()
-    const { data: agents } = await selectAll(createServiceRoleClient(), 'agents', ['id'] as const, { workspace_id: actor.workspaceId, space_id: [...spaces] })
+    const { data: agents } = await selectAll(serviceScope(), 'agents', ['id'] as const, { workspace_id: actor.workspaceId, space_id: [...spaces] })
     return new Set((agents ?? []).map(agent => agent.id))
 }
 
@@ -181,7 +179,7 @@ export async function callableEngineAgentIds(actor: Actor): Promise<string[] | u
     const visible = [...map].filter(([, access]) => access !== 'none').map(([id]) => id)
     if (visible.length === map.size) return undefined
     if (visible.length === 0) return []
-    const { data: agents } = await selectAll(createServiceRoleClient(), 'agents', ['engine_agent_id'] as const, { workspace_id: actor.workspaceId, space_id: visible })
+    const { data: agents } = await selectAll(serviceScope(), 'agents', ['engine_agent_id'] as const, { workspace_id: actor.workspaceId, space_id: visible })
     return (agents ?? []).flatMap(agent => (agent.engine_agent_id ? [agent.engine_agent_id] : []))
 }
 
@@ -205,10 +203,10 @@ export async function assertAgentInWorkspace(agentId: string, need: AccessLevel 
 export async function requireAgentWorkspaceId(agentId: string, need: AccessLevel = 'manage'): Promise<number> {
     const { user } = await getSessionWorkspace()
     if (!user?.id) throw new UnauthenticatedError()
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['workspace_id'] as const, { id: agentId })
+    const scope = serviceScope()
+    const { data: agent } = await selectMaybeSingle(scope, 'agents', ['workspace_id'] as const, { id: agentId })
     if (!agent) throw new AuthorizationError(COWORKER_NOT_FOUND)
-    const { data: membership } = await selectMaybeSingle(supabase, 'workspace_members', ['role', 'box_scope'] as const, { user_id: user.id, workspace_id: agent.workspace_id })
+    const { data: membership } = await selectMaybeSingle(scope, 'workspace_members', ['role', 'box_scope'] as const, { user_id: user.id, workspace_id: agent.workspace_id })
     if (!membership) throw new AuthorizationError(COWORKER_NOT_FOUND)
     await assertAgentAccess(agentId, need, { kind: 'user', userId: user.id, workspaceId: agent.workspace_id, role: membership.role, boxScope: toBoxScope(membership.box_scope) })
     return agent.workspace_id
@@ -228,7 +226,7 @@ export async function assertSessionInWorkspace(sessionId: string, actor?: Promis
 
 async function readSessionWithAgent(sessionId: string) {
     const { data } = await selectMaybeSingleWithJoins(
-        createServiceRoleClient(),
+        serviceScope(),
         'sessions',
         ['id', 'agent_id', 'engine_session_id'] as const,
         // Named, because origin_agent_id points at agents too.
@@ -241,7 +239,7 @@ async function readSessionWithAgent(sessionId: string) {
 // A member named by something the hub signed (a steward turn's token), held to their membership
 // as it stands now: someone who left since the token was minted reaches nothing.
 export async function memberActor(workspaceId: number, userId: string): Promise<Actor | null> {
-    const { data: membership } = await selectMaybeSingle(createServiceRoleClient(), 'workspace_members', ['role', 'box_scope'] as const, { user_id: userId, workspace_id: workspaceId })
+    const { data: membership } = await selectMaybeSingle(serviceScope(), 'workspace_members', ['role', 'box_scope'] as const, { user_id: userId, workspace_id: workspaceId })
     if (!membership) return null
     return { kind: 'user', userId, workspaceId, role: membership.role, boxScope: toBoxScope(membership.box_scope) }
 }

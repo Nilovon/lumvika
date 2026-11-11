@@ -25,7 +25,7 @@ function htmlResult(result: CallbackResult, key?: string): NextResponse {
 }
 
 // Managed OAuth redirect target on our own domain. Exchanges the code for tokens using Lumvika's
-// client, hands the bundle to the ENGINE token store (never Supabase), marks the service
+// client, hands the bundle to the ENGINE token store (never the database), marks the service
 // active, then messages the opener popup and closes.
 export async function GET(req: Request, { params }: { params: Promise<{ provider: string }> }) {
     const { provider: providerId } = await params

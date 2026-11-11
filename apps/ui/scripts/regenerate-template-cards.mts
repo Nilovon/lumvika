@@ -21,10 +21,9 @@
 //
 // The hosted screenshot service cannot see a laptop, which is what the preflight below is about.
 
-import { Constants, type Database } from '@lumvika/db/types'
-import { selectAll } from '@lumvika/db/helpers'
+import { schema, selectAll, serviceScope } from '@lumvika/db'
+import type { Database } from '@lumvika/db/types'
 import { captureTemplateCard } from '../lib/templates/card-render'
-import { createServiceRoleClient } from '../supabase/serviceRole'
 
 const apply = process.argv.includes('--apply')
 const missingOnly = process.argv.includes('--missing')
@@ -41,13 +40,13 @@ const LOCAL_HOST = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
 const shotUrl = process.env.LUMVIKA_SHOT_URL ?? 'https://shot.lumvika.com'
 
-const supabase = createServiceRoleClient()
+const scope = serviceScope()
 
 // A slug list wins over a status filter, and --all-statuses over both: this script is as often
 // pointed at one template being calibrated as at the whole catalogue.
 const filter = slugs ? { slug: slugs } : allStatuses ? {} : { status: statuses }
 
-const { data: rows, error: readError } = await selectAll(supabase, 'templates', TEMPLATE_COLUMNS, filter, { column: 'slug', ascending: true })
+const { data: rows, error: readError } = await selectAll(scope, 'templates', TEMPLATE_COLUMNS, filter, { column: 'slug', ascending: true })
 if (readError || !rows) throw new Error(readError?.message ?? 'Failed to read the templates.')
 
 // A template with no captured agent has no board to draw: the renderer would only null a pair that
@@ -55,9 +54,9 @@ if (readError || !rows) throw new Error(readError?.message ?? 'Failed to read th
 const withBoard = rows.filter(row => (row.agent_count ?? 0) > 0)
 const targets = missingOnly ? withBoard.filter(row => !row.card_image_dark_url || !row.card_image_light_url) : withBoard
 
-// Which project and which app, spelled out: `pnpm cloud env:staging` / `env:prod` swap them under the
+// Which database and which app, spelled out: `pnpm cloud env:staging` / `env:prod` swap them under the
 // script's feet, and writing a catalogue into the wrong one is not something to discover after.
-console.log(`Supabase : ${process.env.NEXT_PUBLIC_SUPABASE_URL}`)
+console.log(`Database : ${new URL(process.env.DATABASE_URL ?? 'postgres://unset').host}`)
 console.log(`App      : ${appUrl || '(unset)'}`)
 console.log(`Shot     : ${shotUrl}\n`)
 
@@ -112,7 +111,7 @@ function listArg(name: string): string[] | undefined {
 }
 
 function toStatus(value: string): Database['public']['Enums']['template_status'] {
-    const known: readonly string[] = Constants.public.Enums.template_status
+    const known: readonly string[] = schema.template_status.enumValues
     if (!known.includes(value)) throw new Error(`Unknown template status "${value}". Expected one of ${known.join(', ')}.`)
     return value as Database['public']['Enums']['template_status']
 }

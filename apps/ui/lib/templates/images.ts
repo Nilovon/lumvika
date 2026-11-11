@@ -1,5 +1,4 @@
-import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { DbScope } from '@/lib/db'
 import { type PublicImageOptions, uploadPublicImage } from '@/lib/images/upload'
 import { fetchPublic } from '@/lib/net/public-fetch'
 
@@ -12,12 +11,12 @@ export type TemplateImageFolder = 'gallery' | 'og'
 const TEMPLATE_IMAGE_OPTIONS: PublicImageOptions = { maxSize: 1200 }
 
 export async function uploadTemplateImageBytes(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     bytes: ArrayBuffer | Uint8Array,
     folder: TemplateImageFolder,
     options?: PublicImageOptions,
 ): Promise<string> {
-    return uploadPublicImage(supabase, bytes, TEMPLATE_MEDIA_BUCKET, folder, { ...TEMPLATE_IMAGE_OPTIONS, ...options })
+    return uploadPublicImage(scope, bytes, TEMPLATE_MEDIA_BUCKET, folder, { ...TEMPLATE_IMAGE_OPTIONS, ...options })
 }
 
 const MAX_REMOTE_IMAGE_BYTES = 8 * 1024 * 1024
@@ -27,7 +26,7 @@ const REMOTE_IMAGE_TIMEOUT_MS = 30_000
 // and land in our own bucket. A generated image URL expires, and a hotlinked one can be swapped
 // for something else the day after the review.
 export async function storeTemplateImageFromUrl(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     imageUrl: string,
     folder: TemplateImageFolder = 'gallery',
     options?: PublicImageOptions,
@@ -49,5 +48,5 @@ export async function storeTemplateImageFromUrl(
     const bytes = await res.arrayBuffer()
     if (bytes.byteLength > MAX_REMOTE_IMAGE_BYTES) throw new Error('The image is over 8MB.')
 
-    return uploadTemplateImageBytes(supabase, bytes, folder, options)
+    return uploadTemplateImageBytes(scope, bytes, folder, options)
 }

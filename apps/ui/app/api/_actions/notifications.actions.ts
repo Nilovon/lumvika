@@ -3,7 +3,7 @@
 import { patchNotificationPrefs } from '@/app/api/_services/notification-prefs.service'
 import { verifyUnsubscribeToken } from '@lumvika/cloud/email'
 import { notificationPrefsPatchSchema, type NotificationPrefsPatch } from '@/lib/notifications/prefs'
-import { getServerSession } from '@/supabase/session/getServerSession'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
 import { failure, failureOf, type ActionFailure } from '@/lib/i18n/action-error'
 
 export type UpdatePrefsResult = { ok: true } | ActionFailure

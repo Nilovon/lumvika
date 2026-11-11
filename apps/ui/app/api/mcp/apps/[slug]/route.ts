@@ -6,8 +6,7 @@ import { appDefinition } from '@/lib/apps/registry'
 import { AppToolRefusal, missingRequired, toolParams } from '@/lib/apps/tools'
 import { isAppSlug } from '@/lib/apps/types'
 import { negotiatedProtocolVersion, rpcError, rpcResult, toolError, toolResult, type RpcRequest } from '@/lib/mcp/hub-rpc'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // A paid app's MCP server, hosted by the hub. Same trust model as /api/mcp/composio/<slug>: the
 // engine proves its workspace with `x-lumvika-key`, names its coworker with `x-lumvika-agent`, and the
@@ -48,19 +47,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const tool = app.tools.find(candidate => candidate.name === toolName)
     if (!tool) return rpcError(id, -32601, `Unknown tool: ${String(rpcParams?.name)}`)
 
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const engineAgentId = req.headers.get('x-lumvika-agent') ?? ''
-    const { data: agent } = engineAgentId ? await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId }) : { data: null }
+    const { data: agent } = engineAgentId ? await selectMaybeSingle(scope, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId }) : { data: null }
     if (!agent) return rpcError(id, -32603, 'Coworker does not belong to the authenticated workspace')
 
-    const resolved = await agentConnection(supabase, agent.id, slug)
+    const resolved = await agentConnection(scope, agent.id, slug)
     if (!resolved.ok) return toolError(id, `No ${app.providerLabel} account is attached to you. Ask the user to pick one in your Services, under ${app.name}.`)
     const { connection, appStatus } = resolved
     if (connection.workspace_id !== engine.workspaceId) return rpcError(id, -32603, 'Account does not belong to the authenticated workspace')
     if (appStatus !== 'active') return toolError(id, `${app.name} is paused while the workspace is paused. Nothing was sent.`)
 
     if (connection.status === 'paused' && connection.pause_reason === 'rate_limited' && connection.paused_until && new Date(connection.paused_until) <= new Date()) {
-        await updateConnection(supabase, connection.id, { status: 'connected', pause_reason: null, paused_until: null })
+        await updateConnection(scope, connection.id, { status: 'connected', pause_reason: null, paused_until: null })
     } else if (connection.status === 'paused') {
         const until = connection.paused_until ? ` until ${new Date(connection.paused_until).toUTCString()}` : ''
         return toolError(id, `This ${app.providerLabel} account is paused${until}${connection.pause_reason === 'rate_limited' ? ` because ${app.providerLabel} asked it to slow down` : ', its slot is not paid for'}. Nothing was sent. Tell the user.`)
@@ -80,8 +79,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         const claims = [...(extra ? [{ action: extra, amount: 1 }] : []), ...(tool.quota ? [{ action: tool.quota.action, amount: tool.quota.amount?.(linkupParams) ?? 1 }] : [])]
         for (const claim of claims) {
             const { periods, maxes } = app.quotaClaim(claim.action, new Date())
-            if (!(await claimQuota(supabase, connectionScope(connection.id), claim.action, periods, maxes, claim.amount))) {
-                await reportWorkspaceEvent(supabase, connection.workspace_id, 'app_quota_hit', { app: slug, action: claim.action })
+            if (!(await claimQuota(scope, connectionScope(connection.id), claim.action, periods, maxes, claim.amount))) {
+                await reportWorkspaceEvent(scope, connection.workspace_id, 'app_quota_hit', { app: slug, action: claim.action })
                 return toolError(id, app.quotaRefusal(claim.action))
             }
         }
@@ -97,11 +96,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
             return toolError(id, `${app.providerLabel} is unavailable right now. Nothing was sent. Try again later.`)
         }
         if (err.code === 'RATE_LIMITED') {
-            await pauseForRateLimit(supabase, connection, slug)
+            await pauseForRateLimit(scope, connection, slug)
             return toolError(id, `${app.providerLabel} asked this account to slow down. It rests for 24 hours: stop every ${app.providerLabel} action for today and tell the user.`)
         }
         if (err.code === 'ACCOUNT_INACTIVE' || err.code === 'INVALID_ACCOUNT') {
-            await markNeedsReconnect(supabase, connection, slug, err.code.toLowerCase())
+            await markNeedsReconnect(scope, connection, slug, err.code.toLowerCase())
             return toolError(id, `This ${app.providerLabel} account was signed out. The user has been asked to reconnect it. Nothing was sent.`)
         }
         if (err.code === 'INVALID_PARAMS' || err.code === 'CHANNEL_ERROR') return toolError(id, `${app.providerLabel} refused: ${err.message}`)

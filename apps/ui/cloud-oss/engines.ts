@@ -1,8 +1,6 @@
 import 'server-only'
 
-import type { Database } from '@/app/api/database.types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { insertRow, selectMaybeSingle, serviceScope } from '@/lib/db'
 
 export type ClaimedInstance = { id: string; engineHost: string; engineApiKey: string | null }
 
@@ -20,15 +18,11 @@ export async function claimPoolEngine(workspaceId: number): Promise<EngineClaim>
     const engineApiKey = process.env.LUMVIKA_ENGINE_API_KEY?.trim()
     if (!engineHost || !engineApiKey) return { ok: false, raced: false, error: NO_SERVER }
 
-    const supabase = createServiceRoleClient()
-    const { data: taken } = await selectMaybeSingle(supabase, 'engine_pool', ['id'] as const, { engine_api_key: engineApiKey })
+    const scope = serviceScope()
+    const { data: taken } = await selectMaybeSingle(scope, 'engine_pool', ['id'] as const, { engine_api_key: engineApiKey })
     if (taken) return { ok: false, raced: false, error: NO_SERVER }
 
-    const { data, error } = await supabase
-        .from('engine_pool')
-        .insert<Database['public']['Tables']['engine_pool']['Insert']>({ provider: 'incus', provider_server_id: null, engine_host: engineHost, engine_api_key: engineApiKey, status: 'claimed', claimed_by_workspace_id: workspaceId })
-        .select('id')
-        .single()
+    const { data, error } = await insertRow(scope, 'engine_pool', { provider: 'incus', provider_server_id: null, engine_host: engineHost, engine_api_key: engineApiKey, status: 'claimed', claimed_by_workspace_id: workspaceId }, ['id'])
     if (error?.code === UNIQUE_VIOLATION) return { ok: false, raced: true, error: NO_SERVER }
     if (error || !data) return { ok: false, raced: false, error: error?.message ?? NO_SERVER }
     return { ok: true, instance: { id: data.id, engineHost, engineApiKey } }

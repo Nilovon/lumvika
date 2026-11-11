@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Actor } from '@/app/api/_auth/access'
-import { fakeSupabase } from '@/test/supabase-fake'
 
 const mocks = vi.hoisted(() => ({
     getAgentChatTarget: vi.fn(),
@@ -35,8 +34,9 @@ vi.mock('@/app/api/_services/agent-activation.service', () => ({ activateAgent: 
 vi.mock('@/app/api/_services/engine-plan.service', () => ({ assertModelEntitled: vi.fn() }))
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ getWorkspaceConnection: mocks.getWorkspaceConnection }))
 vi.mock('@/app/api/_services/notification-audience.service', () => ({ followCoworker: vi.fn() }))
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: vi.fn() }))
 vi.mock('@/lib/ai/parse-schedule', () => ({ parseSchedule: vi.fn() }))
 vi.mock('@/lib/services/registry', () => ({ connectorMcpServerNames: () => new Set(), connectorSkillOwners: vi.fn(), connectorSkillSlugs: vi.fn(), readRegistry: vi.fn() }))
 vi.mock('@/lib/chat/engine-history', () => ({ transformEngineMessages: (messages: unknown[]) => messages }))
@@ -54,7 +54,6 @@ vi.mock('@/lib/engine/client', () => ({
     supportsScheduleRename: vi.fn(async () => true),
 }))
 
-const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const engine = await import('@/lib/engine/client')
 const actions = await import('./agent.actions')
 
@@ -63,6 +62,7 @@ const MEMBER: Actor = { kind: 'user', userId: 'user-2', workspaceId: 7, role: 'm
 const AGENT = 'agent-1'
 
 beforeEach(() => {
+    db.reset()
     vi.clearAllMocks()
     mocks.getAgentChatTarget.mockResolvedValue({ conn, engineAgentId: 'engine-1', contentLocked: false })
     mocks.resolveRunTarget.mockResolvedValue({ conn, engineAgentId: 'engine-1', contentLocked: false })
@@ -136,7 +136,7 @@ describe('listWorkspaceRoutinesAction', () => {
             { id: 'agent-seen', engine_agent_id: 'engine-seen', disabled_at: null },
             { id: 'agent-hidden', engine_agent_id: 'engine-hidden', disabled_at: null },
         ]
-        vi.mocked(createServiceRoleClient).mockReturnValue(fakeSupabase(table => (table === 'agents' ? { data: agents } : undefined)).client)
+        db.answer(call => (call.table === 'agents' ? { data: agents } : undefined))
         mocks.visibleAgentIds.mockResolvedValue(new Set(['agent-seen']))
         mocks.getWorkspaceConnection.mockResolvedValue(conn)
 

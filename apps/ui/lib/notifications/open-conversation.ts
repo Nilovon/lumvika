@@ -1,8 +1,7 @@
 'use client'
 
+import { findSessionIdByEngineSessionAction } from '@/app/api/_actions/conversation-reads.actions'
 import { useBoardStore } from '@/stores/board.store'
-import { createClient } from '@/supabase/client'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 
 type OpenConversationArgs = {
     agentId: string | null
@@ -21,11 +20,8 @@ export async function openConversationFromNotification({ agentId, engineSessionI
 
     if (!engineSessionId) return
 
-    const { data } = await selectMaybeSingle(createClient(), 'sessions', ['id'] as const, {
-        agent_id: agentId,
-        engine_session_id: engineSessionId,
-    })
-    if (!data) return
+    const sessionId = await findSessionIdByEngineSessionAction(agentId, engineSessionId).catch(() => null)
+    if (!sessionId) return
 
-    useBoardStore.getState().setPendingOpenSession({ agentId, sessionId: data.id, runId: engineRunId })
+    useBoardStore.getState().setPendingOpenSession({ agentId, sessionId, runId: engineRunId })
 }

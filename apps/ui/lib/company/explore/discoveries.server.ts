@@ -1,8 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-
-import type { Database } from '@/app/api/database.types'
 import { extractPhotoUrl } from '@/lib/experts/linkedin-scrape'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, type DbScope } from '@/lib/db'
 import type { CollectorId } from './catalog'
 import type { ExploreEvent } from './explore'
 import type { CompanyFinding, DiscoveryEvent, DiscoverySource } from './findings'
@@ -193,11 +190,11 @@ export type IconLookup = (names: string[]) => Promise<Map<string, string>>
 
 // The catalog is read whole, once per exploration, and matched by lowercased name in memory: a name
 // filter would be an exact `IN`, and what the synthesis calls "Hubspot" the catalog calls "HubSpot".
-export function serviceIconLookup(supabase: SupabaseClient<Database>): IconLookup {
+export function serviceIconLookup(scope: DbScope): IconLookup {
     let catalog: Promise<Map<string, string>> | null = null
 
     const readCatalog = async () => {
-        const { data, error } = await selectMany(supabase, 'services', ['name', 'icon'] as const, {})
+        const { data, error } = await selectMany(scope, 'services', ['name', 'icon'] as const, {})
         if (error) {
             catalog = null
             throw new Error(error.message)

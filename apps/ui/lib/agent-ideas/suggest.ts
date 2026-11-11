@@ -1,8 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-
-import type { Database } from '@/app/api/database.types'
 import type { CollectorCost } from '@/lib/company/explore/types'
-import { selectAll } from '@/supabase/supabase-helpers'
+import { selectAll, type DbScope } from '@/lib/db'
 import { design } from './design'
 import { diagnose } from './diagnose'
 import { loadCompanyDossier } from './dossier'
@@ -17,8 +14,8 @@ const MIN_EVIDENCE = 8
 
 const CATALOG_COLUMNS = ['slug', 'name', 'category', 'summary', 'icon'] as const
 
-async function loadCatalog(supabase: SupabaseClient<Database>): Promise<CatalogApp[]> {
-    const { data, error } = await selectAll(supabase, 'services', CATALOG_COLUMNS, { enabled: true }, { column: 'slug' })
+async function loadCatalog(scope: DbScope): Promise<CatalogApp[]> {
+    const { data, error } = await selectAll(scope, 'services', CATALOG_COLUMNS, { enabled: true }, { column: 'slug' })
     if (error) throw new Error(error.message)
     return data ?? []
 }
@@ -28,7 +25,7 @@ type StepResult<K extends SuggestStep> = { data: StepData[K]; highlights: string
 // Agents made to measure for one workspace, from everything we know about its company. Each step
 // reports as it lands so the lab can show where an idea came from and where it died; a step that
 // fails ends the run there, since every later one reads its output.
-export async function suggestAgents(supabase: SupabaseClient<Database>, workspaceId: number, emit: (event: SuggestEvent) => void): Promise<Selection | null> {
+export async function suggestAgents(scope: DbScope, workspaceId: number, emit: (event: SuggestEvent) => void): Promise<Selection | null> {
     const startedAt = Date.now()
 
     async function step<K extends SuggestStep>(id: K, run: () => Promise<StepResult<K>> | StepResult<K>): Promise<StepData[K]> {
@@ -46,7 +43,7 @@ export async function suggestAgents(supabase: SupabaseClient<Database>, workspac
 
     try {
         const dossier = await step('dossier', async () => {
-            const data = await loadCompanyDossier(supabase, workspaceId)
+            const data = await loadCompanyDossier(scope, workspaceId)
             const sources = new Set(data.evidence.map(item => item.source.split(':')[0]))
             return { data, highlights: [`${data.evidence.length} preuves (${[...sources].join(', ') || 'aucune source'})`, `${data.existingAgents.length} agent(s) existant(s)`, ...data.warnings] }
         })
@@ -57,7 +54,7 @@ export async function suggestAgents(supabase: SupabaseClient<Database>, workspac
             return { data, cost, highlights: data.map(opportunity => `[${opportunity.lens}] ${opportunity.job}`) }
         })
 
-        const catalog = await loadCatalog(supabase)
+        const catalog = await loadCatalog(scope)
         const candidates = await step('design', async () => {
             const { candidates: data, cost } = await design(dossier, opportunities, catalog)
             return { data, cost, highlights: data.map(candidate => `${candidate.name} : ${candidate.role}`) }

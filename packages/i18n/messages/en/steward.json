@@ -195,10 +195,6 @@
         "hide": "Hide",
         "pillLabel": "Getting started: {done} of {total} done",
         "steps": {
-            "phone": {
-                "title": "Verify your phone number",
-                "description": "Secure your account and hear from your coworkers on WhatsApp or SMS."
-            },
             "first_agent": {
                 "title": "Create your first coworker",
                 "description": "A teammate that works while you are away."
@@ -325,10 +321,6 @@
             "account": {
                 "title": "Put {name} to work",
                 "description": "Create your account and {name} is installed for you. No setup form, no questions first."
-            },
-            "phone": {
-                "title": "One last step",
-                "description": "Add your phone number. {name} is next."
             },
             "trial": {
                 "title": "Try {name} for {days} days",

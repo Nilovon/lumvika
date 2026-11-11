@@ -1,7 +1,6 @@
 import { assertTemplateOwnedBy, type TemplateAuthorScope } from '@/app/api/_auth/expert'
 import { assertSpaceOwnedBy } from '@/app/api/_auth/ownership'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, serviceScope } from '@/lib/db'
 import {
     captureAgents,
     listCaptureSources,
@@ -31,13 +30,13 @@ async function requireCaptureTarget(userId: string, templateId: string): Promise
 // Fails closed on the whole selection rather than dropping the offending id, so a probe learns
 // nothing about which agent exists.
 async function assertAgentsInSpace(agentIds: string[], spaceId: string, workspaceId: number): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMany(supabase, 'agents', ['id'] as const, { id: { in: agentIds }, space_id: spaceId, workspace_id: workspaceId })
+    const scope = serviceScope()
+    const { data } = await selectMany(scope, 'agents', ['id'] as const, { id: { in: agentIds }, space_id: spaceId, workspace_id: workspaceId })
     if ((data?.length ?? 0) !== agentIds.length) throw new AppError('selectedCoworkerNotInBox')
 }
 
 export async function listAuthorCaptureSources(scope: TemplateAuthorScope): Promise<CaptureSourceSpace[]> {
-    return listCaptureSources(createServiceRoleClient(), scope.workspaceId)
+    return listCaptureSources(serviceScope(), scope.workspaceId)
 }
 
 export async function planAuthorCapture(scope: TemplateAuthorScope, input: { templateId: string; spaceId: string; agentIds: string[] }): Promise<AgentCapturePlan[]> {
@@ -45,7 +44,7 @@ export async function planAuthorCapture(scope: TemplateAuthorScope, input: { tem
     await assertSpaceOwnedBy(scope.workspaceId, input.spaceId)
     await assertAgentsInSpace(input.agentIds, input.spaceId, scope.workspaceId)
 
-    return planCapture(createServiceRoleClient(), input.spaceId, input.agentIds)
+    return planCapture(serviceScope(), input.spaceId, input.agentIds)
 }
 
 export async function captureAuthorAgents(scope: TemplateAuthorScope, input: { templateId: string; spaceId: string; selections: CaptureSelection[] }): Promise<CaptureOutcome> {
@@ -57,10 +56,10 @@ export async function captureAuthorAgents(scope: TemplateAuthorScope, input: { t
         scope.workspaceId,
     )
 
-    return captureAgents(createServiceRoleClient(), slug, input.spaceId, input.selections)
+    return captureAgents(serviceScope(), slug, input.spaceId, input.selections)
 }
 
 export async function removeAuthorTemplateAgent(scope: TemplateAuthorScope, input: { templateId: string; agentKey: string }): Promise<void> {
     const slug = await requireCaptureTarget(scope.userId, input.templateId)
-    await removeCapturedAgent(createServiceRoleClient(), slug, input.agentKey)
+    await removeCapturedAgent(serviceScope(), slug, input.agentKey)
 }

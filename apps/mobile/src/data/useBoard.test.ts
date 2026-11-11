@@ -2,6 +2,7 @@ import type { BoardAgent } from '@lumvika/contracts'
 import { act, renderHook } from '@testing-library/react-native'
 
 import type { BoardRead } from '@/api/board'
+import type { LiveSubscription } from '@/lib/live'
 import { cachedBoard, clearLocalCache } from '@/data/local-cache'
 
 import { useBoard } from './useBoard'
@@ -12,18 +13,14 @@ jest.mock('expo-file-system', () => ({ Directory: class {}, File: class {}, Path
 jest.mock('@/api/board', () => ({ fetchBoard: () => mockFetchBoard() }))
 jest.mock('@/auth/AuthProvider', () => ({ useAuth: () => ({ session: { access_token: 't' }, me: { user: { id: 'u1' }, workspace: { id: 7 } } }) }))
 
-const mockSubscriptions: { table: string; filter?: string }[] = []
+const mockSubscriptions: LiveSubscription[] = []
 
-jest.mock('@/auth/supabase', () => {
-    const channel = {
-        on: (_event: string, spec: { table: string; filter?: string }) => {
-            mockSubscriptions.push(spec)
-            return channel
-        },
-        subscribe: () => channel,
-    }
-    return { supabase: { channel: () => channel, removeChannel: () => {} } }
-})
+jest.mock('@/lib/live', () => ({
+    subscribeLive: (_token: string, subscriptions: LiveSubscription[]) => {
+        mockSubscriptions.push(...subscriptions)
+        return () => {}
+    },
+}))
 
 const agent = (id: string, name: string): BoardAgent => ({ id, name, handle: null, description: null, templateId: null, status: 'idle', workspaceId: 7, spaceId: 's1', disabledAt: null, disabledReason: null })
 const boardWith = (...agents: BoardAgent[]): BoardRead => ({ agents, overview: [], boxes: [] })
@@ -39,7 +36,7 @@ describe('useBoard', () => {
         mockFetchBoard.mockResolvedValue(boardWith())
         await renderHook(() => useBoard())
         await act(async () => {})
-        expect(mockSubscriptions).toContainEqual(expect.objectContaining({ table: 'space_members', filter: 'user_id=eq.u1' }))
+        expect(mockSubscriptions).toContainEqual(expect.objectContaining({ table: 'space_members', filter: { user_id: 'u1' } }))
     })
 
     it('opens on the rows kept from the last visit, then on the hub copy', async () => {

@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { setBoxPlan } from '@/lib/engine/client'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle } from '@/lib/db'
 
 import { assertModelEntitled, pushBoxPlan } from './engine-plan.service'
 vi.mock('@lumvika/cloud/billing', async importOriginal => ({ ...(await importOriginal<object>()), ...(await import('@/test/cloud-fakes')).CLOUD_ENTITLEMENTS }))
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMaybeSingle: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMaybeSingle: vi.fn() }))
 vi.mock('@/lib/engine/client', () => ({ setBoxPlan: vi.fn() }))
 vi.mock('@/app/api/_auth/ownership', () => ({ requireWorkspaceId: vi.fn(async () => 7) }))
 

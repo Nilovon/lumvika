@@ -1,0 +1,25 @@
+---
+description: Database access through the typed helpers of @/lib/db
+alwaysApply: true
+---
+
+# Database
+
+ALWAYS read and write through the helpers of `@/lib/db`, with the `DbScope` of the caller as first argument:
+`getRequestScope()` from `@/lib/auth/session/request` (row level security as the signed-in user), or
+`serviceScope()` for server code that has checked access itself.
+
+```typescript
+// Reads
+const { data, error } = await selectMany(scope, 'agents', ['id', 'name'], { workspace_id })
+
+// Writes, typed by their table
+await updateRows(scope, 'agents', { name }, { id })
+await insertRow(scope, 'agents', { workspace_id, name }, ['id'])
+```
+
+NEVER import from `drizzle-orm` directly: operators (`sql`, `eq`, `and`, ...) come from `@/lib/db` too.
+
+NEVER read or write the database from a client component: go through a server action using `getRequestScope()`.
+
+Schema changes go in `packages/db/src/schema`, then `pnpm db:generate`. See the Database section of the root `CLAUDE.md`.

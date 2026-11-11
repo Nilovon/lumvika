@@ -80,7 +80,7 @@ function analyze() {
 
     const commits = lines(git(['log', '--no-merges', '--format=%h %s', `${from}..${to}`])).map(parseCommit)
     const shippedFiles = lines(git(['diff', '--name-only', from, to])).filter((path) => !NOT_SHIPPED.some((pattern) => pattern.test(path)))
-    const migrations = lines(git(['diff', '--name-only', '--diff-filter=A', from, to, '--', 'supabase/migrations/']))
+    const migrations = lines(git(['diff', '--name-only', '--diff-filter=A', from, to, '--', 'packages/db/migrations/*.sql']))
     const envVars = addedEnvVars(from, to)
     const ladders = lines(git(['diff', '--name-only', from, to, '--', ...ENGINE_LADDERS]))
     const compose = Boolean(git(['diff', '--name-only', from, to, '--', 'docker-compose.yml']))
@@ -115,7 +115,7 @@ function releaseNotes({ commits, migrations, envVars, ladders, compose, bump }) 
     const fixes = bullets(commits.filter((commit) => commit.type === 'fix' || commit.type === 'perf'))
 
     const upgrade = [
-        migrations.length && `- Database: ${migrations.length} new migration${migrations.length > 1 ? 's' : ''}. Run \`npx supabase db push\` before starting the new images.`,
+        migrations.length && `- Database: ${migrations.length} new migration${migrations.length > 1 ? 's' : ''}. The \`migrate\` step of docker-compose.yml applies them when the new images start; back up the database first.`,
         envVars.required.length && `- New required variable${envVars.required.length > 1 ? 's' : ''} in \`.env.example\`: ${envVars.required.map((name) => `\`${name}\``).join(', ')}. Set ${envVars.required.length > 1 ? 'them' : 'it'} before starting the new images.`,
         envVars.optional.length && `- New optional variable${envVars.optional.length > 1 ? 's' : ''} in \`.env.example\`: ${envVars.optional.map((name) => `\`${name}\``).join(', ')}.`,
         ladders.length && '- Engine: migrates its data directory on first start. Back it up first; there is no downgrade.',
@@ -126,7 +126,7 @@ function releaseNotes({ commits, migrations, envVars, ladders, compose, bump }) 
         bump === 'minor'
             ? '> Minor release: read Upgrade before updating.'
             : migrations.length
-              ? '> Patch release: apply the database migrations, then pull the new images.'
+              ? '> Patch release: back up the database, then pull the new images (they apply the migrations on start).'
               : '> Patch release: pull the new images, nothing else to do.'
 
     const sections = [summary]
@@ -160,7 +160,7 @@ function main() {
 
     if (result.commits.length) {
         console.log('\nUpgrade:')
-        console.log(`  Supabase migrations added: ${result.migrations.length ? '' : 'none'}`)
+        console.log(`  Database migrations added: ${result.migrations.length ? '' : 'none'}`)
         for (const path of result.migrations) console.log(`    ${path}`)
         console.log(`  .env.example variables added: ${[...result.envVars.required, ...result.envVars.optional.map((name) => `${name} (optional)`)].join(', ') || 'none'}`)
         console.log(`  Engine data-dir ladders changed: ${result.ladders.length ? result.ladders.join(', ') : 'none'}`)

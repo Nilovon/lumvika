@@ -1,19 +1,19 @@
 ---
-description: Use useRealtimeSubscription hook for Supabase realtime subscriptions
+description: Use the useRealtimeSubscription hook for live database changes
 globs: 
 alwaysApply: true
 ---
 
-# Supabase Realtime Subscriptions
+# Realtime Subscriptions
 
-ALWAYS use the `useRealtimeSubscription` hook from `@/hooks/useRealtimeSubscription.ts` for listening to Supabase realtime changes.
+ALWAYS use the `useRealtimeSubscription` hook from `@/lib/live/useRealtimeSubscription` for listening to changes of a table (Postgres LISTEN/NOTIFY, streamed over SSE).
 
-NEVER use `supabase.channel()` directly in components.
+NEVER open an `EventSource` on the live stream directly in components.
 
 ## Usage
 
 ```tsx
-import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription'
+import { useRealtimeSubscription } from '@/lib/live/useRealtimeSubscription'
 
 useRealtimeSubscription('table_name', {
     enabled: true,

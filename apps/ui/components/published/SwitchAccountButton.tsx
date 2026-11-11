@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/supabase/client'
+import { authClient } from '@/lib/auth/auth-client'
 
 export function SwitchAccountButton({ returnTo }: { returnTo: string }) {
     const t = useTranslations('published.gate')
@@ -11,7 +11,7 @@ export function SwitchAccountButton({ returnTo }: { returnTo: string }) {
 
     const switchAccount = async () => {
         setLoading(true)
-        await createClient().auth.signOut()
+        await authClient.signOut()
         window.location.href = `/auth?next=${encodeURIComponent(returnTo)}`
     }
 

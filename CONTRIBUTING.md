@@ -5,11 +5,11 @@ pull request gets in.
 
 ## Run it from source
 
-You need Node 22, pnpm 8 (`corepack enable`), Docker (for the local Supabase) and an OpenRouter key.
+You need Node 22, pnpm 8 (`corepack enable`), Docker (for the local stack) and an OpenRouter key.
 
 ```bash
 pnpm install
-npx supabase start                 # Postgres, auth, storage and Mailpit on ports 54420 to 54429
+pnpm db:start                      # Postgres, Mailpit and an S3 store, migrated, with the services catalog
 pnpm --filter @lumvika/contracts build
 cp .env.example apps/ui/.env
 cp apps/engine/.env.example apps/engine/.env
@@ -20,8 +20,11 @@ Then fill the two files. Pick any long random string as the engine key and use i
 | `apps/ui/.env` | Value |
 |---|---|
 | `NEXT_PUBLIC_APP_URL` | `http://localhost:3050` |
-| `NEXT_PUBLIC_SUPABASE_URL` | `http://localhost:54421` |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | the keys `npx supabase status` prints |
+| `DATABASE_URL` | `postgres://lumvika:lumvika@127.0.0.1:54432/lumvika` |
+| `S3_ENDPOINT`, `NEXT_PUBLIC_STORAGE_URL` | `http://127.0.0.1:54437` |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | `lumvika`, `lumvika-secret` |
+| `SMTP_URL` | `smtp://127.0.0.1:54435` (leave `RESEND_API_KEY` empty) |
+| `BETTER_AUTH_SECRET` | any long random string |
 | `OPENROUTER_API_KEY` | your OpenRouter key |
 | `LUMVIKA_ENGINE_URL` | `http://localhost:3000` |
 | `LUMVIKA_ENGINE_API_KEY` | the engine key |
@@ -39,7 +42,27 @@ pnpm dev:ui        # http://localhost:3050
 ```
 
 The first workspace that needs an engine gets this one. Sign-in codes land in Mailpit, at
-http://localhost:54424.
+http://localhost:54436.
+
+## The local stack
+
+`docker-compose.dev.yml` holds what the app runs on: Postgres on 54432, Mailpit on 54435 (SMTP) and
+54436 (inbox), an S3 store (RustFS) on 54437 and its console on 54438.
+
+```bash
+pnpm db:start                  # starts it, applies the migrations, creates the buckets, loads the catalog
+pnpm db:stop                   # stops it, keeping the data
+pnpm db:reset                  # drops every table, replays the migrations and the catalog
+pnpm db:generate               # writes the migration for a change of packages/db/src/schema
+node scripts/db.mjs seed       # reloads the services catalog (scripts/seed/services.sql)
+```
+
+The schema lives in `packages/db/src/schema` and every change to it comes as a migration in
+`packages/db/migrations`. Row level security, grants and SQL functions go in custom SQL migrations, and
+their tests in `packages/db/src/*.test.ts` (`pnpm --filter @lumvika/db test`, on a database of its own
+rebuilt from the migrations). Some tables stay empty in a self-hosted install, because the code that
+fills them belongs to Lumvika Cloud: billing, paid apps, the machine pool. They are part of the schema
+all the same, so both run on the same migrations.
 
 ## Checks
 
@@ -48,22 +71,24 @@ pnpm -r --if-present ts-check
 pnpm --filter lumvika lint
 pnpm --filter lumvika test
 pnpm --filter lumvika-engine test
+pnpm --filter @lumvika/db test
 ```
 
-CI runs the same, plus the migrations on an empty database and both Docker images.
+CI runs the same, plus the migrations and the catalog on an empty database and both Docker images.
 
 ## The code
 
 | Path | What it is |
 |---|---|
-| `apps/ui` | The web app and its API (Next.js). Talks to Supabase and to the engine of each workspace |
+| `apps/ui` | The web app and its API (Next.js). Talks to Postgres, the S3 store and the engine of each workspace |
 | `apps/engine` | The engine: runs the coworkers, their tools, their memory, their browser and screen |
 | `apps/docs` | The documentation (Mintlify) |
 | `packages/contracts` | Types and schemas shared by the app and the engine |
 | `packages/ui` | The design system and the board |
-| `supabase/migrations` | The database schema, one migration per change |
+| `packages/db` | The database: Drizzle schema, migrations, query helpers and row level security tests |
+| `packages/storage` | File storage on any S3-compatible store |
 
-`CLAUDE.md` holds the conventions of the codebase (and is what coding agents read): Supabase access
+`CLAUDE.md` holds the conventions of the codebase (and is what coding agents read): database access
 through the typed helpers, responsive from the first version, migrations of the engine data-dir.
 
 `@lumvika/cloud/*` is the seam where Lumvika Cloud plugs in billing, paid apps, emails and its machine

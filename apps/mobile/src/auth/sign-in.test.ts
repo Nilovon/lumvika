@@ -1,56 +1,65 @@
 import { ApiError } from '@/api/client'
-import { sendEmailCode, sendPhoneCode, signInWithPhone, SignInError } from '@/auth/sign-in'
+import { sendEmailCode, signInWithEmail, SignInError } from '@/auth/sign-in'
 
 const mockApi = jest.fn()
 jest.mock('@/api/client', () => {
     const actual = jest.requireActual('@/api/client')
     return { ...actual, api: (...args: unknown[]) => mockApi(...args) }
 })
-const mockSetSession = jest.fn()
-const mockSignInWithOtp = jest.fn()
-jest.mock('@/auth/supabase', () => ({ supabase: { auth: { setSession: (...args: unknown[]) => mockSetSession(...args), signInWithOtp: (...args: unknown[]) => mockSignInWithOtp(...args) } } }))
-
-const REQUEST = { phone: '06 12 34 56 78', country: 'FR', channel: 'whatsapp' as const }
+const mockSendVerificationOtp = jest.fn()
+const mockSignInEmailOtp = jest.fn()
+jest.mock('@/auth/auth-client', () => ({
+    authClient: {
+        emailOtp: { sendVerificationOtp: (...args: unknown[]) => mockSendVerificationOtp(...args) },
+        signIn: { emailOtp: (...args: unknown[]) => mockSignInEmailOtp(...args) },
+    },
+}))
 
 describe('sign-in calls', () => {
     beforeEach(() => {
         mockApi.mockReset()
-        mockSetSession.mockReset()
-        mockSignInWithOtp.mockReset()
-        mockSetSession.mockResolvedValue({ error: null })
-        mockSignInWithOtp.mockResolvedValue({ error: null })
+        mockSendVerificationOtp.mockReset().mockResolvedValue({ data: { success: true }, error: null })
+        mockSignInEmailOtp.mockReset().mockResolvedValue({ data: {}, error: null })
     })
 
-    it('returns the channel the code really went by', async () => {
-        mockApi.mockResolvedValue({ channel: 'sms' })
-        expect(await sendPhoneCode(REQUEST)).toBe('sms')
-        expect(mockApi).toHaveBeenCalledWith('/api/v1/auth/phone/code', { method: 'POST', body: REQUEST })
+    it('asks for a code only when the hub did not mail one', async () => {
+        mockApi.mockResolvedValue({ mailed: true })
+        await sendEmailCode('ada@example.com')
+        expect(mockApi).toHaveBeenCalledWith('/api/v1/auth/email/code', { method: 'POST', body: { email: 'ada@example.com' } })
+        expect(mockSendVerificationOtp).not.toHaveBeenCalled()
+
+        mockApi.mockResolvedValue({ mailed: false })
+        await sendEmailCode('ada@example.com')
+        expect(mockSendVerificationOtp).toHaveBeenCalledWith({ email: 'ada@example.com', type: 'sign-in' })
     })
 
-    it('shows the message of a refusal and keeps its wait', async () => {
-        mockApi.mockRejectedValue(new ApiError(429, 'A code is already on its way.', { error: 'A code is already on its way.', reason: 'too_soon', retryAfterSeconds: 42 }))
-        await expect(sendPhoneCode(REQUEST)).rejects.toMatchObject({ message: 'A code is already on its way.', reason: 'too_soon', retryAfterSeconds: 42 })
+    it('shows the message of a refusal of the hub', async () => {
+        mockApi.mockRejectedValue(new ApiError(422, 'This email domain is not accepted.', { error: 'This email domain is not accepted.', reason: 'blocked_domain' }))
+        await expect(sendEmailCode('ada@blocked.example')).rejects.toMatchObject({ message: 'This email domain is not accepted.', reason: 'blocked_domain', method: 'email' })
+        expect(mockSendVerificationOtp).not.toHaveBeenCalled()
     })
 
     it('reads a failure without a refusal body as a connection problem', async () => {
         mockApi.mockRejectedValue(new TypeError('Network request failed'))
-        await expect(sendPhoneCode(REQUEST)).rejects.toBeInstanceOf(SignInError)
-        await expect(sendPhoneCode(REQUEST)).rejects.toMatchObject({ reason: 'network' })
+        await expect(sendEmailCode('ada@example.com')).rejects.toBeInstanceOf(SignInError)
+        await expect(sendEmailCode('ada@example.com')).rejects.toMatchObject({ reason: 'network' })
     })
 
-    it('opens the session the hub handed back', async () => {
-        mockApi.mockResolvedValue({ created: true, session: { accessToken: 'access', refreshToken: 'refresh' } })
-        expect(await signInWithPhone(REQUEST, '123456')).toBe(true)
-        expect(mockSetSession).toHaveBeenCalledWith({ access_token: 'access', refresh_token: 'refresh' })
-    })
-
-    it('asks Supabase for a code only when the hub did not mail one', async () => {
-        mockApi.mockResolvedValue({ mailed: true })
-        await sendEmailCode('ada@example.com')
-        expect(mockSignInWithOtp).not.toHaveBeenCalled()
-
+    it('tells too many codes apart from a code that could not be sent', async () => {
         mockApi.mockResolvedValue({ mailed: false })
-        await sendEmailCode('ada@example.com')
-        expect(mockSignInWithOtp).toHaveBeenCalledWith({ email: 'ada@example.com', options: { shouldCreateUser: false } })
+        mockSendVerificationOtp.mockResolvedValue({ data: null, error: { status: 429, message: 'Too many requests' } })
+        await expect(sendEmailCode('ada@example.com')).rejects.toMatchObject({ reason: 'rate_limited' })
+        mockSendVerificationOtp.mockResolvedValue({ data: null, error: { status: 500, message: 'Failed' } })
+        await expect(sendEmailCode('ada@example.com')).rejects.toMatchObject({ reason: 'unavailable' })
+    })
+
+    it('opens the session with the code typed', async () => {
+        await signInWithEmail('ada@example.com', '123456')
+        expect(mockSignInEmailOtp).toHaveBeenCalledWith({ email: 'ada@example.com', otp: '123456' })
+    })
+
+    it('reads a refused code as wrong or expired', async () => {
+        mockSignInEmailOtp.mockResolvedValue({ data: null, error: { status: 400, code: 'INVALID_OTP', message: 'Invalid OTP' } })
+        await expect(signInWithEmail('ada@example.com', '000000')).rejects.toMatchObject({ reason: 'wrong_code', method: 'email' })
     })
 })

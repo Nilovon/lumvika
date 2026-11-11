@@ -28,10 +28,12 @@ export function queryRows<T extends Record<string, unknown>>(scope: DbScope, que
     )
 }
 
+// An array goes over as one parameter, the Postgres array the function takes; interpolated as is,
+// Drizzle would spread it into a list of parameters.
 function callOf(name: string, args: Record<string, unknown>) {
     const named = Object.entries(args)
         .filter(([, value]) => value !== undefined)
-        .map(([key, value]) => sql`${sql.identifier(key)} => ${value}`)
+        .map(([key, value]) => sql`${sql.identifier(key)} => ${Array.isArray(value) ? sql.param(value) : value}`)
     return sql`${sql.identifier('public')}.${sql.identifier(name)}(${sql.join(named, sql`, `)})`
 }
 

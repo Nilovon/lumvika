@@ -1,7 +1,7 @@
 import type { AgentModels, AgentView, Conversation } from '@lumvika/contracts'
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 
@@ -9,11 +9,11 @@ import { fetchAgentConversations, fetchAgentView } from '@/api/chat'
 import { markInboxRead } from '@/api/inbox'
 import { fetchAgentModels } from '@/api/models'
 import { useAuth } from '@/auth/AuthProvider'
-import { supabase } from '@/auth/supabase'
 import { coworkerEndpoints } from '@/chat/endpoints'
 import { useChatBack } from '@/components/layout/useChatBack'
 import { environment } from '@/config/environment'
 import { readCoworkerScreen, saveCoworkerScreen } from '@/data/local-cache'
+import { subscribeLive } from '@/lib/live'
 import { useTheme } from '@/theme/theme'
 
 import { ChatHeader, type ChatTab } from './ChatHeader'
@@ -50,9 +50,6 @@ export function CoworkerChat({ agentId, sessionId }: { agentId: string; sessionI
     const [draftKey, setDraftKey] = useState(() => `new-${Date.now()}`)
     const [bornKeys, setBornKeys] = useState<Record<string, string>>({})
     const [activeId, setActiveId] = useState(sessionId)
-    // Two chats of the same coworker can be stacked (a push opens a second one): each needs its own
-    // channel, supabase.channel() hands back the existing instance for a topic already taken.
-    const channelId = useId()
     const [openIds, openChat] = useOpenChats(agentId, sessionId)
     const coworker = coworkerOf(agentId, view)
     const accessToken = session?.access_token
@@ -94,14 +91,9 @@ export function CoworkerChat({ agentId, sessionId }: { agentId: string; sessionI
     // The status moves on the hub while the page is open (a run ends on a question, another one starts
     // on a schedule): the header's menu sorts them by state, so every row of the coworker is followed live.
     useEffect(() => {
-        const channel = supabase
-            .channel(`conversations:${agentId}:${channelId}`)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sessions', filter: `agent_id=eq.${agentId}` }, loadConversations)
-            .subscribe()
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [agentId, channelId, loadConversations])
+        if (!accessToken) return
+        return subscribeLive(accessToken, [{ table: 'sessions', ops: ['UPDATE'], filter: { agent_id: agentId } }], { onChange: loadConversations, onResync: loadConversations })
+    }, [accessToken, agentId, loadConversations])
 
     // On screen is read: a finished run leaves Unread once its conversation is the open one. Only an
     // Unread one: the inbox's read also sends a waiting conversation back to idle.

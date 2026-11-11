@@ -13,7 +13,7 @@ import type { StewardSurface } from '@/lib/steward/surface'
 import { arrivalPreviewPlan, intakePreviewPlan } from '@/lib/onboarding/intake'
 import { useStewardStore } from '@/stores/steward.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // Who opens the conversation. A first arrival is met by the steward rather than by an empty board:
 // the column opens by itself and the first message is one the user never typed, so the steward is
@@ -80,14 +80,14 @@ export async function settleBuiltFunnel(): Promise<'skipped' | 'companion'> {
 }
 
 export function useStewardKickoff({ send, messageCount, restoreDone }: { send: (text: string) => void; messageCount: number; restoreDone: boolean }) {
-    const { workspace, isAnonymous, phoneStep } = useSession()
+    const { workspace, isAnonymous, signupSettled } = useSession()
     const searchParams = useSearchParams()
     const funnel = useStewardStore(state => state.funnel)
     const intake = useStewardStore(state => state.intake)
     const [firstName, setFirstName] = useState<string | null>(null)
     // Ce avec quoi ils sont arrivés, nommé par le serveur. Dans le store et pas ici : la colonne en
-    // fait son tunnel tant que ce n'est pas installé, le board le dessine, et les murs de compte et
-    // de téléphone lui cèdent la place.
+    // fait son tunnel tant que ce n'est pas installé, le board le dessine, et le mur de compte lui
+    // cède la place.
     const arrival = useStewardStore(state => state.arrival)
     // The phase is asked once per identity, not once per mount: signing up upgrades the anonymous
     // session in place, and signing into an existing account swaps the workspace under the column.
@@ -225,11 +225,11 @@ export function useStewardKickoff({ send, messageCount, restoreDone }: { send: (
     // it back too, and calls `start` itself once it has written the profile.
     // Never for an anonymous visitor, and never before the phase has been read for the identity in
     // place: right after a signup the funnel is still the one the anonymous visitor was given.
-    // Nor while the phone wall is up or may still rise: the steward waits for the account to be let in.
+    // Nor before the signup stamp reached this tab: the account is not let in until it is settled.
     useEffect(() => {
-        if (funnel !== 'guided' || intake || !restoreDone || messageCount > 0 || isAnonymous || phoneStep !== 'clear' || !identity || settled !== identity) return
+        if (funnel !== 'guided' || intake || !restoreDone || messageCount > 0 || isAnonymous || !signupSettled || !identity || settled !== identity) return
         start()
-    }, [funnel, intake, restoreDone, messageCount, isAnonymous, phoneStep, identity, settled, start])
+    }, [funnel, intake, restoreDone, messageCount, isAnonymous, signupSettled, identity, settled, start])
 
     return { start, firstName, arrival, prompted }
 }

@@ -5,7 +5,7 @@ import type { CompanyFindingsRow, DiscoveryEvent } from '@/lib/company/explore/f
 import { companySiteUrl } from '@/lib/company/firecrawl'
 import { analyzeCompanyProfile } from '@/lib/company/profile'
 import { takeIntakeCall } from '@/lib/onboarding/anonymous-intake-quota'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle } from '@/lib/db'
 
 // What the onboarding board shows of the company while the welcome card is being filled. A route
 // rather than a server action: Next runs one action at a time per client, and the cards have to
@@ -30,10 +30,10 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as { url?: unknown } | null
     const url = typeof body?.url === 'string' ? companySiteUrl(body.url) : null
     if (!url) return Response.json({ error: 'That does not look like a website address' }, { status: 400 })
-    if (!takeIntakeCall(ctx.workspace.id, 'explore')) return Response.json({ error: ctx.authUser.is_anonymous ? 'Create your account to keep going.' : 'The site was read enough times for now.' }, { status: 429 })
+    if (!takeIntakeCall(ctx.workspace.id, 'explore')) return Response.json({ error: ctx.authUser.isAnonymous ? 'Create your account to keep going.' : 'The site was read enough times for now.' }, { status: 429 })
 
     const domain = new URL(url).hostname
-    const translator = createDiscoveryTranslator({ domain, icons: serviceIconLookup(ctx.supabase) })
+    const translator = createDiscoveryTranslator({ domain, icons: serviceIconLookup(ctx.scope) })
     const encoder = new TextEncoder()
 
     const stream = new ReadableStream<Uint8Array>({
@@ -71,6 +71,6 @@ export async function GET() {
     const ctx = await workspaceContext()
     if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data } = await selectMaybeSingle(ctx.supabase, 'workspace_onboarding', ['company_findings'] as const, { workspace_id: ctx.workspace.id })
+    const { data } = await selectMaybeSingle(ctx.scope, 'workspace_onboarding', ['company_findings'] as const, { workspace_id: ctx.workspace.id })
     return Response.json((data?.company_findings ?? null) as CompanyFindingsRow | null, { headers: { 'cache-control': 'no-store' } })
 }

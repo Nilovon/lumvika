@@ -1,10 +1,8 @@
 import { BOX_NOT_FOUND, assertSpaceAccess, isAdminActor, type Actor } from '@/app/api/_auth/access'
 import { ensureWorkspaceNamed, resolveBoxName } from '@/app/api/_services/naming.service'
 import { ensureWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
-import type { Database } from '@/app/api/database.types'
 import { findRadialRect, rectOnSide, type SpaceSide } from '@/lib/board/space-layout'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectCount, selectMany } from '@/supabase/supabase-helpers'
+import { deleteRows, insertRow, insertRows, selectCount, selectMany, serviceScope, updateRows, upsertRows, type TablesInsert } from '@/lib/db'
 import { AppError, failure, failureOf, type ActionFailure } from '@/lib/i18n/action-error'
 
 // Creating, renaming and deleting a Box, with the workspace handed in rather than read from a
@@ -32,7 +30,7 @@ function takenNames(spaces: { name: string | null }[] | null): string[] {
 async function grantCreatorManage(actor: Actor, spaceIds: string[]): Promise<void> {
     if (isAdminActor(actor) || actor.kind !== 'user' || !spaceIds.length) return
     const rows = spaceIds.map(spaceId => ({ space_id: spaceId, user_id: actor.userId, workspace_id: actor.workspaceId, access: 'manage', granted_by: actor.userId }))
-    const { error } = await createServiceRoleClient().from('space_members').upsert<Database['public']['Tables']['space_members']['Insert']>(rows, { onConflict: 'space_id,user_id' })
+    const { error } = await upsertRows(serviceScope(), 'space_members', rows, { onConflict: ['space_id', 'user_id'] })
     if (error) throw new Error(`Failed to give you access to the Box: ${error.message}`)
 }
 
@@ -53,33 +51,34 @@ export async function createBox(params: { workspaceId: number; userId: string; a
     const engine = await ensureWorkspaceEngine(workspaceId).catch(err => failureOf(err, 'noActivePlan'))
     if (!engine.ok) return engine
 
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: spaces } = await selectMany(supabase, 'spaces', SPACE_RECT_COLUMNS, { workspace_id: workspaceId }, OLDEST_FIRST)
+    const { data: spaces } = await selectMany(scope, 'spaces', SPACE_RECT_COLUMNS, { workspace_id: workspaceId }, OLDEST_FIRST)
     const from = params.from
     const source = from ? spaces?.find(s => s.id === from.spaceId) : undefined
     const rect = source && from ? rectOnSide(source, from.side, spaces ?? []) : findRadialRect(spaces ?? [])
     const name = await resolveBoxName({ workspaceId, taken: takenNames(spaces), proposed: params.name })
 
-    const { data, error } = await supabase
-        .from('spaces')
-        .insert<Database['public']['Tables']['spaces']['Insert']>({
+    const { data, error } = await insertRow(
+        scope,
+        'spaces',
+        {
             workspace_id: workspaceId,
             col_start: rect.colStart,
             row_start: rect.rowStart,
             col_end: rect.colEnd,
             row_end: rect.rowEnd,
             name,
-        })
-        .select('id')
-        .single()
+        },
+        ['id']
+    )
 
     if (error) return { ok: false, error: error.message }
-    const spaceId = (data as { id: string }).id
+    const spaceId = data.id
     try {
         await grantCreatorManage(actor, [spaceId])
     } catch (err) {
-        await supabase.from('spaces').delete().eq('id', spaceId)
+        await deleteRows(scope, 'spaces', { id: spaceId })
         return failureOf(err, 'boxCreateFailed')
     }
 
@@ -120,11 +119,11 @@ export async function createBoxesBatch(params: { workspaceId: number; userId: st
     const engine = await ensureWorkspaceEngine(workspaceId).catch(err => failureOf(err, 'noActivePlan'))
     if (!engine.ok) return names.map(() => engine)
 
-    const supabase = createServiceRoleClient()
-    const { data: existing } = await selectMany(supabase, 'spaces', SPACE_RECT_COLUMNS, { workspace_id: workspaceId }, OLDEST_FIRST)
+    const scope = serviceScope()
+    const { data: existing } = await selectMany(scope, 'spaces', SPACE_RECT_COLUMNS, { workspace_id: workspaceId }, OLDEST_FIRST)
     const placed: { name: string | null; col_start: number; row_start: number; col_end: number; row_end: number }[] = [...(existing ?? [])]
 
-    const rows: Database['public']['Tables']['spaces']['Insert'][] = []
+    const rows: TablesInsert<'spaces'>[] = []
     for (const proposed of names) {
         const rect = findRadialRect(placed)
         const name = await resolveBoxName({ workspaceId, taken: takenNames(placed), proposed })
@@ -132,12 +131,12 @@ export async function createBoxesBatch(params: { workspaceId: number; userId: st
         rows.push({ workspace_id: workspaceId, name, col_start: rect.colStart, row_start: rect.rowStart, col_end: rect.colEnd, row_end: rect.rowEnd })
     }
 
-    const { data, error } = await supabase.from('spaces').insert<Database['public']['Tables']['spaces']['Insert']>(rows).select('id, name, col_start, row_start, col_end, row_end')
+    const { data, error } = await insertRows(scope, 'spaces', rows, SPACE_RECT_COLUMNS)
     if (error || !data) return names.map(() => (error ? { ok: false as const, error: error.message } : failure('boxesCreateFailed')))
     try {
         await grantCreatorManage(actor, data.map(space => space.id))
     } catch (err) {
-        await supabase.from('spaces').delete().in('id', data.map(space => space.id))
+        await deleteRows(scope, 'spaces', { id: data.map(space => space.id) })
         return names.map(() => failureOf(err, 'boxesCreateFailed'))
     }
 
@@ -154,21 +153,20 @@ export async function createBoxesBatch(params: { workspaceId: number; userId: st
 
 export async function renameBox(actor: Actor, spaceId: string, newName: string): Promise<void> {
     await assertSpaceAccess(spaceId, 'manage', actor)
-    const supabase = createServiceRoleClient()
-    const { error } = await supabase.from('spaces').update<Database['public']['Tables']['spaces']['Update']>({ name: newName }).eq('id', spaceId)
+    const { error } = await updateRows(serviceScope(), 'spaces', { name: newName }, { id: spaceId })
     if (error) throw new Error(`Failed to rename the Box: ${error.message}`)
 }
 
 // Deleting a Box no longer takes a machine down with it, so the agents drawn in it would be
-// dropped from Supabase by the cascade while the engine kept running them forever: their
+// dropped from the database by the cascade while the engine kept running them forever: their
 // schedules would keep firing and keep spending. An empty Box is the only one that can go.
 export async function deleteBox(actor: Actor, spaceId: string): Promise<void> {
     await assertSpaceAccess(spaceId, 'manage', actor)
 
-    const supabase = createServiceRoleClient()
-    const { data: agents } = await selectCount(supabase, 'agents', { space_id: spaceId })
+    const scope = serviceScope()
+    const { data: agents } = await selectCount(scope, 'agents', { space_id: spaceId })
     if (agents) throw new AppError('boxStillHoldsCoworkers', { count: agents })
 
-    const { error } = await supabase.from('spaces').delete().eq('id', spaceId)
+    const { error } = await deleteRows(scope, 'spaces', { id: spaceId })
     if (error) throw new Error(`Failed to delete the Box: ${error.message}`)
 }

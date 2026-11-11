@@ -9,9 +9,8 @@ import { AuthBoard } from '@/components/auth/AuthBoard'
 import { useSignInFlow } from '@/components/auth/SignInFlow'
 import { CodeStep } from '@/components/auth/steps/CodeStep'
 import { EmailStep } from '@/components/auth/steps/EmailStep'
-import { PhoneStep } from '@/components/auth/steps/PhoneStep'
 import { ServerStep } from '@/components/auth/steps/ServerStep'
-import { StartStep, type StartLayout } from '@/components/auth/steps/StartStep'
+import { StartStep } from '@/components/auth/steps/StartStep'
 import { FORM_COLUMN_MAX_WIDTH } from '@/components/layout/split'
 import { StewardOrb } from '@/components/orb/StewardOrb'
 import { GlassButton } from '@/components/ui/GlassButton'
@@ -45,7 +44,7 @@ function Steward({ thinking }: { thinking: boolean }) {
 // The sign-in screen: the board of coworkers at work fills the top, the Steward sits on the edge of a
 // sheet that holds every step. The sheet is the screen, so it never closes: it grows and shrinks to
 // the step it shows and rides over the keyboard.
-export function SignInSheet({ startLayout = 'phone-first' }: { startLayout?: StartLayout }) {
+export function SignInSheet() {
     const theme = useTheme()
     const insets = useSafeAreaInsets()
     const { height: windowHeight } = useWindowDimensions()
@@ -74,7 +73,6 @@ export function SignInSheet({ startLayout = 'phone-first' }: { startLayout?: Sta
 
     const sheetHeight = Math.min(restingContent, windowHeight - topRoom - paddingTop - paddingBottom) + paddingTop + paddingBottom
     const boardHeight = windowHeight - sheetHeight + radius.xl
-    const stepKey = step.name === 'code' ? `code-${step.method}` : step.name
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -107,16 +105,15 @@ export function SignInSheet({ startLayout = 'phone-first' }: { startLayout?: Sta
                     <ScrollView keyboardShouldPersistTaps="handled" bounces={false} showsVerticalScrollIndicator={false}>
                         <View onLayout={onContentLayout} style={{ paddingHorizontal: spacing.xl }}>
                             <Animated.View
-                                key={stepKey}
+                                key={step.name}
                                 entering={(direction === 'forward' ? FadeInRight : FadeInLeft).duration(STEP_ENTER_MS)}
                                 exiting={FadeOut.duration(STEP_EXIT_MS)}
                                 style={{ width: '100%', maxWidth: FORM_COLUMN_MAX_WIDTH, alignSelf: 'center', gap: spacing.lg, paddingTop: step.name === 'start' ? 0 : spacing.xl }}
                             >
-                                {step.name === 'start' && <StartStep layout={startLayout} />}
-                                {step.name === 'phone' && <PhoneStep />}
+                                {step.name === 'start' && <StartStep />}
                                 {step.name === 'email' && <EmailStep />}
                                 {step.name === 'server' && <ServerStep />}
-                                {step.name === 'code' && <CodeStep step={step} />}
+                                {step.name === 'code' && <CodeStep />}
                             </Animated.View>
                         </View>
                     </ScrollView>

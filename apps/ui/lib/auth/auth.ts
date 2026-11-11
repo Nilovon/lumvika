@@ -1,9 +1,9 @@
 import { expo } from '@better-auth/expo'
-import { callScalar, findAuthUserIdByEmail, getDb, serviceScope } from '@lumvika/db'
+import { callScalar, eq, findAuthUserIdByEmail, getDb, serviceScope } from '@lumvika/db'
 import { authAccounts, authRateLimits, authSessions, authUsers, authVerifications } from '@lumvika/db/schema'
 import { betterAuth, type BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { APIError } from 'better-auth/api'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { nextCookies } from 'better-auth/next-js'
 import { anonymous, bearer, emailOTP } from 'better-auth/plugins'
 
@@ -14,6 +14,7 @@ import { recipientLocale } from '@/lib/i18n/recipient-locale'
 
 export const SIGN_IN_CODE_TTL_SECONDS = 15 * 60
 export const ANONYMOUS_EMAIL_DOMAIN = 'anonymous.lumvika.invalid'
+export const ANONYMOUS_NAME = 'Anonymous'
 const MOBILE_SCHEME = 'lumvika://'
 
 export function isAnonymousEmail(email: string | null | undefined): boolean {
@@ -82,6 +83,18 @@ function createAuth() {
                 updateUserInfoOnLink: true,
             },
         },
+        // A provider error (an expired OAuth state, a refused consent) comes back to the app's own
+        // callback, which opens the retry dialog.
+        onAPIError: { errorURL: '/auth/callback' },
+        hooks: {
+            // A photo is set by the account dialog's server action, which uploads it first: a URL
+            // posted straight from a browser would end up in every teammate's <img>.
+            before: createAuthMiddleware(async ctx => {
+                if (ctx.path === '/update-user' && ctx.request && ctx.body && 'image' in ctx.body) {
+                    throw new APIError('BAD_REQUEST', { message: 'The photo is changed from the account settings.' })
+                }
+            }),
+        },
         databaseHooks: {
             user: {
                 create: {
@@ -98,13 +111,18 @@ function createAuth() {
                         await refuseBlockedDomain(user.email)
                         return { data: { ...user, email: normalizeEmail(user.email), isAnonymous: false, emailVerified: true } }
                     },
+                    // The placeholder name of an anonymous visitor does not follow them into their account.
+                    after: async user => {
+                        if (user.name !== ANONYMOUS_NAME || (user as { isAnonymous?: boolean | null }).isAnonymous) return
+                        await getDb().update(authUsers).set({ name: '' }).where(eq(authUsers.id, user.id))
+                    },
                 },
             },
         },
         plugins: [
             anonymous({
                 emailDomainName: ANONYMOUS_EMAIL_DOMAIN,
-                generateName: () => 'Anonymous',
+                generateName: () => ANONYMOUS_NAME,
                 // An anonymous visitor who signs into an existing account leaves the throwaway one
                 // behind; the purge task removes it with its workspace.
                 disableDeleteAnonymousUser: true,
@@ -118,6 +136,9 @@ function createAuth() {
                 disableSignUp: true,
                 changeEmail: { enabled: true },
                 async sendVerificationOTP({ email, otp }) {
+                    // The endpoints that mail a code are public: an address takes only so many a day.
+                    const { claimAuthEmailSend } = await import('@/app/api/_services/email-sign-up.service')
+                    if (!(await claimAuthEmailSend(normalizeEmail(email)))) throw new APIError('TOO_MANY_REQUESTS', { message: 'Too many codes for this address. Try again later.' })
                     const result = await sendSignInCodeEmail({ to: email, code: otp, expiresInMinutes: SIGN_IN_CODE_TTL_SECONDS / 60, locale: await localeOfEmail(email) })
                     if (!result.ok) console.error('[auth] could not send the sign-in code', result.error)
                 },

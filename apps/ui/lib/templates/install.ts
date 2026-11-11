@@ -1,8 +1,6 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Actor } from '@/app/api/_auth/access'
-import type { Database } from '@/app/api/database.types'
 import { deriveUniqueHandles, importAgent } from '@/app/api/_services/agent.service'
-import { selectMany, selectSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectSingle, type DbScope } from '@/lib/db'
 import { downloadPrivateFile } from '@/lib/storage/private'
 import { staleImportError } from '@/lib/agents/capture-archive'
 import { AppError } from '@/lib/i18n/action-error'
@@ -29,9 +27,9 @@ export type TemplateInstallOutcome = { imported: number; inactive: number; agent
 // The anchors come from the client, so they are treated as a preference rather than a fact: one
 // that does not fit inside the target space is dropped, and that agent falls back to the free cell
 // the server picks for it.
-async function anchorsInsideSpace(supabase: SupabaseClient<Database>, spaceId: string, positions: GridPosition[] | undefined): Promise<(GridPosition | undefined)[]> {
+async function anchorsInsideSpace(scope: DbScope, spaceId: string, positions: GridPosition[] | undefined): Promise<(GridPosition | undefined)[]> {
     if (!positions?.length) return []
-    const { data: space } = await selectSingle(supabase, 'spaces', ['col_start', 'row_start', 'col_end', 'row_end'] as const, { id: spaceId })
+    const { data: space } = await selectSingle(scope, 'spaces', ['col_start', 'row_start', 'col_end', 'row_end'] as const, { id: spaceId })
     if (!space) return []
 
     return positions.map(p => (containerContainsTile(space, p, AGENT_SPAN) ? p : undefined))
@@ -41,15 +39,15 @@ async function anchorsInsideSpace(supabase: SupabaseClient<Database>, spaceId: s
 // Nothing here reads the tarball. The engine is the only side that opens it, so the connectors an
 // imported agent still needs are the ones its own registry already declares as needing auth, and
 // the Services tab renders them with nothing new to build.
-export async function installTemplate(supabase: SupabaseClient<Database>, slug: string, target: { workspaceId: number; spaceId: string; actor: Actor; positions?: GridPosition[]; again?: boolean }): Promise<TemplateInstallOutcome> {
-    const { data: template } = await selectSingle(supabase, 'templates', ['id', 'title', 'agents', 'agent_archives'] as const, { slug })
+export async function installTemplate(scope: DbScope, slug: string, target: { workspaceId: number; spaceId: string; actor: Actor; positions?: GridPosition[]; again?: boolean }): Promise<TemplateInstallOutcome> {
+    const { data: template } = await selectSingle(scope, 'templates', ['id', 'title', 'agents', 'agent_archives'] as const, { slug })
     if (!template) throw new AppError('templateSlugNotFound', { slug })
 
     // A replayed install (the steward calling twice, a retry after checkout, a second tab) would land
     // a second team with the same names, each asking to be set up from scratch, so the workspace
     // gets back the coworkers it already has. Only the user's explicit "Install again" sets `again`.
     if (!target.again) {
-        const { data: installed } = await selectMany(supabase, 'agents', ['id'] as const, { workspace_id: target.workspaceId, template_id: template.id }, { column: 'created_at' })
+        const { data: installed } = await selectMany(scope, 'agents', ['id'] as const, { workspace_id: target.workspaceId, template_id: template.id }, { column: 'created_at' })
         if (installed?.length) return { imported: 0, inactive: 0, agentIds: installed.map(agent => agent.id), failed: [], warnings: [], alreadyInstalled: true }
     }
 
@@ -60,8 +58,8 @@ export async function installTemplate(supabase: SupabaseClient<Database>, slug: 
     // Named after the editorial entry when there is one, so an admin's rename of a captured agent
     // is what the importer sees.
     const names = archiveAgentNames(archives, agents)
-    const handles = await deriveUniqueHandles(supabase, target.workspaceId, names)
-    const anchors = await anchorsInsideSpace(supabase, target.spaceId, target.positions)
+    const handles = await deriveUniqueHandles(scope, target.workspaceId, names)
+    const anchors = await anchorsInsideSpace(scope, target.spaceId, target.positions)
 
     const failed: TemplateInstallOutcome['failed'] = []
     const warnings: string[] = []
@@ -71,7 +69,7 @@ export async function installTemplate(supabase: SupabaseClient<Database>, slug: 
 
     for (const [index, archive] of archives.entries()) {
         try {
-            const blob = await downloadPrivateFile(supabase, AGENT_ARCHIVE_BUCKET, archive.path)
+            const blob = await downloadPrivateFile(scope, AGENT_ARCHIVE_BUCKET, archive.path)
             // The template id rides along so a revoked purchase can name the agents it installed.
             const { agent, imported: result } = await importAgent({
                 archive: blob,
@@ -97,7 +95,7 @@ export async function installTemplate(supabase: SupabaseClient<Database>, slug: 
         } catch (err) {
             // An engine too old to answer this route will fail on every agent, so it is worth
             // stopping on. Anything else is about this one archive: there is no transaction
-            // between Supabase and the engine, and an agent that already landed is real and
+            // between the database and the engine, and an agent that already landed is real and
             // visible on the grid, so the rest of the batch carries on and reports what failed.
             if (isMissingImportRoute(err)) throw staleImportError()
             failed.push({ name: names[index], error: errorMessage(err) })

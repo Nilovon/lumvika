@@ -6,8 +6,9 @@ import { useMemo, useState } from 'react'
 
 import { teamEmptyStateOf, type TeamEmptyStateModel } from '@/lib/steward/team-empty-state'
 import { readFirstName } from '@/lib/naming/first-name'
+import { readProfile } from '@/lib/auth/user-profile'
 import { useBoardStore } from '@/stores/board.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // Null until the board is hydrated: an empty agent list before that would flash the "no coworkers
 // yet" screen at someone who has a team.
@@ -16,7 +17,7 @@ export function useStewardTeamEmptyState(): { model: TeamEmptyStateModel; now: n
     const agents = useBoardStore(state => state.agents)
     const schedules = useBoardStore(state => state.agentSchedules)
     const { session } = useSession()
-    const firstName = readFirstName(session?.user.user_metadata)
+    const firstName = readFirstName({ name: session ? readProfile(session.user).name : null })
     const [now] = useState(() => Date.now())
     const t = useTranslations('steward.teamEmptyState')
     const copy = useMemo<TeamEmptyStateCopy>(

@@ -10,7 +10,7 @@ import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { useAgentAccess } from '@/hooks/useBoxAccess'
 import type { IsoAgent } from '@/lib/board/types'
 import { useBoardStore } from '@/stores/board.store'
-import { useIsWorkspaceAdmin } from '@/supabase/session/SessionProvider'
+import { useIsWorkspaceAdmin } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 

@@ -6,8 +6,8 @@ import * as schema from './schema'
 export type Schema = typeof schema
 export type Db = NodePgDatabase<Schema>
 
-// int8 arrives as a string by default; every id and counter here fits a JS number, and Supabase
-// handed them over as numbers. Drizzle's typed selects convert on their own, raw SQL relies on this.
+// int8 arrives as a string by default; every id and counter here fits a JS number, as the app
+// has always read them. Drizzle's typed selects convert on their own, raw SQL relies on this.
 pg.types.setTypeParser(pg.types.builtins.INT8, value => Number(value))
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, value => Number(value))
 

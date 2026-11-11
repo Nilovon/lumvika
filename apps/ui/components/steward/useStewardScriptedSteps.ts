@@ -13,7 +13,7 @@ import { browserPermission } from '@/lib/notifications/browser'
 import { useBoardStore } from '@/stores/board.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // The browser's half of the steps the app runs without the model (lib/steward/scripted.ts): framing
 // the board on the team the moment it is built, leaving the funnel once that build lands and handing

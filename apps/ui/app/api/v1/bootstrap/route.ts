@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // Called by the app right after every sign-in. The web provisions a new account in the proxy, which
 // never sees a bearer request, so this is the mobile counterpart. Safe to repeat.
 export const POST = apiRoute({ auth: 'user' }, async ({ ctx }) => {
-    await provisionUser(ctx.supabase, ctx.user, { phoneStep: false, priceArm: null, locale: resolveLocale({ acceptLanguage: (await headers()).get('accept-language') }) })
+    await provisionUser(ctx.scope, ctx.user, { priceArm: null, locale: resolveLocale({ acceptLanguage: (await headers()).get('accept-language') }) })
     try {
         return loadMe(await requireWorkspaceContext())
     } catch (err) {

@@ -12,7 +12,7 @@ import { CheckIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useDialogPortalContainer } from '@lumvika/ui/forms'
 import { useBillingStore } from '@/stores/billing.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useState, type ReactNode } from 'react'
 

@@ -1,9 +1,9 @@
 'use client'
 
 import { useErrorText } from '@/hooks/useErrorText'
-import { resendLiveSignInCode } from '@/app/(authflow)/auth/actions'
 import {
     deleteMyAccountAction,
+    disconnectProviderAction,
     getAccountDeletionStatusAction,
     getSignInMethodsAction,
     prepareEmailChangeAction,
@@ -23,12 +23,11 @@ import { SignInMethodsPanel } from '@/components/account/SignInMethodsPanel'
 import { EmailCodeForm } from '@/components/auth/EmailCodeForm'
 import { DIALOG_TABS_CONTENT, DIALOG_TABS_HEADER } from '@/components/dialogs/DialogTabs'
 import { useLanguagePacksEnabled } from '@/components/layout/FeatureFlagsProvider'
-import { PHONE_ENABLED } from '@lumvika/cloud/phone'
-import { PhoneChangeForm } from '@lumvika/cloud/phone.client'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PanelEditorBody, PanelEditorHeader, PanelEditorShell } from '@/components/ui/panel-editor'
 import { PanelSteps } from '@/components/ui/panel-steps'
 import type { AccountDeletionBlocker } from '@/lib/auth/account-deletion'
+import { authCall, authClient } from '@/lib/auth/auth-client'
 import { forgetLinkIntent, rememberLinkIntent } from '@/lib/auth/link-intent'
 import { OAUTH_PROVIDER_CONFIG, type OAuthProvider } from '@/lib/auth/oauth-providers'
 import { realEmail } from '@/lib/auth/placeholder-email'
@@ -37,8 +36,7 @@ import { detectInAppBrowser } from '@/lib/in-app-browser'
 import { routes } from '@/lib/routes'
 import { useAccountStore, type AccountTab } from '@/stores/account.store'
 import { useBillingStore } from '@/stores/billing.store'
-import { createClient } from '@/supabase/client'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
@@ -47,13 +45,9 @@ function unwrap(result: ActionResult, errorText: ReturnType<typeof useErrorText>
     if (!result.ok) throw new Error(errorText(result))
 }
 
-// The name and the photo ride on the session's user, so reading them back is a token refresh.
-async function refreshSession() {
-    await createClient().auth.refreshSession()
-}
-
+// The name and the photo ride on the session's user, so reading them back is a session refresh.
 function ProfileTab() {
-    const { session } = useSession()
+    const { session, refreshUser: refreshSession } = useSession()
     const errorText = useErrorText()
     const authUser = session?.user
     if (!authUser) return null
@@ -79,14 +73,14 @@ function ProfileTab() {
     return <ProfilePanel name={profile.name ?? ''} avatarUrl={profile.avatarUrl} fallbackLabel={realEmail(authUser.email)} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} saveName={saveName} />
 }
 
-type SignInStep = 'list' | 'email' | 'phone'
+type SignInStep = 'list' | 'email'
 
 function SignInTab() {
     const t = useTranslations('dialogs.account')
     const errorText = useErrorText()
-    const { refreshPhoneStep } = useSession()
+    const { refreshUser: refreshSession } = useSession()
     const [methods, setMethods] = useState<SignInMethods | null>(null)
-    const [step, setStep] = useState<SignInStep>(() => useAccountStore.getState().signInStart)
+    const [step, setStep] = useState<SignInStep>('list')
     const [busyProvider, setBusyProvider] = useState<OAuthProvider | null>(null)
     const [inAppBrowser] = useState(() => !!detectInAppBrowser(navigator.userAgent))
 
@@ -113,37 +107,24 @@ function SignInTab() {
 
     const sendEmailCode = async (email: string) => {
         unwrap(await prepareEmailChangeAction({ email }), errorText)
-        const live = await resendLiveSignInCode(email)
-        if (live.resent) return live.held ? 'held' : undefined
-        const { error } = await createClient().auth.updateUser({ email })
-        if (error) throw error
+        await authCall(authClient.emailOtp.requestEmailChange({ newEmail: email }))
     }
 
     const verifyEmailCode = async (email: string, code: string) => {
-        const { data, error } = await createClient().auth.verifyOtp({ email, token: code, type: 'email_change' })
-        if (error) throw error
-        // Supabase answers a success while the change still waits on the current address, which is
-        // how a project left on double confirmation behaves.
-        if (data.user?.email?.toLowerCase() !== email) throw new Error(t('emailChangeNeedsCurrentAddress'))
+        await authCall(authClient.emailOtp.changeEmail({ newEmail: email, otp: code }))
+        await refreshSession()
         void syncAccountEmailAction()
         toast.success(t('emailUpdated'))
-        await backToList()
-    }
-
-    const onPhoneChanged = async () => {
-        // An account born from a number is filed under it, so its address just moved with it.
-        await Promise.all([refreshSession(), refreshPhoneStep()])
-        toast.success(t('phoneUpdated'))
         await backToList()
     }
 
     // Never the fallback of the sign-in button: a plain sign-in from here would leave this account
     // for another one.
     const connectProvider = async (provider: OAuthProvider) => {
-        const { label, queryParams } = OAUTH_PROVIDER_CONFIG[provider]
+        const { label } = OAUTH_PROVIDER_CONFIG[provider]
         setBusyProvider(provider)
         rememberLinkIntent(provider)
-        const { error } = await createClient().auth.linkIdentity({ provider, options: { redirectTo: `${window.location.origin}${routes.authCallback}`, queryParams } })
+        const { error } = await authClient.linkSocial({ provider, callbackURL: routes.authCallback, errorCallbackURL: routes.authCallback })
         if (!error) return
         forgetLinkIntent()
         setBusyProvider(null)
@@ -155,12 +136,8 @@ function SignInTab() {
         const failure = t('disconnectFailed', { provider: label })
         setBusyProvider(provider)
         try {
-            const supabase = createClient()
-            const { data, error: readError } = await supabase.auth.getUserIdentities()
-            const identity = data?.identities.find(candidate => candidate.provider === provider)
-            if (readError || !identity) throw new Error(failure)
-            const { error } = await supabase.auth.unlinkIdentity(identity)
-            if (error) throw new Error(error.code === 'single_identity_not_deletable' ? t('onlySignInMethod', { provider: label }) : failure)
+            const result = await disconnectProviderAction({ provider })
+            if (!result.ok) throw new Error(result.code === 'lastSignInMethod' ? t('onlySignInMethod', { provider: label }) : failure)
             await refreshSession()
             toast.success(t('disconnected', { provider: label }))
             await load()
@@ -186,21 +163,6 @@ function SignInTab() {
         )
     }
 
-    if (step === 'phone') {
-        return (
-            <PanelSteps stepKey="phone" depth={1}>
-                <PanelEditorShell>
-                    <PanelEditorHeader title={methods?.phone ? t('changePhone') : t('addPhone')} onBack={() => setStep('list')} />
-                    <PanelEditorBody>
-                        <div className="mx-auto w-full max-w-sm py-4">
-                            <PhoneChangeForm onChanged={onPhoneChanged} />
-                        </div>
-                    </PanelEditorBody>
-                </PanelEditorShell>
-            </PanelSteps>
-        )
-    }
-
     return (
         <PanelSteps stepKey="list" depth={0}>
             <SignInMethodsPanel
@@ -208,7 +170,6 @@ function SignInTab() {
                 unavailableReasons={inAppBrowser ? { google: t('googleNeedsBrowser') } : undefined}
                 busyProvider={busyProvider}
                 onChangeEmail={() => setStep('email')}
-                onChangePhone={PHONE_ENABLED ? () => setStep('phone') : undefined}
                 onConnect={connectProvider}
                 onDisconnect={disconnectProvider}
             />

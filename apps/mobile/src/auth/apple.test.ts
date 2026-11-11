@@ -6,40 +6,37 @@ jest.mock('expo-apple-authentication', () => ({
     signInAsync: (...args: unknown[]) => mockSignInAsync(...args),
     AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
 }))
-const mockSignInWithIdToken = jest.fn()
-const mockUpdateUser = jest.fn()
-jest.mock('@/auth/supabase', () => ({ supabase: { auth: { signInWithIdToken: (...args: unknown[]) => mockSignInWithIdToken(...args), updateUser: (...args: unknown[]) => mockUpdateUser(...args) } } }))
+const mockSignInSocial = jest.fn()
+jest.mock('@/auth/auth-client', () => ({ authClient: { signIn: { social: (...args: unknown[]) => mockSignInSocial(...args) } } }))
 jest.mock('@/api/client', () => ({ api: jest.fn(), ApiError: class extends Error {} }))
 
 describe('signInWithApple', () => {
     beforeEach(() => {
         mockSignInAsync.mockReset()
-        mockSignInWithIdToken.mockReset().mockResolvedValue({ error: null })
-        mockUpdateUser.mockReset().mockResolvedValue({ error: null })
+        mockSignInSocial.mockReset().mockResolvedValue({ data: {}, error: null })
     })
 
-    it('opens the Supabase session with the identity token Apple handed back', async () => {
+    it('opens the session with the identity token Apple handed back', async () => {
         mockSignInAsync.mockResolvedValue({ identityToken: 'apple-jwt', fullName: null })
         await expect(signInWithApple()).resolves.toBe(true)
-        expect(mockSignInWithIdToken).toHaveBeenCalledWith({ provider: 'apple', token: 'apple-jwt' })
-        expect(mockUpdateUser).not.toHaveBeenCalled()
+        expect(mockSignInSocial).toHaveBeenCalledWith({ provider: 'apple', idToken: { token: 'apple-jwt', user: undefined } })
     })
 
-    it('keeps the name Apple gives on the first sign-in where the web reads it', async () => {
+    it('sends the name Apple gives on the first sign-in along with the token', async () => {
         mockSignInAsync.mockResolvedValue({ identityToken: 'apple-jwt', fullName: { givenName: 'Ada', familyName: 'Lovelace' } })
         await signInWithApple()
-        expect(mockUpdateUser).toHaveBeenCalledWith({ data: { full_name: 'Ada Lovelace' } })
+        expect(mockSignInSocial).toHaveBeenCalledWith({ provider: 'apple', idToken: { token: 'apple-jwt', user: { name: { firstName: 'Ada', lastName: 'Lovelace' } } } })
     })
 
     it('does nothing when the Apple sheet is closed', async () => {
         mockSignInAsync.mockRejectedValue({ code: 'ERR_REQUEST_CANCELED' })
         await expect(signInWithApple()).resolves.toBe(false)
-        expect(mockSignInWithIdToken).not.toHaveBeenCalled()
+        expect(mockSignInSocial).not.toHaveBeenCalled()
     })
 
-    it('shows one message whether Apple or Supabase refused', async () => {
+    it('shows one message whether Apple or the hub refused', async () => {
         mockSignInAsync.mockResolvedValue({ identityToken: 'apple-jwt', fullName: null })
-        mockSignInWithIdToken.mockResolvedValue({ error: { message: 'Unacceptable audience' } })
+        mockSignInSocial.mockResolvedValue({ data: null, error: { status: 401, message: 'Invalid token' } })
         await expect(signInWithApple()).rejects.toBeInstanceOf(SignInError)
     })
 })

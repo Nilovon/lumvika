@@ -4,8 +4,7 @@ import type { ReactNode } from 'react'
 
 import { badgeFromType, markdownToPlainText } from '@lumvika/ui/experts/options'
 import { MARK_PATH } from '@/components/layout/Logo'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
@@ -419,8 +418,7 @@ function CardImage({ data, photoDataUrl, s }: { data: ExpertCard; photoDataUrl: 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
 
-    const supabase = createServiceRoleClient()
-    const { data: row } = await selectMaybeSingle(supabase, 'experts', EXPERT_COLUMNS, { slug })
+    const { data: row } = await selectMaybeSingle(serviceScope(), 'experts', EXPERT_COLUMNS, { slug })
     if (!row) return new Response('Not found', { status: 404 })
 
     const badge = badgeFromType(row.type)

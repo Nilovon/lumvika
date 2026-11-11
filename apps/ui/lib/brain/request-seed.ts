@@ -1,9 +1,7 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-
-import type { Database, Json } from '@/app/api/database.types'
+import type { Json } from '@/app/api/database.types'
 import { globalIdempotencyKey, triggerTask } from '@lumvika/cloud/tasks'
 import type { CompanyFindingsRow } from '@/lib/company/explore/findings'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, updateRows, type DbScope } from '@/lib/db'
 import type { exploreCompanyTask } from '@/trigger/explore-company'
 import type { seedCompanyBrain } from '@/trigger/seed-company-brain'
 import type { suggestAgentIdeasTask } from '@/trigger/suggest-agent-ideas'
@@ -44,16 +42,13 @@ export function companyExploreIdempotencyKey(key: string) {
 // Starts the exploration the onboarding board shows card by card, unless this site already has one.
 // The row is written before the run starts: with one exploration at a time, a run can wait in the
 // queue, and the board keeps asking for as long as it reads 'running'.
-export async function requestCompanyExplore(supabase: SupabaseClient<Database>, workspaceId: number, url: string): Promise<void> {
-    const { data } = await selectMaybeSingle(supabase, 'workspace_onboarding', ['company_findings'] as const, { workspace_id: workspaceId })
+export async function requestCompanyExplore(scope: DbScope, workspaceId: number, url: string): Promise<void> {
+    const { data } = await selectMaybeSingle(scope, 'workspace_onboarding', ['company_findings'] as const, { workspace_id: workspaceId })
     const current = data?.company_findings as CompanyFindingsRow | null | undefined
     if (current?.url === url) return
 
     const queued: CompanyFindingsRow = { url, status: 'running', pending: [], findings: [] }
-    const { error } = await supabase
-        .from('workspace_onboarding')
-        .update<Database['public']['Tables']['workspace_onboarding']['Update']>({ company_findings: queued as unknown as Json })
-        .eq('workspace_id', workspaceId)
+    const { error } = await updateRows(scope, 'workspace_onboarding', { company_findings: queued as unknown as Json }, { workspace_id: workspaceId })
     if (error) throw new Error(error.message)
     await triggerTask<typeof exploreCompanyTask>('explore-company', { workspaceId, url }, { idempotencyKey: await companyExploreIdempotencyKey(companyExploreKey(workspaceId, url)) })
 }

@@ -3,8 +3,7 @@ import { MAX_TEXT_WRITE_CHARS } from '@lumvika/contracts'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { agentFilesBase, chat as engineChat, createMemory, createSchedule, createTrigger, getAgent, importSkill, listConnections, listSchedules, listSkills, listTriggers, patchAgent, updateSchedule, updateTrigger, uploadFile, writeFileText } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 
 import type { ServiceManifest } from '@/lib/services/manifest'
 import type { InstalledService } from '@/lib/services/types'
@@ -16,7 +15,8 @@ import { resolveAgentTarget } from './chat.service'
 import { dispatchAccountTool } from './mcp-account.service'
 import { allocateServiceInstance, listInstalledServices, loadManifest, uninstallService } from './services.service'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/lib/engine/client')
 vi.mock('./workspace-engine.service', () => ({ findWorkspaceEngine: vi.fn(), getConnectionForAgent: vi.fn(), getWorkspaceConnection: vi.fn() }))
 vi.mock('./agent.service', () => ({ changeAgentHandle: vi.fn(), createAgent: vi.fn(), deleteAgent: vi.fn(), moveAgentToBox: vi.fn(), renameAgent: vi.fn() }))
@@ -58,24 +58,22 @@ function installed(key: string, label?: string): InstalledService {
     return { key, slug, ...(instanceId ? { instanceId } : {}), ...(label ? { label } : {}), name: 'Gmail', icon: null, category: 'productivity', status: 'needs_auth', toolNames: [], installedAt: '2026-10-23T00:00:00.000Z' }
 }
 
-function eqValue(calls: readonly SupabaseCall[], column: string): unknown {
-    return calls.find(call => call.method === 'eq' && call.args[0] === column)?.args[1]
+function filterValue(call: DbCall, column: string): unknown {
+    return (call.args[1] as Record<string, unknown> | undefined)?.[column]
 }
 
-function resolveRow(table: string, calls: readonly SupabaseCall[]) {
-    if (table === 'agents') return { data: AGENTS[eqValue(calls, 'id') as string] ?? null }
-    if (table === 'spaces' && eqValue(calls, 'id') !== undefined && eqValue(calls, 'workspace_id') === undefined) return { data: SPACES.find(space => space.id === eqValue(calls, 'id')) ?? null }
-    if (table === 'spaces') return { data: SPACES.filter(space => space.workspace_id === eqValue(calls, 'workspace_id')) }
+function resolveRow(call: DbCall) {
+    if (call.table === 'agents') return { data: AGENTS[filterValue(call, 'id') as string] ?? null }
+    if (call.table === 'spaces' && filterValue(call, 'id') !== undefined && filterValue(call, 'workspace_id') === undefined) return { data: SPACES.find(space => space.id === filterValue(call, 'id')) ?? null }
+    if (call.table === 'spaces') return { data: SPACES.filter(space => space.workspace_id === filterValue(call, 'workspace_id')) }
     return undefined
 }
 
 describe('dispatchAccountTool', () => {
-    let db: FakeSupabase
-
     beforeEach(() => {
         vi.clearAllMocks()
-        db = fakeSupabase(resolveRow)
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
+        db.reset()
+        db.answer(resolveRow)
     })
 
     describe('send_message', () => {
@@ -122,7 +120,7 @@ describe('dispatchAccountTool', () => {
 
         it('deletes a confirmed agent of the workspace', async () => {
             await expect(dispatchAccountTool(workspaceActor(WORKSPACE_ID), 'delete_agent', { agentId: 'agent-own', confirm: true })).resolves.toEqual({ agentId: 'agent-own', deleted: true })
-            expect(db.chainsOn('space_members')).toEqual([])
+            expect(db.calls.filter(call => call.table === 'space_members')).toEqual([])
 
             expect(deleteAgent).toHaveBeenCalledWith('agent-own')
         })
@@ -132,7 +130,7 @@ describe('dispatchAccountTool', () => {
         it('refuses a Box of another workspace', async () => {
             await expect(dispatchAccountTool(workspaceActor(WORKSPACE_ID), 'create_agent', { name: 'Scout', spaceId: 'box-foreign' })).rejects.toThrow('Box not found')
 
-            expect(eqValue(db.chainsOn('spaces')[0], 'workspace_id')).toBe(WORKSPACE_ID)
+            expect(filterValue(db.calls.filter(call => call.table === 'spaces')[0], 'workspace_id')).toBe(WORKSPACE_ID)
             expect(createAgent).not.toHaveBeenCalled()
         })
 

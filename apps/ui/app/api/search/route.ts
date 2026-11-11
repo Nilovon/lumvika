@@ -1,9 +1,8 @@
 import { z } from 'zod'
-import type { Database } from '@/app/api/database.types'
+import { insertRows, serviceScope, type TablesInsert } from '@/lib/db'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { BRAVE_MAX_COUNT, searchBrave } from '@/lib/search/brave'
 import { readCachedSearch, searchCacheKey, storeSearch } from '@/lib/search/cache'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 // The one door a coworker's web_search goes through. The engine calls it with its LUMVIKA_API_KEY,
 // which names one workspace, so the search provider key never leaves the app.
@@ -12,9 +11,9 @@ export const dynamic = 'force-dynamic'
 const bodySchema = z.object({ query: z.string().min(1), maxResults: z.number().int().min(1).max(20).default(5) })
 
 // Kept for diagnosis only: a search that worked is never failed by its own bookkeeping.
-async function recordWebSearch(event: Database['public']['Tables']['web_search_events']['Insert']): Promise<void> {
+async function recordWebSearch(event: TablesInsert<'web_search_events'>): Promise<void> {
     try {
-        const { error } = await createServiceRoleClient().from('web_search_events').insert<Database['public']['Tables']['web_search_events']['Insert']>(event)
+        const { error } = await insertRows(serviceScope(), 'web_search_events', event)
         if (error) console.error('[search] could not record the search:', error.message)
     } catch (err) {
         console.error('[search] could not record the search:', err instanceof Error ? err.message : err)

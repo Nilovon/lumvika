@@ -5,14 +5,13 @@
 // Run: ../engine/node_modules/.bin/tsx --env-file=.env scripts/verify-template-prefill.mts [slug]
 
 import { TEMPLATE_CATEGORIES } from '@lumvika/contracts'
-import { selectMany } from '@lumvika/db/helpers'
+import { selectMany, serviceScope } from '@lumvika/db'
 import { loadServiceCatalog } from '../lib/templates/catalog'
 import { toTemplateBrief, withConnectorNames } from '../lib/templates/describe'
 import { rowToDocument, TEMPLATE_DOC_COLUMNS, type TemplateRow } from '../lib/templates/document'
 import { IMAGE_ALT_LIMIT, META_DESCRIPTION_LIMIT, META_TITLE_LIMIT, TAGLINE_LIMIT, TITLE_LIMIT } from '../lib/templates/limits'
 import { slugify } from '../lib/slugify'
 import { generateImageAltText, generateTemplateContent, generateTemplateMeta } from '../lib/templates/prefill'
-import { createServiceRoleClient } from '../supabase/serviceRole'
 
 const slug = process.argv[2]
 
@@ -29,8 +28,8 @@ function check(label: string, ok: boolean, detail?: string) {
     }
 }
 
-const supabase = createServiceRoleClient()
-const { data: rows, error } = await selectMany(supabase, 'templates', TEMPLATE_DOC_COLUMNS, slug ? { slug } : {}, { column: 'created_at', ascending: false }, 20)
+const scope = serviceScope()
+const { data: rows, error } = await selectMany(scope, 'templates', TEMPLATE_DOC_COLUMNS, slug ? { slug } : {}, { column: 'created_at', ascending: false }, 20)
 if (error) throw error
 const documents = (rows ?? []).map(row => rowToDocument(row as TemplateRow))
 // Prefer a template that carries both agents and an image, so the vision step is exercised.
@@ -61,7 +60,7 @@ check('no raw html', !/<[a-z][^>]*>/i.test(content.longDescription))
 check('no markdown image', !/!\[/.test(content.longDescription))
 
 console.log('2. Metadata')
-const catalog = await loadServiceCatalog(supabase, brief.connectors)
+const catalog = await loadServiceCatalog(scope, brief.connectors)
 const named = withConnectorNames(brief, new Map([...catalog].map(([slug, entry]) => [slug, entry.name])))
 const meta = await generateTemplateMeta(named)
 console.log(`\n  ${meta.title}\n  /templates/${slugify(meta.slugWords)}\n  ${meta.category} | ${meta.tags.join(', ')}\n  ${meta.metaTitle}\n  ${meta.metaDescription}\n`)

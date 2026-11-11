@@ -3,8 +3,7 @@ import { isWaitingOnHuman, teamMemberStatus } from '@/lib/board/team-status'
 import { listRuns } from '@/lib/engine/client'
 import type { EngineConnection, EngineRun } from '@/lib/engine/types'
 import { projectRun } from '@/lib/mcp/run-projection'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, serviceScope } from '@/lib/db'
 import { findWorkspaceEngine } from './workspace-engine.service'
 
 const TEAM_AGENT_COLUMNS = ['id', 'name', 'handle', 'space_id', 'engine_agent_id', 'disabled_at'] as const
@@ -26,8 +25,8 @@ async function readAgentRuns(conn: EngineConnection, engineAgentId: string): Pro
 }
 
 export async function readTeamStatus(workspaceId: number, { spaceId, agentId }: { spaceId?: string; agentId?: string } = {}) {
-    const supabase = createServiceRoleClient()
-    const [{ data: agents }, { data: workspace }] = await Promise.all([selectMany(supabase, 'agents', TEAM_AGENT_COLUMNS, { workspace_id: workspaceId, ...(spaceId ? { space_id: spaceId } : {}), ...(agentId ? { id: agentId } : {}) }, { column: 'created_at' }), selectMaybeSingle(supabase, 'workspaces', ['boxes_disabled_at', 'boxes_archived_at'] as const, { id: workspaceId })])
+    const scope = serviceScope()
+    const [{ data: agents }, { data: workspace }] = await Promise.all([selectMany(scope, 'agents', TEAM_AGENT_COLUMNS, { workspace_id: workspaceId, ...(spaceId ? { space_id: spaceId } : {}), ...(agentId ? { id: agentId } : {}) }, { column: 'created_at' }), selectMaybeSingle(scope, 'workspaces', ['boxes_disabled_at', 'boxes_archived_at'] as const, { id: workspaceId })])
     const checkedAt = new Date().toISOString()
     if (!agents?.length) return { checkedAt, agents: [] }
 
@@ -36,7 +35,7 @@ export async function readTeamStatus(workspaceId: number, { spaceId, agentId }: 
     const engine = machineDown ? null : await findWorkspaceEngine(workspaceId)
     const [runsByAgent, sessions] = await Promise.all([
         Promise.all(agents.map(agent => (engine && agent.engine_agent_id && !agent.disabled_at ? readAgentRuns(engine.conn, agent.engine_agent_id) : Promise.resolve(null)))),
-        fetchLiveSessions(supabase, agents.map(agent => agent.id)),
+        fetchLiveSessions(scope, agents.map(agent => agent.id)),
     ])
 
     return {

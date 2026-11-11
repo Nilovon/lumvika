@@ -154,10 +154,6 @@
         "hide": "Ausblenden",
         "pillLabel": "Erste Schritte: {done} von {total} erledigt",
         "steps": {
-            "phone": {
-                "title": "Bestätige deine Telefonnummer",
-                "description": "Sichere dein Konto und erhalte Nachrichten deiner Coworker per WhatsApp oder SMS."
-            },
             "first_agent": {
                 "title": "Erstelle deinen ersten Coworker",
                 "description": "Ein Teammitglied, das arbeitet, während du weg bist."
@@ -284,10 +280,6 @@
             "account": {
                 "title": "Lass {name} arbeiten",
                 "description": "Erstelle dein Konto und {name} wird für dich installiert. Kein Einrichtungsformular, keine Fragen vorab."
-            },
-            "phone": {
-                "title": "Ein letzter Schritt",
-                "description": "Gib deine Telefonnummer an. Dann kommt {name}."
             },
             "trial": {
                 "title": "Teste {name} {days} Tage lang",

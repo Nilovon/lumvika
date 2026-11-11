@@ -1,35 +1,90 @@
-# Lumvika on one machine: the web app and the engine of your first workspace.
+# Lumvika on one machine: the web app, its database, its file store and the engine of your first workspace.
 #
 #   cp .env.example .env && node scripts/self-host-check.mjs   # fills the secrets, checks the rest
 #   docker compose up -d --build
 #
-# Supabase runs outside this file: a free project on supabase.com, or `npx supabase start` on this
-# machine (then add `--profile local-supabase`). See https://docs.lumvika.com/self-host.
+# Every start runs `migrate` first: it applies the database migrations, creates the storage buckets
+# and loads the services catalog into an empty database, then the app starts. See
+# https://docs.lumvika.com/self-host.
 name: lumvika
 
+x-app-build: &app-build
+  context: .
+  dockerfile: apps/ui/Dockerfile
+  args:
+    NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    NEXT_PUBLIC_STORAGE_URL: ${NEXT_PUBLIC_STORAGE_URL:-http://localhost:3002}
+    NEXT_PUBLIC_SOURCE_REPO_URL: ${NEXT_PUBLIC_SOURCE_REPO_URL:-}
+    NEXT_PUBLIC_DOCS_URL: ${NEXT_PUBLIC_DOCS_URL:-}
+    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:-}
+    NEXT_PUBLIC_ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+    NEXT_PUBLIC_OAUTH_PROVIDERS: ${NEXT_PUBLIC_OAUTH_PROVIDERS:-}
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+    NEXT_PUBLIC_HCAPTCHA_SITE_KEY: ${NEXT_PUBLIC_HCAPTCHA_SITE_KEY:-}
+
+# Where the app and the migrate step find the database and the file store: the two services below,
+# unless `.env` points DATABASE_URL or S3_ENDPOINT somewhere else.
+x-data-env: &data-env
+  DATABASE_URL: ${DATABASE_URL:-postgres://lumvika:${POSTGRES_PASSWORD}@postgres:5432/lumvika}
+  S3_ENDPOINT: ${S3_ENDPOINT:-http://storage:9000}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-lumvika}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+
 services:
+  postgres:
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_USER: lumvika
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: lumvika
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lumvika -d lumvika"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  # Any S3-compatible store works in its place (R2, AWS, MinIO): set S3_* in `.env`.
+  storage:
+    image: rustfs/rustfs:1.0.4
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-lumvika}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY}
+    # Browsers load avatars, logos and template images straight from here (NEXT_PUBLIC_STORAGE_URL).
+    ports:
+      - "${LUMVIKA_STORAGE_PORT:-3002}:9000"
+    volumes:
+      - storage-data:/data
+    restart: unless-stopped
+
+  migrate:
+    build: *app-build
+    working_dir: /app
+    command: ["node", "scripts/db.mjs", "migrate"]
+    env_file: .env
+    environment: *data-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      storage:
+        condition: service_started
+    restart: "no"
+
   app:
-    build:
-      context: .
-      dockerfile: apps/ui/Dockerfile
-      args:
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-        NEXT_PUBLIC_SOURCE_REPO_URL: ${NEXT_PUBLIC_SOURCE_REPO_URL:-}
-        NEXT_PUBLIC_DOCS_URL: ${NEXT_PUBLIC_DOCS_URL:-}
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
-        NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:-}
-        NEXT_PUBLIC_ADMIN_EMAILS: ${ADMIN_EMAILS:-}
-        NEXT_PUBLIC_OAUTH_PROVIDERS: ${NEXT_PUBLIC_OAUTH_PROVIDERS:-}
-        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
-        NEXT_PUBLIC_HCAPTCHA_SITE_KEY: ${NEXT_PUBLIC_HCAPTCHA_SITE_KEY:-}
+    build: *app-build
     env_file: .env
     environment:
+      <<: *data-env
       # The engine below goes to the first workspace that needs one.
       LUMVIKA_ENGINE_URL: http://engine:3000
       LUMVIKA_ENGINE_API_KEY: ${LUMVIKA_ENGINE_API_KEY}
       # Where a browser reaches the engine below, to watch a coworker's screen.
       LUMVIKA_ENGINE_BROWSER_URL: ${LUMVIKA_ENGINE_BROWSER_URL:-http://localhost:3001}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "${LUMVIKA_APP_PORT:-3000}:3000"
     extra_hosts:
@@ -56,15 +111,7 @@ services:
     shm_size: 2gb
     restart: unless-stopped
 
-  # Only with `npx supabase start` on this machine: makes the local Supabase answer on the same
-  # address inside the app container as in your browser (http://localhost:54421).
-  supabase-bridge:
-    image: alpine/socat:1.8.0.3
-    profiles: ["local-supabase"]
-    network_mode: "service:app"
-    depends_on: [app]
-    command: TCP-LISTEN:54421,fork,reuseaddr TCP:host.docker.internal:54421
-    restart: unless-stopped
-
 volumes:
+  postgres-data:
+  storage-data:
   engine-data:

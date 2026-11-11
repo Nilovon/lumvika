@@ -5,12 +5,10 @@ const mocks = vi.hoisted(() => ({
     selectSingle: vi.fn(),
     selectMaybeSingle: vi.fn(),
     selectMany: vi.fn(),
-    client: {},
 }))
 
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: () => mocks.client }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectSingle: mocks.selectSingle, selectMaybeSingle: mocks.selectMaybeSingle, selectMany: mocks.selectMany }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectSingle: mocks.selectSingle, selectMaybeSingle: mocks.selectMaybeSingle, selectMany: mocks.selectMany }))
 
 const {
     AuthorizationError,
@@ -67,7 +65,7 @@ describe('requireWorkspaceContext', () => {
     it('hands back the workspace once the membership is proven', async () => {
         mocks.selectMaybeSingle.mockResolvedValue({ data: { role: 'member', box_scope: 'assigned' }, error: null })
         const context = await requireWorkspaceContext()
-        expect(context).toMatchObject({ userId: 'u1', userEmail: 'a@b.c', workspace: { id: 1 }, role: 'member', boxScope: 'assigned', supabase: mocks.client })
+        expect(context).toMatchObject({ userId: 'u1', userEmail: 'a@b.c', workspace: { id: 1 }, role: 'member', boxScope: 'assigned', scope: expect.objectContaining({ kind: 'service' }) })
         expect(mocks.selectMaybeSingle.mock.calls[0][1]).toBe('workspace_members')
         expect(mocks.selectMaybeSingle.mock.calls[0][3]).toEqual({ user_id: 'u1', workspace_id: 1 })
     })

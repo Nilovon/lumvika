@@ -10,7 +10,7 @@ import { removePrivateFiles } from '@/lib/storage/private'
 /** Drops an attachment the user took back out of the composer after its bytes had landed. */
 export async function deleteStewardFileAction(sessionId: string, path: string): Promise<void> {
     const ctx = await requireWorkspaceContext()
-    await removePrivateFiles(ctx.supabase, STEWARD_FILES_BUCKET, [stewardFileKey(ctx, sessionId, path)])
+    await removePrivateFiles(ctx.scope, STEWARD_FILES_BUCKET, [stewardFileKey(ctx, sessionId, path)])
 }
 
 /** Backs the lightbox when the user opens a text attachment of a steward conversation. */

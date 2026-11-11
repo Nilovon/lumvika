@@ -1,2 +1,0 @@
--- Applied on the remote project before the migration history was baselined.
--- Its effect is contained in the baseline migration that follows.

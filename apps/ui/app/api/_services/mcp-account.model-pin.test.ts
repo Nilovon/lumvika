@@ -9,7 +9,8 @@ import { assertModelEntitled } from './engine-plan.service'
 import { dispatchAccountTool } from './mcp-account.service'
 import { getWorkspaceConnection } from './workspace-engine.service'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/lib/engine/client')
 vi.mock('@/lib/triggers/webhook', () => ({ MAX_TRIGGER_BODY_BYTES: 1, triggerWebhookUrl: vi.fn(async () => 'https://hook') }))
 vi.mock('./chat.service', () => ({ ensureSessionRow: vi.fn(), resolveAgentTarget: vi.fn() }))

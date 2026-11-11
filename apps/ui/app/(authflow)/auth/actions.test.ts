@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ verifyCaptcha: vi.fn(), ensureEmailAccount: vi.fn(), claimEmailCodeAsk: vi.fn(), lookupEmailForSignUp: vi.fn(), getUser: vi.fn(), provisionUser: vi.fn(), cookies: new Map<string, string>() }))
+const mocks = vi.hoisted(() => ({ verifyCaptcha: vi.fn(), ensureEmailAccount: vi.fn(), claimEmailCodeAsk: vi.fn(), lookupEmailForSignUp: vi.fn(), getSession: vi.fn(), provisionUser: vi.fn(), cookies: new Map<string, string>() }))
 
 vi.mock('next/headers', () => ({
     headers: async () => new Headers({ 'x-real-ip': '203.0.113.7', 'user-agent': 'Mozilla/5.0' }),
@@ -9,14 +9,12 @@ vi.mock('next/headers', () => ({
 vi.mock('@/lib/auth/captcha', () => ({ verifyCaptcha: mocks.verifyCaptcha }))
 vi.mock('@lumvika/cloud/billing', () => ({ drawPriceArm: () => '29' }))
 vi.mock('@/app/api/_services/email-sign-up.service', () => ({ ensureEmailAccount: mocks.ensureEmailAccount, claimEmailCodeAsk: mocks.claimEmailCodeAsk, lookupEmailForSignUp: mocks.lookupEmailForSignUp }))
-vi.mock('@/app/api/_services/sign-in-code.service', () => ({ resendSignInCodeIfLive: vi.fn() }))
 vi.mock('@/app/api/_services/user-provisioning.service', () => ({ provisionUser: mocks.provisionUser }))
-vi.mock('@/supabase/server', () => ({ createClient: async () => ({ auth: { getUser: mocks.getUser } }) }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+vi.mock('@/lib/auth/auth', () => ({ getAuth: () => ({ api: { getSession: mocks.getSession } }) }))
 
 const { completeSignupAction, prepareAnonymousEmailStep, prepareEmailSignIn } = await import('./actions')
 
-const account = { id: 'user-1', is_anonymous: false }
+const account = { id: 'user-1', isAnonymous: false }
 
 beforeEach(() => {
     vi.clearAllMocks()
@@ -25,30 +23,28 @@ beforeEach(() => {
     mocks.ensureEmailAccount.mockResolvedValue({ ok: true, created: true })
     mocks.claimEmailCodeAsk.mockResolvedValue(true)
     mocks.lookupEmailForSignUp.mockResolvedValue({ ok: true, exists: false })
-    mocks.getUser.mockResolvedValue({ data: { user: account } })
+    mocks.getSession.mockResolvedValue({ user: account, session: {} })
     mocks.provisionUser.mockResolvedValue({ signedUp: true })
 })
 
 describe('completeSignupAction', () => {
-    it('stamps the signup of the account behind the request, with the phone step a web signup owes', async () => {
+    it('stamps the signup of the account behind the request, as that account', async () => {
         expect(await completeSignupAction()).toEqual({ ok: true, signedUp: true })
 
-        expect(mocks.provisionUser).toHaveBeenCalledWith(expect.objectContaining({ auth: expect.anything() }), account, { phoneStep: true, priceArm: '29', locale: 'en' })
+        expect(mocks.provisionUser).toHaveBeenCalledWith(expect.objectContaining({ kind: 'user', userId: 'user-1' }), account, { priceArm: '29', locale: 'en' })
     })
 
-    it('asks no phone of whoever arrived by invite', async () => {
-        mocks.cookies.set('pending_invite', '/invite/abc')
-
+    it('reads the session past its cached copy, which still says anonymous right after the claim', async () => {
         await completeSignupAction()
 
-        expect(mocks.provisionUser).toHaveBeenCalledWith(expect.anything(), account, expect.objectContaining({ phoneStep: false }))
+        expect(mocks.getSession).toHaveBeenCalledWith(expect.objectContaining({ query: { disableCookieCache: true } }))
     })
 
     it('does nothing for a visitor still anonymous, nor for nobody', async () => {
-        mocks.getUser.mockResolvedValueOnce({ data: { user: { id: 'visitor', is_anonymous: true } } })
+        mocks.getSession.mockResolvedValueOnce({ user: { id: 'visitor', isAnonymous: true }, session: {} })
         expect(await completeSignupAction()).toEqual({ ok: false })
 
-        mocks.getUser.mockResolvedValueOnce({ data: { user: null } })
+        mocks.getSession.mockResolvedValueOnce(null)
         expect(await completeSignupAction()).toEqual({ ok: false })
 
         expect(mocks.provisionUser).not.toHaveBeenCalled()

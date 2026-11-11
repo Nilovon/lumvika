@@ -3,7 +3,6 @@ import { mintAccessCookie } from './access-ticket'
 import { accessCookieHeader, mayOpen, readAccessCookie, safeNextPath, siteFileExists } from './gate'
 
 vi.mock('server-only', () => ({}))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 
 const SLUG = 'weekly-kpis-p8d2hs0qva'
 

@@ -19,7 +19,7 @@ import { WorkspaceMembersView, type OpenedMember } from '@/components/dialogs/Wo
 import { Dialog } from '@/components/ui/dialog'
 import { useMemberDirectory } from '@/hooks/useMemberProfiles'
 import { syncBoardGrant, syncBoardVisibility } from '@/lib/board/sync-space-access'
-import { useSession, type WorkspaceRole } from '@/supabase/session/SessionProvider'
+import { useSession, type WorkspaceRole } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'

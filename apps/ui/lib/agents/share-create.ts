@@ -1,12 +1,10 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { shareContents, shareExcludePaths, type AgentArchivePlan, type AgentShareContents, type AgentShareInclude, type AgentSharePreview } from '@lumvika/contracts'
-import type { Database } from '@/app/api/database.types'
 import { getSpaceConnection } from '@/app/api/_services/space.service'
 import { planAgentArchive } from '@/lib/engine/client'
 import { connectorSkillSlugs, readRegistry } from '@/lib/services/registry'
 import { getAppOrigin } from '@/lib/app-origin'
 import { opaqueToken } from '@/lib/opaque-token'
-import { selectMaybeSingle, selectSingle } from '@/supabase/supabase-helpers'
+import { insertRows, selectMaybeSingle, selectSingle, type DbScope } from '@/lib/db'
 import { uploadPrivateFile } from '@/lib/storage/private'
 import { projectAgent } from '@/lib/templates/archives'
 import { resolveAgentConnectors } from '@/lib/templates/connectors'
@@ -43,10 +41,10 @@ export type AgentSharePlan = {
 // says so, which is exactly why it has to be said here.
 const SPACE_DATA_WARNING = 'The Box database and the Box shared files stay here: a copy starts with an empty one.'
 
-async function planFor(supabase: SupabaseClient<Database>, agentRowId: string, workspaceId: number) {
+async function planFor(scope: DbScope, agentRowId: string, workspaceId: number) {
     // The engine id addresses a folder on a box, so it is resolved from the row rather than taken
     // from the caller: a forged one would archive an agent nothing here owns.
-    const { data: agent } = await selectSingle(supabase, 'agents', ['name', 'space_id', 'engine_agent_id', 'workspace_id'] as const, { id: agentRowId })
+    const { data: agent } = await selectSingle(scope, 'agents', ['name', 'space_id', 'engine_agent_id', 'workspace_id'] as const, { id: agentRowId })
     if (!agent || agent.workspace_id !== workspaceId || !agent.engine_agent_id) throw new AppError('coworkerNotFound')
 
     const conn = await getSpaceConnection(agent.space_id)
@@ -57,8 +55,8 @@ async function planFor(supabase: SupabaseClient<Database>, agentRowId: string, w
     }
 }
 
-export async function planAgentShare(supabase: SupabaseClient<Database>, agentRowId: string, workspaceId: number): Promise<AgentSharePlan> {
-    const { agent, plan } = await planFor(supabase, agentRowId, workspaceId)
+export async function planAgentShare(scope: DbScope, agentRowId: string, workspaceId: number): Promise<AgentSharePlan> {
+    const { agent, plan } = await planFor(scope, agentRowId, workspaceId)
     return {
         agentName: plan.displayName || agent.name,
         contents: shareContents(plan),
@@ -69,7 +67,7 @@ export async function planAgentShare(supabase: SupabaseClient<Database>, agentRo
 }
 
 async function buildPreview(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     plan: AgentArchivePlan,
     connectorSkills: Set<string>,
     include: AgentShareInclude,
@@ -79,7 +77,7 @@ async function buildPreview(
     // dropped, one-shot schedules dropped, disabled webhooks dropped. The key it needs is inert
     // here, a share holds exactly one agent.
     const agent = projectAgent(plan, 'agent', connectorSkills)
-    const { connectors } = await resolveAgentConnectors(supabase, [agent])
+    const { connectors } = await resolveAgentConnectors(scope, [agent])
     return {
         agent,
         connectors,
@@ -95,7 +93,7 @@ async function buildPreview(
 export type CreatedShare = { token: string; url: string; warnings: string[]; reused: boolean }
 
 export async function createAgentShare(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     input: { agentRowId: string; workspaceId: number; userId: string; include: AgentShareInclude },
 ): Promise<CreatedShare> {
     const { agentRowId, workspaceId, userId, include } = input
@@ -104,7 +102,7 @@ export async function createAgentShare(
     // with the same answers hands back the link that already exists instead of taking a second
     // snapshot. Same reflex as `inviteToWorkspaceAction` with a pending invitation.
     const { data: existing } = await selectMaybeSingle(
-        supabase,
+        scope,
         'agent_shares',
         ['token'] as const,
         {
@@ -119,21 +117,21 @@ export async function createAgentShare(
     )
     if (existing) return { token: existing.token, url: await shareUrl(existing.token), warnings: [], reused: true }
 
-    const { agent, conn, plan: fullPlan } = await planFor(supabase, agentRowId, workspaceId)
+    const { agent, conn, plan: fullPlan } = await planFor(scope, agentRowId, workspaceId)
     const exclude = shareExcludePaths(fullPlan, include)
     const { plan, bytes } = await captureAgentArchive(conn, agent.engine_agent_id as string, exclude)
 
     const connectorSkills = connectorSkillSlugs(await readRegistry(conn, agent.engine_agent_id as string))
-    const { data: workspace } = await selectMaybeSingle(supabase, 'workspaces', ['name'] as const, { id: workspaceId })
-    const preview = await buildPreview(supabase, plan, connectorSkills, include, workspace?.name?.trim() || null)
+    const { data: workspace } = await selectMaybeSingle(scope, 'workspaces', ['name'] as const, { id: workspaceId })
+    const preview = await buildPreview(scope, plan, connectorSkills, include, workspace?.name?.trim() || null)
 
     const token = opaqueToken(AGENT_SHARE_TOKEN_LENGTH)
     // The token names the object, so a row that fails to insert leaves something the sweeper can
     // still name, and two links never share a path.
     const archivePath = `${workspaceId}/${token}.tar.gz`
-    await uploadPrivateFile(supabase, AGENT_SHARE_BUCKET, archivePath, bytes, 'application/gzip')
+    await uploadPrivateFile(scope, AGENT_SHARE_BUCKET, archivePath, bytes, 'application/gzip')
 
-    const { error } = await supabase.from('agent_shares').insert<Database['public']['Tables']['agent_shares']['Insert']>({
+    const { error } = await insertRows(scope, 'agent_shares', {
         token,
         workspace_id: workspaceId,
         created_by: userId,

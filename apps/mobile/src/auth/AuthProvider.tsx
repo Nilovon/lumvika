@@ -1,14 +1,12 @@
 import type { Me } from '@lumvika/contracts'
-import type { Session } from '@supabase/supabase-js'
 import * as SecureStore from 'expo-secure-store'
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { fetchMe } from '@/api/account'
 import { isAdminRole } from '@/auth/access'
 import { ApiError } from '@/api/client'
-import { forgetGoogleAccount } from '@/auth/google'
+import { authClient } from '@/auth/auth-client'
 import { bootstrap } from '@/auth/sign-in'
-import { supabase } from '@/auth/supabase'
 import { cachedMe, clearLocalCache } from '@/data/local-cache'
 import { forgetPerson, identifyPerson, registerWorkspace } from '@/lib/analytics'
 import { registerDevice, unregisterDevice } from '@/notifications/push'
@@ -16,6 +14,15 @@ import { registerDevice, unregisterDevice } from '@/notifications/push'
 // Each device keeps its own active workspace, as the hub expects: it is named on every request
 // instead of moving the account's default under the web session.
 const WORKSPACE_KEY = 'lumvika.workspace-id'
+
+// Long enough for the hub to forget this phone's push token, short enough that leaving never hangs.
+const UNREGISTER_TIMEOUT_MS = 3000
+
+// `access_token` is the Better Auth session token, sent to the hub as `Authorization: Bearer`.
+export type Session = {
+    access_token: string
+    user: { id: string; email: string | null }
+}
 
 type AuthState = {
     // False until the stored session has been read: the app shows nothing rather than flash sign-in.
@@ -50,70 +57,76 @@ async function loadMe(accessToken: string): Promise<Me> {
     }
 }
 
+const withinTimeout = (work: Promise<unknown>, ms: number) => Promise.race([work.catch(() => {}), new Promise(resolve => setTimeout(resolve, ms))])
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [ready, setReady] = useState(false)
-    const [session, setSession] = useState<Session | null>(null)
-    const [me, setMe] = useState<Me | null>(null)
+    // The hub is asked for the session on launch; offline, the stored one holds until the hub refuses it.
+    const { data, isPending } = authClient.useSession()
+    const [signingOut, setSigningOut] = useState(false)
+    // The account, stamped with the person it was read for.
+    const [account, setAccount] = useState<{ userId: string; me: Me | null } | null>(null)
+
+    const token = signingOut ? null : (data?.session.token ?? null)
+    const userId = signingOut ? null : (data?.user.id ?? null)
+    const email = signingOut ? null : (data?.user.email ?? null)
+    const session = useMemo<Session | null>(() => (token && userId ? { access_token: token, user: { id: userId, email } } : null), [token, userId, email])
+    const me = userId && account && account.userId === userId ? account.me : null
+    // The session kept in the Keychain counts at once: the hub confirms it behind, offline included.
+    const ready = (!isPending || data !== null) && (!userId || account?.userId === userId)
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data }) => {
-            setSession(data.session)
-            // The account as last read: the home opens on it while the hub is asked again.
-            if (data.session) setMe(cachedMe(data.session.user.id).read())
-            setReady(true)
-        })
-        const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
-            setSession(next)
-            if (!next) {
-                setMe(null)
-                clearLocalCache()
-            }
-        })
-        return () => listener.subscription.unsubscribe()
-    }, [])
+        if (!data) setSigningOut(false)
+    }, [data])
 
-    const email = session?.user.email
+    // A session the hub ended elsewhere leaves nothing of the account behind on the phone.
+    const previousUserId = useRef<string | null>(null)
+    useEffect(() => {
+        if (previousUserId.current && previousUserId.current !== userId) clearLocalCache()
+        previousUserId.current = userId
+    }, [userId])
+
     useEffect(() => {
         if (email) identifyPerson(email)
     }, [email])
 
     const workspaceId = me?.workspace.id
-    const accessToken = session?.access_token
     useEffect(() => {
         if (workspaceId) registerWorkspace(workspaceId)
     }, [workspaceId])
 
-    // Keyed on the user, not the session: a token refresh hands back a new session for the same person.
-    const userId = session?.user.id
+    // Keyed on the user, not the session: a refreshed session is the same person.
     useEffect(() => {
-        if (!userId) return
+        if (!userId || !token) {
+            setAccount(null)
+            return
+        }
         let cancelled = false
-        supabase.auth
-            .getSession()
-            .then(({ data }) => {
-                const signedIn = data.session
-                return signedIn ? cachedMe(signedIn.user.id).load(() => loadMe(signedIn.access_token)) : null
-            })
+        // The account as last read: the home opens on it while the hub is asked again.
+        setAccount({ userId, me: cachedMe(userId).read() })
+        cachedMe(userId)
+            .load(() => loadMe(token))
             .then(result => {
-                if (!cancelled && result) setMe(result)
+                if (!cancelled && result) setAccount({ userId, me: result })
             })
             .catch(error => console.warn('[auth] loading the account failed', error))
         return () => {
             cancelled = true
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId])
 
     useEffect(() => {
-        if (!accessToken || !workspaceId) return
-        registerDevice({ accessToken, workspaceId }).catch(error => console.warn('[push] registering the device failed', error))
-        // Once per signed-in person, not per refreshed token.
+        if (!token || !workspaceId) return
+        registerDevice({ accessToken: token, workspaceId }).catch(error => console.warn('[push] registering the device failed', error))
+        // Once per signed-in person, not per refreshed session.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId, workspaceId])
 
     const switchWorkspace = useCallback(
         async (workspaceId: number) => {
             if (!session) return
-            setMe(await cachedMe(session.user.id).load(() => fetchMe({ accessToken: session.access_token, workspaceId })))
+            const next = await cachedMe(session.user.id).load(() => fetchMe({ accessToken: session.access_token, workspaceId }))
+            setAccount({ userId: session.user.id, me: next })
             await SecureStore.setItemAsync(WORKSPACE_KEY, String(workspaceId))
         },
         [session]
@@ -121,22 +134,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshMe = useCallback(async () => {
         if (!session || !me) return
-        setMe(await cachedMe(session.user.id).load(() => fetchMe({ accessToken: session.access_token, workspaceId: me.workspace.id })))
+        const next = await cachedMe(session.user.id).load(() => fetchMe({ accessToken: session.access_token, workspaceId: me.workspace.id }))
+        setAccount({ userId: session.user.id, me: next })
     }, [session, me])
 
-    // The screen leaves first: the hub call, supabase-js's lock or the auth event must never hold the
-    // person on a home they asked to leave. A local sign-out still tells Supabase to revoke this
-    // session's refresh token, and leaves the person's other devices signed in; the device is
-    // unregistered behind, while the access token is still good.
+    // The screen leaves first: no hub call may hold the person on a home they asked to leave. The
+    // device is unregistered before the session is revoked, since the hub refuses its token after;
+    // the other devices of the person stay signed in.
     const signOut = useCallback(async () => {
         const caller = session && me ? { accessToken: session.access_token, workspaceId: me.workspace.id } : null
-        setSession(null)
-        setMe(null)
+        setSigningOut(true)
+        setAccount(null)
         clearLocalCache()
-        if (caller) unregisterDevice(caller).catch(() => {})
         await SecureStore.deleteItemAsync(WORKSPACE_KEY).catch(() => {})
-        await supabase.auth.signOut({ scope: 'local' }).catch(error => console.warn('[auth] signing out failed', error))
-        forgetGoogleAccount()
+        if (caller) await withinTimeout(unregisterDevice(caller), UNREGISTER_TIMEOUT_MS)
+        const { error } = await authClient.signOut().catch((failure: unknown) => ({ error: failure }))
+        if (error) console.warn('[auth] signing out failed', error)
         forgetPerson().catch(() => {})
     }, [session, me])
 

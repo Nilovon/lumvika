@@ -30,7 +30,9 @@
         "db:start": "node scripts/db.mjs start",
         "db:stop": "node scripts/db.mjs stop",
         "db:reset": "node scripts/db.mjs reset",
-        "db:generate": "node scripts/db.mjs generate"
+        "db:generate": "node scripts/db.mjs generate",
+        "db:seed": "node scripts/db.mjs seed",
+        "db:migrate": "node scripts/db.mjs migrate"
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^1.6.0",

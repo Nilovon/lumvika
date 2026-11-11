@@ -1,20 +1,18 @@
 'use server'
 
-import type { Database } from '@/app/api/database.types'
 import { AuthorizationError, requireAdminContext, requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { hasPendingCreatorTerms, isExpertAccount, requireSandboxWorkspaceId } from '@/app/api/_auth/expert'
 import { BASE_PLAN_SLUG, baseLimitsToColumns, SIGNUP_BUDGET_MICROS } from '@lumvika/cloud/billing'
 import { grantLumvikaTopup } from '@lumvika/cloud/billing.server'
 import { BLOB_ILLUSTRATIONS, getBlobByFile, randomBlob } from '@/lib/blobs/catalog'
 import { uploadPublicImage } from '@/lib/images/upload'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { enterSandbox, ensureSandboxSpace } from '@/app/api/_services/sandbox.service'
 import { readFirstName } from '@/lib/naming/first-name'
 import { WORKSPACE_NAME_MAX, workspaceNameFrom } from '@/lib/naming/workspace-name'
 import { fetchLogoBytes, rasterizeVectorLogo } from '@/lib/workspace/fetch-logo'
 import { LOGO_MAX_BYTES, logoLinkImageUrl, readLogoLink } from '@/lib/workspace/logo-input'
-import { getServerSession } from '@/supabase/session/getServerSession'
-import { selectSingle } from '@/supabase/supabase-helpers'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
+import { insertRow, insertRows, selectSingle, serviceScope, updateRows } from '@/lib/db'
 
 import { applyCoworkerLanguage } from '@/app/api/_services/coworker-language.service'
 import { isStableLocale } from '@lumvika/i18n'
@@ -28,16 +26,16 @@ async function requireUserId(): Promise<string> {
 }
 
 // Sets the caller's active workspace. The active workspace is `users.workspace_id`,
-// which scopes the UI and the service-role API layer. We only allow switching to a
+// which scopes the UI and the service-scope API layer. We only allow switching to a
 // workspace the caller is actually a member of.
 export async function switchWorkspaceAction(workspaceId: number): Promise<ActionResult> {
     const userId = await requireUserId()
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: membership } = await selectSingle(supabase, 'workspace_members', ['workspace_id'] as const, { user_id: userId, workspace_id: workspaceId })
+    const { data: membership } = await selectSingle(scope, 'workspace_members', ['workspace_id'] as const, { user_id: userId, workspace_id: workspaceId })
     if (!membership) return failure('notMember')
 
-    const { error } = await supabase.from('users').update<Database['public']['Tables']['users']['Update']>({ workspace_id: workspaceId }).eq('id', userId)
+    const { error } = await updateRows(scope, 'users', { workspace_id: workspaceId }, { id: userId })
     if (error) return { ok: false, error: error.message }
     return { ok: true }
 }
@@ -54,7 +52,7 @@ export async function updateWorkspaceAction(formData: FormData): Promise<ActionR
         throw err
     })
     if (ctx instanceof AuthorizationError) return failure(ctx.code, ctx.params)
-    const { workspace, supabase } = ctx
+    const { workspace, scope } = ctx
 
     const name = String(formData.get('name') ?? '').trim()
     if (!name) return failure('nameRequired')
@@ -66,12 +64,9 @@ export async function updateWorkspaceAction(formData: FormData): Promise<ActionR
     const logo = await readLogo(formData, workspace.id)
     if (!logo.ok) return logo
 
-    const { error } = await supabase
-        .from('workspaces')
-        .update<Database['public']['Tables']['workspaces']['Update']>({ name, ...(logo.iconUrl ? { icon_url: logo.iconUrl } : {}), ...(locale ? { locale } : {}) })
-        .eq('id', workspace.id)
+    const { error } = await updateRows(scope, 'workspaces', { name, ...(logo.iconUrl ? { icon_url: logo.iconUrl } : {}), ...(locale ? { locale } : {}) }, { id: workspace.id })
     if (error) return { ok: false, error: error.message }
-    if (locale) await applyCoworkerLanguage(createServiceRoleClient(), workspace.id, locale)
+    if (locale) await applyCoworkerLanguage(serviceScope(), workspace.id, locale)
     return { ok: true }
 }
 
@@ -107,7 +102,7 @@ async function readLogo(formData: FormData, workspaceId: number): Promise<Action
 async function rehostLogo(bytes: ArrayBuffer | Uint8Array, workspaceId: number): Promise<ActionResult<{ iconUrl: string }>> {
     try {
         const raster = await rasterizeVectorLogo(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes), WORKSPACE_LOGO_MAX_SIZE)
-        const iconUrl = await uploadPublicImage(createServiceRoleClient(), raster, WORKSPACE_LOGOS_BUCKET, String(workspaceId), { maxSize: WORKSPACE_LOGO_MAX_SIZE })
+        const iconUrl = await uploadPublicImage(serviceScope(), raster, WORKSPACE_LOGOS_BUCKET, String(workspaceId), { maxSize: WORKSPACE_LOGO_MAX_SIZE })
         return { ok: true, iconUrl }
     } catch {
         return failure('imageUnreadable')
@@ -121,12 +116,13 @@ export async function createWorkspaceAction(name: string, iconUrl?: string): Pro
     const icon = iconUrl ? BLOB_ILLUSTRATIONS.find(blob => blob.url === iconUrl) : undefined
     if (iconUrl && !icon) return failure('unknownIcon')
     const { session, workspace: current } = await getServerSession()
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: workspace, error: workspaceError } = await supabase
-        .from('workspaces')
-        .insert<Database['public']['Tables']['workspaces']['Insert']>({
-            name: name.trim() || workspaceNameFrom({ firstName: readFirstName(session?.user_metadata) }),
+    const { data: workspace, error: workspaceError } = await insertRow(
+        scope,
+        'workspaces',
+        {
+            name: name.trim() || workspaceNameFrom({ firstName: readFirstName(session && !session.isAnonymous ? { name: session.name } : undefined) }),
             icon_url: icon?.url ?? randomBlob()?.url ?? null,
             plan: BASE_PLAN_SLUG,
             ...baseLimitsToColumns(),
@@ -135,15 +131,15 @@ export async function createWorkspaceAction(name: string, iconUrl?: string): Pro
             lumvika_budget_micros: 0,
             // One person is quoted one price, whichever of their workspaces they stand in.
             price_arm: current?.price_arm ?? null,
-        })
-        .select('id')
-        .single()
+        },
+        ['id'],
+    )
 
     if (workspaceError || !workspace) return workspaceError ? { ok: false, error: workspaceError.message } : failure('createWorkspaceFailed')
 
-    const workspaceId = (workspace as { id: number }).id
+    const workspaceId = workspace.id
 
-    const { error: membershipError } = await supabase.from('workspace_members').insert<Database['public']['Tables']['workspace_members']['Insert']>({
+    const { error: membershipError } = await insertRows(scope, 'workspace_members', {
         user_id: userId,
         workspace_id: workspaceId,
         role: 'admin',
@@ -154,7 +150,7 @@ export async function createWorkspaceAction(name: string, iconUrl?: string): Pro
     // "credits used up" on the first message, though none was ever used.
     await grantLumvikaTopup(workspaceId, SIGNUP_BUDGET_MICROS)
 
-    const { error: switchError } = await supabase.from('users').update<Database['public']['Tables']['users']['Update']>({ workspace_id: workspaceId }).eq('id', userId)
+    const { error: switchError } = await updateRows(scope, 'users', { workspace_id: workspaceId }, { id: userId })
     if (switchError) return { ok: false, error: switchError.message }
 
     return { ok: true, workspaceId }

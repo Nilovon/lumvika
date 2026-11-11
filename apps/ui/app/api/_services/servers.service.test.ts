@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeSupabase, writeMethodOf, type FakeSupabase, type SupabaseResult } from '@/test/supabase-fake'
+import type { DbAnswer } from '@/test/db-fake'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ attachCustomEngine: vi.fn(), findWorkspaceEngine: vi.fn() }))
 vi.mock('@/lib/engine/client', () => ({ getEngineHealth: vi.fn(), listConnections: vi.fn() }))
 
-const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const { attachCustomEngine, findWorkspaceEngine } = await import('@/app/api/_services/workspace-engine.service')
 const { getEngineHealth, listConnections } = await import('@/lib/engine/client')
 const { createPairingToken, detachWorkspaceServer, engineAddress, redeemPairingToken } = await import('./servers.service')
@@ -16,21 +16,20 @@ const TOKEN = 'rrn_pair_abc'
 const KEY = 'k'.repeat(64)
 const URL = 'http://10.0.0.5:3000'
 
-let db: FakeSupabase
 let tokenRow: Record<string, unknown> | null
-let spend: SupabaseResult
+let spend: DbAnswer
 
 beforeEach(() => {
     vi.clearAllMocks()
     tokenRow = { id: 't1', workspace_id: 7, expires_at: new Date(Date.now() + 60_000).toISOString(), used_at: null }
     spend = { data: [{ id: 't1' }] }
-    db = fakeSupabase((table, calls) => {
-        if (table !== 'engine_pairing_tokens') return undefined
-        if (writeMethodOf(calls) === 'update') return spend
-        if (writeMethodOf(calls)) return undefined
-        return { data: tokenRow }
+    db.reset()
+    db.answer(call => {
+        if (call.table !== 'engine_pairing_tokens') return undefined
+        if (call.helper === 'updateRows') return spend
+        if (call.helper === 'selectMaybeSingle') return { data: tokenRow }
+        return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
     vi.mocked(findWorkspaceEngine).mockResolvedValue(null)
     vi.mocked(getEngineHealth).mockResolvedValue({ status: 'ok', activeAgents: 0, capabilities: [] })
     vi.mocked(listConnections).mockResolvedValue({ connections: [] } as never)
@@ -41,8 +40,8 @@ describe('createPairingToken', () => {
         const { token, expiresAt } = await createPairingToken(7, 'user-1')
 
         expect(token).toMatch(/^rrn_pair_/)
-        const [insert] = db.writes('engine_pairing_tokens')
-        expect(insert.payload).toMatchObject({ workspace_id: 7, created_by: 'user-1', token_hash: createHash('sha256').update(token).digest('hex') })
+        const [insert] = db.callsTo('insertRows', 'engine_pairing_tokens')
+        expect(insert.args[0]).toMatchObject({ workspace_id: 7, created_by: 'user-1', token_hash: createHash('sha256').update(token).digest('hex') })
         expect(Date.parse(expiresAt) - Date.now()).toBeGreaterThan(14 * 60_000)
     })
 })
@@ -53,6 +52,7 @@ describe('redeemPairingToken', () => {
 
         expect(listConnections).toHaveBeenCalledWith({ baseUrl: URL, apiKey: KEY }, expect.anything())
         expect(attachCustomEngine).toHaveBeenCalledWith(7, { engineHost: URL, engineApiKey: KEY })
+        expect(db.callsTo('updateRows', 'engine_pairing_tokens')[0].args).toEqual([{ used_at: expect.any(String) }, { id: 't1', used_at: { isNull: true } }, ['id']])
     })
 
     it('refuses a token that expired, or was already used', async () => {
@@ -68,7 +68,7 @@ describe('redeemPairingToken', () => {
         vi.mocked(getEngineHealth).mockRejectedValue(new Error('ECONNREFUSED'))
 
         await expect(redeemPairingToken({ token: TOKEN, url: URL, apiKey: KEY })).rejects.toThrow('cannot reach your server at http://10.0.0.5:3000')
-        expect(db.writes('engine_pairing_tokens')).toHaveLength(0)
+        expect(db.callsTo('updateRows', 'engine_pairing_tokens')).toHaveLength(0)
     })
 
     it('refuses a workspace that already has a server', async () => {
@@ -98,6 +98,6 @@ describe('detachWorkspaceServer', () => {
         vi.mocked(findWorkspaceEngine).mockResolvedValue({ instanceId: 'i', conn: { baseUrl: URL, apiKey: KEY }, managed: true })
 
         await expect(detachWorkspaceServer(7)).rejects.toThrow('Lumvika Cloud')
-        expect(db.writes('engine_pool')).toHaveLength(0)
+        expect(db.callsTo('deleteRows', 'engine_pool')).toHaveLength(0)
     })
 })

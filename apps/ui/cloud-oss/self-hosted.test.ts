@@ -6,7 +6,6 @@ import { LUMVIKA_CLOUD } from './edition'
 import { DESKTOP_DIRECT } from './engines'
 import { ILLUSTRATION_ENTRIES } from './illustrations'
 import { MARKETPLACE_ENABLED } from './marketplace'
-import { PHONE_ENABLED } from './phone'
 import { DEFAULT_SENDERS, DEFAULT_WHATSAPP_FROM } from './senders'
 import { SERVERS_ENABLED } from './servers'
 import { SUPPORT_CHAT_ENABLED } from './support'
@@ -37,8 +36,7 @@ describe('the self-hosted side of @lumvika/cloud', () => {
         expect(DESKTOP_DIRECT).toBe(true)
     })
 
-    it('has no phone check, no support chat, no built-in admin and no illustration library', () => {
-        expect(PHONE_ENABLED).toBe(false)
+    it('has no support chat, no built-in admin and no illustration library', () => {
         expect(SUPPORT_CHAT_ENABLED).toBe(false)
         expect(DEFAULT_ADMIN_EMAILS).toEqual([])
         expect(ILLUSTRATION_ENTRIES).toEqual([])

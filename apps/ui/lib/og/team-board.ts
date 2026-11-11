@@ -1,6 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/app/api/database.types'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, type DbScope } from '@/lib/db'
 import type { BoardScene } from './board-image'
 
 // No 'server-only': the lifecycle and the WhatsApp sweeps build a board from Trigger.dev tasks.
@@ -39,13 +38,13 @@ export function boardStatusOfKind(kind: NotificationKind): BoardStatus {
  * knows by name. One switched off by a plan limit is not part of it. `mustInclude` is read even
  * past the eighth, for a message about a coworker hired late in a large team.
  */
-export async function loadTeam(supabase: SupabaseClient<Database>, workspaceId: number, mustInclude: string[] = []): Promise<TeamMember[]> {
-    const { data } = await selectMany(supabase, 'agents', ['id', 'name'] as const, { workspace_id: workspaceId, disabled_at: { isNull: true } }, { column: 'created_at', ascending: true }, TEAM_LIMIT)
+export async function loadTeam(scope: DbScope, workspaceId: number, mustInclude: string[] = []): Promise<TeamMember[]> {
+    const { data } = await selectMany(scope, 'agents', ['id', 'name'] as const, { workspace_id: workspaceId, disabled_at: { isNull: true } }, { column: 'created_at', ascending: true }, TEAM_LIMIT)
     const team = data ?? []
 
     const missing = mustInclude.filter(id => !team.some(agent => agent.id === id))
     if (missing.length) {
-        const { data: extra } = await selectMany(supabase, 'agents', ['id', 'name'] as const, { workspace_id: workspaceId, id: missing })
+        const { data: extra } = await selectMany(scope, 'agents', ['id', 'name'] as const, { workspace_id: workspaceId, id: missing })
         team.push(...(extra ?? []))
     }
 

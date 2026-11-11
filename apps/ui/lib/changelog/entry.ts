@@ -1,8 +1,6 @@
-import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { revalidateLanding } from '@/lib/landing-revalidate'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, upsertRows, type DbScope, type TablesInsert } from '@/lib/db'
 import { normalizeChangelogImage } from './images'
 
 export const CHANGELOG_PATH = '/changelog'
@@ -43,7 +41,7 @@ export const changelogEntrySchema = z
 
 export type WriteResult = { ok: true; slug: string; entry: unknown } | { ok: false; status: number; error: string }
 
-export function toRow(input: ChangelogEntryInput): Database['public']['Tables']['changelog_entries']['Insert'] {
+export function toRow(input: ChangelogEntryInput): TablesInsert<'changelog_entries'> {
     return {
         slug: input.slug.trim(),
         title: input.title.trim(),
@@ -70,10 +68,12 @@ export function publishedAtFor(publish: boolean, existing: string | null, backda
 
 const IMAGE_COLUMNS = ['image_url', 'image_dark_url', 'dialog_image_url', 'dialog_image_dark_url'] as const
 
-export async function normalizeRowImages(supabase: SupabaseClient<Database>, row: Database['public']['Tables']['changelog_entries']['Insert']) {
+const ENTRY_COLUMNS = ['id', 'slug', 'title', 'body_md', 'image_url', 'image_dark_url', 'dialog_image_url', 'dialog_image_dark_url', 'image_alt', 'published_at', 'created_at', 'updated_at'] as const
+
+export async function normalizeRowImages(scope: DbScope, row: TablesInsert<'changelog_entries'>) {
     for (const column of IMAGE_COLUMNS) {
         const url = row[column]
-        row[column] = url ? await normalizeChangelogImage(supabase, url) : null
+        row[column] = url ? await normalizeChangelogImage(scope, url) : null
     }
 }
 
@@ -82,27 +82,23 @@ export async function pingChangelogRevalidate() {
 }
 
 export async function upsertChangelogEntry(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     input: ChangelogEntryInput,
     { draftsOnly = false }: { draftsOnly?: boolean } = {},
 ): Promise<WriteResult> {
     const row = toRow(input)
 
-    const { data: existing, error: readError } = await selectMaybeSingle(supabase, 'changelog_entries', ['id', 'published_at'] as const, { slug: row.slug })
+    const { data: existing, error: readError } = await selectMaybeSingle(scope, 'changelog_entries', ['id', 'published_at'] as const, { slug: row.slug })
     if (readError) return { ok: false, status: 500, error: readError.message }
     // Saving a draft over a live slug would unpublish it.
     if (draftsOnly && existing?.published_at) return { ok: false, status: 409, error: 'This entry is already published, only an admin can change it' }
 
-    await normalizeRowImages(supabase, row)
+    await normalizeRowImages(scope, row)
 
     const published_at = publishedAtFor(input.publish, existing?.published_at ?? null, input.published_at)
-    const { data, error } = await supabase
-        .from('changelog_entries')
-        .upsert<Database['public']['Tables']['changelog_entries']['Insert']>({ ...row, published_at, updated_at: new Date().toISOString() }, { onConflict: 'slug' })
-        .select()
-        .single()
+    const { data, error } = await upsertRows(scope, 'changelog_entries', { ...row, published_at, updated_at: new Date().toISOString() }, { onConflict: ['slug'], returning: ENTRY_COLUMNS })
     if (error) return { ok: false, status: 500, error: error.message }
 
     await pingChangelogRevalidate()
-    return { ok: true, slug: row.slug, entry: data }
+    return { ok: true, slug: row.slug, entry: data[0] }
 }

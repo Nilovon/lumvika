@@ -4,11 +4,10 @@ import { isPremiumModelEntitled } from '@lumvika/cloud/billing'
 import { setBoxPlan } from '@/lib/engine/client'
 import type { EngineConnection } from '@/lib/engine/types'
 import { AppError } from '@/lib/i18n/action-error'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 async function premiumModelsAllowed(workspaceId: number): Promise<boolean> {
-    const { data: workspace } = await selectMaybeSingle(createServiceRoleClient(), 'workspaces', ['subscription_status', 'is_sandbox'] as const, { id: workspaceId })
+    const { data: workspace } = await selectMaybeSingle(serviceScope(), 'workspaces', ['subscription_status', 'is_sandbox'] as const, { id: workspaceId })
     return !!workspace && isPremiumModelEntitled(workspace)
 }
 

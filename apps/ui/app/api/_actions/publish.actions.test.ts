@@ -2,8 +2,6 @@ import { AuthorizationError } from '@/app/api/_auth/ownership'
 import { assertAgentInWorkspace, requireLightSessionActor, visibleAgentIds, type Actor } from '@/app/api/_auth/access'
 import { listWorkspacePublished, unpublishInWorkspace, updatePublishedAccess } from '@/lib/services/publish'
 import { publishWithThumbnail } from '@/lib/services/publish-thumbnail'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase } from '@/test/supabase-fake'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { listWorkspacePublishedAction, publishFileAction, unpublishLinkAction, updatePublishedAccessAction } from './publish.actions'
 
@@ -14,7 +12,8 @@ vi.mock('@/app/api/_auth/access', () => ({
     requireLightSessionActor: vi.fn(),
     visibleAgentIds: vi.fn(),
 }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@lumvika/cloud/email', () => ({ EMAIL_DELIVERY: true }))
 vi.mock('@/lib/services/publish-thumbnail', () => ({ publishWithThumbnail: vi.fn() }))
 vi.mock('@/lib/services/publish', () => ({
@@ -98,7 +97,8 @@ describe('listWorkspacePublishedAction', () => {
 describe('links reached by their slug', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(createServiceRoleClient).mockReturnValue(fakeSupabase(table => (table === 'published_files' ? { data: { agent_id: 'agent-hidden' } } : undefined)).client)
+        db.reset()
+        db.answer(call => (call.table === 'published_files' ? { data: { agent_id: 'agent-hidden' } } : undefined))
     })
 
     it('refuses a member a link published by a coworker they cannot reach', async () => {

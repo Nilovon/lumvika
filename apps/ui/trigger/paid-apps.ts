@@ -10,8 +10,7 @@ import { slotQuantity } from '@/lib/apps/stripe-slots'
 import { sweepSubscriberTrials } from '@/lib/apps/trials'
 import { APP_SLUGS, SLOT_HOLDING_STATUSES, isAppSlug } from '@/lib/apps/types'
 import { stripe } from '@/lib/billing/no-billing'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectAll, selectMany } from '@/supabase/supabase-helpers'
+import { selectAll, selectMany, serviceScope } from '@/lib/db'
 
 const paidAppsQueue = queue({ name: 'paid-apps', concurrencyLimit: 1 })
 
@@ -30,7 +29,7 @@ export const paidAppTrialsSchedule = schedules.task({
             logger.log('paid app trials: skipped, not production')
             return null
         }
-        const report = await sweepSubscriberTrials(createServiceRoleClient(), new Date())
+        const report = await sweepSubscriberTrials(serviceScope(), new Date())
         logger.log('paid app trials', report)
         return report
     },
@@ -39,10 +38,10 @@ export const paidAppTrialsSchedule = schedules.task({
 type ReconcilePayload = { dryRun?: boolean }
 
 async function reconcile({ dryRun = false }: ReconcilePayload) {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const now = new Date()
     const accounts = await listAccounts()
-    const { data: connections } = await selectAll(supabase, 'app_connections', ['id', 'workspace_id', 'app_slug', 'provider_account_id', 'status', 'pause_reason', 'label', 'updated_at'] as const, { provider_account_id: { notNull: true } })
+    const { data: connections } = await selectAll(scope, 'app_connections', ['id', 'workspace_id', 'app_slug', 'provider_account_id', 'status', 'pause_reason', 'label', 'updated_at'] as const, { provider_account_id: { notNull: true } })
     const verdicts = accountsToDelete(accounts, connections ?? [], now, linkupNamespace(), linkupPlatforms())
     const rowOf = new Map((connections ?? []).map(connection => [connection.id, connection]))
 
@@ -56,12 +55,12 @@ async function reconcile({ dryRun = false }: ReconcilePayload) {
                 // An unpaid account is gone for good: it leaves its coworkers, who would otherwise
                 // keep a service pointing at nothing.
                 if (verdict.reason === 'unpaid_pause') {
-                    const { data: bindings } = await selectMany(supabase, 'app_connection_agents', ['agent_id'] as const, { connection_id: row.id })
-                    if (isAppSlug(row.app_slug)) for (const binding of bindings ?? []) await unbindAgent(supabase, row.workspace_id, binding.agent_id, row.app_slug)
-                    await updateConnection(supabase, row.id, { status: 'deleted', pause_reason: 'unpaid_pause' })
+                    const { data: bindings } = await selectMany(scope, 'app_connection_agents', ['agent_id'] as const, { connection_id: row.id })
+                    if (isAppSlug(row.app_slug)) for (const binding of bindings ?? []) await unbindAgent(scope, row.workspace_id, binding.agent_id, row.app_slug)
+                    await updateConnection(scope, row.id, { status: 'deleted', pause_reason: 'unpaid_pause' })
                 }
                 // An abandoned reconnect goes back to waiting for one; a first connection never was.
-                if (verdict.reason === 'stale_connect') await updateConnection(supabase, row.id, row.label ? { status: 'needs_reconnect' } : { status: 'deleted' })
+                if (verdict.reason === 'stale_connect') await updateConnection(scope, row.id, row.label ? { status: 'needs_reconnect' } : { status: 'deleted' })
             } catch (err) {
                 failed.push(`${verdict.accountId}: ${err instanceof Error ? err.message : String(err)}`)
             }
@@ -69,8 +68,8 @@ async function reconcile({ dryRun = false }: ReconcilePayload) {
 
         // A connection that crashed before Linkup even answered holds a slot with no account behind it.
         const cutoff = new Date(now.getTime() - CONNECTING_GRACE_MS).toISOString()
-        const { data: stuck } = await selectAll(supabase, 'app_connections', ['id', 'label'] as const, { status: 'connecting', provider_account_id: { isNull: true }, updated_at: { lt: cutoff } })
-        for (const row of stuck ?? []) await updateConnection(supabase, row.id, row.label ? { status: 'needs_reconnect' } : { status: 'deleted' })
+        const { data: stuck } = await selectAll(scope, 'app_connections', ['id', 'label'] as const, { status: 'connecting', provider_account_id: { isNull: true }, updated_at: { lt: cutoff } })
+        for (const row of stuck ?? []) await updateConnection(scope, row.id, row.label ? { status: 'needs_reconnect' } : { status: 'deleted' })
     }
 
     // What Stripe bills against what the app counts. Logged for a human, never corrected on an
@@ -78,9 +77,9 @@ async function reconcile({ dryRun = false }: ReconcilePayload) {
     const drift: string[] = []
     for (const slug of APP_SLUGS) {
         const addonKey = appDefinition(slug).addonKey
-        const { data: apps } = await selectMany(supabase, 'workspace_apps', ['workspace_id', 'slots'] as const, { app_slug: slug, status: 'active' })
+        const { data: apps } = await selectMany(scope, 'workspace_apps', ['workspace_id', 'slots'] as const, { app_slug: slug, status: 'active' })
         for (const app of apps ?? []) {
-            const { data: workspace } = await selectMany(supabase, 'workspaces', ['stripe_subscription_id'] as const, { id: app.workspace_id }, undefined, 1)
+            const { data: workspace } = await selectMany(scope, 'workspaces', ['stripe_subscription_id'] as const, { id: app.workspace_id }, undefined, 1)
             const subscriptionId = workspace?.[0]?.stripe_subscription_id
             const billed = subscriptionId ? slotQuantity(await stripe.subscriptions.retrieve(subscriptionId), addonKey) : 0
             if (billed > app.slots) drift.push(`workspace ${app.workspace_id}, ${slug}: Stripe bills ${billed}, app holds ${app.slots}`)

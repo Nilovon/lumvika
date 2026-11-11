@@ -1,7 +1,5 @@
-import type { Database } from '@/app/api/database.types'
 import { patchAgent as enginePatchAgent } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectAll, selectSingle } from '@/supabase/supabase-helpers'
+import { selectAll, selectSingle, serviceScope, updateRows } from '@/lib/db'
 import { pauseAgentSchedules, resumeAgentSchedules } from './agent.service'
 import { PLAN_LIMIT_REASON, activeAgentLimit, hasFreeAgentSlot, isPlanLimited } from './capacity.service'
 import { getSpaceConnection } from './space.service'
@@ -14,8 +12,6 @@ import { AppError } from '@/lib/i18n/action-error'
 // it is what every gate reads, while reaching the engine can hang on a box that is asleep and is
 // therefore handed to a Trigger task.
 
-type AgentUpdate = Database['public']['Tables']['agents']['Update']
-
 // Switch off whatever exceeds the workspace's current allowance, oldest agents first: the ones the
 // user built their setup around stay up, the newest go quiet. Never switches anything back on:
 // regaining capacity frees slots, and filling them is an explicit choice (activateAgent), a trial
@@ -25,16 +21,13 @@ export async function reconcileAgentActivation(workspaceId: number): Promise<str
     const limit = await activeAgentLimit(workspaceId)
     if (limit === null) return []
 
-    const supabase = createServiceRoleClient()
-    const { data: active } = await selectAll(supabase, 'agents', ['id'] as const, { workspace_id: workspaceId, disabled_at: { isNull: true } }, { column: 'created_at', ascending: true })
+    const scope = serviceScope()
+    const { data: active } = await selectAll(scope, 'agents', ['id'] as const, { workspace_id: workspaceId, disabled_at: { isNull: true } }, { column: 'created_at', ascending: true })
 
     const excess = (active ?? []).slice(limit).map(agent => agent.id)
     if (excess.length === 0) return []
 
-    await supabase
-        .from('agents')
-        .update<AgentUpdate>({ disabled_at: new Date().toISOString(), disabled_reason: PLAN_LIMIT_REASON })
-        .in('id', excess)
+    await updateRows(scope, 'agents', { disabled_at: new Date().toISOString(), disabled_reason: PLAN_LIMIT_REASON }, { id: excess })
 
     return excess
 }
@@ -47,15 +40,15 @@ export async function wakePlanLimitedAgents(workspaceId: number): Promise<{ woke
     const limit = await activeAgentLimit(workspaceId)
     if (limit === 0) return { woken: [], active: [] }
 
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const [{ data: active }, { data: switchedOff }] = await Promise.all([
-        selectAll(supabase, 'agents', ['id'] as const, { workspace_id: workspaceId, disabled_at: { isNull: true } }),
-        selectAll(supabase, 'agents', ['id'] as const, { workspace_id: workspaceId, disabled_reason: PLAN_LIMIT_REASON }, { column: 'created_at', ascending: true }),
+        selectAll(scope, 'agents', ['id'] as const, { workspace_id: workspaceId, disabled_at: { isNull: true } }),
+        selectAll(scope, 'agents', ['id'] as const, { workspace_id: workspaceId, disabled_reason: PLAN_LIMIT_REASON }, { column: 'created_at', ascending: true }),
     ])
     const freeSlots = limit === null ? Infinity : Math.max(0, limit - (active ?? []).length)
     const woken = (switchedOff ?? []).slice(0, freeSlots).map(agent => agent.id)
 
-    if (woken.length > 0) await supabase.from('agents').update<AgentUpdate>({ disabled_at: null, disabled_reason: null }).in('id', woken)
+    if (woken.length > 0) await updateRows(scope, 'agents', { disabled_at: null, disabled_reason: null }, { id: woken })
     return { woken, active: (active ?? []).map(agent => agent.id) }
 }
 
@@ -79,14 +72,14 @@ export const NO_FREE_SLOT_ERROR = 'No free coworker slot on your plan. Start Pro
 // decides how many agents run, the user decides which ones, and letting them toggle freely would
 // turn a paid limit into a scheduling game.
 export async function activateAgent(agentId: string): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['workspace_id', 'disabled_at', 'disabled_reason'] as const, { id: agentId })
+    const scope = serviceScope()
+    const { data: agent } = await selectSingle(scope, 'agents', ['workspace_id', 'disabled_at', 'disabled_reason'] as const, { id: agentId })
     if (!agent) throw new AppError('coworkerNotFound')
     if (!agent.disabled_at) return
     if (!isPlanLimited(agent.disabled_reason)) throw new AppError('templateSubscriptionEnded')
     if (!(await hasFreeAgentSlot(agent.workspace_id))) throw new AppError('noFreeCoworkerSlot')
 
-    await supabase.from('agents').update<AgentUpdate>({ disabled_at: null, disabled_reason: null }).eq('id', agentId)
+    await updateRows(scope, 'agents', { disabled_at: null, disabled_reason: null }, { id: agentId })
 
     // The flag above is what every gate reads, so the agent is usable from here on. Reaching its
     // box can still fail (asleep, updating), and that must not read as a failed activation: the
@@ -120,8 +113,7 @@ async function attempt(what: string, run: () => Promise<void>): Promise<void> {
 }
 
 export async function setEngineAgentEnabled(agentId: string, enabled: boolean): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['engine_agent_id', 'space_id'] as const, { id: agentId })
+    const { data: agent } = await selectSingle(serviceScope(), 'agents', ['engine_agent_id', 'space_id'] as const, { id: agentId })
     if (!agent?.engine_agent_id) return
 
     const conn = await getSpaceConnection(agent.space_id)

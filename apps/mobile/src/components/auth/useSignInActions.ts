@@ -1,20 +1,11 @@
-import { reachableChannels, type PhoneChannel } from '@lumvika/contracts'
 import { useState } from 'react'
 import { useTranslations } from 'use-intl'
 
 import { useSignInFlow } from '@/components/auth/SignInFlow'
 import { signInWithApple } from '@/auth/apple'
 import { signInWithGoogle } from '@/auth/google'
-import { sendEmailCode, sendPhoneCode, SignInError } from '@/auth/sign-in'
+import { sendEmailCode, SignInError } from '@/auth/sign-in'
 import { track } from '@/lib/analytics'
-import { isPossibleNumber } from '@/lib/phone'
-
-const SEND_BY_KEYS = { whatsapp: 'phone.sendByWhatsapp', sms: 'phone.sendBySms' } as const
-
-export function useChannelLabel(): (channel: PhoneChannel) => string {
-    const t = useTranslations('mobileAuth')
-    return channel => t(SEND_BY_KEYS[channel])
-}
 
 const REASON_KEYS = { network: 'errors.offline', session: 'errors.session', apple: 'errors.apple', google: 'errors.google' } as const
 
@@ -32,40 +23,6 @@ export function useSignInErrorText(): (failure: unknown) => string {
 }
 
 const looksLikeEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
-
-// The phone number leads: it signs into the account that holds it, or creates one.
-export function usePhoneCode() {
-    const { country, phone, goTo, setThinking } = useSignInFlow()
-    const t = useTranslations('mobileAuth')
-    const errorText = useSignInErrorText()
-    const [sending, setSending] = useState<PhoneChannel | null>(null)
-    const [error, setError] = useState<string | null>(null)
-    const channels = reachableChannels(country, 'verify')
-
-    const send = async (channel: PhoneChannel) => {
-        if (!isPossibleNumber(phone, country)) return setError(t('errors.phone.invalid_number'))
-        track('signup_method_selected', { method: 'phone' })
-        setSending(channel)
-        setThinking(true)
-        setError(null)
-        try {
-            const sentBy = await sendPhoneCode({ phone, country, channel })
-            goTo({ name: 'code', method: 'phone', channel: sentBy })
-        } catch (failure) {
-            // Back from the code step within the minute: the code already sent is still the one to type.
-            if (failure instanceof SignInError && failure.reason === 'too_soon') {
-                goTo({ name: 'code', method: 'phone', channel, resendIn: failure.retryAfterSeconds ?? 0 })
-                return
-            }
-            setError(errorText(failure))
-        } finally {
-            setSending(null)
-            setThinking(false)
-        }
-    }
-
-    return { channels, send, sending, error, clearError: () => setError(null) }
-}
 
 export function useEmailCode() {
     const { email, goTo, setThinking } = useSignInFlow()

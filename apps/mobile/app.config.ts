@@ -22,11 +22,11 @@ function withEasProject(config: ConfigContext['config']): ConfigContext['config'
 }
 
 // The builder never receives cloud/, so a store build without it reads its hub from EXPO_PUBLIC_* (see
-// src/cloud-oss/environments.ts). Missing, the app ships pointing at localhost with an empty Supabase
-// key and crashes on launch: fail the build instead.
+// src/cloud-oss/environments.ts). Missing, the app ships pointing at localhost and cannot sign anyone
+// in: fail the build instead.
 const LUMVIKA_CLOUD_SOURCE = `${__dirname}/../../cloud/apps/mobile/src/environments.ts`
 const STORE_PROFILES = ['production', 'staging']
-const REQUIRED_HUB_VARIABLES = ['EXPO_PUBLIC_API_URL', 'EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'] as const
+const REQUIRED_HUB_VARIABLES = ['EXPO_PUBLIC_API_URL'] as const
 
 function assertStoreBuildHasHub(): void {
     if (process.env.EAS_BUILD !== 'true' || !STORE_PROFILES.includes(process.env.EAS_BUILD_PROFILE ?? '')) return

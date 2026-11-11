@@ -2,8 +2,7 @@ import { logger, queue, schedules, task } from '@trigger.dev/sdk/v3'
 import { REWIND_RELEASED } from '@/lib/features'
 import { buildWorkspaceRewind } from '@/lib/rewind/build'
 import { lastCompletedWeek, rewindWeekStarting } from '@/lib/rewind/week'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectAll } from '@/supabase/supabase-helpers'
+import { selectAll, serviceScope } from '@/lib/db'
 
 const BATCH_SIZE = 500
 
@@ -24,17 +23,17 @@ export const buildRewind = task({
     retry: { maxAttempts: 2 },
     run: async ({ workspaceId, weekStart }: BuildPayload) => {
         const week = weekStart ? rewindWeekStarting(new Date(`${weekStart}T00:00:00.000Z`)) : lastCompletedWeek(new Date())
-        const result = await buildWorkspaceRewind(createServiceRoleClient(), workspaceId, week)
+        const result = await buildWorkspaceRewind(serviceScope(), workspaceId, week)
         logger.log('rewind', { workspaceId, weekStart: week.weekStart, ...result })
         return result
     },
 })
 
 async function workspacesWithAgents(): Promise<number[]> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const [{ data: agents }, { data: torndown }] = await Promise.all([
-        selectAll(supabase, 'agents', ['workspace_id'] as const, { engine_agent_id: { notNull: true } }),
-        selectAll(supabase, 'workspaces', ['id'] as const, { boxes_deleted_at: { notNull: true } }),
+        selectAll(scope, 'agents', ['workspace_id'] as const, { engine_agent_id: { notNull: true } }),
+        selectAll(scope, 'workspaces', ['id'] as const, { boxes_deleted_at: { notNull: true } }),
     ])
     const excluded = new Set((torndown ?? []).map(workspace => workspace.id))
     return [...new Set((agents ?? []).map(agent => agent.workspace_id))].filter(id => !excluded.has(id))
@@ -46,7 +45,7 @@ export const weeklyRewindSchedule = schedules.task({
     maxDuration: 300,
     retry: { maxAttempts: 1 },
     run: async (_payload, { ctx }) => {
-        // apps/ui/.env points at production, so a local `pnpm trigger:dev` would hit every real Box.
+        // A local `pnpm trigger:dev` may point at production data, and would hit every real Box.
         if (ctx.environment.type === 'DEVELOPMENT') {
             logger.log('weekly rewind: skipped, dev environment')
             return null

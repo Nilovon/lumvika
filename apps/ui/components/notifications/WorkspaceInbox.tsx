@@ -19,7 +19,7 @@ import { useBoardStore } from '@/stores/board.store'
 import { useStewardStore } from '@/stores/steward.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useUnseenRunsStore } from '@/stores/unseen-runs.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // A `done` row is one finished conversation, or every unseen run of one scheduled task, so it
 // carries the sessions it stands for.

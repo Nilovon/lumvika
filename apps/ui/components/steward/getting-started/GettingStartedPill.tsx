@@ -7,11 +7,10 @@ import { useEffect, useRef, useState } from 'react'
 import { GettingStartedPopover } from '@/components/steward/getting-started/GettingStartedPopover'
 import { useGettingStarted } from '@/hooks/useGettingStarted'
 import type { GettingStartedStep } from '@/lib/onboarding/getting-started'
-import { useAccountStore } from '@/stores/account.store'
 import { useBillingStore } from '@/stores/billing.store'
 import { useStewardStore } from '@/stores/steward.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 /**
  * The checklist in the board's bottom-left corner. Steps without a settings panel are handed to the Steward,
@@ -51,8 +50,7 @@ export function GettingStartedPill() {
         setOpen(false)
         track('getting_started_step_clicked', { step: step.id })
         // The billing dialog takes the card: beside a running trial it offers to pay at its end.
-        if (step.id === 'phone') useAccountStore.getState().openAccount('sign-in', 'phone')
-        else if (step.id === 'payment_method') useBillingStore.getState().openBilling(undefined, 'getting_started')
+        if (step.id === 'payment_method') useBillingStore.getState().openBilling(undefined, 'getting_started')
         else if (step.panel) useWorkspaceSettingsStore.getState().openWorkspacePanel(step.panel)
         else if (step.prompt) useStewardStore.getState().askSteward(t.has(step.id as never) ? t(step.id as never) : step.prompt)
     }

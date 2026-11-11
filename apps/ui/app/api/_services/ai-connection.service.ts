@@ -296,7 +296,7 @@ export async function readAiConnectionsView(ctx: WorkspaceContext): Promise<AiCo
     const premiumAllowed = isPremiumModelEntitled(ctx.workspace)
     const pick = effectiveDefault(list.default)
     const taken = list.connections.map(connection => connection.name)
-    const locale = await recipientLocale(ctx.supabase, ctx.userId, ctx.workspace.id)
+    const locale = await recipientLocale(ctx.scope, ctx.userId, ctx.workspace.id)
     const t = await translatorFor(locale, 'connections')
     return {
         connections: pinFirst(list.connections, connection => connection.id === LUMVIKA_CONNECTION_ID).map(source => connectionView(source, list, credit, premiumAllowed, t, locale)),

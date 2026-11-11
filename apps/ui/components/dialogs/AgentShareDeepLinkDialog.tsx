@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAgentShareCta } from '@/lib/agents/useAgentShareCta'
 import { useAgentShareStore } from '@/stores/agent-share.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // The landing page of a share link, in the app. Same shape as TemplateDeepLinkDialog: one card,
 // one decision. It is deliberately also what an anonymous visitor sees, ahead of the account wall,

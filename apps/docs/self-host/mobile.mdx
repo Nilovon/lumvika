@@ -24,7 +24,7 @@ To go back to Lumvika Cloud, open **Preferences**, tap **Server**, then **Leave*
 ## What the phone needs to reach
 
 - **The app**, at the address you typed. Use `https://` on the internet. Plain `http://` only works on your local network: a private address such as `192.168.1.20`, a `.local` name, or a Tailscale address. The first time, iOS asks to let Lumvika find devices on your local network: allow it.
-- **Supabase**, at the address your app is configured with (`NEXT_PUBLIC_SUPABASE_URL`). When that is `localhost`, as with `npx supabase start`, the phone uses the same machine as the app, on the same port: open that port on your network.
+- **The file store**, at `NEXT_PUBLIC_STORAGE_URL`, for avatars and images. When that is `localhost`, the phone uses the same machine as the app, on the same port: open that port on your network.
 - **The engine**, at `LUMVIKA_ENGINE_BROWSER_URL`, only to watch a coworker's screen.
 
 If **Connect** says the address is not a Lumvika server, or that the server needs an update, check the address in a browser and update your install.

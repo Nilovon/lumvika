@@ -1,8 +1,8 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js/min'
 
-// An account born from a phone number has no address to write to, and Supabase can only open a
-// session for a user that has one. It is given this one, on a subdomain that has no mail server
-// and never will: every reader of an account's email goes through `realEmail` or `accountLabel`.
+// Phone sign-in is gone, but accounts it opened were filed under an address on this subdomain, which
+// has no mail server and never will: every reader of an account's email goes through `realEmail` or
+// `accountLabel`.
 const PLACEHOLDER_DOMAIN = 'phone.lumvika.com'
 const PLACEHOLDER_PATTERN = new RegExp(`^(\\d+)@${PLACEHOLDER_DOMAIN.replaceAll('.', '\\.')}$`)
 
@@ -19,7 +19,13 @@ export const deletedAccountEmailFor = (userId: string) => `${userId}@${DELETED_A
 
 export const isDeletedAccountEmail = (email: string | null | undefined) => !!email && email.toLowerCase().endsWith(`@${DELETED_ACCOUNT_DOMAIN}`)
 
-export const realEmail = (email: string | null | undefined) => (email && !isPlaceholderEmail(email) && !isDeletedAccountEmail(email) ? email : null)
+// An anonymous visitor's row carries an address on a reserved domain until they claim a real one.
+// Mirrors `ANONYMOUS_EMAIL_DOMAIN` of the auth layer, which client code cannot import.
+const ANONYMOUS_ACCOUNT_DOMAIN = 'anonymous.lumvika.invalid'
+
+export const isAnonymousAccountEmail = (email: string | null | undefined) => !!email && email.toLowerCase().endsWith(`@${ANONYMOUS_ACCOUNT_DOMAIN}`)
+
+export const realEmail = (email: string | null | undefined) => (email && !isPlaceholderEmail(email) && !isDeletedAccountEmail(email) && !isAnonymousAccountEmail(email) ? email : null)
 
 // The number an account born from a phone signed up with, in E.164.
 export function placeholderPhone(email: string | null | undefined): string | null {

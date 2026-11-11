@@ -2,7 +2,7 @@
 
 import type { SessionStatus } from '@/lib/board/types'
 import { useBoardStore } from '@/stores/board.store'
-import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
+import { useRealtimeSubscription } from '@/lib/live/useRealtimeSubscription'
 
 export function useSessionsRealtime(enabled: boolean) {
     const _onSessionInsert = useBoardStore(s => s._onSessionInsert)

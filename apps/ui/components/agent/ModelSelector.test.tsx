@@ -19,7 +19,7 @@ vi.mock('@/app/api/_actions/workspace-connection.actions', () => ({
     updateAiConnectionAction: vi.fn(),
     updateAiConnectionKeysAction: vi.fn(),
 }))
-vi.mock('@/supabase/session/SessionProvider', () => ({
+vi.mock('@/lib/auth/session/SessionProvider', () => ({
     useSession: () => ({ workspace: { id: 1, subscription_status: 'trialing', is_sandbox: false, lumvika_budget_micros: 0, lumvika_used_micros: 0, lumvika_topup_micros: 0 } }),
     useOptionalSession: () => null,
 }))

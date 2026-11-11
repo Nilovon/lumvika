@@ -1,5 +1,5 @@
-import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { publicUrl, uploadObject, type Bucket } from '@lumvika/storage'
+import type { DbScope } from '@/lib/db'
 import { randomUuid } from '@/lib/random-uuid'
 
 // Paths are random UUIDs, so an object is never overwritten and can be cached forever.
@@ -17,14 +17,12 @@ export type PublicImageOptions = {
 // orientation, cap the dimensions and store one webp in a public bucket. Callers only
 // choose the bucket and the folder inside it.
 export async function uploadPublicImage(
-    supabase: SupabaseClient<Database>,
+    _scope: DbScope,
     bytes: ArrayBuffer | Uint8Array,
-    bucket: string,
+    bucket: Bucket,
     folder: string,
     { maxSize = DEFAULT_MAX_SIZE, sharpen = false }: PublicImageOptions = {},
 ): Promise<string> {
-    await supabase.storage.createBucket(bucket, { public: true }).catch(() => {})
-
     const { default: sharp } = await import('sharp')
     const pipeline = sharp(Buffer.from(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)))
         .rotate()
@@ -32,10 +30,8 @@ export async function uploadPublicImage(
     const webp = await (sharpen ? pipeline.sharpen({ sigma: 0.6 }) : pipeline).webp({ quality: 82, effort: 6 }).toBuffer()
 
     const path = `${folder}/${randomUuid()}.webp`
-    const { error } = await supabase.storage
-        .from(bucket)
-        .upload(path, new Uint8Array(webp), { contentType: 'image/webp', cacheControl: IMMUTABLE_CACHE_CONTROL, upsert: true })
+    const { error } = await uploadObject(bucket, path, new Uint8Array(webp), { contentType: 'image/webp', cacheControl: IMMUTABLE_CACHE_CONTROL })
     if (error) throw new Error(error.message)
 
-    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl
+    return publicUrl(bucket, path)
 }

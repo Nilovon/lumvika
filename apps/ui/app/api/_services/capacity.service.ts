@@ -1,6 +1,5 @@
 import { activeAgentLimitFor, isSubscriptionEntitled } from '@lumvika/cloud/billing'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectCount, selectSingle } from '@/supabase/supabase-helpers'
+import { selectCount, selectSingle, serviceScope } from '@/lib/db'
 import { AppError } from '@/lib/i18n/action-error'
 
 // The plan caps how many agents can be *active*, not how many exist: a workspace may hold as many
@@ -21,15 +20,13 @@ export function isPlanLimited(disabledReason: string | null): boolean {
 // subscription that is really over collapses it to zero. `past_due` keeps its full allowance: a
 // declined charge archives the machine, and the agents have to come back as they were once it is paid.
 export async function activeAgentLimit(workspaceId: number): Promise<number | null> {
-    const supabase = createServiceRoleClient()
-    const { data: workspace } = await selectSingle(supabase, 'workspaces', ['max_agents', 'subscription_status'] as const, { id: workspaceId })
+    const { data: workspace } = await selectSingle(serviceScope(), 'workspaces', ['max_agents', 'subscription_status'] as const, { id: workspaceId })
     if (!workspace) return 0
     return activeAgentLimitFor(workspace.max_agents, workspace.subscription_status)
 }
 
 async function countActiveAgents(workspaceId: number): Promise<number> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectCount(supabase, 'agents', { workspace_id: workspaceId, disabled_at: { isNull: true } })
+    const { data } = await selectCount(serviceScope(), 'agents', { workspace_id: workspaceId, disabled_at: { isNull: true } })
     return data ?? 0
 }
 
@@ -57,7 +54,6 @@ export class NoPlanError extends AppError {
 // the first Box is what claims a real machine: without this, a signup with no subscription at all
 // takes one out of the pool.
 export async function assertEngineEntitlement(workspaceId: number): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data: workspace } = await selectSingle(supabase, 'workspaces', ['subscription_status'] as const, { id: workspaceId })
+    const { data: workspace } = await selectSingle(serviceScope(), 'workspaces', ['subscription_status'] as const, { id: workspaceId })
     if (!isSubscriptionEntitled(workspace?.subscription_status)) throw new NoPlanError()
 }

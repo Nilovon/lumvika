@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { loadAgentIdeasAction } from '@/app/api/_actions/agent-ideas.actions'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import type { StoredAgentIdeas, StoredIdea } from './stored'
 
 // One read per workspace and page load, shared by the board and the dialog. A run still in flight is

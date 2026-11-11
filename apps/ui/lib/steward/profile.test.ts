@@ -1,44 +1,42 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { WorkspaceContext } from '@/app/api/_auth/ownership'
-import { fakeSupabase } from '@/test/supabase-fake'
-import { readAnswers, writeAnswers } from './profile'
+import { fakeScope } from '@/test/db-fake'
 
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('server-only', () => ({}))
 vi.mock('@/app/api/_services/naming.service', () => ({ ensureWorkspaceNamed: vi.fn() }))
 
-function context(db: ReturnType<typeof fakeSupabase>): WorkspaceContext {
-    return { userId: 'member-2', userEmail: null, authUser: {} as WorkspaceContext['authUser'], workspace: { id: 7 } as WorkspaceContext['workspace'], role: 'admin', boxScope: 'all', supabase: db.client }
+const { readAnswers, writeAnswers } = await import('./profile')
+
+function context(): WorkspaceContext {
+    return { userId: 'member-2', userEmail: null, authUser: {} as WorkspaceContext['authUser'], workspace: { id: 7 } as WorkspaceContext['workspace'], role: 'admin', boxScope: 'all', scope: fakeScope() }
 }
+
+beforeEach(() => db.reset())
 
 describe('steward profile', () => {
     it('reads the answers of the workspace, whoever asks', async () => {
-        const db = fakeSupabase(table => (table === 'workspace_onboarding' ? { data: { answers: { company_name: 'Acme' } } } : undefined))
+        db.answer(call => (call.table === 'workspace_onboarding' ? { data: { answers: { company_name: 'Acme' } } } : undefined))
 
-        await expect(readAnswers(context(db))).resolves.toEqual({ company_name: 'Acme' })
-        expect(db.chainsOn('users')).toEqual([])
-        expect(db.chainsOn('workspace_onboarding')[0]).toContainEqual(expect.objectContaining({ method: 'eq', args: ['workspace_id', 7] }))
+        await expect(readAnswers(context())).resolves.toEqual({ company_name: 'Acme' })
+        expect(db.calls.filter(call => call.table === 'users')).toEqual([])
+        expect(db.callsTo('selectMaybeSingle', 'workspace_onboarding')[0].args[1]).toEqual({ workspace_id: 7 })
     })
 
     it('writes the answers on the workspace and leaves the person alone', async () => {
-        const db = fakeSupabase()
+        await writeAnswers(context(), { company_name: 'Acme' }, false)
 
-        await writeAnswers(context(db), { company_name: 'Acme' }, false)
-
-        expect(db.writes('workspace_onboarding')).toEqual([expect.objectContaining({ method: 'upsert', payload: expect.objectContaining({ workspace_id: 7, answers: { company_name: 'Acme' } }) })])
-        expect(db.writes('workspaces')).toEqual([])
-        expect(db.writes('users')).toEqual([])
+        expect(db.callsTo('upsertRows', 'workspace_onboarding').map(call => call.args[0])).toEqual([expect.objectContaining({ workspace_id: 7, answers: { company_name: 'Acme' } })])
+        expect(db.calls.filter(call => call.table === 'workspaces' || call.table === 'users')).toEqual([])
     })
 
     it('stamps the workspace onboarded once, never over an earlier date', async () => {
-        const db = fakeSupabase()
+        await writeAnswers(context(), {}, true)
 
-        await writeAnswers(context(db), {}, true)
-
-        const [stamp] = db.writes('workspaces')
-        expect(stamp.payload).toEqual({ onboarded_at: expect.any(String) })
-        expect(stamp.filters).toEqual(
-            expect.arrayContaining([expect.objectContaining({ method: 'eq', args: ['id', 7] }), expect.objectContaining({ method: 'is', args: ['onboarded_at', null] })]),
-        )
+        const [stamp] = db.callsTo('updateRows', 'workspaces')
+        expect(stamp.args[0]).toEqual({ onboarded_at: expect.any(String) })
+        expect(stamp.args[1]).toEqual({ id: 7, onboarded_at: { isNull: true } })
     })
 })

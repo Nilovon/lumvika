@@ -1,6 +1,5 @@
 import { captureOgCard, OG_VERSION, ogFallbackResponse, readOgRequest } from '@/lib/og/capture'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
@@ -8,8 +7,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     const { slug } = await params
     const { format, fresh } = readOgRequest(req)
 
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'templates', ['updated_at'] as const, { slug })
+    const { data } = await selectMaybeSingle(serviceScope(), 'templates', ['updated_at'] as const, { slug })
     if (!data) return ogFallbackResponse(req)
 
     // The version travels in the captured URL, so it is part of the cache key on both sides: editing

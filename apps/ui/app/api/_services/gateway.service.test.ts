@@ -2,8 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ selectMany: vi.fn(), selectMaybeSingle: vi.fn(), spaceAccessMap: vi.fn(), findWorkspaceEngine: vi.fn() }))
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: () => ({}) }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany: mocks.selectMany, selectMaybeSingle: mocks.selectMaybeSingle }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany: mocks.selectMany, selectMaybeSingle: mocks.selectMaybeSingle }))
 vi.mock('@/app/api/_auth/access', () => ({ spaceAccessMap: mocks.spaceAccessMap }))
 vi.mock('./workspace-engine.service', () => ({ findWorkspaceEngine: mocks.findWorkspaceEngine }))
 

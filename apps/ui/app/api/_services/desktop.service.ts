@@ -6,8 +6,7 @@ import { buildBaseUrl } from '@/lib/engine/base-url'
 import { supportsDesktop } from '@/lib/engine/client'
 import { mintDesktopTicket } from '@/lib/engine/desktop-ticket'
 import type { EngineConnection } from '@/lib/engine/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 import { AppError, type ErrorCode } from '@/lib/i18n/action-error'
 
 const DESKTOP_ENGINE_COLUMNS = ['engine_host', 'engine_api_key', 'host_id', 'box_index'] as const
@@ -36,8 +35,7 @@ async function socketBaseOf(conn: EngineConnection, hostId: string | null, boxIn
 }
 
 export async function resolveWorkspaceDesktop(workspaceId: number): Promise<WorkspaceDesktop> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'engine_pool', DESKTOP_ENGINE_COLUMNS, { claimed_by_workspace_id: workspaceId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'engine_pool', DESKTOP_ENGINE_COLUMNS, { claimed_by_workspace_id: workspaceId })
     if (!data?.engine_host) throw new NoEngineError()
     const conn = { baseUrl: buildBaseUrl(data.engine_host), apiKey: data.engine_api_key }
     if (!(await supportsDesktop(conn))) throw new DesktopUnavailableError('desktopNeedsUpdate')

@@ -18,8 +18,6 @@ const PROJECT_REF =
 
 export default defineConfig({
   project: PROJECT_REF,
-  // node-22 ships a native global WebSocket; the default "node" runtime is 21.7.3, which
-  // doesn't, and supabase-js's RealtimeClient errors without it.
   runtime: "node-22",
   logLevel: "log",
   // The max compute seconds a task is allowed to run. If the task run exceeds this duration, it will be stopped.

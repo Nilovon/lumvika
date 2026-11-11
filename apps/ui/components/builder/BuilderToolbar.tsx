@@ -15,7 +15,7 @@ import { useLibraryViewerSignals } from '@/lib/templates/useLibraryViewerSignals
 import { placementLabel, useBoardStore } from '@/stores/board.store'
 import { useBuilderDialogsStore } from '@/stores/builder-dialogs.store'
 import { useControlCenterStore } from '@/stores/control-center.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { TooltipDisabledReason, TooltipLabeled } from '@/components/ui/tooltip'
 import { CirclePlusIcon, GridIcon, PlusIcon, SearchIcon } from '@/lib/icons'

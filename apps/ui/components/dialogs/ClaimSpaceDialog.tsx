@@ -7,7 +7,7 @@ import { useBoxViewer } from '@/hooks/useBoxAccess'
 import type { SpaceSide } from '@/lib/board/space-layout'
 import { useBoxNameSuggestions } from '@/lib/onboarding/useBoxNameSuggestions'
 import { useBoardStore } from '@/stores/board.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 
 // `target` porte la face de la Box d'où part la création : c'est le board qui l'ouvre, en cliquant

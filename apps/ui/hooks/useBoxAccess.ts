@@ -2,7 +2,7 @@
 
 import { boxAccessFor, type BoxAccess, type BoxViewer } from '@/lib/board/box-access'
 import { useBoardStore } from '@/stores/board.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useMemo } from 'react'
 
 export function useBoxViewer(): BoxViewer {

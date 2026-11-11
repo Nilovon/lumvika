@@ -40,7 +40,7 @@ export type RegistryEntry = {
     // uninstall/reconnect delete at Composio to actually revoke access.
     composio?: { toolkit: string; serverName: string; connectedAccountId?: string; accountLabel?: string }
     // A paid app to plug in (needs_auth until the coworker picks an account). Which account it
-    // picked lives in Supabase (app_connection_agents), the label here is only for display.
+    // picked lives in the database (app_connection_agents), the label here is only for display.
     app?: { appSlug: string; serverName: string; accountLabel?: string }
     // Set on an extra account only, the base one is the bare slug key.
     instanceId?: string

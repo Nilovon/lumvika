@@ -14,27 +14,20 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), requireLightSessionActor: mocks.requireLightSessionActor, visibleSpaceIds: mocks.visibleSpaceIds }))
-vi.mock('@/supabase/serviceRole', () => ({
-    createServiceRoleClient: () => ({
-        from: (table: string) => ({
-            update: (payload: unknown) => {
-                const filters: Record<string, unknown> = {}
-                const query = {
-                    eq: (column: string, value: unknown) => {
-                        filters[column] = value
-                        return query
-                    },
-                    then: (resolve: (value: { error: null }) => unknown) => {
-                        mocks.sessionUpdate(table, payload, filters)
-                        return Promise.resolve({ error: null }).then(resolve)
-                    },
-                }
-                return query
-            },
-        }),
-    }),
+vi.mock('@/lib/db', async importOriginal => ({
+    ...(await importOriginal<object>()),
+    selectMaybeSingleWithJoins: mocks.selectMaybeSingleWithJoins,
+    selectManyWithJoins: mocks.selectManyWithJoins,
+    selectMaybeSingle: mocks.selectMaybeSingle,
+    selectSingle: vi.fn(),
+    selectCount: vi.fn(),
+    selectMany: mocks.selectMany,
+    selectAll: vi.fn(),
+    updateRows: async (_scope: unknown, table: string, patch: unknown, filters: unknown) => {
+        mocks.sessionUpdate(table, patch, filters)
+        return { data: [], error: null }
+    },
 }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMaybeSingleWithJoins: mocks.selectMaybeSingleWithJoins, selectManyWithJoins: mocks.selectManyWithJoins, selectMaybeSingle: mocks.selectMaybeSingle, selectSingle: vi.fn(), selectCount: vi.fn(), selectMany: mocks.selectMany, selectAll: vi.fn() }))
 vi.mock('@/lib/engine/client', () => ({ listRuns: mocks.listRuns, getRunSteps: vi.fn() }))
 vi.mock('./workspace-engine.service', () => ({ findWorkspaceEngine: mocks.findWorkspaceEngine, NoEngineError: class NoEngineError extends Error {} }))
 

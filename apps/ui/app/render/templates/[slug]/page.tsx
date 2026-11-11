@@ -5,8 +5,7 @@ import { OgReadyMarker } from '@/components/og/OgReadyMarker'
 import { TemplateOgStage } from '@/components/templates/TemplateOgStage'
 import { OG_HEIGHT, OG_WIDTH } from '@/lib/og/size'
 import { agentsFromRow, connectorsFromRow } from '@/lib/templates/document'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // Rendering surface for the screenshot service, not a page anyone browses: it holds nothing but the
 // OG stage at its exact pixel size. Drafts render too, so the admin can preview one before publishing.
@@ -23,8 +22,7 @@ const RENDER_COLUMNS = ['title', 'tagline', 'agents', 'connectors'] as const
 export default async function TemplateOgRenderPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
 
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'templates', RENDER_COLUMNS, { slug })
+    const { data } = await selectMaybeSingle(serviceScope(), 'templates', RENDER_COLUMNS, { slug })
     if (!data) notFound()
 
     return (

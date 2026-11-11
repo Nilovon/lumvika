@@ -1,14 +1,12 @@
 import { isAdminEmail } from '@/lib/auth/admin-emails'
 import { COMPUTER_RELEASED, I18N_RELEASED, PUBLISHED_ACCESS_RELEASED, REWIND_RELEASED } from '@/lib/features'
-import { createClient } from '@/supabase/server'
+import { getAuthUser } from '@/lib/auth/session/getServerSession'
 import { dedupe, flag } from 'flags/next'
 
 type Entities = { user?: { email: string } }
 
 export const identify = dedupe(async (): Promise<Entities> => {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser()
-    const email = data.user?.email
+    const email = (await getAuthUser())?.email
     return { user: email ? { email: email.toLowerCase() } : undefined }
 })
 

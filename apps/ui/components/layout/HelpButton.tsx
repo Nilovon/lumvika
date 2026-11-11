@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { TooltipLabeled } from '@/components/ui/tooltip'
 import { HeadsetIcon, HelpCircleIcon } from '@/lib/icons'
 import { openCrisp } from '@/lib/crisp'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useRef } from 'react'
 

@@ -1,8 +1,7 @@
 import { z } from 'zod'
-import type { Database } from '@/app/api/database.types'
+import { insertRows, serviceScope, type TablesInsert } from '@/lib/db'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { isPublicUrl, scrapePage } from '@/lib/company/firecrawl'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 // Where a coworker's web_fetch falls back once the site refused the box itself. The engine calls it
 // with its LUMVIKA_API_KEY, which names one workspace, so the scraping key never leaves the app.
@@ -16,9 +15,9 @@ const MAX_RAW_HTML = 1_000_000
 const bodySchema = z.object({ url: z.string().url(), directStatus: z.number().int().nullable().default(null) })
 
 // Kept for diagnosis only: a page that was read is never failed by its own bookkeeping.
-async function recordWebFetch(event: Database['public']['Tables']['web_fetch_events']['Insert']): Promise<void> {
+async function recordWebFetch(event: TablesInsert<'web_fetch_events'>): Promise<void> {
     try {
-        const { error } = await createServiceRoleClient().from('web_fetch_events').insert<Database['public']['Tables']['web_fetch_events']['Insert']>(event)
+        const { error } = await insertRows(serviceScope(), 'web_fetch_events', event)
         if (error) console.error('[fetch] could not record the fetch:', error.message)
     } catch (err) {
         console.error('[fetch] could not record the fetch:', err instanceof Error ? err.message : err)

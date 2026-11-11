@@ -1,9 +1,9 @@
 import { AccessDeniedError, type DeniedCode } from '@/app/api/_auth/access'
 import { AuthorizationError, UnauthenticatedError, requireAdminContext, requireWorkspaceContext, type WorkspaceContext } from '@/app/api/_auth/ownership'
-import type { Database } from '@/app/api/database.types'
-import { createClient, getRequestAccessToken } from '@/supabase/server'
+import { getAuthUser, type AuthUser } from '@/lib/auth/session/getServerSession'
+import { getRequestScope } from '@/lib/auth/session/request'
+import type { DbScope } from '@/lib/db'
 import { CLIENT_HEADER } from '@lumvika/contracts'
-import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { ApiError } from '@/lib/api-error'
 
@@ -12,7 +12,7 @@ import { ApiError } from '@/lib/api-error'
 // who runs the workspace (billing, AI providers); any other member gets a 403.
 type AuthLevel = 'public' | 'user' | 'member' | 'admin'
 
-export type UserContext = { user: User; supabase: SupabaseClient<Database> }
+export type UserContext = { user: AuthUser; scope: DbScope }
 
 type ContextFor<A extends AuthLevel> = A extends 'public' ? null : A extends 'user' ? UserContext : WorkspaceContext
 
@@ -48,10 +48,9 @@ function errorResponse(status: number, error: string, extra?: Record<string, unk
 }
 
 async function authenticateUser(): Promise<UserContext> {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser((await getRequestAccessToken()) ?? undefined)
-    if (!data.user || data.user.is_anonymous) throw new UnauthenticatedError()
-    return { user: data.user, supabase }
+    const user = await getAuthUser()
+    if (!user || user.isAnonymous) throw new UnauthenticatedError()
+    return { user, scope: await getRequestScope() }
 }
 
 async function authenticate<A extends AuthLevel>(level: A): Promise<ContextFor<A>> {

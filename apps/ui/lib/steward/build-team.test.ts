@@ -14,7 +14,6 @@ const mergeSteward = vi.fn(async () => ({}))
 vi.mock('@/app/api/_services/agent.service', () => ({ createAgent, deriveUniqueHandles, findFreeCellsInSpace }))
 vi.mock('@/app/api/_services/box.service', () => ({ createBoxesBatch }))
 vi.mock('@/app/api/_services/capacity.service', () => ({ freeAgentSlots }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: () => ({}) }))
 vi.mock('./onboarding-tools', () => ({ installFromLibrary, installFromShare }))
 vi.mock('./profile', () => ({ mergeSteward }))
 vi.mock('./prompt', () => ({ stewardProfileBlock: () => 'Company: Retalk' }))
@@ -62,8 +61,8 @@ describe('buildTeam', () => {
         vi.clearAllMocks()
         createBoxesBatch.mockImplementation(async ({ names }: { names: string[] }) => names.map((name, index) => ({ ok: true, spaceId: `box-${name}`, name, colStart: index, rowStart: 0, colEnd: index + 4, rowEnd: 4 })))
         freeAgentSlots.mockResolvedValue(2)
-        deriveUniqueHandles.mockImplementation(async (_supabase: unknown, _workspaceId: number, names: string[]) => names.map(name => name.toLowerCase()))
-        findFreeCellsInSpace.mockImplementation(async (_supabase: unknown, spaceId: string, count: number) => Array.from({ length: count }, (_, index) => ({ col: index, row: spaceId.length })))
+        deriveUniqueHandles.mockImplementation(async (_scope: unknown, _workspaceId: number, names: string[]) => names.map(name => name.toLowerCase()))
+        findFreeCellsInSpace.mockImplementation(async (_scope: unknown, spaceId: string, count: number) => Array.from({ length: count }, (_, index) => ({ col: index, row: spaceId.length })))
         createAgent.mockImplementation(async ({ name, enabled }: { name: string; enabled: boolean }) => ({ id: `agent-${name}`, name, disabled_at: enabled ? null : 'now' }))
     })
 
@@ -96,7 +95,7 @@ describe('buildTeam', () => {
     it('decides handles, cells and slots up front, the first agents of the plan taking the slots', async () => {
         await run(stateWith({ plan: TEAM }))
 
-        expect(deriveUniqueHandles).toHaveBeenCalledWith({}, 7, ['Scout', 'Closer', 'Ledger'])
+        expect(deriveUniqueHandles).toHaveBeenCalledWith(expect.objectContaining({ kind: 'service' }), 7, ['Scout', 'Closer', 'Ledger'])
         expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ name: 'Scout', handle: 'scout', enabled: true, position: { col: 0, row: 'box-Marketing'.length } }))
         expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ name: 'Closer', handle: 'closer', enabled: true }))
         expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ name: 'Ledger', handle: 'ledger', enabled: false }))

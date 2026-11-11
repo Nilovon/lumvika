@@ -16,7 +16,7 @@ describe('workspaceInitials', () => {
 
 describe('logoUrlOf', () => {
     it('keeps only a full web address', () => {
-        expect(logoUrlOf('https://x.supabase.co/storage/v1/object/public/workspace-logos/1.png')).toBe('https://x.supabase.co/storage/v1/object/public/workspace-logos/1.png')
+        expect(logoUrlOf('https://storage.example.com/workspace-logos/1.png')).toBe('https://storage.example.com/workspace-logos/1.png')
         expect(logoUrlOf('/pricing/scale.png')).toBeNull()
         expect(logoUrlOf('')).toBeNull()
         expect(logoUrlOf(null)).toBeNull()

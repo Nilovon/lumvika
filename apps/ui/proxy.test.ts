@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ updateSession: vi.fn() }))
 
-vi.mock('@/supabase/middleware', () => ({ updateSession: mocks.updateSession }))
+vi.mock('@/lib/auth/proxy-session', () => ({ updateSession: mocks.updateSession }))
 
 const { config, proxy } = await import('./proxy')
 

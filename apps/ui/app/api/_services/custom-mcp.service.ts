@@ -7,8 +7,7 @@ import { brandLabel, mcpIconDomain, mcpServerHost, toCustomMcpServer, unclaimedM
 import { verifiedFaviconUrl } from '@/lib/services/mcp-favicon.server'
 import { connectorMcpServerNames, readRegistry, type ServiceRegistry } from '@/lib/services/registry'
 import type { CustomMcpLiveStatus, CustomMcpServer, CustomMcpStatus, InstalledService } from '@/lib/services/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, serviceScope } from '@/lib/db'
 
 type CatalogLook = { name: string; icon: string }
 
@@ -22,7 +21,7 @@ async function catalogLooks(servers: EngineMcpServer[]): Promise<Map<string, Cat
         candidates.add(server.name.toLowerCase())
     }
     if (candidates.size === 0) return new Map()
-    const { data } = await selectMany(createServiceRoleClient(), 'services', ['slug', 'name', 'icon'] as const, { slug: { in: [...candidates] } })
+    const { data } = await selectMany(serviceScope(), 'services', ['slug', 'name', 'icon'] as const, { slug: { in: [...candidates] } })
     return new Map((data ?? []).filter((row): row is typeof row & { icon: string } => !!row.icon).map(row => [row.slug, { name: row.name, icon: row.icon }]))
 }
 

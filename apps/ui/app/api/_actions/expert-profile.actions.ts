@@ -1,25 +1,23 @@
 'use server'
 
 import { after } from 'next/server'
-import { listExpertBannerUrls, uploadExpertImage, type ExpertImageFolder } from '@lumvika/db'
+import { listExpertBannerUrls, uploadExpertImage, type ExpertImageFolder } from '@lumvika/storage'
 import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
 import { expertDistinctId } from '@lumvika/analytics'
 import { editExpertSchema, type EditExpertValues } from '@lumvika/ui/experts/schema'
 import { badgeFromType, type ExpertStatus } from '@lumvika/ui/experts/options'
 import { initialsFromName, type OwnerExpert } from '@lumvika/ui/experts/types'
 
-import type { Database } from '@/app/api/database.types'
 import { AuthorizationError } from '@/app/api/_auth/ownership'
 import { revalidateLanding } from '@/lib/landing-revalidate'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { getServerSession } from '@/supabase/session/getServerSession'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
+import { selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 import { failure, failureOf, type ActionFailure } from '@/lib/i18n/action-error'
 
 // Self-serve edition of the caller's own marketplace fiche, the in-app twin of the landing claim
 // link. The capability is the account: `users.expert_profile_id` is the only way in, and the fiche
-// id is resolved here rather than accepted from the client. Reads go through the service-role
-// client because the RLS policy on `experts` only exposes published rows, and `email` is not
+// id is resolved here rather than accepted from the client. Reads go through the service scope
+// because the RLS policy on `experts` only exposes published rows, and `email` is not
 // granted to `authenticated` at all.
 
 const OWNER_EXPERT_COLUMNS = [
@@ -55,8 +53,8 @@ async function requireOwnExpertId(): Promise<string> {
     const { user } = await getServerSession()
     if (!user?.id) throw new AuthorizationError('notAuthenticated')
 
-    const supabase = createServiceRoleClient()
-    const { data: account } = await selectMaybeSingle(supabase, 'users', ['expert_profile_id'] as const, { id: user.id })
+    const scope = serviceScope()
+    const { data: account } = await selectMaybeSingle(scope, 'users', ['expert_profile_id'] as const, { id: user.id })
     if (!account?.expert_profile_id) throw new AuthorizationError('noExpertProfile')
 
     return account.expert_profile_id
@@ -65,12 +63,12 @@ async function requireOwnExpertId(): Promise<string> {
 export async function getMyExpertProfileAction(): Promise<ExpertProfileResult> {
     try {
         const expertId = await requireOwnExpertId()
-        const supabase = createServiceRoleClient()
+        const scope = serviceScope()
 
-        const { data } = await selectMaybeSingle(supabase, 'experts', OWNER_EXPERT_COLUMNS, { id: expertId })
+        const { data } = await selectMaybeSingle(scope, 'experts', OWNER_EXPERT_COLUMNS, { id: expertId })
         if (!data) return failure('expertProfileNotFound')
 
-        const bannerOptions = await listExpertBannerUrls(supabase)
+        const bannerOptions = await listExpertBannerUrls()
 
         return {
             ok: true,
@@ -109,15 +107,16 @@ export async function updateMyExpertProfileAction(values: EditExpertValues): Pro
     try {
         const expertId = await requireOwnExpertId()
         const parsed = editExpertSchema.parse(values)
-        const supabase = createServiceRoleClient()
+        const scope = serviceScope()
 
-        const { data: existing } = await selectMaybeSingle(supabase, 'experts', ['id', 'slug', 'email', 'banner_url'] as const, { id: expertId })
+        const { data: existing } = await selectMaybeSingle(scope, 'experts', ['id', 'slug', 'email', 'banner_url'] as const, { id: expertId })
         if (!existing) return failure('expertProfileNotFound')
 
         const now = new Date().toISOString()
-        const { error } = await supabase
-            .from('experts')
-            .update<Database['public']['Tables']['experts']['Update']>({
+        const { error } = await updateRows(
+            scope,
+            'experts',
+            {
                 name: parsed.name.trim(),
                 type: parsed.type,
                 email: nullIfEmpty(parsed.email),
@@ -136,8 +135,9 @@ export async function updateMyExpertProfileAction(values: EditExpertValues): Pro
                 status: 'published',
                 accepted_at: now,
                 updated_at: now,
-            })
-            .eq('id', expertId)
+            },
+            { id: expertId },
+        )
 
         if (error) throw new Error(error.message)
 
@@ -161,7 +161,7 @@ export async function updateMyExpertProfileAction(values: EditExpertValues): Pro
 
 async function uploadOwnExpertImage(formData: FormData, folder: ExpertImageFolder): Promise<UploadExpertProfileResult> {
     const expertId = await requireOwnExpertId()
-    return uploadExpertImage(createServiceRoleClient(), { expertId, file: formData.get('file'), folder, prefix: 'claimed' })
+    return uploadExpertImage({ expertId, file: formData.get('file'), folder, prefix: 'claimed' })
 }
 
 export async function uploadMyExpertAvatarAction(formData: FormData): Promise<UploadExpertProfileResult> {

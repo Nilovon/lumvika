@@ -1,8 +1,8 @@
 import { fal } from '@fal-ai/client'
 import { withBrandIconTone, type BrandIconTone } from '@lumvika/ui/brand-icon'
 import type { Database } from '@/app/api/database.types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, serviceScope, updateRows } from '@/lib/db'
+import { publicUrl, uploadObject } from '@lumvika/storage'
 import { analyzeBrandIconTone } from './icon-tone.server'
 
 // Brand-icon pipeline for the service library. Given a service website, produce a clean,
@@ -78,18 +78,14 @@ async function removeBackground(imageUrl: string): Promise<string> {
     return url
 }
 
-// Persist bytes to Supabase Storage under a stable, slug-keyed path and return the public
-// URL. Cache-busted so re-runs (upsert overwrites the path) are picked up immediately.
+// Persist bytes to object storage under a stable, slug-keyed path and return the public
+// URL. Cache-busted so re-runs (an upload overwrites the path) are picked up immediately.
 async function storeAsset(slug: string, bytes: Uint8Array, ext: 'svg' | 'png', contentType: string): Promise<string> {
-    const supabase = createServiceRoleClient()
-    await supabase.storage.createBucket(ICON_BUCKET, { public: true }).catch(() => {}) // idempotent
-
     const path = `${slug}.${ext}`
-    const { error } = await supabase.storage.from(ICON_BUCKET).upload(path, bytes, { contentType, upsert: true })
+    const { error } = await uploadObject(ICON_BUCKET, path, bytes, { contentType })
     if (error) throw new Error(`Storage upload failed: ${error.message}`)
 
-    const { data } = supabase.storage.from(ICON_BUCKET).getPublicUrl(path)
-    return `${data.publicUrl}?v=${Date.now()}`
+    return `${publicUrl(ICON_BUCKET, path)}?v=${Date.now()}`
 }
 
 async function downloadBytes(url: string): Promise<Uint8Array> {
@@ -180,8 +176,8 @@ export function syncTemplateConnectorIconSnapshot(connectors: unknown, iconsBySl
 // reçoit ou perd `tone=dark`, puis les snapshots dénormalisés dans templates.connectors sont
 // synchronisés. Les octets des assets restent intacts.
 export async function reclassifyAllBrandIcons(): Promise<ReclassifyBrandIconsResult> {
-    const supabase = createServiceRoleClient()
-    const { data, error } = await selectMany(supabase, 'services', ['slug', 'icon'] as const, {})
+    const scope = serviceScope()
+    const { data, error } = await selectMany(scope, 'services', ['slug', 'icon'] as const, {})
     if (error) throw new Error(error.message)
 
     const results = await Promise.all(
@@ -190,10 +186,7 @@ export async function reclassifyAllBrandIcons(): Promise<ReclassifyBrandIconsRes
             try {
                 const tone = await analyzeBrandIconTone(await downloadBytes(icon))
                 const after = withBrandIconTone(icon, tone)
-                const { error: updateError } = await supabase
-                    .from('services')
-                    .update<Database['public']['Tables']['services']['Update']>({ icon: after })
-                    .eq('slug', slug)
+                const { error: updateError } = await updateRows(scope, 'services', { icon: after }, { slug })
                 if (updateError) throw new Error(updateError.message)
                 return { ok: true as const, value: { slug, before: icon, after, tone } }
             } catch (cause) {
@@ -206,19 +199,14 @@ export async function reclassifyAllBrandIcons(): Promise<ReclassifyBrandIconsRes
     const failed = results.flatMap(result => (result && !result.ok ? [result.value] : []))
     const iconsBySlug = new Map(updated.map(result => [result.slug, result.after]))
 
-    const { data: templates, error: templateReadError } = await selectMany(supabase, 'templates', ['id', 'slug', 'connectors'] as const, {})
+    const { data: templates, error: templateReadError } = await selectMany(scope, 'templates', ['id', 'slug', 'connectors'] as const, {})
     if (templateReadError) throw new Error(templateReadError.message)
 
     const templateResults = await Promise.all(
         (templates ?? []).map(async template => {
             const synced = syncTemplateConnectorIconSnapshot(template.connectors, iconsBySlug)
             if (!synced.changed) return null
-            const { error: updateError } = await supabase
-                .from('templates')
-                .update<Database['public']['Tables']['templates']['Update']>({
-                    connectors: synced.connectors as Database['public']['Tables']['templates']['Update']['connectors'],
-                })
-                .eq('id', template.id)
+            const { error: updateError } = await updateRows(scope, 'templates', { connectors: synced.connectors as Database['public']['Tables']['templates']['Update']['connectors'] }, { id: template.id })
             if (updateError) return { ok: false as const, slug: template.slug, error: updateError.message }
             return { ok: true as const, slug: template.slug }
         }),
@@ -236,8 +224,8 @@ export async function reclassifyAllBrandIcons(): Promise<ReclassifyBrandIconsRes
 // chaque service concerné, on re-télécharge l'asset courant et le ré-uploade au même chemin.
 // Idempotent : un PNG déjà serré ressort identique. Les échecs restent isolés.
 export async function retrimAllPngIcons(): Promise<Array<{ slug: string; before: string; after: string }>> {
-    const supabase = createServiceRoleClient()
-    const { data, error } = await selectMany(supabase, 'services', ['slug', 'icon'] as const, { icon: { ilike: '%.png%' } })
+    const scope = serviceScope()
+    const { data, error } = await selectMany(scope, 'services', ['slug', 'icon'] as const, { icon: { ilike: '%.png%' } })
     if (error) throw new Error(error.message)
 
     const results: Array<{ slug: string; before: string; after: string } | null> = await Promise.all(
@@ -247,10 +235,7 @@ export async function retrimAllPngIcons(): Promise<Array<{ slug: string; before:
                 const trimmed = await trimTransparentPng(await downloadBytes(icon))
                 const tone = await analyzeBrandIconTone(trimmed)
                 const after = withBrandIconTone(await storeAsset(slug, trimmed, 'png', 'image/png'), tone)
-                const { error: upErr } = await supabase
-                    .from('services')
-                    .update<Database['public']['Tables']['services']['Update']>({ icon: after })
-                    .eq('slug', slug)
+                const { error: upErr } = await updateRows(scope, 'services', { icon: after }, { slug })
                 if (upErr) throw new Error(upErr.message)
                 return { slug, before: icon, after }
             } catch {

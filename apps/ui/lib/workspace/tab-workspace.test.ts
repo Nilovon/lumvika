@@ -63,7 +63,7 @@ describe('installWorkspaceHeader', () => {
 
     it('never sends it to another origin', async () => {
         pinTabWorkspace(7)
-        await window.fetch('https://project.supabase.co/rest/v1/agents')
+        await window.fetch('https://api.example.com/v1/agents')
         expect(sentHeaders().has('x-workspace-id')).toBe(false)
     })
 

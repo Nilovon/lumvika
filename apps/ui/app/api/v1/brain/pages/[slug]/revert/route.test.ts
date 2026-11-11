@@ -6,7 +6,7 @@ vi.mock('@/app/api/_actions/brain.actions', () => ({ revertBrainPageAction: (...
 vi.mock('@/app/api/_actions/agent.actions', () => ({ cancelSubRunAction: (...args: unknown[]) => cancelSubRunAction(...args) }))
 vi.mock('@/app/api/_auth/ownership', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/ownership')>()),
-    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace: { id: 7 }, supabase: {} }),
+    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace: { id: 7 }, scope: {} }),
 }))
 
 const revert = await import('./route')

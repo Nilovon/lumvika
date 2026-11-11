@@ -4,7 +4,7 @@ import { duplicateAgentName } from '@/lib/copy-name'
 import { startKickoffAction } from '@/app/api/_actions/chat.actions'
 import type { KickoffResult } from '@/app/api/_services/kickoff.service'
 import { createAgentWithSetupAction } from '@/app/api/_actions/services.actions'
-import { findIdleSessionsAction } from '@/app/api/_actions/session.actions'
+import { discardPlacingAgentAction, listLiveSessionsAction, loadBoardAction, markSessionsHandledAction, moveSpaceAction, setAgentPositionAction, setSessionStatusAction, sweepZombieSessionsAction, updateSpaceRectAction } from '@/app/api/_actions/board-store.actions'
 import { claimSpaceAction, deleteSpaceAction, renameSpaceAction } from '@/app/api/_actions/space.actions'
 import { ATTENTION_STATUSES } from '@/lib/board/attention'
 import type { SpaceRect, SpaceSide } from '@/lib/board/space-layout'
@@ -17,14 +17,10 @@ import { track } from '@lumvika/analytics/client'
 import { toast } from 'sonner'
 import type { ReactNode } from 'react'
 import { refusalText, translated } from '@/lib/i18n/toast-text'
-import type { Database } from '@/app/api/database.types'
-import { createClient } from '@/supabase/client'
-import { selectMany } from '@/supabase/supabase-helpers'
 import { create } from 'zustand'
 import type { AgentFocusTab, AgentLink, GridPosition, InteractionMode, IsoAgent, SessionEntry, SessionStatus, SpacePublic } from '../lib/board/types'
 import { agentFromRow, computeAgentStatus } from '../lib/board/types'
 import { AGENT_SPAN, isPlaced } from '@/lib/board/iso'
-import { fetchLiveSessions, sweepZombieSessions } from '@/lib/board/live-sessions'
 import type { AgentSchedule } from '@/lib/board/next-runs'
 
 // La Box dans laquelle une tuile est posée se lit sur le plan : un agent est dessiné à ses propres
@@ -39,8 +35,8 @@ function spaceAtPosition(spaces: SpacePublic[], pos: GridPosition) {
     })
 }
 
-// The board's own writes go straight to the database: a Box the caller only uses is refused here,
-// before RLS would refuse it in silence.
+// A Box the caller only uses is refused here, before row level security would refuse the write in
+// silence.
 function managesBoxes(state: { spaces: SpacePublic[]; spaceGrants: SpaceGrant[] }, viewer: BoxViewer, spaceIds: (string | null | undefined)[]) {
     return spaceIds.every(spaceId => boxAccessFor(viewer, spaceId ? state.spaces.find(s => s.id === spaceId) : undefined, state.spaceGrants) === 'manage')
 }
@@ -162,7 +158,7 @@ type BoardState = {
     // A member manages the Box they create: their grant is written here before realtime brings it,
     // so the new Box opens its controls the moment it lands.
     claimSpace: (workspaceId: number, name: string, from?: { spaceId: string; side: SpaceSide }, viewer?: BoxViewer) => Promise<void>
-    updateSpace: (id: string, patch: Partial<Pick<SpacePublic, 'col_start' | 'row_start' | 'col_end' | 'row_end' | 'name'>>, viewer: BoxViewer) => void
+    updateSpace: (id: string, patch: Partial<SpaceRect>, viewer: BoxViewer) => void
     moveSpace: (id: string, rect: SpaceRect, viewer: BoxViewer) => void
     // L'activation est déjà écrite en base quand ceci est appelé : c'est du repaint immédiat, le
     // realtime repassera derrière avec la même valeur.
@@ -190,8 +186,6 @@ type BoardState = {
     reconcileSessions: () => Promise<void>
     _recomputeAgentStatus: (agentId: string) => void
 }
-
-const supabase = createClient()
 
 // Single-flight sur l'envoi du kickoff, par agent : la fermeture du wizard et le rattrapage au boot
 // peuvent se chevaucher, or l'entrée localStorage n'est effacée qu'après la réponse. Un seul envoi
@@ -259,17 +253,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     reset: () => set({ ...initialState }),
 
     hydrate: async (workspaceId: number) => {
-        const [agentsResult, spacesResult, grantsResult] = await Promise.all([
-            selectMany(supabase, 'agents', ['id', 'name', 'handle', 'description', 'template_id', 'status', 'col', 'row', 'workspace_id', 'space_id', 'created_at', 'disabled_at', 'disabled_reason'] as const, { workspace_id: workspaceId }),
-            selectMany(supabase, 'spaces', ['id', 'workspace_id', 'name', 'col_start', 'row_start', 'col_end', 'row_end', 'created_at', 'visibility'] as const, { workspace_id: workspaceId }),
-            selectMany(supabase, 'space_members', ['space_id', 'user_id', 'access'] as const, { workspace_id: workspaceId }),
-        ])
-
-        const dbAgents = agentsResult.data ? agentsResult.data.map(agentFromRow) : []
-        const dbSpaces = spacesResult.data ?? []
-
-        const agentIds = dbAgents.map(a => a.id)
-        const dbSessions = (agentIds.length > 0 ? await fetchLiveSessions(supabase, agentIds) : []) ?? []
+        const board = await loadBoardAction(workspaceId)
+        const dbAgents = board.agents.map(agentFromRow)
+        const dbSpaces = board.spaces
+        const dbSessions = board.sessions
 
         const onlineMap: Record<string, boolean> = {}
         for (const a of dbAgents) {
@@ -281,12 +268,14 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             return { ...a, status: computeAgentStatus(agentSessions, onlineMap[a.id] ?? true) }
         })
 
-        set({ agents: agentsWithStatus, spaces: dbSpaces, sessions: dbSessions, spaceGrants: grantsResult.data ?? [], agentOnlineMap: onlineMap, hydrated: true })
+        set({ agents: agentsWithStatus, spaces: dbSpaces, sessions: dbSessions, spaceGrants: board.grants, agentOnlineMap: onlineMap, hydrated: true })
 
         // The board shows first and the engine is asked after: a sweep that waits on a slow Box
         // would hold the whole board back for sessions that are, at worst, shown busy a moment
         // too long. Only a session still `working` by then is flipped, realtime may have moved it.
-        void sweepZombieSessions(supabase, dbSessions.map(session => ({ ...session })), findIdleSessionsAction).then(zombieIds => {
+        const workingSessionIds = dbSessions.filter(session => session.status === 'working').map(session => session.id)
+        if (workingSessionIds.length === 0) return
+        void sweepZombieSessionsAction(workingSessionIds).then(zombieIds => {
             if (zombieIds.length === 0) return
             const zombies = new Set(zombieIds)
             set(state => {
@@ -480,7 +469,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             agents: state.agents.map(a => (a.id === placingAgentId ? { ...a, position: pos, spaceId: target.id } : a)),
             placingAgentId: null,
         }))
-        supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ col: pos.col, row: pos.row, space_id: target.id }).eq('id', placingAgentId).then()
+        void setAgentPositionAction({ agentId: placingAgentId, col: pos.col, row: pos.row, spaceId: target.id })
     },
 
     cancelPlacement: () => {
@@ -494,7 +483,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
         if (!placingAgentId) return
 
-        supabase.from('agents').delete().eq('id', placingAgentId).then()
+        void discardPlacingAgentAction(placingAgentId)
 
         set({ placingAgentId: null })
     },
@@ -516,13 +505,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             agents: state.agents.map(a => (a.id === id ? { ...a, position: pos, spaceId: target ?? a.spaceId } : a)),
         }))
 
-        const patch: Database['public']['Tables']['agents']['Update'] = target ? { col: pos.col, row: pos.row, space_id: target } : { col: pos.col, row: pos.row }
-        supabase
-            .from('agents')
-            .update<Database['public']['Tables']['agents']['Update']>(patch)
-            .eq('id', id)
-            .then(({ error }) => {
-                if (!error || !previous) return
+        void setAgentPositionAction({ agentId: id, col: pos.col, row: pos.row, spaceId: target })
+            .catch(() => ({ ok: false }))
+            .then(({ ok }) => {
+                if (ok || !previous) return
                 // Un refus de la clé étrangère ou de la policy n'émet aucun realtime : sans ce
                 // retour en arrière la tuile resterait garée dans une Box où elle n'est jamais
                 // arrivée. On ne rembobine que si rien n'a bougé depuis.
@@ -563,7 +549,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     },
 
     setSessionStatus: (sessionId, status) => {
-        supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ status }).eq('id', sessionId).then()
+        void setSessionStatusAction(sessionId, status)
         const session = get().sessions.find(s => s.id === sessionId)
         if (session) {
             set(state => ({
@@ -582,12 +568,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
         const ids = targets.map(s => s.id)
 
-        supabase
-            .from('sessions')
-            .update<Database['public']['Tables']['sessions']['Update']>({ status: 'idle' })
-            .in('id', ids)
-            .in('status', [...ATTENTION_STATUSES])
-            .then()
+        void markSessionsHandledAction(ids)
 
         const cleared = new Set(ids)
         const agentIds = new Set(targets.map(s => s.agentId))
@@ -740,13 +721,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         set(state => ({
             spaces: state.spaces.map(s => (s.id === id ? { ...s, ...patch } : s)),
         }))
-        supabase.from('spaces').update<Database['public']['Tables']['spaces']['Update']>(patch).eq('id', id).then()
+        void updateSpaceRectAction(id, patch)
     },
 
-    // Un agent est dessiné à ses propres col/row, pas relativement à sa Box : la déplacer, c'est
-    // translater chacun de ses agents posés du même pas. Le navigateur n'a pas de transaction, donc
-    // un échec en route réécrit l'ancienne place de tout le monde plutôt que de laisser des agents
-    // hors de leur Box.
+    // An agent is drawn at its own col/row, not relative to its Box: moving the Box shifts each of
+    // its placed agents by the same step. The server writes them in one transaction, so a refusal
+    // leaves every one of them where it was and only the screen has to be put back.
     moveSpace: (id, rect, viewer) => {
         const before = get().spaces.find(s => s.id === id)
         if (!before) return
@@ -760,12 +740,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             .agents.filter(a => a.spaceId === id && isPlaced(a.position))
             .map(a => ({ id: a.id, from: a.position, to: { col: a.position.col + delta.col, row: a.position.row + delta.row } }))
 
-        const write = (spaceRect: SpaceRect, end: 'from' | 'to') =>
-            Promise.all([
-                supabase.from('spaces').update<Database['public']['Tables']['spaces']['Update']>(spaceRect).eq('id', id),
-                ...carried.map(moved => supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ col: moved[end].col, row: moved[end].row }).eq('id', moved.id)),
-            ]).then(results => results.some(r => r.error))
-
         set(state => ({
             _movingSpaceId: id,
             spaces: state.spaces.map(s => (s.id === id ? { ...s, ...rect } : s)),
@@ -774,11 +748,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
                 return moved ? { ...a, position: moved.to } : a
             }),
         }))
-        write(rect, 'to')
+        moveSpaceAction({ spaceId: id, rect, carried: carried.map(moved => ({ id: moved.id, col: moved.to.col, row: moved.to.row })) })
+            .then(result => !result.ok)
             .catch(() => true)
             .then(failed => {
                 if (!failed) return
-                write(from, 'from').catch(() => {})
                 // Un agent redéplacé entre-temps garde sa nouvelle place.
                 set(state => ({
                     spaces: state.spaces.map(s => (s.id === id ? { ...s, ...from } : s)),
@@ -970,7 +944,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     reconcileSessions: async () => {
         const agentIds = get().agents.map(a => a.id)
         if (agentIds.length === 0) return
-        const sessions = await fetchLiveSessions(supabase, agentIds)
+        const sessions = await listLiveSessionsAction(agentIds)
         if (!sessions) return
         set(state => {
             const agents = state.agents.map(a => {

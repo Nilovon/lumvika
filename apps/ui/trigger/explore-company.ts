@@ -1,9 +1,8 @@
 import { realEmail } from '@/lib/auth/placeholder-email'
 import { queue, task } from '@trigger.dev/sdk/v3'
 import { taskLogger as logger } from '@lumvika/cloud/tasks'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
-import type { Database, Json } from '@/app/api/database.types'
+import type { Json } from '@/app/api/database.types'
 import { buildSeedPages, seedPagesOutline } from '@/lib/brain/seed-pages'
 import { COLLECTOR_IDS } from '@/lib/company/explore/catalog'
 import type { CatalogFindings } from '@/lib/company/explore/catalog-collector'
@@ -12,8 +11,8 @@ import { exploreCompany } from '@/lib/company/explore/explore'
 import { applyToRow, type CompanyFindingsRow, type DiscoveryEvent } from '@/lib/company/explore/findings'
 import type { SynthesisFindings } from '@/lib/company/explore/synthesize'
 import type { StewardAnswers } from '@/lib/steward/phase'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, serviceScope, upsertRows, type DbScope } from '@/lib/db'
+import { loadAuthAccount } from '@/lib/notifications/recipient'
 
 export type ExploreCompanyPayload = { workspaceId: number; url: string }
 
@@ -26,36 +25,28 @@ const companyExploreQueue = queue({ name: 'company-explore', concurrencyLimit: 1
 
 type Signup = { personName: string | null; email: string | null }
 
-export async function readAnswers(supabase: SupabaseClient<Database>, workspaceId: number): Promise<StewardAnswers> {
-    const { data } = await selectMaybeSingle(supabase, 'workspace_onboarding', ['answers'] as const, { workspace_id: workspaceId })
+export async function readAnswers(scope: DbScope, workspaceId: number): Promise<StewardAnswers> {
+    const { data } = await selectMaybeSingle(scope, 'workspace_onboarding', ['answers'] as const, { workspace_id: workspaceId })
     const value = data?.answers
     return value && typeof value === 'object' && !Array.isArray(value) ? (value as StewardAnswers) : {}
 }
 
-function metadataString(metadata: Record<string, unknown> | undefined, key: string): string {
-    const value = metadata?.[key]
-    return typeof value === 'string' ? value.trim() : ''
-}
-
 // The earliest member is the one who signed up, the person the LinkedIn collectors look for.
-export async function readSignup(supabase: SupabaseClient<Database>, workspaceId: number): Promise<Signup> {
-    const { data: members } = await selectMany(supabase, 'workspace_members', ['user_id'] as const, { workspace_id: workspaceId }, { column: 'created_at' }, 1)
+export async function readSignup(scope: DbScope, workspaceId: number): Promise<Signup> {
+    const { data: members } = await selectMany(scope, 'workspace_members', ['user_id'] as const, { workspace_id: workspaceId }, { column: 'created_at' }, 1)
     const owner = members?.[0]
     if (!owner) return { personName: null, email: null }
 
-    const { data } = await supabase.auth.admin.getUserById(owner.user_id)
-    const user = data.user
-    if (!user || user.is_anonymous) return { personName: null, email: null }
+    const account = await loadAuthAccount(scope, owner.user_id)
+    if (!account) return { personName: null, email: null }
 
-    const metadata = user.user_metadata
-    const personName = metadataString(metadata, 'full_name') || metadataString(metadata, 'name') || metadataString(metadata, 'first_name')
-    return { personName: personName || null, email: realEmail(user.email)?.trim() || null }
+    // An account that claimed an address keeps the name its anonymous visit was given until it says its own.
+    const personName = account.name === 'Anonymous' ? null : account.name
+    return { personName, email: realEmail(account.email)?.trim() || null }
 }
 
-export async function writeCompanyFindings(supabase: SupabaseClient<Database>, workspaceId: number, row: CompanyFindingsRow): Promise<void> {
-    const { error } = await supabase
-        .from('workspace_onboarding')
-        .upsert<Database['public']['Tables']['workspace_onboarding']['Insert']>({ workspace_id: workspaceId, company_findings: row as unknown as Json }, { onConflict: 'workspace_id' })
+export async function writeCompanyFindings(scope: DbScope, workspaceId: number, row: CompanyFindingsRow): Promise<void> {
+    const { error } = await upsertRows(scope, 'workspace_onboarding', { workspace_id: workspaceId, company_findings: row as unknown as Json }, { onConflict: ['workspace_id'] })
     if (error) logger.warn('company explore: findings not written', { workspaceId, error: error.message })
 }
 
@@ -75,10 +66,10 @@ export const exploreCompanyTask = task({
 })
 
 export async function exploreCompanyRun({ workspaceId, url }: ExploreCompanyPayload): Promise<ExploredCompany | null> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const domain = new URL(url).hostname
     let row: CompanyFindingsRow = { url, status: 'running', pending: [], findings: [] }
-    await writeCompanyFindings(supabase, workspaceId, row)
+    await writeCompanyFindings(scope, workspaceId, row)
 
     // Events are translated and written one after the other, in the order the collectors sent them.
     let writing = Promise.resolve()
@@ -87,13 +78,13 @@ export async function exploreCompanyRun({ workspaceId, url }: ExploreCompanyPayl
             const events = await translate()
             if (!events.length) return
             row = events.reduce(applyToRow, row)
-            await writeCompanyFindings(supabase, workspaceId, row)
+            await writeCompanyFindings(scope, workspaceId, row)
         })
     }
 
     try {
-        const [answers, signup] = await Promise.all([readAnswers(supabase, workspaceId), readSignup(supabase, workspaceId)])
-        const translator = createDiscoveryTranslator({ domain, icons: serviceIconLookup(supabase) })
+        const [answers, signup] = await Promise.all([readAnswers(scope, workspaceId), readSignup(scope, workspaceId)])
+        const translator = createDiscoveryTranslator({ domain, icons: serviceIconLookup(scope) })
         // What the welcome card read off the home page is already saved: the identity card does not wait for the synthesis.
         if (answers.company_name) record(() => translator.fromProfile({ name: answers.company_name, description: answers.company_description, audience: answers.company_audience }))
 
@@ -119,7 +110,7 @@ export async function exploreCompanyRun({ workspaceId, url }: ExploreCompanyPayl
     } catch (error) {
         logger.error('company explore: failed', { workspaceId, url, error: error instanceof Error ? error.message : String(error) })
         await writing.catch(() => {})
-        await writeCompanyFindings(supabase, workspaceId, { ...row, status: 'failed', pending: [] })
+        await writeCompanyFindings(scope, workspaceId, { ...row, status: 'failed', pending: [] })
         return null
     }
 }

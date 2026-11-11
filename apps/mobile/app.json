@@ -63,12 +63,6 @@
             "deploymentTarget": "26.0"
           }
         }
-      ],
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.530380179314-likpnhr06isv0ucqs86c4bgpt0oi91c5"
-        }
       ]
     ],
     "experiments": {

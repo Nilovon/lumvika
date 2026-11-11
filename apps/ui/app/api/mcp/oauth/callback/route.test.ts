@@ -3,16 +3,15 @@ import { putMcpToken } from '@/lib/engine/client'
 import { type OAuthContext, encodeContext, exchangeCode } from '@/lib/mcp-oauth'
 import { mintCallbackGrant } from '@/lib/oauth/mobile-ticket'
 import { parkSignIn } from '@/lib/oauth/pending-grant'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { getServerSession } from '@/supabase/session/getServerSession'
-import { fakeSupabase } from '@/test/supabase-fake'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
 import { cookies } from 'next/headers'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET } from './route'
 
 vi.mock('next/headers', () => ({ cookies: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/session/getServerSession', () => {
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
+vi.mock('@/lib/auth/session/getServerSession', () => {
     const session = vi.fn()
     return { getServerSession: session, getSessionWorkspace: session }
 })
@@ -63,13 +62,14 @@ beforeEach(() => {
     memberOfAgentWorkspace = true
     role = 'admin'
     jar = {}
-    const db = fakeSupabase(table => {
+    db.reset()
+    db.answer(({ helper, table }) => {
+        if (!helper.startsWith('select')) return undefined
         if (table === 'agents') return { data: { workspace_id: agentWorkspace, space_id: 'space-1', engine_agent_id: 'engine-agent', template_id: null, disabled_at: null, disabled_reason: null, workspaces: { subscription_status: 'active', is_sandbox: false }, space: { visibility: 'workspace' } } }
         if (table === 'spaces') return { data: { id: 'space-1', workspace_id: agentWorkspace, visibility: 'workspace' } }
         if (table === 'workspace_members') return { data: memberOfAgentWorkspace ? { user_id: 'user-1', role, box_scope: 'all' } : null }
         return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'user-1', workspace_id: SESSION_WORKSPACE }, workspaceRefused: false } as never)
     vi.mocked(cookies).mockResolvedValue({ get: (name: string) => (jar[name] === undefined ? undefined : { name, value: jar[name] }) } as never)
     vi.mocked(getWorkspaceConnection).mockResolvedValue({ baseUrl: 'https://engine.test', apiKey: null })

@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto'
 
-// The in-app browser carries neither the bearer token nor a Supabase session, so the sign-in entry
+// The in-app browser carries neither the bearer token nor a session cookie, so the sign-in entry
 // point authenticates with a capability instead: signed, two minutes, and scoped to one agent and
 // one service. It holds no secret of its own, and nothing it reaches ends up anywhere but a row the
 // app claims with its own bearer afterwards, so a leaked ticket can only open a sign-in the user was

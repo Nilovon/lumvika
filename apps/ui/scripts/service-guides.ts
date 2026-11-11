@@ -1,9 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import type { Database, Json } from '@/app/api/database.types'
+import type { Json } from '@/app/api/database.types'
 import { serviceManifestSchema, type InputDef } from '../lib/services/manifest'
-import { createServiceRoleClient } from '../supabase/serviceRole'
-import { selectAll } from '../supabase/supabase-helpers'
+import { closeDb, selectAll, serviceScope, updateRows } from '../lib/db'
 
 // Rewrites the credential help of the service catalogue: every pasted input gets a one-line
 // `help` and, when the value has to be created, a step-by-step `guide` (see the add-service skill).
@@ -55,11 +54,10 @@ export type GuidesFile = { fields: FieldGuide[]; rewrites: MethodRewrite[] }
 
 type RawMethod = { id: string; inputs?: InputDef[]; mcpServers?: { name: string; url?: string; headers?: Record<string, string> }[] }
 type RawManifest = { inputs?: InputDef[]; authMethods?: RawMethod[]; skills?: { name: string; body: string }[] }
-type ServiceUpdate = Database['public']['Tables']['services']['Update']
+const DATABASE_HOST = new URL(process.env.DATABASE_URL ?? 'postgres://unset').host
 
 async function loadCatalog() {
-    const supabase = createServiceRoleClient()
-    const { data, error } = await selectAll(supabase, 'services', ['slug', 'manifest'] as const, {}, { column: 'slug' })
+    const { data, error } = await selectAll(serviceScope(), 'services', ['slug', 'manifest'] as const, {}, { column: 'slug' })
     if (error) throw error
     return data
 }
@@ -138,7 +136,7 @@ function applyField(raw: RawManifest, field: FieldGuide, log: string[]) {
 
 async function apply(guidesPath: string, write: boolean) {
     const guides = JSON.parse(readFileSync(guidesPath, 'utf8')) as GuidesFile
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const catalog = new Map((await loadCatalog()).map(row => [row.slug, row.manifest]))
     const slugs = [...new Set([...guides.rewrites.map(r => r.slug), ...guides.fields.map(f => f.slug)])]
 
@@ -159,13 +157,10 @@ async function apply(guidesPath: string, write: boolean) {
         console.log(`\n${slug}\n${log.join('\n')}`)
 
         if (!write) continue
-        const { error } = await supabase
-            .from('services')
-            .update<ServiceUpdate>({ manifest: raw as Json })
-            .eq('slug', slug)
+        const { error } = await updateRows(scope, 'services', { manifest: raw as Json }, { slug })
         if (error) throw error
     }
-    console.log(`\n${changed} services ${write ? 'written' : 'would change (dry run, pass --write)'} on ${process.env.NEXT_PUBLIC_SUPABASE_URL}`)
+    console.log(`\n${changed} services ${write ? 'written' : 'would change (dry run, pass --write)'} on ${DATABASE_HOST}`)
 }
 
 async function main() {
@@ -176,7 +171,9 @@ async function main() {
     process.exit(1)
 }
 
-main().catch(error => {
-    console.error(error)
-    process.exit(1)
-})
+main()
+    .then(closeDb)
+    .catch(error => {
+        console.error(error)
+        process.exit(1)
+    })

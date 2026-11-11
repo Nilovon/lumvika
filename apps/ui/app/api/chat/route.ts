@@ -3,7 +3,6 @@ import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { createSessionRow, ensureSessionRow, findGeneralSession, GeneralAlreadyOpenError, getAgentChatTarget, getExistingSession, updateSessionStatus } from '@/app/api/_services/chat.service'
 import { messageAuthorOf } from '@/app/api/_services/me.service'
 import { recordSessionParticipant, recordSessionRead } from '@/app/api/_services/notification-audience.service'
-import type { Database } from '@/app/api/database.types'
 import { generateSessionTitle } from '@/lib/ai/generate-title'
 import { cancelRun, reconnectRun } from '@/lib/engine/client'
 import { QUEUED_RETRY_DELAYS_MS, startChat } from '@/lib/chat/start-chat'
@@ -11,7 +10,7 @@ import { stripAttachmentsRef } from '@/lib/chat/attachments-marker'
 import { installSessionTitle, parseInstallMessage } from '@/lib/chat/install-marker'
 import { preferredLanguage } from '@/lib/steward/language'
 import { stripVoiceMarker } from '@/lib/voice/marker'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope, updateRows } from '@/lib/db'
 import { ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND, type MessageAuthor, type SessionKind, type SessionSource } from '@lumvika/contracts'
 
 type ChatRequestBody = {
@@ -108,7 +107,7 @@ export async function POST(request: Request) {
     }
 
     let engineRes!: Response
-    let supabaseSessionId!: string
+    let sessionRowId!: string
     // Two passes at most: when another tab opened General between the lookup above and the insert
     // below, the message is sent again on the General that won.
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -168,13 +167,13 @@ export async function POST(request: Request) {
         // The engine returns the (possibly newly created) session id as a header.
         const resolvedEngineSessionId = engineRes.headers.get('x-session-id') ?? engineSessionId
 
-        // Map to the Supabase session row the UI tracks.
+        // Map to the session row the UI tracks.
         if (!sessionId) {
             if (!resolvedEngineSessionId) {
                 return Response.json({ error: 'Engine did not return a session id' }, { status: 502 })
             }
             try {
-                supabaseSessionId = await createSessionRow(agentId, resolvedEngineSessionId, sessionTitleSeed, null, source, general ? 'general' : 'thread', install ? null : sessionTitleSeed)
+                sessionRowId = await createSessionRow(agentId, resolvedEngineSessionId, sessionTitleSeed, null, source, general ? 'general' : 'thread', install ? null : sessionTitleSeed)
             } catch (err) {
                 // Another tab opened General a moment ago: the run just started belongs to no row. It is
                 // cancelled, and the message starts over on the General that won.
@@ -193,29 +192,27 @@ export async function POST(request: Request) {
             if (!install && !general) {
                 generateSessionTitle(sessionTitleSeed)
                     .then(async title => {
-                        const supabase = createServiceRoleClient()
-                        await supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ title }).eq('id', supabaseSessionId)
+                        await updateRows(serviceScope(), 'sessions', { title }, { id: sessionRowId })
                     })
                     .catch(() => {})
             }
         } else {
-            supabaseSessionId = sessionId
+            sessionRowId = sessionId
             if (resolvedEngineSessionId && resolvedEngineSessionId !== engineSessionId) {
                 // Backfill the engine session id if we didn't have it yet.
-                const supabase = createServiceRoleClient()
-                await supabase.from('sessions').update<Database['public']['Tables']['sessions']['Update']>({ engine_session_id: resolvedEngineSessionId }).eq('id', supabaseSessionId).then()
+                await updateRows(serviceScope(), 'sessions', { engine_session_id: resolvedEngineSessionId }, { id: sessionRowId })
             }
         }
         break
     }
 
-    await updateSessionStatus(supabaseSessionId, 'working')
-    await Promise.all([recordSessionParticipant(supabaseSessionId, author.id), recordSessionRead(supabaseSessionId, author.id)])
+    await updateSessionStatus(sessionRowId, 'working')
+    await Promise.all([recordSessionParticipant(sessionRowId, author.id), recordSessionRead(sessionRowId, author.id)])
 
     const headers = new Headers()
     headers.set('Content-Type', engineRes.headers.get('content-type') ?? 'text/event-stream')
     headers.set('x-vercel-ai-ui-message-stream', engineRes.headers.get('x-vercel-ai-ui-message-stream') ?? 'v1')
-    headers.set('X-Session-Id', supabaseSessionId)
+    headers.set('X-Session-Id', sessionRowId)
     const runId = engineRes.headers.get('x-run-id')
     if (runId) headers.set('X-Run-Id', runId)
 

@@ -6,14 +6,17 @@ const mocks = vi.hoisted(() => ({
     selectMaybeSingle: vi.fn(),
 }))
 
-vi.mock('@/supabase/serviceRole', () => ({
-    createServiceRoleClient: () => ({
-        from: () => ({
-            insert: (payload: unknown) => ({ select: () => ({ single: () => Promise.resolve(mocks.insert(payload)) }) }),
-        }),
-    }),
+vi.mock('@/lib/db', async importOriginal => ({
+    ...(await importOriginal<object>()),
+    insertRow: async (_scope: unknown, _table: string, payload: unknown) => mocks.insert(payload),
+    selectMaybeSingleWithJoins: vi.fn(),
+    selectManyWithJoins: vi.fn(),
+    selectMaybeSingle: mocks.selectMaybeSingle,
+    selectSingle: vi.fn(),
+    selectCount: vi.fn(),
+    selectMany: vi.fn(),
+    selectAll: vi.fn(),
 }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMaybeSingleWithJoins: vi.fn(), selectManyWithJoins: vi.fn(), selectMaybeSingle: mocks.selectMaybeSingle, selectSingle: vi.fn(), selectCount: vi.fn(), selectMany: vi.fn(), selectAll: vi.fn() }))
 vi.mock('@/lib/engine/client', () => ({ listRuns: vi.fn(), getRunSteps: vi.fn() }))
 vi.mock('./workspace-engine.service', () => ({ findWorkspaceEngine: vi.fn(), NoEngineError: class NoEngineError extends Error {} }))
 

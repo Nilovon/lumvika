@@ -10,7 +10,7 @@ import { TEXT_FILE_PAGE_CHARS } from '@lumvika/contracts'
 
 import { STEWARD_FILES_BUCKET, stewardFileKey } from './files'
 
-type FilesContext = Pick<WorkspaceContext, 'userId' | 'workspace' | 'supabase'>
+type FilesContext = Pick<WorkspaceContext, 'userId' | 'workspace' | 'scope'>
 type Part = UIMessage['parts'][number]
 
 // The image types a vision model accepts. An svg is xml, so it is handed over as text; an ico, a bmp
@@ -52,7 +52,7 @@ async function inlineAttachment(ctx: FilesContext, sessionId: string, path: stri
     if (!mediaType && !readsAsText) return null
 
     // A file that went missing costs the model its contents, not the user their turn.
-    const blob = await downloadPrivateFile(ctx.supabase, STEWARD_FILES_BUCKET, stewardFileKey(ctx, sessionId, path)).catch(() => null)
+    const blob = await downloadPrivateFile(ctx.scope, STEWARD_FILES_BUCKET, stewardFileKey(ctx, sessionId, path)).catch(() => null)
     if (!blob) return null
 
     if (mediaType) {

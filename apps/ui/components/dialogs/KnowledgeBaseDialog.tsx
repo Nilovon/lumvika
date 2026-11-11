@@ -6,7 +6,7 @@ import { PanelDialogContent } from '@/components/dialogs/PanelDialogContent'
 import { usePublishedAccessEnabled } from '@/components/layout/FeatureFlagsProvider'
 import { Dialog, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 

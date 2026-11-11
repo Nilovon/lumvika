@@ -13,8 +13,8 @@ import { loadPublished, loadWorkspaceBrand, mayOpen, opensInViewer, previewImage
 import { extractPublishedSlug, publishedSiteOrigin } from '@/lib/published/host'
 import { fileNameOf, isMarkdownDeck, viewerKindOf } from '@/lib/published/viewer-kind'
 import { PUBLISHED_BUCKET } from '@/lib/services/publish'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
+import { downloadObject } from '@lumvika/storage'
 import { getTranslations } from 'next-intl/server'
 
 // The root of a published host when the link is a single file a browser would only download or
@@ -36,9 +36,9 @@ const openableEntry = cache(async (slug: string): Promise<PublishedEntry | null>
 })
 
 async function readText(entry: PublishedEntry): Promise<{ text: string; truncated: boolean } | null> {
-    const { data } = await createServiceRoleClient().storage.from(PUBLISHED_BUCKET).download(entry.storage_key)
+    const { data } = await downloadObject(PUBLISHED_BUCKET, entry.storage_key)
     if (!data) return null
-    return { text: await data.slice(0, MAX_TEXT_BYTES).text(), truncated: data.size > MAX_TEXT_BYTES }
+    return { text: new TextDecoder().decode(data.subarray(0, MAX_TEXT_BYTES)), truncated: data.byteLength > MAX_TEXT_BYTES }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const origin = publishedSiteOrigin(slug)
     if (!entry || !origin) return { robots: { index: false, follow: false } }
 
-    const [brand, { data: agent }, t] = await Promise.all([loadWorkspaceBrand(entry.workspace_id), selectMaybeSingle(createServiceRoleClient(), 'agents', ['name'] as const, { id: entry.agent_id }), getTranslations('publicPages.publishedView')])
+    const [brand, { data: agent }, t] = await Promise.all([loadWorkspaceBrand(entry.workspace_id), selectMaybeSingle(serviceScope(), 'agents', ['name'] as const, { id: entry.agent_id }), getTranslations('publicPages.publishedView')])
     const isPublic = entry.access === 'public'
     const title = isPublic ? (entry.title ?? fileNameOf(entry.source_path)) : t('protectedTitle')
     const description = isPublic ? (agent?.name ? t('publishedBy', { agent: agent.name, workspace: brand.name }) : t('publishedByUnknown', { workspace: brand.name })) : t('protectedDescription', { workspace: brand.name })

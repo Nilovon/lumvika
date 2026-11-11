@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
-import type { Database } from '@/app/api/database.types'
 import { verifyUnsubscribeToken } from '@/lib/email/unsubscribeToken'
 import { EMAIL_CATEGORIES, normalizeNotificationPrefs, type EmailCategory } from '@/lib/notifications/prefs'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectSingle } from '@/supabase/supabase-helpers'
+import { selectSingle, serviceScope, updateRows, type TablesUpdate } from '@/lib/db'
 
-type UserUpdate = Database['public']['Tables']['users']['Update']
+type UserUpdate = TablesUpdate<'users'>
 
 function isCategory(value: string | null): value is EmailCategory {
     return value !== null && (EMAIL_CATEGORIES as readonly string[]).includes(value)
@@ -25,8 +23,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const categoryParam = url.searchParams.get('category')
     const categories: EmailCategory[] = isCategory(categoryParam) ? [categoryParam] : [...EMAIL_CATEGORIES]
 
-    const supabase = createServiceRoleClient()
-    const { data: current } = await selectSingle(supabase, 'users', ['email_notification_prefs'] as const, { id: target.userId })
+    const scope = serviceScope()
+    const { data: current } = await selectSingle(scope, 'users', ['email_notification_prefs'] as const, { id: target.userId })
     const prefs = normalizeNotificationPrefs(current?.email_notification_prefs)
     let merged = prefs
     if (target.scope === 'runs') {
@@ -35,10 +33,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         for (const category of categories) merged.categories[category] = false
     }
 
-    const { error } = await supabase
-        .from('users')
-        .update<UserUpdate>({ email_notification_prefs: merged as unknown as UserUpdate['email_notification_prefs'] })
-        .eq('id', target.userId)
+    const { error } = await updateRows(scope, 'users', { email_notification_prefs: merged as unknown as UserUpdate['email_notification_prefs'] }, { id: target.userId })
     if (error) return NextResponse.json({ ok: false }, { status: 500 })
 
     return NextResponse.json({ ok: true })

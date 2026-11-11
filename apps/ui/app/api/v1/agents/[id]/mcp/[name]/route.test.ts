@@ -5,7 +5,7 @@ const assertAgentInWorkspace = vi.fn()
 vi.mock('@/app/api/_services/custom-mcp.service', () => ({ getCustomMcpServer: (...args: unknown[]) => getCustomMcpServer(...args) }))
 vi.mock('@/app/api/_auth/ownership', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/ownership')>()),
-    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace: { id: 7 }, role: 'member', boxScope: 'all', supabase: {} }),
+    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace: { id: 7 }, role: 'member', boxScope: 'all', scope: {} }),
 }))
 vi.mock('@/app/api/_auth/access', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/access')>()),

@@ -8,7 +8,7 @@ import { hasOpenRouterKey, openrouter } from '@/lib/ai/openrouter'
 import { starterPack } from '@/lib/onboarding/starter-packs'
 import { templateCardImage } from '@/lib/templates/card-image'
 import { LIBRARY_COLUMNS, toLibraryTemplates, type LibraryRow } from '@/lib/templates/library'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany } from '@/lib/db'
 import type { StewardState } from './phase'
 import { pinnedPlanBoxes } from './phases'
 import type { StarterPackInput } from './starter-pack'
@@ -25,7 +25,7 @@ const MAX_ROLE = 90
  */
 export async function loadStarterPack(ctx: WorkspaceContext, state: StewardState): Promise<StarterPackInput | null> {
     const cards = starterPack(state.answers.industry)
-    const { data } = await selectMany(ctx.supabase, 'templates', LIBRARY_COLUMNS, { slug: cards.map(card => card.template), status: 'published' })
+    const { data } = await selectMany(ctx.scope, 'templates', LIBRARY_COLUMNS, { slug: cards.map(card => card.template), status: 'published' })
     const bySlug = new Map(
         toLibraryTemplates((data ?? []) as LibraryRow[])
             .filter(template => template.pricing.model === 'free' && template.archiveAgentNames.length > 0)

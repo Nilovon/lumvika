@@ -1,12 +1,10 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { BrainPage } from '@lumvika/contracts'
 
 import { findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
-import type { Database } from '@/app/api/database.types'
 import type { CompanyFindingsRow } from '@/lib/company/explore/findings'
 import { listBrainPages, readBrainPage } from '@/lib/engine/client'
 import type { StewardAnswers } from '@/lib/steward/phase'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, type DbScope } from '@/lib/db'
 import { answersEvidence, brainEvidence, buildEvidence, findingsEvidence } from './evidence'
 import type { CompanyDossier } from './types'
 
@@ -18,11 +16,11 @@ function asObject<T>(value: unknown): T | null {
 
 type BrainRead = { pages: BrainPage[]; warning: string | null }
 
-// A workspace without a machine, or one whose machine is off, still has what Supabase holds: the
+// A workspace without a machine, or one whose machine is off, still has what the database holds: the
 // dossier is thinner and says so, rather than failing the whole run.
 async function readBrain(workspaceId: number): Promise<BrainRead> {
     const engine = await findWorkspaceEngine(workspaceId)
-    if (!engine) return { pages: [], warning: 'Ce workspace n’a pas de machine : pas de brain, le dossier vient de Supabase seul.' }
+    if (!engine) return { pages: [], warning: 'Ce workspace n’a pas de machine : pas de brain, le dossier vient de la base seule.' }
 
     try {
         const summaries = (await listBrainPages(engine.conn)).slice(0, BRAIN_PAGES_MAX)
@@ -30,12 +28,12 @@ async function readBrain(workspaceId: number): Promise<BrainRead> {
         return { pages, warning: pages.length ? null : 'Le brain de ce workspace est vide.' }
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
-        return { pages: [], warning: `Brain injoignable (${message}) : le dossier vient de Supabase seul.` }
+        return { pages: [], warning: `Brain injoignable (${message}) : le dossier vient de la base seule.` }
     }
 }
 
-export async function loadCompanyDossier(supabase: SupabaseClient<Database>, workspaceId: number): Promise<CompanyDossier> {
-    const [workspace, onboarding, agents, brain] = await Promise.all([selectMaybeSingle(supabase, 'workspaces', ['id', 'name'] as const, { id: workspaceId }), selectMaybeSingle(supabase, 'workspace_onboarding', ['answers', 'company_findings'] as const, { workspace_id: workspaceId }), selectMany(supabase, 'agents', ['name', 'description'] as const, { workspace_id: workspaceId }, { column: 'created_at' }), readBrain(workspaceId)])
+export async function loadCompanyDossier(scope: DbScope, workspaceId: number): Promise<CompanyDossier> {
+    const [workspace, onboarding, agents, brain] = await Promise.all([selectMaybeSingle(scope, 'workspaces', ['id', 'name'] as const, { id: workspaceId }), selectMaybeSingle(scope, 'workspace_onboarding', ['answers', 'company_findings'] as const, { workspace_id: workspaceId }), selectMany(scope, 'agents', ['name', 'description'] as const, { workspace_id: workspaceId }, { column: 'created_at' }), readBrain(workspaceId)])
     if (!workspace.data) throw new Error(`Workspace ${workspaceId} introuvable`)
 
     const answers = asObject<StewardAnswers>(onboarding.data?.answers) ?? {}

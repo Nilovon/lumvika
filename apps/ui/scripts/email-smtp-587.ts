@@ -1,7 +1,6 @@
-import type { Database, Json } from '@/app/api/database.types'
+import type { Json } from '@/app/api/database.types'
 import { serviceManifestSchema } from '../lib/services/manifest'
-import { createServiceRoleClient } from '../supabase/serviceRole'
-import { selectSingle } from '../supabase/supabase-helpers'
+import { closeDb, selectSingle, serviceScope, updateRows } from '../lib/db'
 
 // One-shot: pins the email-imap-smtp service to port 587 with STARTTLS. Hetzner drops outbound 25
 // and 465 on every engine host, so a box can only send over 587: the port and encryption fields go
@@ -18,7 +17,7 @@ const SKILL_ANCHOR = 'Call check_connection first when a mail call fails, it tes
 const SKILL_SENTENCE =
     'Sending always goes through port 587 with STARTTLS, the only SMTP port open from this machine: an SMTP failure means a wrong server address or password, never a port to change.'
 
-type ServiceUpdate = Database['public']['Tables']['services']['Update']
+const DATABASE_HOST = new URL(process.env.DATABASE_URL ?? 'postgres://unset').host
 type RawManifest = {
     inputs: { key: string; help?: string }[]
     mcpServers: { name: string; env: Record<string, string> }[]
@@ -27,8 +26,8 @@ type RawManifest = {
 
 async function main() {
     const write = process.argv.includes('--write')
-    const supabase = createServiceRoleClient()
-    const { data, error } = await selectSingle(supabase, 'services', ['manifest'] as const, { slug: SLUG })
+    const scope = serviceScope()
+    const { data, error } = await selectSingle(scope, 'services', ['manifest'] as const, { slug: SLUG })
     if (error || !data) throw error ?? new Error(`${SLUG} not found`)
 
     serviceManifestSchema.parse(data.manifest)
@@ -58,18 +57,17 @@ async function main() {
             2,
         ),
     )
-    if (unchanged) return console.log(`already up to date on ${process.env.NEXT_PUBLIC_SUPABASE_URL}`)
-    if (!write) return console.log(`dry run on ${process.env.NEXT_PUBLIC_SUPABASE_URL}, pass --write`)
+    if (unchanged) return console.log(`already up to date on ${DATABASE_HOST}`)
+    if (!write) return console.log(`dry run on ${DATABASE_HOST}, pass --write`)
 
-    const { error: updateError } = await supabase
-        .from('services')
-        .update<ServiceUpdate>({ manifest: raw as unknown as Json })
-        .eq('slug', SLUG)
+    const { error: updateError } = await updateRows(scope, 'services', { manifest: raw as unknown as Json }, { slug: SLUG })
     if (updateError) throw updateError
-    console.log(`written on ${process.env.NEXT_PUBLIC_SUPABASE_URL}`)
+    console.log(`written on ${DATABASE_HOST}`)
 }
 
-main().catch(e => {
-    console.error(e)
-    process.exit(1)
-})
+main()
+    .then(closeDb)
+    .catch(e => {
+        console.error(e)
+        process.exit(1)
+    })

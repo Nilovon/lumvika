@@ -1,10 +1,9 @@
 import 'server-only'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
-import type { Database } from '@/app/api/database.types'
+import type { DbScope } from '@/lib/db'
 import type { AppSlug } from './apps'
 
-export async function unbindAgent(_supabase: SupabaseClient<Database>, _workspaceId: number, _agentId: string, _slug: AppSlug): Promise<void> {}
+export async function unbindAgent(_scope: DbScope, _workspaceId: number, _agentId: string, _slug: AppSlug): Promise<void> {}
 
 // No paid app is offered here: the self-hosted build runs without a Linkup account.
 export async function paidAppFlag(_slug: AppSlug): Promise<boolean> {

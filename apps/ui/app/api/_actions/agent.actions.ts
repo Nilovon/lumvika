@@ -9,7 +9,7 @@ import { getAgentChatTarget, resolveRunTarget, sessionRowOf } from '@/app/api/_s
 import { assertModelEntitled } from '@/app/api/_services/engine-plan.service'
 import { getWorkspaceConnection, NoEngineError } from '@/app/api/_services/workspace-engine.service'
 import { followCoworker } from '@/app/api/_services/notification-audience.service'
-import { getServerSession } from '@/supabase/session/getServerSession'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
 import { deleteAgent, duplicateAgent, moveAgentToBox, renameAgent } from '@/app/api/_services/agent.service'
 import {
     type ScheduleCreateParams,
@@ -84,8 +84,7 @@ import { TEXT_FILE_PAGE_CHARS } from '@lumvika/contracts'
 import { failureOf, refusal, refusalOf, type ActionFailure, type ActionRefusal, type ErrorCode, type SuccessResult } from '@/lib/i18n/action-error'
 import { nextRunAt } from '@/lib/schedules/cron'
 import { latestOutcomes, type TaskOutcome } from '@/lib/schedules/outcomes'
-import { selectMany } from '@/supabase/supabase-helpers'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { selectMany, serviceScope } from '@/lib/db'
 
 export async function deleteAgentAction(id: string) {
     await assertAgentInWorkspace(id, 'manage')
@@ -588,7 +587,7 @@ export type WorkspaceRoutines = { routines: WorkspaceRoutine[]; canRename: boole
 export async function listWorkspaceRoutinesAction(): Promise<WorkspaceRoutines> {
     const actor = await requireLightSessionActor()
     const workspaceId = actor.workspaceId
-    const [{ data: agents }, visible] = await Promise.all([selectMany(createServiceRoleClient(), 'agents', ['id', 'engine_agent_id', 'disabled_at'] as const, { workspace_id: workspaceId }), visibleAgentIds(actor)])
+    const [{ data: agents }, visible] = await Promise.all([selectMany(serviceScope(), 'agents', ['id', 'engine_agent_id', 'disabled_at'] as const, { workspace_id: workspaceId }), visibleAgentIds(actor)])
     const runnable = keepVisible(agents ?? [], visible, agent => agent.id).filter(agent => agent.engine_agent_id && !agent.disabled_at)
     if (runnable.length === 0) return { routines: [], canRename: false }
 

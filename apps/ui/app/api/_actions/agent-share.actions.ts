@@ -9,8 +9,7 @@ import { assertCanManageShare, shareManageableAgentIds } from '@/lib/agents/shar
 import { createAgentShare, planAgentShare, type AgentSharePlan } from '@/lib/agents/share-create'
 import { installAgentShare, type AgentShareInstallOutcome } from '@/lib/agents/share-install'
 import { listWorkspaceShares, readAgentShare, revokeAgentShare, type WorkspaceShare } from '@/lib/agents/share-read'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 import { AppError, failureOf, type ActionFailure } from '@/lib/i18n/action-error'
 
 // Unlike a template capture, none of this is gated on the sandbox: a share is a transfer to one
@@ -24,7 +23,7 @@ export async function planAgentShareAction(agentId: string): Promise<ActionResul
     try {
         const id = z.string().uuid().parse(agentId)
         const { workspace_id } = await assertAgentInWorkspace(id, 'manage')
-        return { ok: true, plan: await planAgentShare(createServiceRoleClient(), id, workspace_id) }
+        return { ok: true, plan: await planAgentShare(serviceScope(), id, workspace_id) }
     } catch (err) {
         return failureOf(err, 'inspectCoworkerFailed')
     }
@@ -37,7 +36,7 @@ export async function createAgentShareAction(input: unknown): Promise<ActionResu
         const { agentId, include } = createInputSchema.parse(input)
         const ctx = await requireWorkspaceContext()
         await assertAgentInWorkspace(agentId, 'manage', actorFromContext(ctx))
-        const { url, warnings, reused } = await createAgentShare(ctx.supabase, { agentRowId: agentId, workspaceId: ctx.workspace.id, userId: ctx.userId, include })
+        const { url, warnings, reused } = await createAgentShare(ctx.scope, { agentRowId: agentId, workspaceId: ctx.workspace.id, userId: ctx.userId, include })
         return { ok: true, url, warnings, reused }
     } catch (err) {
         return failureOf(err, 'createShareLinkFailed')
@@ -47,7 +46,7 @@ export async function createAgentShareAction(input: unknown): Promise<ActionResu
 export async function listAgentSharesAction(): Promise<ActionResult<{ shares: WorkspaceShare[] }>> {
     try {
         const ctx = await requireWorkspaceContext()
-        const [shares, manageable] = await Promise.all([listWorkspaceShares(ctx.supabase, ctx.workspace.id), shareManageableAgentIds(actorFromContext(ctx))])
+        const [shares, manageable] = await Promise.all([listWorkspaceShares(ctx.scope, ctx.workspace.id), shareManageableAgentIds(actorFromContext(ctx))])
         return { ok: true, shares: keepVisible(shares, manageable, share => share.sourceAgentId) }
     } catch (err) {
         return failureOf(err, 'readShareLinksFailed')
@@ -58,8 +57,8 @@ export async function revokeAgentShareAction(shareId: string): Promise<ActionRes
     try {
         const id = z.string().uuid().parse(shareId)
         const ctx = await requireWorkspaceContext()
-        await assertCanManageShare(ctx.supabase, id, actorFromContext(ctx))
-        await revokeAgentShare(ctx.supabase, id, ctx.workspace.id)
+        await assertCanManageShare(ctx.scope, id, actorFromContext(ctx))
+        await revokeAgentShare(ctx.scope, id, ctx.workspace.id)
         return { ok: true }
     } catch (err) {
         return failureOf(err, 'revokeLinkFailed')
@@ -72,7 +71,7 @@ export async function revokeAgentShareAction(shareId: string): Promise<ActionRes
 export async function getSharedAgentAction(token: string): Promise<AgentSharePreview | null> {
     const parsed = z.string().trim().max(64).safeParse(token)
     if (!parsed.success) return null
-    return readAgentShare(createServiceRoleClient(), parsed.data)
+    return readAgentShare(serviceScope(), parsed.data)
 }
 
 const installInputSchema = z.object({
@@ -94,15 +93,15 @@ export async function installSharedAgentAction(input: unknown): Promise<InstallS
         const { token, spaceId, position } = installInputSchema.parse(input)
         const { actor } = await assertSpaceAccess(spaceId, 'manage')
         const workspace_id = actor.workspaceId
-        const supabase = createServiceRoleClient()
+        const scope = serviceScope()
 
         if ((await getAdminEmail()) === null) {
-            const { data: workspace } = await selectMaybeSingle(supabase, 'workspaces', ['subscription_status'] as const, { id: workspace_id })
+            const { data: workspace } = await selectMaybeSingle(scope, 'workspaces', ['subscription_status'] as const, { id: workspace_id })
             const status = workspace?.subscription_status
             if (status !== 'active' && status !== 'trialing') throw new AppError('noActivePlan')
         }
 
-        return { ok: true, ...(await installAgentShare(supabase, token, { workspaceId: workspace_id, spaceId, actor, position })) }
+        return { ok: true, ...(await installAgentShare(scope, token, { workspaceId: workspace_id, spaceId, actor, position })) }
     } catch (err) {
         return failureOf(err, 'addSharedCoworkerFailed')
     }

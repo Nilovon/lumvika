@@ -53,11 +53,6 @@
             "title": "Email",
             "empty": "Not connected. Add one to sign in with a code sent to your inbox."
         },
-        "phone": {
-            "title": "Phone",
-            "empty": "Not connected. Add a number to sign in with a code by WhatsApp or SMS.",
-            "otherAccount": "This number signs into another Lumvika account. Change it to sign in here by phone."
-        },
         "change": "Change",
         "add": "Add",
         "connect": "Connect",

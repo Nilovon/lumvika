@@ -1,12 +1,11 @@
 import { z } from 'zod'
 import { isSetupAnswered, type AgentArchivePlan } from '@lumvika/contracts'
 import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { patchAgent, planAgentArchive } from '@/lib/engine/client'
 import { archiveWarnings, captureAgentArchive, isMissingRoute, staleExportError } from '@/lib/agents/capture-archive'
 import { AppError } from '@/lib/i18n/action-error'
 import { getSpaceConnection } from '@/app/api/_services/space.service'
-import { selectAll, selectMany, selectSingle, type Filters } from '@/supabase/supabase-helpers'
+import { selectAll, selectMany, selectSingle, updateRows, type DbScope, type Filters } from '@/lib/db'
 import { removePrivateFiles, uploadPrivateFile } from '@/lib/storage/private'
 import { connectorSkillSlugs, readRegistry } from '@/lib/services/registry'
 import { resolveAgentConnectors } from './connectors'
@@ -29,13 +28,13 @@ const SOURCE_DESCRIPTION_LIMIT = 160
 
 // Only spaces that actually hold an agent are worth offering as a capture source. A `null` scope
 // means every workspace on the platform, which only the admin console is allowed to ask for.
-export async function listCaptureSources(supabase: SupabaseClient<Database>, workspaceId: number | null = null): Promise<CaptureSourceSpace[]> {
+export async function listCaptureSources(scope: DbScope, workspaceId: number | null = null): Promise<CaptureSourceSpace[]> {
     const agentScope: Filters<'agents'> = workspaceId === null ? {} : { workspace_id: workspaceId }
     const spaceScope: Filters<'spaces'> = workspaceId === null ? {} : { workspace_id: workspaceId }
 
     const agentColumns = ['id', 'name', 'handle', 'description', 'status', 'engine_agent_id', 'space_id'] as const
-    const { data: agents } = await selectAll(supabase, 'agents', agentColumns, agentScope, { column: 'name' })
-    const { data: spaces } = await selectAll(supabase, 'spaces', ['id', 'name'] as const, spaceScope, { column: 'name' })
+    const { data: agents } = await selectAll(scope, 'agents', agentColumns, agentScope, { column: 'name' })
+    const { data: spaces } = await selectAll(scope, 'spaces', ['id', 'name'] as const, spaceScope, { column: 'name' })
 
     const bySpace = new Map<string, CaptureSourceAgent[]>()
     for (const agent of agents ?? []) {
@@ -60,9 +59,9 @@ export async function listCaptureSources(supabase: SupabaseClient<Database>, wor
 
 export type AgentCapturePlan = AgentArchivePlan & { agentRowId: string }
 
-export async function planCapture(supabase: SupabaseClient<Database>, spaceId: string, agentIds: string[]): Promise<AgentCapturePlan[]> {
+export async function planCapture(scope: DbScope, spaceId: string, agentIds: string[]): Promise<AgentCapturePlan[]> {
     const conn = await getSpaceConnection(spaceId)
-    const { data: agents } = await selectMany(supabase, 'agents', ['id', 'engine_agent_id'] as const, { id: { in: agentIds }, space_id: spaceId })
+    const { data: agents } = await selectMany(scope, 'agents', ['id', 'engine_agent_id'] as const, { id: { in: agentIds }, space_id: spaceId })
 
     const plans: AgentCapturePlan[] = []
     for (const agent of agents ?? []) {
@@ -91,13 +90,13 @@ export type CaptureOutcome = { captured: number; warnings: string[] }
 // and `connectors` jsonb the public page already renders, so nothing about the landing has to
 // change and the admin stops hand-authoring what the folder already knows.
 export async function captureAgents(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     slug: string,
     spaceId: string,
     selections: CaptureSelection[],
 ): Promise<CaptureOutcome> {
     const conn = await getSpaceConnection(spaceId)
-    const { data: template } = await selectSingle(supabase, 'templates', ['id', 'slug', 'agents', 'agent_archives'] as const, { slug })
+    const { data: template } = await selectSingle(scope, 'templates', ['id', 'slug', 'agents', 'agent_archives'] as const, { slug })
     if (!template) throw new AppError('templateSlugNotFound', { slug })
 
     const agents = agentsFromRow.parse(template.agents)
@@ -105,7 +104,7 @@ export async function captureAgents(
 
     // The engine id addresses a folder on the box, so it is resolved from the rows of this space
     // rather than taken from the caller: a forged one would archive an agent nothing here owns.
-    const { data: sourceRows } = await selectMany(supabase, 'agents', ['id', 'engine_agent_id'] as const, {
+    const { data: sourceRows } = await selectMany(scope, 'agents', ['id', 'engine_agent_id'] as const, {
         id: { in: selections.map(selection => selection.agentRowId) },
         space_id: spaceId,
     })
@@ -150,7 +149,7 @@ export async function captureAgents(
         else agents.push(projected)
 
         const path = archivePath(template.slug, key)
-        await uploadPrivateFile(supabase, AGENT_ARCHIVE_BUCKET, path, bytes, 'application/gzip')
+        await uploadPrivateFile(scope, AGENT_ARCHIVE_BUCKET, path, bytes, 'application/gzip')
 
         const archive: TemplateAgentArchive = {
             agentKey: key,
@@ -168,7 +167,7 @@ export async function captureAgents(
         const archiveIndex = archives.findIndex(entry => entry.agentKey === key)
         if (archiveIndex >= 0) {
             // Paths carry a UUID, so the replacement never overwrites the previous object.
-            await removePrivateFiles(supabase, AGENT_ARCHIVE_BUCKET, [archives[archiveIndex].path]).catch(() => {})
+            await removePrivateFiles(scope, AGENT_ARCHIVE_BUCKET, [archives[archiveIndex].path]).catch(() => {})
             archives[archiveIndex] = archive
         } else {
             archives.push(archive)
@@ -178,18 +177,10 @@ export async function captureAgents(
         captured++
     }
 
-    const { connectors, warnings: connectorWarnings } = await resolveAgentConnectors(supabase, agents)
+    const { connectors, warnings: connectorWarnings } = await resolveAgentConnectors(scope, agents)
     warnings.push(...connectorWarnings)
 
-    const { error } = await supabase
-        .from('templates')
-        .update<Database['public']['Tables']['templates']['Update']>({
-            agents,
-            connectors,
-            agent_archives: archives,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', template.id)
+    const { error } = await updateRows(scope, 'templates', { agents, connectors, agent_archives: archives, updated_at: new Date().toISOString() }, { id: template.id })
     if (error) throw new Error(error.message)
 
     await pingTemplateRevalidate(template.slug, null, [])
@@ -198,8 +189,8 @@ export async function captureAgents(
 
 // An agent only exists because a capture archived its folder, so dropping it from the editorial
 // list without deleting the archive would leave a `.tar.gz` nothing points at any more.
-export async function removeCapturedAgent(supabase: SupabaseClient<Database>, slug: string, agentKey: string): Promise<void> {
-    const { data: template } = await selectSingle(supabase, 'templates', ['id', 'slug', 'agents', 'agent_archives'] as const, { slug })
+export async function removeCapturedAgent(scope: DbScope, slug: string, agentKey: string): Promise<void> {
+    const { data: template } = await selectSingle(scope, 'templates', ['id', 'slug', 'agents', 'agent_archives'] as const, { slug })
     if (!template) throw new AppError('templateSlugNotFound', { slug })
 
     const agents = agentsFromRow.parse(template.agents).filter(agent => agent.key !== agentKey)
@@ -207,21 +198,13 @@ export async function removeCapturedAgent(supabase: SupabaseClient<Database>, sl
     const removed = archives.filter(entry => entry.agentKey === agentKey)
 
     // An object that is already gone must not keep the row pointing at it.
-    await removePrivateFiles(supabase, AGENT_ARCHIVE_BUCKET, removed.map(entry => entry.path)).catch(() => {})
+    await removePrivateFiles(scope, AGENT_ARCHIVE_BUCKET, removed.map(entry => entry.path)).catch(() => {})
 
     // The connector list is the union of the remaining agents', so the ones this agent was the
     // last user of leave the public page with it.
-    const { connectors } = await resolveAgentConnectors(supabase, agents)
+    const { connectors } = await resolveAgentConnectors(scope, agents)
 
-    const { error } = await supabase
-        .from('templates')
-        .update<Database['public']['Tables']['templates']['Update']>({
-            agents,
-            connectors,
-            agent_archives: archives.filter(entry => entry.agentKey !== agentKey),
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', template.id)
+    const { error } = await updateRows(scope, 'templates', { agents, connectors, agent_archives: archives.filter(entry => entry.agentKey !== agentKey), updated_at: new Date().toISOString() }, { id: template.id })
     if (error) throw new Error(error.message)
 
     await pingTemplateRevalidate(template.slug, null, [])

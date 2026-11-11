@@ -7,13 +7,13 @@ Bug reports, fixes and docs are welcome. This page is the short version of `CONT
 
 ## Run it from source
 
-You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and an OpenRouter key.
+You need Node 22, pnpm 8 (`corepack enable`), Docker for the local stack, and an OpenRouter key.
 
 <Steps>
-  <Step title="Install and start Supabase">
+  <Step title="Install and start the local stack">
     ```bash
     pnpm install
-    npx supabase start      # Postgres, auth, storage and Mailpit on ports 54420 to 54429
+    pnpm db:start           # Postgres, Mailpit and an S3 store, migrated, with the services catalog
     ```
   </Step>
   <Step title="Configure the app">
@@ -21,7 +21,18 @@ You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and
     cp .env.example .env
     ```
 
-    In `.env`, set `NEXT_PUBLIC_APP_URL=http://localhost:3050`, `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54421`, the two keys from `npx supabase status`, and `OPENROUTER_API_KEY`. Then generate the secrets and hand the file to the app:
+    In `.env`, set `NEXT_PUBLIC_APP_URL=http://localhost:3050`, `OPENROUTER_API_KEY`, and the local stack:
+
+    ```bash .env
+    DATABASE_URL=postgres://lumvika:lumvika@127.0.0.1:54432/lumvika
+    S3_ENDPOINT=http://127.0.0.1:54437
+    NEXT_PUBLIC_STORAGE_URL=http://127.0.0.1:54437
+    S3_ACCESS_KEY_ID=lumvika
+    S3_SECRET_ACCESS_KEY=lumvika-secret
+    SMTP_URL=smtp://127.0.0.1:54435
+    ```
+
+    Then generate the secrets and hand the file to the app:
 
     ```bash
     node scripts/self-host-check.mjs
@@ -52,7 +63,7 @@ You need Node 22, pnpm 8 (`corepack enable`), Docker for the local Supabase, and
   </Step>
 </Steps>
 
-Sign-in codes land in Mailpit, at [http://localhost:54424](http://localhost:54424).
+Sign-in codes land in Mailpit, at [http://localhost:54436](http://localhost:54436).
 
 To work on these docs, run `pnpm dev:docs` and open [http://localhost:3333](http://localhost:3333).
 
@@ -63,28 +74,29 @@ pnpm -r --if-present ts-check
 pnpm --filter lumvika lint
 pnpm --filter lumvika test
 pnpm --filter lumvika-engine test
+pnpm --filter @lumvika/db test
 ```
 
-CI runs the same, plus every migration on an empty database and a build of both Docker images.
+CI runs the same, plus every migration and the catalog on an empty database and a build of both Docker images.
 
 ## The code
 
 | Path | What it is |
 |---|---|
-| `apps/ui` | The web app and its API (Next.js). Talks to Supabase and to the engine of each workspace |
+| `apps/ui` | The web app and its API (Next.js). Talks to Postgres, the file store and the engine of each workspace |
 | `apps/engine` | The engine: runs the coworkers, their tools, their memory, their browser and screen |
 | `apps/docs` | This documentation (Mintlify) |
 | `packages/contracts` | Types and schemas shared by the app and the engine |
 | `packages/ui` | The design system and the board |
-| `supabase/migrations` | The database schema, one migration per change |
+| `packages/db` | The database: schema, migrations, query helpers and row level security tests |
 
 `CLAUDE.md` holds the conventions of the codebase, and is what coding agents read. Three of them matter most:
 
-- **Supabase access** goes through the typed helpers for reads, and every write states its payload type.
+- **Database access** goes through the typed helpers of `@lumvika/db`, for reads and for writes, with the scope of the caller so row level security applies.
 - **Responsive** from the first version: every screen works on a phone, a tablet and a desktop.
 - **Engine data-dir migrations**: anything that changes what the engine keeps on disk is a new numbered step at the end of its ladder, never an edit of a shipped one. Details in `apps/engine/README.md`.
 
-A schema change is a new migration: `pnpm db:new <name>` creates the file, and `pnpm db:reset` replays every migration and the seed on the local stack.
+A schema change starts in `packages/db/src/schema`: `pnpm db:generate` writes its migration, and `pnpm db:reset` replays every migration and the catalog on the local stack.
 
 `apps/ui/cloud/` is the seam where Lumvika Cloud plugs in billing, paid apps, emails and its machine pool. In this repository it holds the self-hosted behaviour. Pull requests that change what it exports are unlikely to be merged.
 

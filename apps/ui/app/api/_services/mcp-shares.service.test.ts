@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeSupabase } from '@/test/supabase-fake'
 import type { Actor } from '@/app/api/_auth/access'
 
 const mocks = vi.hoisted(() => ({
@@ -11,13 +10,13 @@ const mocks = vi.hoisted(() => ({
     dispatchTemplateTool: vi.fn(),
 }))
 
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: vi.fn(), getSessionWorkspace: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: vi.fn(), getSessionWorkspace: vi.fn() }))
 vi.mock('@/lib/agents/share-create', () => ({ createAgentShare: mocks.createAgentShare, planAgentShare: mocks.planAgentShare }))
 vi.mock('@/lib/agents/share-read', () => ({ listWorkspaceShares: mocks.listWorkspaceShares, revokeAgentShare: mocks.revokeAgentShare }))
 vi.mock('./mcp-templates.service', () => ({ dispatchTemplateTool: mocks.dispatchTemplateTool }))
 
-const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const { dispatchShareTool } = await import('./mcp-shares.service')
 
 const WORKSPACE_ID = 7
@@ -33,9 +32,12 @@ const API_KEY: Actor = { kind: 'workspace', workspaceId: WORKSPACE_ID }
 
 type Box = { visibility?: 'workspace' | 'restricted'; grant?: 'use' | 'manage' | null }
 
+const SINGLE_HELPERS = new Set(['selectSingle', 'selectMaybeSingle', 'selectFirst', 'selectSingleWithJoins', 'selectMaybeSingleWithJoins'])
+
 function database({ visibility = 'workspace', grant = null }: Box = {}) {
-    const db = fakeSupabase((table, calls) => {
-        const single = calls.some(call => call.method === 'maybeSingle' || call.method === 'single')
+    db.reset()
+    db.answer(({ helper, table }) => {
+        const single = SINGLE_HELPERS.has(helper)
         if (table === 'agents') return single ? { data: { workspace_id: WORKSPACE_ID, space_id: SPACE_ID, engine_agent_id: 'engine-1' } } : { data: [{ id: AGENT_ID }] }
         if (table === 'spaces') return single ? { data: { id: SPACE_ID, workspace_id: WORKSPACE_ID, visibility } } : { data: [{ id: SPACE_ID, workspace_id: WORKSPACE_ID, visibility }] }
         if (table === 'space_members') return single ? { data: grant ? { access: grant } : null } : { data: grant ? [{ space_id: SPACE_ID, access: grant }] : [] }
@@ -43,8 +45,6 @@ function database({ visibility = 'workspace', grant = null }: Box = {}) {
         if (table === 'workspace_members') return { data: [{ user_id: FOUNDER_ID, role: 'admin' }] }
         return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
-    return db
 }
 
 function share(agentId: string) {

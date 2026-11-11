@@ -6,13 +6,12 @@ import { dispatchHubTool } from '@/app/api/_services/services.service'
 import { dispatchTeamHubTool, isTeamHubTool } from '@/app/api/_services/team-hub.service'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { stewardHubTokenRequired, verifyStewardHubToken } from '@/lib/steward/hub-token'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // Lumvika Hub REST endpoint. The engine's built-in `lumvika_hub_*` tools call this over
 // the public internet, authenticated with its LUMVIKA_API_KEY (same identity as the engine
 // webhooks), which names one workspace. The `x-lumvika-agent` header carries the ENGINE agent
-// id, resolved here to the Supabase agent of that workspace. Every coworker of the box holds that
+// id, resolved here to the agent row of that workspace. Every coworker of the box holds that
 // key, so `steward` must also carry the token the hub signed into the steward's brief.
 export const dynamic = 'force-dynamic'
 
@@ -49,8 +48,7 @@ export async function POST(req: Request): Promise<Response> {
             console.warn('[hub] steward call without token (tolerated)', { workspaceId: engine.workspaceId })
         }
     }
-    const supabase = createServiceRoleClient()
-    const { data: agent } = isSteward ? { data: null } : await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId })
+    const { data: agent } = isSteward ? { data: null } : await selectMaybeSingle(serviceScope(), 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId })
     if (!isSteward && !agent) return new Response('Coworker does not belong to the authenticated workspace', { status: 403 })
 
     let body: { tool?: string; args?: Record<string, unknown> }

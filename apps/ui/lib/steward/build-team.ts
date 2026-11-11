@@ -9,7 +9,7 @@ import { freeAgentSlots } from '@/app/api/_services/capacity.service'
 import type { SubRunTask } from '@/lib/chat/sub-run-progress'
 import type { GridPosition } from '@/lib/board/types'
 import { getAgent as engineGetAgent, patchAgent } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope, type DbScope } from '@/lib/db'
 import { installFromLibrary, installFromShare } from './onboarding-tools'
 import type { ArrivingIntent, StewardPlanItem, StewardState } from './phase'
 import { mergeSteward } from './profile'
@@ -171,8 +171,8 @@ export async function buildTeam({ ctx, state, emit, signal }: BuildTeamOptions):
         // Everything createAgent would read then write is decided here, once, so the agents can be
         // created all at once: the slots go to the first agents of the plan, and every handle and
         // every cell is handed out against the ones already given.
-        const supabase = createServiceRoleClient()
-        const [slots, handles, cells] = await Promise.all([freeAgentSlots(ctx.workspace.id), deriveUniqueHandles(supabase, ctx.workspace.id, agentEntries.map(entry => entry.item.name)), cellsBySpace(supabase, agentEntries)])
+        const scope = serviceScope()
+        const [slots, handles, cells] = await Promise.all([freeAgentSlots(ctx.workspace.id), deriveUniqueHandles(scope, ctx.workspace.id, agentEntries.map(entry => entry.item.name)), cellsBySpace(scope, agentEntries)])
 
         const agents: BuiltAgent[] = []
         const results = await Promise.all(
@@ -273,9 +273,9 @@ async function focusInstall(workspaceId: number, agentId: string, focus: string)
     }
 }
 
-async function cellsBySpace(supabase: ReturnType<typeof createServiceRoleClient>, entries: { spaceId: string }[]): Promise<Map<string, GridPosition[]>> {
+async function cellsBySpace(scope: DbScope, entries: { spaceId: string }[]): Promise<Map<string, GridPosition[]>> {
     const counts = new Map<string, number>()
     for (const { spaceId } of entries) counts.set(spaceId, (counts.get(spaceId) ?? 0) + 1)
-    const found = await Promise.all([...counts].map(async ([spaceId, count]) => [spaceId, await findFreeCellsInSpace(supabase, spaceId, count)] as const))
+    const found = await Promise.all([...counts].map(async ([spaceId, count]) => [spaceId, await findFreeCellsInSpace(scope, spaceId, count)] as const))
     return new Map(found)
 }

@@ -7,7 +7,6 @@ import { EngineWaitlistDialog } from '@/components/dialogs/EngineWaitlistDialog'
 import { BuilderView } from '@/components/builder/BuilderView'
 import { StewardDock } from '@/components/steward/StewardDock'
 import { useRewindEnabled } from '@/components/layout/FeatureFlagsProvider'
-import { PhoneVerificationDialog } from '@lumvika/cloud/phone.client'
 import { PostPaymentDialog, TemplatePurchaseSuccessDialog } from '@lumvika/cloud/billing.client'
 import { AgentShareDeepLinkDialog } from '@/components/dialogs/AgentShareDeepLinkDialog'
 import { TemplateDeepLinkDialog } from '@/components/dialogs/TemplateDeepLinkDialog'
@@ -29,16 +28,15 @@ import { useAccountStore } from '@/stores/account.store'
 import { useBillingStore } from '@/stores/billing.store'
 import { useBoardStore } from '@/stores/board.store'
 import { useCreatorStore } from '@/stores/creator.store'
-import { useSession } from '@/supabase/session/SessionProvider'
-import { useAgentsRealtime } from '@/supabase/useAgentsRealtime'
+import { useSession } from '@/lib/auth/session/SessionProvider'
+import { useAgentsRealtime } from '@/lib/live/useAgentsRealtime'
 import { hasPendingStart, useOnboardingStore } from '@/stores/onboarding.store'
 import { useAgentShareStore } from '@/stores/agent-share.store'
 import { useTemplateFlowStore } from '@/stores/template-flow.store'
 import { selectStewardVisible, useStewardStore } from '@/stores/steward.store'
 import { useResumePendingStart } from '@/lib/onboarding/useResumePendingStart'
 import { openConversationFromNotification } from '@/lib/notifications/open-conversation'
-import { createClient } from '@/supabase/client'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { findNotificationLinkAction } from '@/app/api/_actions/notification-reads.actions'
 import { AGENT_FOCUS_TABS, type AgentFocusTab, type SpacePublic } from '@/lib/board/types'
 import { useSearchParams } from 'next/navigation'
 import { WORKSPACE_PARAM } from '@/lib/workspace/workspace-header'
@@ -69,7 +67,7 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     const t = useTranslations('layout')
     const tOAuthRetry = useTranslations('auth.oauthRetry')
     const tLinkError = useTranslations('account.signIn.linkError')
-    const { user, workspace, loading, isAnonymous, phoneStep } = useSession()
+    const { user, workspace, loading, isAnonymous, signupSettled } = useSession()
     const stewardVisible = useStewardStore(selectStewardVisible)
     const stewardFunnel = useStewardStore(state => state.funnel)
     const stewardIntake = useStewardStore(state => state.intake)
@@ -92,15 +90,13 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     // l'orbe la rouvre sur ce bouton. Le reste (colonne refermée pendant la carte, phase qui n'est
     // pas un tunnel) le ramène au mur.
     const stewardHoldsTheWall = stewardFunnel === 'unknown' || (stewardFunnel === 'guided' && (stewardIntake ? stewardOpen !== false : pendingIntake !== null))
-    // Arrivé sur une template ou un partage : la colonne demande elle-même le compte puis le code du
-    // téléphone, avec ce qu'il a cliqué sous les yeux, et les deux murs lui cèdent la place. Le lien
-    // parké tient la supposition le temps que la phase revienne, sinon le mur du téléphone surgit
-    // entre la création du compte et la reprise du tunnel.
+    // Arrivé sur une template ou un partage : la colonne demande elle-même le compte, avec ce qu'il a
+    // cliqué sous les yeux, et le mur lui cède la place. Le lien parké tient la supposition le temps
+    // que la phase revienne.
     const readyMadeParked = useOnboardingStore(s => s.pendingTemplateLink !== null || s.pendingShareLink !== null)
     const arrivalHoldsTheWall = stewardArrival ? stewardFunnel === 'guided' && !stewardArrival.installed && stewardOpen !== false : stewardFunnel === 'unknown' && readyMadeParked && !workspace?.onboarded_at
     const accountWallOpen = isAnonymous && !accountClaimed && !stewardHoldsTheWall && !arrivalHoldsTheWall
     const retryCopy = signInRetry ? oauthRetryCopy(signInRetry.code, signInRetry.provider ? OAUTH_PROVIDER_CONFIG[signInRetry.provider].label : null, tOAuthRetry) : null
-    const phoneWallOpen = phoneStep === 'pending' && !arrivalHoldsTheWall
     const templateLinkSlug = useTemplateFlowStore(s => s.linkSlug)
     const shareLinkToken = useAgentShareStore(s => s.token)
     const purchase = useTemplateFlowStore(s => s.purchase)
@@ -314,10 +310,11 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
         if (!notificationId || notificationLinkOpened.current || !hydrated || isAnonymous) return
         notificationLinkOpened.current = true
         clearSearchParams('notification')
-        void selectMaybeSingle(createClient(), 'notifications', ['agent_id', 'engine_session_id', 'engine_run_id'] as const, { id: notificationId }).then(({ data }) => {
-            if (!data) return
-            void openConversationFromNotification({ agentId: data.agent_id, engineSessionId: data.engine_session_id, engineRunId: data.engine_run_id })
-        })
+        void findNotificationLinkAction(notificationId)
+            .catch(() => null)
+            .then(link => {
+                if (link) void openConversationFromNotification(link)
+            })
     }, [searchParams, hydrated, isAnonymous])
 
     // Le lien est consommé : le param ne doit plus rien porter, sinon un refresh (après un import
@@ -333,10 +330,10 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     // compte existant, ou Google). Si un brouillon attend et que le flag one-shot est présent, on
     // termine la création du premier agent sur le workspace désormais résolu.
     //
-    // Pas tant que le téléphone n'est pas réglé : le paywall s'ouvrirait par-dessus un mur qu'on ne
-    // peut pas fermer. Le flag attend, persisté, et la reprise repart dès le numéro vérifié.
+    // Pas tant que le tampon du signup n'a pas atteint l'onglet : le flag attend, persisté, et la
+    // reprise repart dès que le compte est réglé.
     useEffect(() => {
-        if (loading || !workspace || phoneStep !== 'clear') return
+        if (loading || !workspace || !signupSettled) return
         if (!hasPendingStart(useOnboardingStore.getState())) return
         // Un brouillon posé par le composer de la landing chez quelqu'un qui n'a jamais vu Lumvika
         // n'attend pas le paywall : c'est le Steward qui ouvre la conversation dessus, et qui le
@@ -346,7 +343,7 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
         if (!useOnboardingStore.getState().consumeResume()) return
         if (stewardTakesOver) return
         void resumePendingStart()
-    }, [loading, workspace, phoneStep, resumePendingStart])
+    }, [loading, workspace, signupSettled, resumePendingStart])
 
     // Kickoff parqué mais jamais envoyé (reload ou crash pendant le wizard "Finish setup", ou
     // envoi précédent en échec) : on le rejoue au boot et on ouvre le panel de l'agent sur la
@@ -387,7 +384,7 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
     // session restée anonyme passerait par `accountWallOpen` seul, qui retombe dès que le mur est
     // écarté ; et deux overlays qui s'ouvrent seuls au même chargement se recouvriraient.
     const rewindShown = useRewindStore(state => state.shown !== null)
-    const changelogReady = hydrated && !accountWallOpen && !phoneWallOpen && !isAnonymous && Boolean(workspace?.onboarded_at) && !templateLinkSlug && !shareLinkToken && !purchase && !rewindShown
+    const changelogReady = hydrated && !accountWallOpen && !isAnonymous && Boolean(workspace?.onboarded_at) && !templateLinkSlug && !shareLinkToken && !purchase && !rewindShown
     useChangelogLauncher(user?.id, changelogReady)
 
     useEnsureSandboxSpace()
@@ -425,9 +422,6 @@ export function HomeContent({ initialSpaces = [], initialWorkspaceId = null }: {
                 workspace déjà provisionné et tout ce qu'un deep link a parké lui restent attachés. */}
             <AuthDialog variant="welcome" open={accountWallOpen} onOpenChange={() => setAccountClaimed(true)} copy={retryCopy} />
             {!accountWallOpen && <AuthDialog variant="signin" open={signInRetry !== null && isAnonymous} onOpenChange={open => !open && setSignInRetry(null)} copy={retryCopy} />}
-            {/* Le mur du téléphone : il prend le relais dès que le compte existe, par quelque porte
-                qu'il soit né, et ne tombe qu'une fois le numéro vérifié. */}
-            <PhoneVerificationDialog open={phoneWallOpen} />
             {/* Le mur de capacité : même mécanique, pour un compte créé alors que le pool d'engines
                 est vide. Il tombe tout seul au chargement suivant où une machine est disponible. */}
             <EngineWaitlistDialog open={stewardWaitlisted && !isAnonymous} />

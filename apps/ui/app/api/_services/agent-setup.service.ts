@@ -2,8 +2,7 @@ import type { Actor } from '@/app/api/_auth/access'
 import { compileService } from '@/lib/services/compiler'
 import { type ServiceManifest, autoInstallableMethod, serviceManifestSchema } from '@/lib/services/manifest'
 import type { ServiceChecklistItem } from '@/lib/services/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectSingle } from '@/supabase/supabase-helpers'
+import { selectSingle, serviceScope } from '@/lib/db'
 import { createAgent } from './agent.service'
 import { type ServiceInstanceSeed, markServiceNeedsConfig, toAuthMethodSummaries } from './services.service'
 
@@ -11,10 +10,10 @@ import { type ServiceInstanceSeed, markServiceNeedsConfig, toAuthMethodSummaries
 // auto-supplied, so they're marked needs_config and returned in the checklist for the user
 // to finish; the rest are compiled immediately. Unknown/disabled slugs are skipped.
 export async function installServiceSlugs(agentId: string, slugs: string[], actor?: Actor): Promise<ServiceChecklistItem[]> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const checklist: ServiceChecklistItem[] = []
     for (const slug of slugs) {
-        const { data: svc } = await selectSingle(supabase, 'services', ['manifest', 'enabled'] as const, { slug })
+        const { data: svc } = await selectSingle(scope, 'services', ['manifest', 'enabled'] as const, { slug })
         if (!svc || !svc.enabled) continue
         const manifest = serviceManifestSchema.parse(svc.manifest)
         const declared = await declareService(agentId, manifest, actor)

@@ -1,9 +1,9 @@
 ---
 title: "Administration"
-description: "Admins, the data in Supabase Studio, invitations, background jobs and logs."
+description: "Admins, the data in Postgres, invitations, background jobs and logs."
 ---
 
-A self-hosted Lumvika has no back office. You administer it with one variable, Supabase Studio, and the Docker logs.
+A self-hosted Lumvika has no back office. You administer it with one variable, a SQL prompt on its Postgres, and the Docker logs.
 
 ## Admins
 
@@ -15,13 +15,23 @@ ADMIN_EMAILS=you@example.com,ops@example.com
 
 Admins see a few extra switches in the app. The list is also baked into the app for the browser, so rebuild after changing it: `docker compose up -d --build`.
 
-There is no `/admin` page in the open source build. Everything else goes through Supabase Studio.
+There is no `/admin` page in the open source build. Everything else goes through the database.
 
-## Supabase Studio
+## The database
 
-Studio is the table editor and SQL editor of your Supabase project: the project dashboard on supabase.com, [http://localhost:54423](http://localhost:54423) for the local stack, or the root of your Supabase domain for open source Supabase. There, it sits behind `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` from `supabase-stack/.env`, and anyone can reach its login: keep the generated password.
+Open a SQL prompt on the Postgres docker compose runs:
 
-People are in **Authentication > Users**. Deleting a user there removes their account and their memberships.
+```bash
+docker compose exec postgres psql -U lumvika lumvika
+```
+
+Any Postgres client works too (TablePlus, DBeaver, pgAdmin), through an SSH tunnel to the server: the port is not published outside Docker.
+
+People are in `auth.users`. Deleting a row there removes the account, its sessions and its memberships:
+
+```sql
+delete from auth.users where email = 'someone@example.com';
+```
 
 The tables that matter:
 
@@ -73,7 +83,7 @@ Members invite people from the workspace menu, as on Lumvika Cloud. See [Teams](
 
 This build sends no invitation email. Send the link yourself: it is `NEXT_PUBLIC_APP_URL/invite/<token>`, with the `token` of the invitation in `workspace_invitations`. The person opens it and signs in with their email code.
 
-Sign-in codes are the one email Lumvika relies on, and Supabase sends them. See [Set up Supabase](/self-host/install#2-set-up-supabase).
+Sign-in codes are the one email Lumvika relies on, sent through Resend or your SMTP server. See [Set up email](/self-host/install#2-set-up-email).
 
 ## Background jobs
 
@@ -91,6 +101,7 @@ The times follow the clock of the app container, UTC unless you set `TZ`. A rest
 
 ```bash
 docker compose logs -f app engine        # follow both
+docker compose logs migrate              # the migrations of the last start
 docker compose logs --since 1h app       # the last hour of the app
 docker logs -f lumvika-engine              # a paired server
 ```

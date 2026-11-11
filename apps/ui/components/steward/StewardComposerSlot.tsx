@@ -13,7 +13,7 @@ import { StewardIntakeCard } from '@/components/steward/intake/StewardIntakeCard
 import type { StewardIntakeController } from '@/components/steward/intake/useStewardIntake'
 import type { TrialStep } from '@/lib/steward/next-steps'
 import { cn } from '@/lib/utils'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 /**
  * Le pied de la colonne. Une question du Steward attend dans la conversation, comme l'`ask_user`

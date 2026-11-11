@@ -128,6 +128,8 @@ export const config = {
          *   caller is an engine with its key, never a browser with a session to refresh.)
          * - api/v1 (the mobile API: callers send a bearer token, never a cookie, so there is no
          *   session to refresh, and each route authenticates itself through apiRoute())
+         * - api/auth (Better Auth's own endpoints: they read and write the session themselves, and a
+         *   provider's callback must not find an anonymous session minted on the same response)
          * - email/ (artwork fetched by mail clients and image proxies, same reason again)
          * - r/ (the affiliate pixel and its API proxy: a tracking beacon has no session to
          *   refresh, and it fires on every page)
@@ -143,7 +145,7 @@ export const config = {
          *   fragment is the only key, there is no session to refresh nor one to provision)
          * Feel free to modify this pattern to include more paths.
          */
-        '/((?!_next/static|_next/image|favicon.ico|api/version|api/t/|api/files|api/llm/|api/v1/|api/host-metrics|api/public/|og/|render/|email/|r/|p/|published-auth|desktop-view|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|api/version|api/auth/|api/t/|api/files|api/llm/|api/v1/|api/host-metrics|api/public/|og/|render/|email/|r/|p/|published-auth|desktop-view|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
         // The labs put back in, for the gate alone: proxy() returns before it ever reaches
         // updateSession(). The UI kit (/render/kit) and the OG renders, /render/brand and
         // /render/templates, stay out: the screenshot service captures those on every card.

@@ -8,7 +8,7 @@ vi.mock('@/app/api/_services/kickoff.service', () => ({ startKickoff: (...args: 
 vi.mock('@/app/api/_services/board-agents.service', () => ({ listBoardAgents: vi.fn() }))
 vi.mock('@/app/api/_auth/ownership', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/ownership')>()),
-    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1', user_metadata: { full_name: 'Ada' } }, workspace: { id: 7 }, role: 'member', boxScope: 'all', supabase: {} }),
+    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1', email: null, name: 'Ada', image: null, isAnonymous: false }, workspace: { id: 7 }, role: 'member', boxScope: 'all', scope: {} }),
     assertSpaceOwnedBy: (...args: unknown[]) => assertSpaceOwnedBy(...args),
 }))
 

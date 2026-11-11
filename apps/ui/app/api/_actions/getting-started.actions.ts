@@ -5,10 +5,10 @@ import { markGettingStarted, restoreGettingStarted } from '@/app/api/_services/g
 
 export async function dismissGettingStartedAction(): Promise<void> {
     const ctx = await requireWorkspaceContext()
-    await markGettingStarted(ctx.supabase, ctx.workspace.id, ['dismissed'])
+    await markGettingStarted(ctx.scope, ctx.workspace.id, ['dismissed'])
 }
 
 export async function restoreGettingStartedAction(): Promise<void> {
     const ctx = await requireWorkspaceContext()
-    await restoreGettingStarted(ctx.supabase, ctx.workspace.id)
+    await restoreGettingStarted(ctx.scope, ctx.workspace.id)
 }

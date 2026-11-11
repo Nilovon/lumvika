@@ -1,8 +1,7 @@
 'use server'
 
-import type { Database } from '@/app/api/database.types'
 import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, updateRows } from '@/lib/db'
 
 // Le menu rouvre les dernières annonces, pas l'historique : le reste se lit sur la page publique.
 const MAX_ENTRIES = 10
@@ -27,16 +26,16 @@ const EMPTY: ChangelogFeed = { entries: [], seenAt: null }
 // Newest first: the popup only shows what is unread, the menu reopens the latest ones, and one read
 // serves both.
 export async function listChangelogAction(): Promise<ChangelogFeed> {
-    const { supabase, userId, workspace } = await requireWorkspaceContext()
+    const { scope, userId, workspace } = await requireWorkspaceContext()
 
-    // La vraie porte est ici. `requireWorkspaceContext` rend un client service role, donc la RLS ne
+    // La vraie porte est ici. `requireWorkspaceContext` rend un scope service, donc la RLS ne
     // filtre rien : un compte pas encore inscrit ou pas encore sorti de l'onboarding n'a rien à
     // lire, et une entrée non publiée ne doit pas fuiter.
-    const { data: me } = await selectMaybeSingle(supabase, 'users', ['signed_up_at', 'changelog_seen_at'] as const, { id: userId })
+    const { data: me } = await selectMaybeSingle(scope, 'users', ['signed_up_at', 'changelog_seen_at'] as const, { id: userId })
     if (!me?.signed_up_at || !workspace.onboarded_at) return EMPTY
 
     const { data } = await selectMany(
-        supabase,
+        scope,
         'changelog_entries',
         ['id', 'slug', 'title', 'body_md', 'image_url', 'image_dark_url', 'dialog_image_url', 'dialog_image_dark_url', 'image_alt', 'published_at'] as const,
         { published_at: { lte: new Date().toISOString() } },
@@ -73,10 +72,10 @@ export async function listChangelogAction(): Promise<ChangelogFeed> {
 // Le curseur ne recule jamais : deux onglets, ou une action qui revient en retard, ne doivent pas
 // rouvrir ce qui a déjà été lu.
 export async function markChangelogSeenAction(seenAt: string): Promise<void> {
-    const { supabase, userId } = await requireWorkspaceContext()
-    const { data: me } = await selectMaybeSingle(supabase, 'users', ['changelog_seen_at'] as const, { id: userId })
+    const { scope, userId } = await requireWorkspaceContext()
+    const { data: me } = await selectMaybeSingle(scope, 'users', ['changelog_seen_at'] as const, { id: userId })
     if (!me) return
     if (Date.parse(seenAt) <= Date.parse(me.changelog_seen_at)) return
 
-    await supabase.from('users').update<Database['public']['Tables']['users']['Update']>({ changelog_seen_at: seenAt }).eq('id', userId)
+    await updateRows(scope, 'users', { changelog_seen_at: seenAt }, { id: userId })
 }

@@ -3,7 +3,7 @@
 import { ARCHIVE_RETENTION_DAYS } from '@/lib/archive/retention'
 import { isMachineEntitled } from '@lumvika/cloud/billing'
 import { useSandboxArchiveStore } from '@/stores/sandbox-archive.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 
 // `paused`: the plan ended and the machine was archived away; the board still draws every agent,

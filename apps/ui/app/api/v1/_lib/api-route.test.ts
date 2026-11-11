@@ -3,10 +3,8 @@ import { z } from 'zod'
 
 const mocks = vi.hoisted(() => ({ requireWorkspaceContext: vi.fn(), requireAdminContext: vi.fn() }))
 
-vi.mock('@/supabase/server', () => ({
-    createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }),
-    getRequestAccessToken: async () => null,
-}))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getAuthUser: async () => null }))
+vi.mock('@/lib/auth/session/request', () => ({ getRequestScope: async () => ({ kind: 'anon', userId: null }) }))
 
 vi.mock('@/app/api/_auth/ownership', async () => {
     class AuthorizationError extends Error {}

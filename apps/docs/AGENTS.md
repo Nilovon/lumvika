@@ -37,4 +37,4 @@
 
 - Document the product as a user sees it: Boxes, agents, apps, triggers, templates, billing
 - Never document the `/admin` back office, internal scripts, or infrastructure topology
-- Never include API keys, tokens, engine IPs, or Supabase project references
+- Never include API keys, tokens, engine IPs, or database connection strings

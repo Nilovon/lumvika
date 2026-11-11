@@ -9,7 +9,7 @@ import { CreditCard, LayoutGridIcon, type LucideIcon } from '@/lib/icons'
 import { TRIAL_DAYS, formatAmount, trialLimitsCaption } from '@lumvika/contracts'
 import { useBoardStore } from '@/stores/board.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // Adding a shared agent is two doors rather than the template's three: have a plan, place the
 // agent. There is nothing to buy, so nothing sits between them. Same ladder, same parking on the

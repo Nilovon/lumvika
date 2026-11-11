@@ -3,23 +3,12 @@
         "title": "Willkommen bei Lumvika",
         "continueWithApple": "Weiter mit Apple",
         "continueWithGoogle": "Weiter mit Google",
-        "continueWithPhone": "Weiter mit Telefon",
         "continueWithEmail": "Weiter mit E-Mail",
-        "or": "Oder",
         "welcome": "Willkommen bei Lumvika",
         "ownServer": "Eigenen Server nutzen",
         "useCloud": "Lumvika Cloud nutzen"
     },
     "back": "Zurück",
-    "phone": {
-        "title": "Deine Telefonnummer",
-        "unsupportedCountry": "In dieses Land können wir noch keine Codes senden.",
-        "consent": "Wenn du fortfährst, stimmst du zu, dass Lumvika dich per WhatsApp oder SMS kontaktiert.",
-        "sendByWhatsapp": "Per WhatsApp senden",
-        "sendBySms": "Per SMS senden",
-        "countryLabel": "Land, {name}",
-        "numberLabel": "Telefonnummer"
-    },
     "email": {
         "title": "Weiter mit E-Mail",
         "label": "E-Mail",
@@ -28,19 +17,12 @@
     },
     "code": {
         "title": "Code eingeben",
-        "sentByPhone": "Per {channel} an {number} gesendet",
         "sentByEmail": "An {email} gesendet",
         "fieldLabel": "Bestätigungscode",
         "continue": "Weiter",
         "resendIn": "Code erneut senden in {seconds} s",
         "resend": "Code erneut senden",
-        "switchChannel": "Stattdessen per {channel} senden",
-        "differentNumber": "Andere Nummer verwenden",
         "differentEmail": "Andere E-Mail verwenden"
-    },
-    "country": {
-        "search": "Suchen",
-        "searchLabel": "Länder suchen"
     },
     "errors": {
         "generic": "Etwas ist schiefgelaufen. Versuch es erneut.",
@@ -48,24 +30,6 @@
         "session": "Deine Sitzung konnte nicht geöffnet werden. Versuch es erneut.",
         "apple": "Die Anmeldung mit Apple hat nicht geklappt. Versuch es erneut.",
         "google": "Die Anmeldung mit Google hat nicht geklappt. Versuch es erneut.",
-        "phone": {
-            "taken": "Mit dieser Nummer meldet man sich bereits bei einem anderen Lumvika-Konto an.",
-            "same_number": "Das ist bereits die Nummer deines Kontos.",
-            "not_required": "Deine Telefonnummer ist bereits bestätigt.",
-            "too_soon": "Ein Code ist schon unterwegs. Warte kurz, bevor du einen neuen anforderst.",
-            "too_many": "Zu viele Codes für diese Nummer angefordert. Versuch es später erneut.",
-            "invalid_number": "Gib eine gültige Mobilnummer ein.",
-            "unsupported_country": "In dieses Land können wir noch keine Codes senden. Nutze stattdessen E-Mail oder Google.",
-            "undeliverable": "Wir konnten keinen Code an diese Nummer zustellen. Versuch den anderen Kanal oder nutze E-Mail oder Google.",
-            "blocked": "An diese Nummer können wir keinen Code senden. Nutze stattdessen E-Mail oder Google.",
-            "rate_limited": "Zu viele Versuche mit dieser Nummer. Versuch es später erneut.",
-            "wrong_code": "Dieser Code ist falsch oder abgelaufen.",
-            "expired": "Dieser Code ist abgelaufen. Fordere einen neuen an.",
-            "unavailable": "Dein Telefon ist nicht erreichbar. Versuch es erneut oder nutze den anderen Kanal.",
-            "busy": "Die Anmeldung per Telefon ist gerade ausgelastet. Nutze stattdessen E-Mail oder Google.",
-            "captcha_failed": "Wir konnten nicht bestätigen, dass du kein Roboter bist. Versuch es erneut.",
-            "signed_out": "Erstelle zuerst dein Konto."
-        },
         "email": {
             "invalid_email": "Gib eine gültige E-Mail ein",
             "captcha_failed": "Wir konnten nicht bestätigen, dass du kein Roboter bist. Versuch es erneut.",
@@ -93,8 +57,7 @@
             "invalid": "Gib die Adresse deines Lumvika-Servers ein.",
             "insecure": "Nutze https:// außerhalb deines lokalen Netzwerks.",
             "unreachable": "Dieser Server ist nicht erreichbar.",
-            "not-lumvika": "Diese Adresse ist kein Lumvika-Server.",
-            "outdated": "Aktualisiere diesen Lumvika-Server, um ihn mit der App zu nutzen."
+            "not-lumvika": "Diese Adresse ist kein Lumvika-Server."
         }
     }
 }

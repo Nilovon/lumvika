@@ -21,7 +21,7 @@ async function read(req: Request) {
     if (!path || invalidDir(path)) return Response.json({ error: 'Invalid path' }, { status: 400 })
 
     try {
-        const blob = await downloadPrivateFile(ctx.supabase, STEWARD_FILES_BUCKET, stewardFileKey(ctx, sessionId, path))
+        const blob = await downloadPrivateFile(ctx.scope, STEWARD_FILES_BUCKET, stewardFileKey(ctx, sessionId, path))
         const range = parseByteRange(req.headers.get('range'), blob.size)
         if (range === 'unsatisfiable') return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${blob.size}`, 'Accept-Ranges': 'bytes' } })
 

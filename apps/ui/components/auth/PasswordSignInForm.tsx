@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { normalizeEmail } from '@/lib/email'
-import { createClient } from '@/supabase/client'
+import { authClient } from '@/lib/auth/auth-client'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
@@ -28,7 +28,7 @@ export function PasswordSignInForm({ onSignedIn }: { onSignedIn: () => void }) {
     })
 
     const submit = form.handleSubmit(async ({ email, password }) => {
-        const { error } = await createClient().auth.signInWithPassword({ email: normalizeEmail(email), password })
+        const { error } = await authClient.signIn.email({ email: normalizeEmail(email), password })
         if (error) {
             form.setError('password', { message: error.status === 429 ? t('errors.tooManyAttempts') : t('errors.wrongCredentials') })
             return

@@ -1,11 +1,14 @@
-import { clientServerSchema, type ClientServer } from '@lumvika/contracts'
 import { reloadAppAsync } from 'expo'
 import * as SecureStore from 'expo-secure-store'
 
 const CUSTOM_SERVER_KEY = 'lumvika.server'
 
-const customServerSchema = clientServerSchema.extend({ apiUrl: clientServerSchema.shape.supabaseUrl })
-export type CustomServer = ClientServer & { apiUrl: string }
+export type CustomServer = { apiUrl: string }
+
+function asCustomServer(value: unknown): CustomServer | null {
+    if (typeof value !== 'object' || value === null || !('apiUrl' in value) || typeof value.apiUrl !== 'string') return null
+    return URL.canParse(value.apiUrl) ? { apiUrl: value.apiUrl } : null
+}
 
 // Read synchronously, before the first module that talks to a server is evaluated: the whole app is
 // bound to one server for as long as it runs, and changing it relaunches the app.
@@ -13,15 +16,14 @@ export function readCustomServer(): CustomServer | null {
     const raw = SecureStore.getItem(CUSTOM_SERVER_KEY)
     if (!raw) return null
     try {
-        const parsed = customServerSchema.safeParse(JSON.parse(raw))
-        return parsed.success ? parsed.data : null
+        return asCustomServer(JSON.parse(raw))
     } catch {
         return null
     }
 }
 
 // Null goes back to the server the build was made for. The person is signed out before: a session
-// belongs to one server's Supabase.
+// belongs to the one server that opened it.
 export async function switchServer(server: CustomServer | null): Promise<void> {
     if (server) await SecureStore.setItemAsync(CUSTOM_SERVER_KEY, JSON.stringify(server))
     else await SecureStore.deleteItemAsync(CUSTOM_SERVER_KEY)

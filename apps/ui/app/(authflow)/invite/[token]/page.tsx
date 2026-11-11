@@ -3,7 +3,7 @@ import { acceptInvitationAction, joinedWorkspaceForInvitationAction, loadInvitat
 import { Card } from '@/components/ui/card'
 import { routes } from '@/lib/routes'
 import { WORKSPACE_PARAM } from '@/lib/workspace/workspace-header'
-import { getServerSession } from '@/supabase/session/getServerSession'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
 import { redirect } from 'next/navigation'
 import { InviteMismatch } from './InviteMismatch'
 import { InviteRedirect } from './InviteRedirect'

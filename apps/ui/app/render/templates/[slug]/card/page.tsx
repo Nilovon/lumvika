@@ -5,8 +5,7 @@ import { OgReadyMarker } from '@/components/og/OgReadyMarker'
 import { TemplateCardStage } from '@/components/templates/TemplateCardStage'
 import { CARD_BACKGROUND, CARD_HEIGHT, CARD_MAX_ZOOM, CARD_THEME, CARD_THEMES, CARD_WIDTH, type CardTheme } from '@/lib/og/size'
 import { agentsFromRow, connectorsFromRow } from '@/lib/templates/document'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // Rendering surface for the screenshot service, sibling of the OG render one page up: nothing but
 // the board at its exact pixel size. Drafts render too, so a card can be judged before publishing.
@@ -40,8 +39,7 @@ function readTheme(raw: string | string[] | undefined): CardTheme {
 export default async function TemplateCardRenderPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Search> }) {
     const [{ slug }, search] = await Promise.all([params, searchParams])
 
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'templates', RENDER_COLUMNS, { slug })
+    const { data } = await selectMaybeSingle(serviceScope(), 'templates', RENDER_COLUMNS, { slug })
     if (!data) notFound()
 
     const agents = agentsFromRow.parse(data.agents)

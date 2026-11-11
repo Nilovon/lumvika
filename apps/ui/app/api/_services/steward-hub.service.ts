@@ -9,7 +9,7 @@ import { dispatchWorkspaceOnboardingTool } from '@/lib/steward/onboarding-tools'
 import { searchStewardDocs } from '@/lib/steward/search-docs'
 import { STEWARD_BOX_TOOL_DEFS } from '@/lib/steward/tool-defs'
 import { requireString } from '@/lib/mcp/args'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 
 const BOX_TOOL_NAMES = new Set<string>(STEWARD_BOX_TOOL_DEFS.map(def => def.name))
 
@@ -26,7 +26,7 @@ export async function dispatchStewardHubTool(actor: Actor, tool: string, args: R
     // speaks for the workspace, as the account owner.
     const userId = actor.kind === 'user' ? actor.userId : await founderOf(workspaceId)
     if (BOX_TOOL_NAMES.has(tool)) return dispatchBoxTool({ workspaceId, userId, actor }, tool, args)
-    if (STEWARD_ENGINE_ONBOARDING_TOOL_NAMES.has(tool)) return dispatchWorkspaceOnboardingTool({ supabase: createServiceRoleClient(), userId, workspace: { id: workspaceId }, actor }, tool, args)
+    if (STEWARD_ENGINE_ONBOARDING_TOOL_NAMES.has(tool)) return dispatchWorkspaceOnboardingTool({ scope: serviceScope(), userId, workspace: { id: workspaceId }, actor }, tool, args)
 
     return dispatchAccountTool(actor, tool, args, { actorUserId: actor.kind === 'user' ? actor.userId : null })
 }

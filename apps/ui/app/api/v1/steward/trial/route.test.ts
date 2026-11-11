@@ -4,8 +4,8 @@ const workspace = { id: 7, subscription_status: null as string | null }
 
 vi.mock('@/app/api/_auth/ownership', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/ownership')>()),
-    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace, role: 'admin', supabase: {} }),
-    requireAdminContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace, role: 'admin', supabase: {} }),
+    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace, role: 'admin', scope: {} }),
+    requireAdminContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace, role: 'admin', scope: {} }),
 }))
 
 const { POST } = await import('./route')

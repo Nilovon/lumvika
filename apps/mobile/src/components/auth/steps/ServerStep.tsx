@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { TextInput } from 'react-native'
 import { useTranslations } from 'use-intl'
 
-import { FIELD_HEIGHT, FIELD_RADIUS } from '@/components/auth/PhoneField'
+import { FIELD_HEIGHT, FIELD_RADIUS } from '@/components/auth/field'
 import { StepTitle } from '@/components/auth/steps/StepTitle'
 import { useServerConnect } from '@/components/auth/useServerConnect'
 import { AppText } from '@/components/ui/AppText'

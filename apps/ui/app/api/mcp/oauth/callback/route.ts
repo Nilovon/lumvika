@@ -24,7 +24,7 @@ function htmlResult(result: CallbackResult, serverName?: string): NextResponse {
 }
 
 // OAuth redirect target on our own domain. Exchanges the code for tokens, writes the bundle
-// to the engine token store (never Supabase), then messages the opener popup and closes. For the
+// to the engine token store (never the database), then messages the opener popup and closes. For the
 // app, which has no session here, the bundle is parked instead, for the app to claim with its bearer.
 // A pre-registered client's secret is never parked: the claim reads it from the environment again.
 export async function GET(req: Request) {

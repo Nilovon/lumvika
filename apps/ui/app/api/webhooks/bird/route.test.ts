@@ -1,16 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Webhook } from 'standardwebhooks'
-import { phoneOwnerId } from '@/app/api/_services/phone-ownership.service'
 import { markWhatsAppReplied, markWhatsAppUnreachable, setWhatsAppOptOut } from '@/lib/whatsapp/recipient'
 import { applyWhatsAppFailure, applyWhatsAppProgress, loadWhatsAppMessageOwner } from '@/lib/whatsapp/store'
-import { captureServer, deterministicUuid } from '@lumvika/analytics/server'
 import { POST } from './route'
 
-const getUserById = vi.fn()
 vi.mock('server-only', () => ({}))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: () => ({ auth: { admin: { getUserById: (id: string) => getUserById(id) } } }) }))
-vi.mock('@/app/api/_services/phone-ownership.service', () => ({ phoneOwnerId: vi.fn() }))
-vi.mock('@lumvika/analytics/server', async importOriginal => ({ ...(await importOriginal<object>()), captureServer: vi.fn() }))
 vi.mock('@/lib/whatsapp/recipient', () => ({ markWhatsAppReplied: vi.fn(), markWhatsAppUnreachable: vi.fn(), setWhatsAppOptOut: vi.fn() }))
 vi.mock('@/lib/whatsapp/store', () => ({ applyWhatsAppFailure: vi.fn(), applyWhatsAppProgress: vi.fn(), loadWhatsAppMessageOwner: vi.fn() }))
 
@@ -44,8 +38,6 @@ beforeEach(() => {
     vi.mocked(markWhatsAppUnreachable).mockResolvedValue(true)
     vi.mocked(markWhatsAppReplied).mockResolvedValue(true)
     vi.mocked(loadWhatsAppMessageOwner).mockResolvedValue({ user_id: 'user-1', phone: PHONE })
-    vi.mocked(phoneOwnerId).mockResolvedValue({ userId: null })
-    getUserById.mockResolvedValue({ data: { user: { id: 'user-1', email: 'ada@lumvika.com' } } })
 })
 
 afterEach(() => {
@@ -143,62 +135,5 @@ describe('POST /api/webhooks/bird', () => {
 
         expect(setWhatsAppOptOut).not.toHaveBeenCalled()
         expect(applyWhatsAppProgress).not.toHaveBeenCalled()
-    })
-
-    describe('verify events', () => {
-        const verifyEvent = (type: string, data: object = {}) => ({
-            type,
-            timestamp: AT,
-            data: { verification_id: 'vrf_1', to: { phone_number: PHONE }, channel: 'whatsapp', metadata: { context: 'wall', user_id: 'user-1' }, ...data },
-        })
-
-        it.each([
-            ['verify.attempt.sent', 'sent'],
-            ['verify.attempt.delivered', 'delivered'],
-            ['verify.verification.verified', 'verified'],
-        ])('reports %s on the account the code was sent for, once per delivery', async (type, status) => {
-            expect((await POST(signed(verifyEvent(type)))).status).toBe(200)
-
-            expect(getUserById).toHaveBeenCalledWith('user-1')
-            expect(captureServer).toHaveBeenCalledWith(
-                'ada@lumvika.com',
-                'phone_verification_delivery',
-                { status, channel: 'whatsapp', reason: undefined, country: 'BE', context: 'wall' },
-                { uuid: deterministicUuid('bird:msg_1') }
-            )
-        })
-
-        it('carries why an attempt did not arrive, and what the last one said when nothing got out', async () => {
-            await POST(signed(verifyEvent('verify.attempt.undelivered', { reason: 'carrier_rejected' })))
-            expect(vi.mocked(captureServer).mock.calls[0][2]).toMatchObject({ status: 'undelivered', reason: 'carrier_rejected' })
-
-            await POST(signed(verifyEvent('verify.verification.failed', { reason: 'undeliverable', last_attempt_reason: 'channel_restricted' })))
-            expect(vi.mocked(captureServer).mock.calls[1][2]).toMatchObject({ status: 'failed', reason: 'channel_restricted' })
-        })
-
-        it('reports a code asked to sign in on the account the number opens, or the one it will', async () => {
-            const signIn = { metadata: { context: 'sign_in' } }
-
-            vi.mocked(phoneOwnerId).mockResolvedValue({ userId: 'user-1' })
-            await POST(signed(verifyEvent('verify.attempt.delivered', signIn)))
-            expect(vi.mocked(captureServer).mock.calls[0][0]).toBe('ada@lumvika.com')
-
-            vi.mocked(phoneOwnerId).mockResolvedValue({ userId: null })
-            await POST(signed(verifyEvent('verify.attempt.delivered', signIn)))
-            expect(vi.mocked(captureServer).mock.calls[1][0]).toBe('32492000000@phone.lumvika.com')
-        })
-
-        it('answers 200 even when the event could not be recorded, so Bird does not retry analytics', async () => {
-            vi.spyOn(console, 'error').mockImplementation(() => {})
-            vi.mocked(captureServer).mockRejectedValue(new Error('posthog down'))
-
-            expect((await POST(signed(verifyEvent('verify.attempt.sent')))).status).toBe(200)
-        })
-
-        it('leaves the WhatsApp tables alone', async () => {
-            await POST(signed(verifyEvent('verify.attempt.delivered')))
-
-            expect(applyWhatsAppProgress).not.toHaveBeenCalled()
-        })
     })
 })

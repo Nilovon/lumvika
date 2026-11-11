@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
-import { fakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
-import { boardStatusOfKind, loadTeam, teamBoardScene } from './team-board'
+import { describe, expect, it, vi } from 'vitest'
+import { fakeScope } from '@/test/db-fake'
+
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
+
+const { boardStatusOfKind, loadTeam, teamBoardScene } = await import('./team-board')
 
 const agent = (id: string, name = id) => ({ id, name })
 
@@ -46,11 +50,11 @@ describe('boardStatusOfKind', () => {
 
 describe('loadTeam', () => {
     it('reads a coworker past the eighth when the message is about it', async () => {
-        const db = fakeSupabase((_table, calls: readonly SupabaseCall[]) => {
-            const byId = calls.some(call => call.method === 'in')
+        db.answer(call => {
+            const byId = Array.isArray((call.args[1] as { id?: unknown }).id)
             return { data: byId ? [agent('late', 'Late Hire')] : [agent('a', ' Scout '), agent('b', '  ')] }
         })
 
-        await expect(loadTeam(db.client, 7, ['a', 'late'])).resolves.toEqual([agent('a', 'Scout'), agent('late', 'Late Hire')])
+        await expect(loadTeam(fakeScope('service'), 7, ['a', 'late'])).resolves.toEqual([agent('a', 'Scout'), agent('late', 'Late Hire')])
     })
 })

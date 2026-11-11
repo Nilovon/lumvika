@@ -174,15 +174,24 @@ docker compose exec engine node dist/cli/bin.js doctor                # the engi
 
 ## Backups
 
-Two things hold your data, and you back up both.
+Three things hold your data, and you back up all of them.
 
-**The Supabase database**: accounts, workspaces, members, the catalog. On supabase.com, the project's own backups cover it. With open source Supabase, run `docker exec supabase-db pg_dump -U postgres postgres | gzip > lumvika-db.sql.gz`. Otherwise, dump it with `pg_dump` and the connection string from **Connect** in the Supabase dashboard. For the local stack:
+**The database**: accounts, workspaces, members, the catalog. From the folder of your clone:
 
 ```bash
-pg_dump postgresql://postgres:postgres@localhost:54422/postgres -Fc -f lumvika-db.dump
+docker compose exec -T postgres pg_dump -U lumvika -Fc lumvika > lumvika-db.dump
 ```
 
-Files people upload to the app live in Supabase Storage, which a database dump does not include.
+With your own `DATABASE_URL`, run `pg_dump` against it, or rely on your provider's backups.
+
+**The file store**: files people upload to the app, which a database dump does not include.
+
+```bash
+docker run --rm -v lumvika_storage-data:/data -v $PWD:/backup alpine \
+  tar czf /backup/storage-data.tgz -C /data .
+```
+
+With your own S3 store, rely on its versioning or replication.
 
 **The engine data-dir**: everything the coworkers know and do. It holds their credentials too, so store the archive like a password.
 

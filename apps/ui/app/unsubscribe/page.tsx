@@ -4,8 +4,7 @@ import { EmailPreferencesForm } from '@/components/settings/EmailPreferencesForm
 import { SignInPillButton } from '@/components/layout/SignInPill'
 import { verifyUnsubscribeToken } from '@/lib/email/unsubscribeToken'
 import { normalizeEmailPrefs } from '@/lib/notifications/prefs'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectSingle } from '@/supabase/supabase-helpers'
+import { selectSingle, serviceScope } from '@/lib/db'
 import { getTranslations } from 'next-intl/server'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,8 +17,7 @@ export const dynamic = 'force-dynamic'
 async function loadPrefs(token: string) {
     const target = verifyUnsubscribeToken(token)
     if (!target) return null
-    const supabase = createServiceRoleClient()
-    const { data } = await selectSingle(supabase, 'users', ['email_notification_prefs'] as const, { id: target.userId })
+    const { data } = await selectSingle(serviceScope(), 'users', ['email_notification_prefs'] as const, { id: target.userId })
     return { prefs: normalizeEmailPrefs(data?.email_notification_prefs), scope: target.scope }
 }
 

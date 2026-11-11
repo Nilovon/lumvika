@@ -1,8 +1,9 @@
-import type { Database } from '@/app/api/database.types'
+import type { Enums } from '@/app/api/database.types'
 
 import { isScheduledSource } from './prefs'
 
-export type UnseenRun = Database['public']['Functions']['unseen_runs']['Returns'][number]
+// A row of the `unseen_runs` SQL function.
+export type UnseenRun = { session_id: string; agent_id: string; title: string; source: Enums<'session_source'>; slug: string | null; message: string; last_at: string; run_count: number }
 
 // One line of the inbox and of the board card. Every run of the same scheduled task is folded into
 // one line: an hourly task left alone for a day is « ×24 », not twenty-four lines.

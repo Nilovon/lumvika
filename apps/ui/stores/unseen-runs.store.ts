@@ -1,10 +1,7 @@
 import { create } from 'zustand'
 
-import type { Database } from '@/app/api/database.types'
+import { listUnseenRunsAction, markRunsSeenAction } from '@/app/api/_actions/notification-reads.actions'
 import { withoutSeenLocally, type UnseenRun } from '@/lib/notifications/unseen-runs'
-import { createClient } from '@/supabase/client'
-
-type SessionReadInsert = Database['public']['Tables']['session_reads']['Insert']
 
 type UnseenRunsState = {
     workspaceId: number | null
@@ -44,8 +41,8 @@ export const useUnseenRunsStore = create<UnseenRunsState>()((set, get) => ({
                 refreshAgain = false
                 const { workspaceId } = get()
                 if (workspaceId === null) return
-                const { data, error } = await createClient().rpc('unseen_runs', { p_workspace_id: workspaceId })
-                if (error || !data || get().workspaceId !== workspaceId) continue
+                const data = await listUnseenRunsAction(workspaceId).catch(() => null)
+                if (!data || get().workspaceId !== workspaceId) continue
                 const runs = withoutSeenLocally(data, get().seenLocally)
                 set({ runs })
                 const onScreen = runs.filter(run => get().viewing[run.session_id] && isTabVisible()).map(run => run.session_id)
@@ -66,15 +63,9 @@ export const useUnseenRunsStore = create<UnseenRunsState>()((set, get) => ({
             runs: state.runs.filter(run => !ids.includes(run.session_id)),
             seenLocally: { ...state.seenLocally, ...Object.fromEntries(ids.map(id => [id, Number.POSITIVE_INFINITY])) },
         }))
-        const { data, error } = await createClient()
-            .from('session_reads')
-            .upsert<SessionReadInsert>(
-                ids.map(id => ({ session_id: id, user_id: userId })),
-                { onConflict: 'session_id,user_id' }
-            )
-            .select('session_id, seen_at')
-        if (error || !data) {
-            console.error('[unseen-runs] failed to record the read', error)
+        const data = await markRunsSeenAction(ids).catch(() => null)
+        if (!data) {
+            console.error('[unseen-runs] failed to record the read')
             set(state => ({ seenLocally: Object.fromEntries(Object.entries(state.seenLocally).filter(([id]) => !ids.includes(id))) }))
             return
         }

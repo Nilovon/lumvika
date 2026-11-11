@@ -1,37 +1,27 @@
 import { isAppleRelayEmail, realEmail } from '@/lib/auth/placeholder-email'
-import type { User } from '@supabase/supabase-js'
 
 export type UserProfile = { name: string | null; avatarUrl: string | null }
 
 export const PROFILE_NAME_MAX = 80
 
-type Metadata = Record<string, unknown> | undefined
+// The name the anonymous plugin gives every visitor; it stays on the row once they claim an address.
+const ANONYMOUS_NAME = 'Anonymous'
 
-function readString(metadata: Metadata, keys: string[]): string | null {
-    for (const key of keys) {
-        const value = metadata?.[key]
-        if (typeof value === 'string' && value.trim()) return value.trim()
-    }
-    return null
-}
+// The auth user as `auth.users` holds it. The name and the photo are the ones the person chose in
+// their account, or the provider's until they do: a sign-in never writes over them again.
+export type ProfileSource = { name: string | null; image: string | null }
 
-// What the person chose in their account lives in `app_metadata`, which only the service role
-// writes: Google rewrites `user_metadata` at every sign-in, and the browser can write it too, so a
-// photo kept there would neither last nor be safe to hand to an <img>. An `avatar_url` that is
-// present but empty is a photo that was removed, and it does not fall back to the one Google holds.
-// Empty rather than null: Supabase reads a null metadata value as "drop the key".
-export function readProfile(authUser: Pick<User, 'app_metadata' | 'user_metadata'>): UserProfile {
-    const chosen: Metadata = authUser.app_metadata
-    const avatarWasChosen = !!chosen && 'avatar_url' in chosen
+export function readProfile(authUser: ProfileSource): UserProfile {
+    const name = authUser.name?.trim()
     return {
-        name: readString(chosen, ['full_name']) ?? readString(authUser.user_metadata, ['full_name', 'name', 'first_name', 'given_name']),
-        avatarUrl: avatarWasChosen ? readString(chosen, ['avatar_url']) : readString(authUser.user_metadata, ['avatar_url', 'picture']),
+        name: name && name !== ANONYMOUS_NAME ? name : null,
+        avatarUrl: authUser.image?.trim() || null,
     }
 }
 
 // Someone who signed in by email code has no name anywhere: the part before the @ is the only
 // thing that tells them apart from a teammate. An Apple relay address has nothing to show there.
-export function displayNameOf(authUser: Pick<User, 'app_metadata' | 'user_metadata' | 'email'>): string | null {
+export function displayNameOf(authUser: ProfileSource & { email: string | null }): string | null {
     const name = readProfile(authUser).name
     if (name) return name
     const email = realEmail(authUser.email)

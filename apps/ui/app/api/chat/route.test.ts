@@ -5,7 +5,7 @@ import * as engine from '@/lib/engine/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { POST } from './route'
 
-vi.mock('@/app/api/_auth/ownership', () => ({ requireWorkspaceContext: vi.fn().mockResolvedValue({ userId: 'me', authUser: { app_metadata: {}, user_metadata: {} } }) }))
+vi.mock('@/app/api/_auth/ownership', () => ({ requireWorkspaceContext: vi.fn().mockResolvedValue({ userId: 'me', authUser: { id: 'me', email: 'me@lumvika.test', name: '', image: null, isAnonymous: false } }) }))
 vi.mock('@/app/api/_auth/access', () => ({ actorFromContext: vi.fn(() => ({ kind: 'user', userId: 'me', workspaceId: 7, role: 'member', boxScope: 'assigned' })), callableEngineAgentIds: vi.fn() }))
 vi.mock('@/app/api/_services/notification-audience.service', () => ({ recordSessionParticipant: vi.fn(), recordSessionRead: vi.fn() }))
 vi.mock('@/app/api/_services/chat.service', async importOriginal => ({
@@ -17,7 +17,8 @@ vi.mock('@/app/api/_services/chat.service', async importOriginal => ({
     updateSessionStatus: vi.fn(),
 }))
 vi.mock('@/lib/ai/generate-title', () => ({ generateSessionTitle: vi.fn().mockResolvedValue('Title') }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/lib/engine/client', () => ({ chat: vi.fn(), reconnectRun: vi.fn(), cancelRun: vi.fn().mockResolvedValue(undefined) }))
 
 const busy = () => Response.json({ runId: 'run-1', startedAt: null }, { status: 409 })

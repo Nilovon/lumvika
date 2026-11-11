@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const selectSingle = vi.fn()
 const selectMany = vi.fn()
 const importAgent = vi.fn()
-const deriveUniqueHandles = vi.fn(async (_supabase: unknown, _workspaceId: number, names: string[]) => names.map(name => name.toLowerCase()))
+const deriveUniqueHandles = vi.fn(async (_scope: unknown, _workspaceId: number, names: string[]) => names.map(name => name.toLowerCase()))
 const downloadPrivateFile = vi.fn(async () => new Blob(['archive']))
 
-vi.mock('@/supabase/supabase-helpers', () => ({ selectSingle, selectMany }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectSingle, selectMany }))
 vi.mock('@/app/api/_services/agent.service', () => ({ importAgent, deriveUniqueHandles }))
 vi.mock('@/lib/storage/private', () => ({ downloadPrivateFile }))
 

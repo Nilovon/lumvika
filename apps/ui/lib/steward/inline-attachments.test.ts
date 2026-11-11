@@ -9,7 +9,7 @@ vi.mock('server-only', () => ({}))
 
 const files = new Map<string, Blob>()
 vi.mock('@/lib/storage/private', () => ({
-    downloadPrivateFile: vi.fn(async (_supabase: unknown, _bucket: string, key: string) => {
+    downloadPrivateFile: vi.fn(async (_scope: unknown, _bucket: string, key: string) => {
         const blob = files.get(key.split('/').slice(3).join('/'))
         if (!blob) throw new Error('Object not found')
         return blob
@@ -18,7 +18,7 @@ vi.mock('@/lib/storage/private', () => ({
 
 const { withInlineAttachments } = await import('./inline-attachments')
 
-const ctx = { userId: 'u1', workspace: { id: 7 }, supabase: {} } as unknown as Pick<WorkspaceContext, 'userId' | 'workspace' | 'supabase'>
+const ctx = { userId: 'u1', workspace: { id: 7 }, scope: {} } as unknown as Pick<WorkspaceContext, 'userId' | 'workspace' | 'scope'>
 
 const user = (text: string): UIMessage => ({ id: 'm1', role: 'user', parts: [{ type: 'text', text }] }) as UIMessage
 const withFiles = (text: string, paths: string[]) => user(appendAttachmentsRef(text, buildAttachmentsRef(paths)))

@@ -1,8 +1,6 @@
 // No 'server-only': swept hourly from Trigger.dev.
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/app/api/database.types'
 import { stripe } from '@/lib/billing/no-billing'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, updateRows, type DbScope, type TablesUpdate } from '@/lib/db'
 import { reportWorkspaceEvent } from './analytics'
 import { updateConnection } from './connections'
 import { notifyWorkspace } from './notify'
@@ -10,8 +8,7 @@ import { appDefinition } from './registry'
 import { addPaidSlot, slotQuantity } from './stripe-slots'
 import { APP_CONNECTION_COLUMNS, SLOT_HOLDING_STATUSES, isAppSlug, type AppSlug } from './types'
 
-type Client = SupabaseClient<Database>
-type WorkspaceAppUpdate = Database['public']['Tables']['workspace_apps']['Update']
+type WorkspaceAppUpdate = TablesUpdate<'workspace_apps'>
 
 export const TRIAL_REMINDER_LEAD_MS = 2 * 86_400_000
 
@@ -29,12 +26,8 @@ function dateLabel(iso: string): string {
     return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' })
 }
 
-async function settle(supabase: Client, workspaceId: number, slug: AppSlug, update: WorkspaceAppUpdate): Promise<void> {
-    const { error } = await supabase
-        .from('workspace_apps')
-        .update<WorkspaceAppUpdate>({ ...update, updated_at: new Date().toISOString() })
-        .eq('workspace_id', workspaceId)
-        .eq('app_slug', slug)
+async function settle(scope: DbScope, workspaceId: number, slug: AppSlug, update: WorkspaceAppUpdate): Promise<void> {
+    const { error } = await updateRows(scope, 'workspace_apps', { ...update, updated_at: new Date().toISOString() }, { workspace_id: workspaceId, app_slug: slug })
     if (error) throw new Error(error.message)
 }
 
@@ -48,12 +41,12 @@ function isPaymentRefusal(err: unknown): boolean {
 // Settled before Stripe is called: a crash between the two must not charge the slot twice on the
 // next tick. The idempotency key covers a retry of the very same call, and an error that is not a
 // refusal unsettles the trial so the next tick tries again.
-async function convert(supabase: Client, workspaceId: number, slug: AppSlug): Promise<'charged' | 'nothing_to_charge' | 'declined'> {
+async function convert(scope: DbScope, workspaceId: number, slug: AppSlug): Promise<'charged' | 'nothing_to_charge' | 'declined'> {
     const app = appDefinition(slug)
-    await settle(supabase, workspaceId, slug, { trial_settled_at: new Date().toISOString() })
+    await settle(scope, workspaceId, slug, { trial_settled_at: new Date().toISOString() })
 
-    const { data: workspace } = await selectMaybeSingle(supabase, 'workspaces', ['stripe_subscription_id'] as const, { id: workspaceId })
-    const { data: connections } = await selectMany(supabase, 'app_connections', APP_CONNECTION_COLUMNS, { workspace_id: workspaceId, app_slug: slug, status: [...SLOT_HOLDING_STATUSES] })
+    const { data: workspace } = await selectMaybeSingle(scope, 'workspaces', ['stripe_subscription_id'] as const, { id: workspaceId })
+    const { data: connections } = await selectMany(scope, 'app_connections', APP_CONNECTION_COLUMNS, { workspace_id: workspaceId, app_slug: slug, status: [...SLOT_HOLDING_STATUSES] })
     const holding = connections ?? []
     const subscription = workspace?.stripe_subscription_id ? await stripe.subscriptions.retrieve(workspace.stripe_subscription_id) : null
     const paidSlots = subscription ? slotQuantity(subscription, app.addonKey) : 0
@@ -62,8 +55,8 @@ async function convert(supabase: Client, workspaceId: number, slug: AppSlug): Pr
 
     const newest = [...holding].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
     const pauseNewest = async (message: string, key: 'trialEndedPlanInactive' | 'trialEndedDeclined') => {
-        if (newest) await updateConnection(supabase, newest.id, { status: 'paused', pause_reason: 'trial_payment_failed', paused_until: null })
-        await notifyWorkspace(supabase, workspaceId, { appName: app.name, message, email: true, copy: { key, values: { provider: app.providerLabel, account: newest?.label ?? 'none' } } })
+        if (newest) await updateConnection(scope, newest.id, { status: 'paused', pause_reason: 'trial_payment_failed', paused_until: null })
+        await notifyWorkspace(scope, workspaceId, { appName: app.name, message, email: true, copy: { key, values: { provider: app.providerLabel, account: newest?.label ?? 'none' } } })
     }
     const account = newest?.label ?? 'the account'
 
@@ -76,7 +69,7 @@ async function convert(supabase: Client, workspaceId: number, slug: AppSlug): Pr
         return 'charged'
     } catch (err) {
         if (!isPaymentRefusal(err)) {
-            await settle(supabase, workspaceId, slug, { trial_settled_at: null })
+            await settle(scope, workspaceId, slug, { trial_settled_at: null })
             throw err
         }
         console.warn(`[apps:${slug}] trial conversion of workspace ${workspaceId} declined`, err instanceof Error ? err.message : err)
@@ -85,8 +78,8 @@ async function convert(supabase: Client, workspaceId: number, slug: AppSlug): Pr
     }
 }
 
-export async function sweepSubscriberTrials(supabase: Client, now: Date): Promise<{ reminded: number; charged: number; declined: number; free: number; failed: string[] }> {
-    const { data: apps } = await selectMany(supabase, 'workspace_apps', ['workspace_id', 'app_slug', 'trial_ends_at', 'trial_settled_at', 'trial_reminder_sent_at', 'status'] as const, { trial_ends_at: { notNull: true }, trial_settled_at: { isNull: true } })
+export async function sweepSubscriberTrials(scope: DbScope, now: Date): Promise<{ reminded: number; charged: number; declined: number; free: number; failed: string[] }> {
+    const { data: apps } = await selectMany(scope, 'workspace_apps', ['workspace_id', 'app_slug', 'trial_ends_at', 'trial_settled_at', 'trial_reminder_sent_at', 'status'] as const, { trial_ends_at: { notNull: true }, trial_settled_at: { isNull: true } })
     const report = { reminded: 0, charged: 0, declined: 0, free: 0, failed: [] as string[] }
 
     for (const row of apps ?? []) {
@@ -95,22 +88,22 @@ export async function sweepSubscriberTrials(supabase: Client, now: Date): Promis
         try {
             if (step === 'remind' && row.status === 'active') {
                 const app = appDefinition(row.app_slug)
-                await notifyWorkspace(supabase, row.workspace_id, {
+                await notifyWorkspace(scope, row.workspace_id, {
                     appName: app.name,
                     message: `Your free ${app.providerLabel} slot ends on ${dateLabel(row.trial_ends_at as string)}. It then becomes a paid slot on your plan. Disconnect the account from Settings → Apps before then if you do not want to keep it.`,
                     copy: { key: 'trialEndsSoon', values: { provider: app.providerLabel, endsAt: row.trial_ends_at as string } },
                     email: true,
                 })
-                await settle(supabase, row.workspace_id, row.app_slug, { trial_reminder_sent_at: now.toISOString() })
+                await settle(scope, row.workspace_id, row.app_slug, { trial_reminder_sent_at: now.toISOString() })
                 report.reminded++
             }
             if (step === 'convert' && row.status !== 'active') {
                 // A paused or removed workspace has no account left to bill: its trial simply ends.
-                await settle(supabase, row.workspace_id, row.app_slug, { trial_settled_at: now.toISOString() })
+                await settle(scope, row.workspace_id, row.app_slug, { trial_settled_at: now.toISOString() })
                 report.free++
             } else if (step === 'convert') {
-                const outcome = await convert(supabase, row.workspace_id, row.app_slug)
-                await reportWorkspaceEvent(supabase, row.workspace_id, 'app_trial_converted', { app: row.app_slug, outcome })
+                const outcome = await convert(scope, row.workspace_id, row.app_slug)
+                await reportWorkspaceEvent(scope, row.workspace_id, 'app_trial_converted', { app: row.app_slug, outcome })
                 if (outcome === 'charged') report.charged++
                 if (outcome === 'declined') report.declined++
                 if (outcome === 'nothing_to_charge') report.free++

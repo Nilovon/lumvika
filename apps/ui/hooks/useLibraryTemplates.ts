@@ -3,7 +3,7 @@
 import { listLibraryTemplatesAction } from '@/app/api/_actions/template.actions'
 import type { LibraryTemplate } from '@/lib/templates/library'
 import { useTemplatePurchaseStore } from '@/stores/template-purchase.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useEffect, useState } from 'react'
 
 // Whether this workspace owns a template is per-workspace and changes under the dialogs that read

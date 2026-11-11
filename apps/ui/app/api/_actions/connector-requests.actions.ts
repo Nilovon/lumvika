@@ -1,8 +1,7 @@
 'use server'
 
-import type { Database } from '@/app/api/database.types'
 import { requireWorkspaceId } from '@/app/api/_auth/ownership'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { insertRows, serviceScope } from '@/lib/db'
 import { failure, type ActionFailure } from '@/lib/i18n/action-error'
 
 // A user searched the connector library, found nothing, and asked us to add the connector
@@ -17,8 +16,7 @@ export async function requestConnectorAction(input: { description: string; agent
     // Trust the session for the workspace, not the client.
     const workspaceId = await requireWorkspaceId()
 
-    const supabase = createServiceRoleClient()
-    const { error } = await supabase.from('connector_requests').insert<Database['public']['Tables']['connector_requests']['Insert']>({
+    const { error } = await insertRows(serviceScope(), 'connector_requests', {
         workspace_id: workspaceId,
         agent_id: input.agentId ?? null,
         description,

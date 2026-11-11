@@ -295,7 +295,7 @@ export async function patchMcpServers(conn: EngineConnection, id: string, body: 
 }
 
 // OAuth token bundle for an mcp server, stored in the engine token store (never in
-// Supabase). The engine injects it as a bearer at connect time and refreshes it via the
+// the database). The engine injects it as a bearer at connect time and refreshes it via the
 // stored tokenEndpoint/clientId.
 export type McpTokenBundle = {
     accessToken: string

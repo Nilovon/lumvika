@@ -8,7 +8,7 @@ import type { EngineConnection } from '@/lib/engine/types'
 import { buildInstallMessage, installSessionTitle } from '@/lib/chat/install-marker'
 import { preferredLanguage } from '@/lib/steward/language'
 import { requireString } from '@/lib/mcp/args'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany } from '@/lib/db'
 import { headers } from 'next/headers'
 
 // The end of the guided setup: the team asks for what it still needs, each agent in its own chat,
@@ -106,7 +106,7 @@ async function start(actor: Actor, { agentId, message }: Handoff, fresh: boolean
 // `fresh` names the agents a caller has just created with the very install it hands over: there is
 // nothing on the engine to read back that it does not already hold. `actor` is whose access each
 // setup starts with: the member behind a steward turn, or, left out, the workspace itself.
-export async function startAgentSetup(ctx: Pick<WorkspaceContext, 'supabase'> & { workspace: Pick<WorkspaceContext['workspace'], 'id'>; actor?: Actor }, args: Record<string, unknown>, { fresh = new Set<string>() }: { fresh?: ReadonlySet<string> } = {}): Promise<unknown> {
+export async function startAgentSetup(ctx: Pick<WorkspaceContext, 'scope'> & { workspace: Pick<WorkspaceContext['workspace'], 'id'>; actor?: Actor }, args: Record<string, unknown>, { fresh = new Set<string>() }: { fresh?: ReadonlySet<string> } = {}): Promise<unknown> {
     const actor = ctx.actor ?? workspaceActor(ctx.workspace.id)
     const listed = Array.isArray(args.agents) ? args.agents.map(handoff) : []
     if (!listed.length) throw new Error('start_agent_setup needs at least one agent: its agentId and the message to hand it.')
@@ -120,7 +120,7 @@ export async function startAgentSetup(ctx: Pick<WorkspaceContext, 'supabase'> & 
     // would announce half the team as broken when it is a slot to buy. Read it first, report it for
     // what it is.
     const { data: rows } = await selectMany(
-        ctx.supabase,
+        ctx.scope,
         'agents',
         ['id', 'name', 'disabled_at'] as const,
         { workspace_id: ctx.workspace.id, id: requests.map(request => request.agentId) },

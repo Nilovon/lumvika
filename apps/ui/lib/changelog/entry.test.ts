@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { upsertChangelogEntry, type ChangelogEntryInput } from './entry'
+import { fakeScope } from '@/test/db-fake'
+import type { ChangelogEntryInput } from './entry'
 
-const { selectMaybeSingle } = vi.hoisted(() => ({ selectMaybeSingle: vi.fn() }))
-
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMaybeSingle }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/lib/landing-revalidate', () => ({ revalidateLanding: vi.fn() }))
-vi.mock('./images', () => ({ normalizeChangelogImage: vi.fn(async (_supabase: unknown, url: string) => url) }))
+vi.mock('./images', () => ({ normalizeChangelogImage: vi.fn(async (_scope: unknown, url: string) => url) }))
+
+const { upsertChangelogEntry } = await import('./entry')
 
 const input: ChangelogEntryInput = {
     slug: 'agents-read-your-drive',
@@ -20,44 +22,47 @@ const input: ChangelogEntryInput = {
     publish: false,
 }
 
-function fakeClient() {
-    const single = vi.fn(async () => ({ data: { slug: input.slug }, error: null }))
-    const upsert = vi.fn(() => ({ select: () => ({ single }) }))
-    return { client: { from: vi.fn(() => ({ upsert })) }, upsert }
+const scope = fakeScope('service')
+
+function existing(publishedAt: string | null) {
+    db.answer(call => {
+        if (call.helper === 'selectMaybeSingle' && call.table === 'changelog_entries') return { data: { id: 1, published_at: publishedAt } }
+        if (call.helper === 'upsertRows') return { data: [{ slug: input.slug }] }
+        return undefined
+    })
 }
+
+const upserts = () => db.callsTo('upsertRows', 'changelog_entries').map(call => call.args)
 
 describe('upsertChangelogEntry with draftsOnly', () => {
     beforeEach(() => {
-        selectMaybeSingle.mockReset()
+        db.reset()
     })
 
     it('refuses to overwrite an entry that is already published', async () => {
-        selectMaybeSingle.mockResolvedValue({ data: { id: 1, published_at: '2026-11-01T00:00:00.000Z' }, error: null })
-        const { client, upsert } = fakeClient()
+        existing('2026-11-01T00:00:00.000Z')
 
-        const result = await upsertChangelogEntry(client as never, input, { draftsOnly: true })
+        const result = await upsertChangelogEntry(scope, input, { draftsOnly: true })
 
         expect(result).toEqual({ ok: false, status: 409, error: expect.any(String) })
-        expect(upsert).not.toHaveBeenCalled()
+        expect(upserts()).toEqual([])
     })
 
     it('saves a draft over an unpublished entry', async () => {
-        selectMaybeSingle.mockResolvedValue({ data: { id: 1, published_at: null }, error: null })
-        const { client, upsert } = fakeClient()
+        existing(null)
 
-        const result = await upsertChangelogEntry(client as never, input, { draftsOnly: true })
+        const result = await upsertChangelogEntry(scope, input, { draftsOnly: true })
 
         expect(result.ok).toBe(true)
-        expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ published_at: null }), { onConflict: 'slug' })
+        expect(upserts()).toEqual([[expect.objectContaining({ published_at: null }), expect.objectContaining({ onConflict: ['slug'] })]])
     })
 
     it('lets an admin overwrite a published entry', async () => {
-        selectMaybeSingle.mockResolvedValue({ data: { id: 1, published_at: '2026-11-01T00:00:00.000Z' }, error: null })
-        const { client, upsert } = fakeClient()
+        existing('2026-11-01T00:00:00.000Z')
 
-        const result = await upsertChangelogEntry(client as never, { ...input, publish: true })
+        const result = await upsertChangelogEntry(scope, { ...input, publish: true })
 
         expect(result.ok).toBe(true)
-        expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ published_at: '2026-11-01T00:00:00.000Z' }), { onConflict: 'slug' })
+        expect(upserts()).toEqual([[expect.objectContaining({ published_at: '2026-11-01T00:00:00.000Z' }), expect.objectContaining({ onConflict: ['slug'] })]])
     })
 })

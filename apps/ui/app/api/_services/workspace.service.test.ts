@@ -1,17 +1,15 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { Database } from '@/app/api/database.types'
+import { fakeScope } from '@/test/db-fake'
 vi.mock('@lumvika/cloud/billing', async importOriginal => ({ ...(await importOriginal<object>()), ...(await import('@/test/cloud-fakes')).CLOUD_ENTITLEMENTS }))
 
 const mocks = vi.hoisted(() => ({ selectMany: vi.fn() }))
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany: mocks.selectMany, selectMaybeSingle: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany: mocks.selectMany, selectMaybeSingle: vi.fn() }))
 
 const { listUserWorkspaces } = await import('./workspace.service')
 
-const client = {} as SupabaseClient<Database>
+const scope = fakeScope('user', 'u1')
 
 describe('listUserWorkspaces', () => {
     it('lists the memberships oldest first, without the expert sandbox, with the caller’s role and which have a subscription in force', async () => {
@@ -25,7 +23,7 @@ describe('listUserWorkspaces', () => {
             error: null,
         })
 
-        await expect(listUserWorkspaces(client, 'u1')).resolves.toEqual([
+        await expect(listUserWorkspaces(scope, 'u1')).resolves.toEqual([
             { id: 3, name: null, iconUrl: '', plan: 'free', subscribed: false, role: 'admin', boxScope: 'all' },
             { id: 7, name: 'Side', iconUrl: 'https://x/7.png', plan: 'pro', subscribed: true, role: 'member', boxScope: 'assigned' },
         ])
@@ -34,7 +32,7 @@ describe('listUserWorkspaces', () => {
 
     it('answers an empty list without a second read when the user has no membership', async () => {
         mocks.selectMany.mockReset().mockResolvedValueOnce({ data: [], error: null })
-        await expect(listUserWorkspaces(client, 'u1')).resolves.toEqual([])
+        await expect(listUserWorkspaces(scope, 'u1')).resolves.toEqual([])
         expect(mocks.selectMany).toHaveBeenCalledTimes(1)
     })
 })

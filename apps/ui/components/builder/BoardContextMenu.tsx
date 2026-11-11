@@ -11,7 +11,7 @@ import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { useBoxViewer, useCanManageAgent, useCanManageSpace, useManageableSpaceIds } from '@/hooks/useBoxAccess'
 import { CopyPlusIcon, Link2, MessageCircle, PencilIcon, SettingsIcon, Trash2Icon, UsersIcon } from '@/lib/icons'
 import { useBoardStore } from '@/stores/board.store'
-import { useIsWorkspaceAdmin } from '@/supabase/session/SessionProvider'
+import { useIsWorkspaceAdmin } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 import { useState, type ReactNode } from 'react'
 

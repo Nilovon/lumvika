@@ -4,8 +4,8 @@ import { AppState } from 'react-native'
 
 import { fetchInbox, markInboxRead } from '@/api/inbox'
 import { useAuth } from '@/auth/AuthProvider'
-import { supabase } from '@/auth/supabase'
 import { cachedInbox } from '@/data/local-cache'
+import { subscribeLive } from '@/lib/live'
 
 // `fresh`: read from the hub since the app opened, not the copy the phone kept from the last visit.
 type InboxState = { state: 'loading' } | { state: 'error' } | { state: 'ready'; items: InboxItem[]; running: number; fresh: boolean }
@@ -22,7 +22,7 @@ const InboxContext = createContext<Inbox | null>(null)
 const BURST_MS = 400
 
 // The web's inbox, read once for the home's bell and its sheet, again whenever a session, a
-// notification or a read changes in Realtime, and when the app comes back to the foreground.
+// notification or a read changes on the live stream, and when the app comes back to the foreground.
 export function InboxProvider({ children }: { children: ReactNode }) {
     const { session, me } = useAuth()
     const accessToken = session?.access_token
@@ -73,18 +73,21 @@ export function InboxProvider({ children }: { children: ReactNode }) {
     }, [reload])
 
     useEffect(() => {
-        if (!workspaceId || !userId) return
-        const channel = supabase
-            .channel(`inbox:${workspaceId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, reloadSoon)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `workspace_id=eq.${workspaceId}` }, reloadSoon)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'session_reads', filter: `user_id=eq.${userId}` }, reloadSoon)
-            .subscribe()
+        if (!accessToken || !workspaceId || !userId) return
+        const unsubscribe = subscribeLive(
+            accessToken,
+            [
+                { table: 'sessions' },
+                { table: 'notifications', ops: ['INSERT'], filter: { workspace_id: workspaceId } },
+                { table: 'session_reads', filter: { user_id: userId } },
+            ],
+            { onChange: reloadSoon, onResync: reloadSoon }
+        )
         return () => {
-            supabase.removeChannel(channel)
+            unsubscribe()
             if (timer.current) clearTimeout(timer.current)
         }
-    }, [workspaceId, userId, reloadSoon])
+    }, [accessToken, workspaceId, userId, reloadSoon])
 
     const write = useCallback(
         (sessionIds: string[] | 'all', rowIds: string[]) => {

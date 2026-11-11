@@ -1,7 +1,7 @@
 'use client'
 
 import { useBoardStore } from '@/stores/board.store'
-import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
+import { useRealtimeSubscription } from '@/lib/live/useRealtimeSubscription'
 
 export function useSpacesRealtime(workspaceId: number | undefined) {
     const _realtimeInsertSpace = useBoardStore(s => s._realtimeInsertSpace)

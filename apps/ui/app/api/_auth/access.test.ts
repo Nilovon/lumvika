@@ -8,9 +8,8 @@ const mocks = vi.hoisted(() => ({
     selectAll: vi.fn(),
 }))
 
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: mocks.getSessionWorkspace, getSessionWorkspace: mocks.getSessionWorkspace }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: () => ({}) }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectSingle: vi.fn(), selectMaybeSingle: mocks.selectMaybeSingle, selectMaybeSingleWithJoins: mocks.selectMaybeSingleWithJoins, selectMany: mocks.selectMany, selectAll: mocks.selectAll }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: mocks.getSessionWorkspace, getSessionWorkspace: mocks.getSessionWorkspace }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectSingle: vi.fn(), selectMaybeSingle: mocks.selectMaybeSingle, selectMaybeSingleWithJoins: mocks.selectMaybeSingleWithJoins, selectMany: mocks.selectMany, selectAll: mocks.selectAll }))
 
 const { AuthorizationError } = await import('./ownership')
 const { AccessDeniedError, assertAgentAccess, assertSessionInWorkspace, boxAccessOf, callableEngineAgentIds, hasAccess, keepVisible, visibleSpaceIds, workspaceActor } = await import('./access')

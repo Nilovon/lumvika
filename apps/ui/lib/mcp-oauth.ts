@@ -1,7 +1,7 @@
 // MCP OAuth (authorization-code + PKCE + Dynamic Client Registration), driven by the UI
 // because lumvika.com has a domain + TLS the engine (raw IP) does not. The resulting token
 // is handed to the engine token store (apps/engine mcp-auth.ts) — never persisted in
-// Supabase. Mirrors the hand-rolled PKCE style of lib/engine/claude-oauth.ts.
+// the database. Mirrors the hand-rolled PKCE style of lib/engine/claude-oauth.ts.
 //
 // Server-only (uses node:crypto). Import from route handlers.
 

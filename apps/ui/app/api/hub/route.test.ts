@@ -6,7 +6,7 @@ import { dispatchHubTool } from '@/app/api/_services/services.service'
 import { dispatchTeamHubTool } from '@/app/api/_services/team-hub.service'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { mintStewardHubToken } from '@/lib/steward/hub-token'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle } from '@/lib/db'
 
 import { POST } from './route'
 
@@ -18,8 +18,7 @@ vi.mock('@/app/api/_auth/ownership', () => ({ workspaceFounderUserId: vi.fn().mo
 vi.mock('@/lib/steward/onboarding-tools', () => ({ dispatchWorkspaceOnboardingTool: vi.fn() }))
 vi.mock('@/lib/steward/search-docs', () => ({ searchStewardDocs: vi.fn() }))
 vi.mock('@/lib/steward/box-tools', () => ({ dispatchBoxTool: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn().mockReturnValue({}) }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMaybeSingle: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMaybeSingle: vi.fn() }))
 
 const WORKSPACE_ID = 7
 

@@ -6,7 +6,7 @@ import { TemplateCardStage } from '@/components/templates/TemplateCardStage'
 import { readBoardImageRequest } from '@/lib/og/board-image'
 import { boardImageMaxZoom, stageBoardScene } from '@/lib/og/board-scene'
 import { CARD_BACKGROUND } from '@/lib/og/size'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 
 // Rendering surface for the screenshot service: the board the query describes, at the exact pixel
 // size it asks for, and nothing else.
@@ -34,7 +34,7 @@ export default async function BoardRenderPage({ searchParams }: { searchParams: 
     const request = readBoardImageRequest(toSearchParams(await searchParams))
     if (!request) notFound()
 
-    const { agents, connectors, highlightedConnectorSlugs } = await stageBoardScene(createServiceRoleClient(), request.scene)
+    const { agents, connectors, highlightedConnectorSlugs } = await stageBoardScene(serviceScope(), request.scene)
 
     return (
         <main className="overflow-hidden" style={{ width: request.width, height: request.height, background: CARD_BACKGROUND[request.theme] }}>

@@ -7,25 +7,28 @@ const ADMIN_URL = process.env.TEST_DATABASE_ADMIN_URL ?? 'postgres://lumvika:lum
 export const TEST_DATABASE = 'lumvika_test'
 const MIGRATIONS = fileURLToPath(new URL('../../migrations', import.meta.url))
 
-export function testDatabaseUrl(): string {
+// Each suite that rebuilds a database names its own, so suites running in parallel never drop one
+// another's.
+export function testDatabaseUrl(name = TEST_DATABASE): string {
     const url = new URL(ADMIN_URL)
-    url.pathname = `/${TEST_DATABASE}`
+    url.pathname = `/${name}`
     return url.toString()
 }
 
 // A database of its own, rebuilt from the migrations on every run, so a test never reads the rows
 // the app wrote while you were clicking around.
-export async function resetTestDatabase(): Promise<void> {
+export async function resetTestDatabase(name = TEST_DATABASE): Promise<void> {
+    if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error(`Invalid test database name: ${name}`)
     const admin = new pg.Client({ connectionString: ADMIN_URL })
     await admin.connect()
     try {
-        await admin.query(`drop database if exists ${TEST_DATABASE} with (force)`)
-        await admin.query(`create database ${TEST_DATABASE}`)
+        await admin.query(`drop database if exists ${name} with (force)`)
+        await admin.query(`create database ${name}`)
     } finally {
         await admin.end()
     }
 
-    const client = new pg.Client({ connectionString: testDatabaseUrl() })
+    const client = new pg.Client({ connectionString: testDatabaseUrl(name) })
     await client.connect()
     try {
         await migrate(drizzle(client), { migrationsFolder: MIGRATIONS, migrationsSchema: 'drizzle', migrationsTable: 'migrations' })

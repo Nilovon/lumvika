@@ -1,13 +1,11 @@
 import 'server-only'
 import { createHash, randomBytes } from 'node:crypto'
 
-import type { Database } from '@/app/api/database.types'
 import { attachCustomEngine, findWorkspaceEngine } from '@/app/api/_services/workspace-engine.service'
 import { buildBaseUrl } from '@/lib/engine/base-url'
 import { getEngineHealth, listConnections } from '@/lib/engine/client'
 import type { EngineHealth } from '@/lib/engine/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { deleteRows, insertRows, selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 import { AppError, type ErrorCode, type ErrorParams } from '@/lib/i18n/action-error'
 
 // The servers of a self-hosted install: an engine somebody runs on a machine of their own, attached
@@ -15,8 +13,6 @@ import { AppError, type ErrorCode, type ErrorParams } from '@/lib/i18n/action-er
 
 export const PAIRING_TOKEN_PREFIX = 'rrn_pair_'
 const PAIRING_TTL_MS = 15 * 60_000
-
-type TokenUpdate = Database['public']['Tables']['engine_pairing_tokens']['Update']
 
 export class ServerPairingError extends AppError {
     constructor(
@@ -34,9 +30,7 @@ const hashToken = (token: string) => createHash('sha256').update(token).digest('
 export async function createPairingToken(workspaceId: number, userId: string): Promise<{ token: string; expiresAt: string }> {
     const token = `${PAIRING_TOKEN_PREFIX}${randomBytes(24).toString('base64url')}`
     const expiresAt = new Date(Date.now() + PAIRING_TTL_MS).toISOString()
-    const { error } = await createServiceRoleClient()
-        .from('engine_pairing_tokens')
-        .insert<Database['public']['Tables']['engine_pairing_tokens']['Insert']>({ workspace_id: workspaceId, token_hash: hashToken(token), created_by: userId, expires_at: expiresAt })
+    const { error } = await insertRows(serviceScope(), 'engine_pairing_tokens', { workspace_id: workspaceId, token_hash: hashToken(token), created_by: userId, expires_at: expiresAt })
     if (error) throw new Error(error.message)
     return { token, expiresAt }
 }
@@ -73,8 +67,8 @@ export async function redeemPairingToken(input: { token: string; url: string | n
     if (!input.apiKey) throw new ServerPairingError('serverSentNoKey', 400)
     if (!input.url) throw new ServerPairingError('serverSentNoUrl', 400)
 
-    const supabase = createServiceRoleClient()
-    const { data: row } = await selectMaybeSingle(supabase, 'engine_pairing_tokens', ['id', 'workspace_id', 'expires_at', 'used_at'] as const, { token_hash: hashToken(input.token) })
+    const scope = serviceScope()
+    const { data: row } = await selectMaybeSingle(scope, 'engine_pairing_tokens', ['id', 'workspace_id', 'expires_at', 'used_at'] as const, { token_hash: hashToken(input.token) })
     if (!row || row.used_at) throw new ServerPairingError('pairingTokenUnusable', 401)
     if (Date.parse(row.expires_at) < Date.now()) throw new ServerPairingError('pairingTokenExpired', 401)
     if (await findWorkspaceEngine(row.workspace_id)) throw new ServerPairingError('workspaceHasServerRemoveFirst', 409)
@@ -82,12 +76,7 @@ export async function redeemPairingToken(input: { token: string; url: string | n
     await checkReachable(input.url, input.apiKey)
 
     // The token is spent before the engine is attached, so two servers racing on one token attach once.
-    const { data: claimed, error } = await supabase
-        .from('engine_pairing_tokens')
-        .update<TokenUpdate>({ used_at: new Date().toISOString() })
-        .eq('id', row.id)
-        .is('used_at', null)
-        .select('id')
+    const { data: claimed, error } = await updateRows(scope, 'engine_pairing_tokens', { used_at: new Date().toISOString() }, { id: row.id, used_at: { isNull: true } }, ['id'])
     if (error) throw new Error(error.message)
     if (!claimed?.length) throw new ServerPairingError('pairingTokenUsed', 401)
 
@@ -126,6 +115,6 @@ export async function detachWorkspaceServer(workspaceId: number): Promise<void> 
     const engine = await findWorkspaceEngine(workspaceId)
     if (!engine) return
     if (engine.managed) throw new ServerPairingError('machineBelongsToCloud', 403)
-    const { error } = await createServiceRoleClient().from('engine_pool').delete().eq('id', engine.instanceId)
+    const { error } = await deleteRows(serviceScope(), 'engine_pool', { id: engine.instanceId })
     if (error) throw new Error(error.message)
 }

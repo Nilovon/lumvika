@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { loadOwnCreatorInviteAction } from '@/app/api/_actions/creator-onboarding.actions'
-import { getServerSession } from '@/supabase/session/getServerSession'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
 import { routes } from '@/lib/routes'
 import { CreatorOnboarding } from './CreatorOnboarding'
 import { JoinShell } from './JoinShell'

@@ -24,7 +24,7 @@ export async function readAgentModels(ctx: WorkspaceContext, agentId: string): P
     const [detail, list, t] = await Promise.all([
         engineGetAgent(conn, engineAgentId),
         listConnections(conn),
-        recipientLocale(ctx.supabase, ctx.userId, ctx.workspace.id).then(locale => translatorFor(locale, 'connections')),
+        recipientLocale(ctx.scope, ctx.userId, ctx.workspace.id).then(locale => translatorFor(locale, 'connections')),
     ])
     const groups = connectionGroups(list.connections, isPremiumModelEntitled(ctx.workspace), t)
     return {

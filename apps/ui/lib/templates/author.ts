@@ -3,8 +3,7 @@ import { assertTemplateOwnedBy } from '@/app/api/_auth/expert'
 import { isPayoutReady } from '@lumvika/cloud/marketplace.server'
 import { slugify } from '@/lib/slugify'
 import { AppError } from '@/lib/i18n/action-error'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectCount, selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { deleteRows, selectCount, selectMany, selectMaybeSingle, serviceScope } from '@/lib/db'
 import { rowToDocument, TEMPLATE_DOC_COLUMNS, type TemplateRow } from './document'
 import {
     EXPERT_TEMPLATE_COLUMNS,
@@ -33,16 +32,16 @@ import { createTemplate, uniqueTemplateSlug, updateTemplateBySlug, type Template
 export type AuthorWrite = { slug: string; warnings: string[] }
 
 export async function listAuthorTemplates(userId: string): Promise<ExpertTemplate[]> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMany(supabase, 'templates', EXPERT_TEMPLATE_COLUMNS, { creator_id: userId }, { column: 'updated_at', ascending: false })
+    const scope = serviceScope()
+    const { data } = await selectMany(scope, 'templates', EXPERT_TEMPLATE_COLUMNS, { creator_id: userId }, { column: 'updated_at', ascending: false })
     return toExpertTemplates((data ?? []) as ExpertTemplateRow[])
 }
 
 export async function loadAuthorTemplate(userId: string, id: string): Promise<ExpertTemplateDetail> {
     const owned = await assertTemplateOwnedBy(userId, id)
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: row } = await selectMaybeSingle(supabase, 'templates', [...TEMPLATE_DOC_COLUMNS, 'submitted_at', 'review_note'] as const, { id: owned.id })
+    const { data: row } = await selectMaybeSingle(scope, 'templates', [...TEMPLATE_DOC_COLUMNS, 'submitted_at', 'review_note'] as const, { id: owned.id })
     if (!row) throw new AppError('templateNotFoundDot')
 
     return {
@@ -62,15 +61,15 @@ export async function createAuthorTemplateDraft(userId: string, title: string): 
     const base = slugify(trimmed)
     if (!base) throw new AppError('titleUnusableSlug')
 
-    const supabase = createServiceRoleClient()
-    const { data: owned } = await selectCount(supabase, 'templates', { creator_id: userId })
+    const scope = serviceScope()
+    const { data: owned } = await selectCount(scope, 'templates', { creator_id: userId })
     if ((owned ?? 0) >= MAX_TEMPLATES_PER_AUTHOR) throw new AppError('templateLimitReached', { max: MAX_TEMPLATES_PER_AUTHOR })
 
-    const slug = await uniqueTemplateSlug(supabase, base)
-    const result = await createTemplate(supabase, templateDocumentSchema.parse({ slug, title: trimmed, creatorId: userId }))
+    const slug = await uniqueTemplateSlug(scope, base)
+    const result = await createTemplate(scope, templateDocumentSchema.parse({ slug, title: trimmed, creatorId: userId }))
     if (!result.ok) throw new Error(result.error)
 
-    const { data: created } = await selectMaybeSingle(supabase, 'templates', ['id'] as const, { slug: result.slug })
+    const { data: created } = await selectMaybeSingle(scope, 'templates', ['id'] as const, { slug: result.slug })
     if (!created) throw new AppError('templateCreatedNotReloaded')
 
     return { id: created.id, slug: result.slug }
@@ -85,15 +84,15 @@ export async function loadEditableAuthorDocument(userId: string, id: string): Pr
     const blocked = templateEditBlockCode(owned.status)
     if (blocked) throw new AppError(blocked)
 
-    const supabase = createServiceRoleClient()
-    const { data: row } = await selectMaybeSingle(supabase, 'templates', TEMPLATE_DOC_COLUMNS, { id: owned.id })
+    const scope = serviceScope()
+    const { data: row } = await selectMaybeSingle(scope, 'templates', TEMPLATE_DOC_COLUMNS, { id: owned.id })
     if (!row) throw new AppError('templateNotFoundDot')
 
     return { id: owned.id, slug: owned.slug, document: rowToDocument(row as TemplateRow) }
 }
 
 async function writeAuthorDocument(slug: string, document: TemplateDocument, review?: TemplateReviewPatch): Promise<AuthorWrite> {
-    const result = await updateTemplateBySlug(createServiceRoleClient(), slug, document, review)
+    const result = await updateTemplateBySlug(serviceScope(), slug, document, review)
     if (!result.ok) throw new Error(result.error)
     return { slug: result.slug, warnings: result.warnings }
 }
@@ -129,8 +128,8 @@ export async function withdrawAuthorTemplate(userId: string, id: string): Promis
     const owned = await assertTemplateOwnedBy(userId, id)
     if (owned.status !== 'in_review') throw new AppError('templateNotInReview')
 
-    const supabase = createServiceRoleClient()
-    const { data: row } = await selectMaybeSingle(supabase, 'templates', TEMPLATE_DOC_COLUMNS, { id: owned.id })
+    const scope = serviceScope()
+    const { data: row } = await selectMaybeSingle(scope, 'templates', TEMPLATE_DOC_COLUMNS, { id: owned.id })
     if (!row) throw new AppError('templateNotFoundDot')
 
     return writeAuthorDocument(owned.slug, { ...rowToDocument(row as TemplateRow), status: 'draft' }, { submitted_at: null })
@@ -142,8 +141,8 @@ export async function deleteAuthorTemplate(userId: string, id: string): Promise<
     const blocked = templateEditBlockCode(owned.status)
     if (blocked) throw new AppError(blocked)
 
-    const supabase = createServiceRoleClient()
-    const { error } = await supabase.from('templates').delete().eq('id', owned.id)
+    const scope = serviceScope()
+    const { error } = await deleteRows(scope, 'templates', { id: owned.id })
     if (error) throw new Error(error.message)
 }
 
@@ -157,7 +156,7 @@ export async function addAuthorTemplateImage(userId: string, id: string, input: 
     const stored = await loadEditableAuthorDocument(userId, id)
     if (stored.document.gallery.length >= MAX_TEMPLATE_GALLERY_IMAGES) throw new AppError('galleryLimit', { max: MAX_TEMPLATE_GALLERY_IMAGES })
 
-    const url = await storeTemplateImageFromUrl(createServiceRoleClient(), input.imageUrl)
+    const url = await storeTemplateImageFromUrl(serviceScope(), input.imageUrl)
     const image = { url, alt: (input.alt ?? '').slice(0, IMAGE_ALT_LIMIT) }
     const gallery = input.cover ? [image, ...stored.document.gallery] : [...stored.document.gallery, image]
 

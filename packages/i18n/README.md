@@ -40,7 +40,7 @@ with `pnpm i18n:translate --accept`.
 1. Add it to `SUPPORTED_LOCALES` in `src/locales.ts` as `beta`, and its pack to `PACKS` in
    `src/messages.ts`.
 2. `pnpm i18n:translate --locale <locale>`, then `pnpm i18n:check`.
-3. The Supabase auth emails (`supabase/templates/*.html`) get their branch for it.
+3. The emails of `packages/emails` get its copy (the sign-in code email included).
 4. Its WhatsApp templates are submitted to Meta.
 5. Its App Store listing is added (`apps/mobile/store.config.json`).
 6. The landing adds it to its routing; the sitemap follows.

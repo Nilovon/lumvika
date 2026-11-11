@@ -1,8 +1,7 @@
 // No 'server-only', see lib/email/client.ts: the lifecycle sweeper builds its banners from a
 // Trigger.dev task.
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { SCENE_HEIGHT, SCENE_WIDTH } from '@lumvika/emails'
-import type { Database } from '@/app/api/database.types'
+import type { DbScope } from '@/lib/db'
 import { boardImageUrl } from '@/lib/og/board-image'
 import { loadTeam, teamBoardScene, type TeamMember, type TeamStatus } from '@/lib/og/team-board'
 import { warmImage } from '@/lib/og/warm'
@@ -18,9 +17,9 @@ export const BANNER_WARM_INLINE_MS = 6_000
  * captured in time: the message then opens on its usual picture. Never throws, a missing banner
  * costs the message its illustration and never its delivery.
  */
-export async function emailBoardBanner(supabase: SupabaseClient<Database>, workspaceId: number, status: TeamStatus, timeoutMs: number): Promise<string | undefined> {
+export async function emailBoardBanner(scope: DbScope, workspaceId: number, status: TeamStatus, timeoutMs: number): Promise<string | undefined> {
     try {
-        const team = await loadTeam(supabase, workspaceId, typeof status === 'string' ? [] : Object.keys(status))
+        const team = await loadTeam(scope, workspaceId, typeof status === 'string' ? [] : Object.keys(status))
         return await teamBoardBanner(team, status, timeoutMs)
     } catch (error) {
         console.error('[email] board banner failed', workspaceId, error)

@@ -2,7 +2,6 @@ import { STEWARD_AGENT_ID } from '@lumvika/contracts'
 
 import { actorFromContext, callableEngineAgentIds } from '@/app/api/_auth/access'
 import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import { isPhoneStepPending } from '@lumvika/cloud/phone.server'
 import { messageAuthorOf } from '@/app/api/_services/me.service'
 import { getWorkspaceConnection, NoEngineError } from '@/app/api/_services/workspace-engine.service'
 import { QUEUED_RETRY_DELAYS_MS, startChat } from '@/lib/chat/start-chat'
@@ -12,7 +11,6 @@ import { stewardEngineBrief } from '@/lib/steward/engine-brief'
 import { mintStewardHubToken } from '@/lib/steward/hub-token'
 import { loadStewardState } from '@/lib/steward/state'
 import { resolveStewardSurface } from '@/lib/steward/surface.server'
-import { PHONE_REQUIRED_MESSAGE } from '@lumvika/cloud/phone'
 
 // The steward of every workspace past its onboarding, running on the workspace's engine. The loop,
 // the model and the transcript are the engine's; the hub only hands it, on every turn, the
@@ -37,14 +35,13 @@ async function authorize(): Promise<Awaited<ReturnType<typeof requireWorkspaceCo
     } catch {
         return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    if (ctx.authUser.is_anonymous) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    if (ctx.authUser.isAnonymous) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     return ctx
 }
 
 export async function POST(req: Request): Promise<Response> {
     const ctx = await authorize()
     if (ctx instanceof Response) return ctx
-    if (await isPhoneStepPending(ctx.supabase, ctx.userId)) return Response.json({ error: PHONE_REQUIRED_MESSAGE }, { status: 403 })
 
     let body: EngineStewardBody
     try {

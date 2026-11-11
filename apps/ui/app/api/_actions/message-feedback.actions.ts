@@ -1,18 +1,16 @@
 'use server'
 
-import type { Database, Json } from '@/app/api/database.types'
+import type { Json, TablesInsert } from '@/lib/db'
 import { actorFromContext, assertAgentInWorkspace, assertSessionInWorkspace, isAdminActor, requireLightSessionActor } from '@/app/api/_auth/access'
 import { requireWorkspaceContext, type WorkspaceContext } from '@/app/api/_auth/ownership'
 import { readSessionMessages } from '@/app/api/_services/conversation.service'
 import { engineSessionOf, readStewardEngineMessages } from '@/lib/steward/conversation'
 import { MESSAGE_FEEDBACK_CATEGORY_VALUES, type MessageFeedbackRating } from '@lumvika/contracts'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { deleteRows, selectMany, selectMaybeSingle, serviceScope, updateRows, upsertRows } from '@/lib/db'
 import { z } from 'zod'
 import { failure, type ActionFailure } from '@/lib/i18n/action-error'
 
-type MessageFeedbackInsert = Database['public']['Tables']['message_feedback']['Insert']
-type MessageFeedbackUpdate = Database['public']['Tables']['message_feedback']['Update']
+type MessageFeedbackInsert = TablesInsert<'message_feedback'>
 
 export type RateMessageResult = { ok: true; id: string } | ActionFailure
 export type MessageFeedbackResult = { ok: true } | ActionFailure
@@ -45,42 +43,41 @@ export async function rateMessageAction(input: z.input<typeof rateSchema>): Prom
     const { sessionId, scope, messageId, rating, messageText } = parsed.data
 
     const ctx = await requireWorkspaceContext()
-    const { userId, workspace, supabase } = ctx
+    const { userId, workspace } = ctx
     const owner = scope === 'steward' ? await stewardFeedbackOwner(ctx, sessionId) : await agentFeedbackOwner(ctx, sessionId)
     if (!owner) return failure('conversationNotFound')
     // A vote names a message of the conversation it is about, not any string: each one copies the
     // transcript with it.
     if (owner.transcript.length > 0 && !owner.transcript.some(message => (message as { id?: unknown }).id === messageId)) return failure('messageNotFound')
 
-    const { data, error } = await supabase
-        .from('message_feedback')
-        .upsert<MessageFeedbackInsert>(
-            {
-                workspace_id: workspace.id,
-                user_id: userId,
-                ...owner.keys,
-                message_id: messageId,
-                rating,
-                category: null,
-                details: null,
-                message_text: messageText,
-                transcript: owner.transcript as unknown as Json,
-                updated_at: new Date().toISOString(),
-            },
-            { onConflict: owner.onConflict },
-        )
-        .select('id')
-        .single()
-    if (error || !data) return error ? { ok: false, error: error.message } : failure('saveFeedbackFailed')
-    return { ok: true, id: data.id }
+    const { data, error } = await upsertRows(
+        ctx.scope,
+        'message_feedback',
+        {
+            workspace_id: workspace.id,
+            user_id: userId,
+            ...owner.keys,
+            message_id: messageId,
+            rating,
+            category: null,
+            details: null,
+            message_text: messageText,
+            transcript: owner.transcript as unknown as Json,
+            updated_at: new Date().toISOString(),
+        },
+        { onConflict: owner.onConflict, returning: ['id'] },
+    )
+    const saved = data?.[0]
+    if (error || !saved) return error ? { ok: false, error: error.message } : failure('saveFeedbackFailed')
+    return { ok: true, id: saved.id }
 }
 
-type FeedbackOwner = { keys: Pick<MessageFeedbackInsert, 'agent_id' | 'session_id' | 'steward_conversation_id'>; onConflict: string; transcript: unknown[] }
+type FeedbackOwner = { keys: Pick<MessageFeedbackInsert, 'agent_id' | 'session_id' | 'steward_conversation_id'>; onConflict: ('session_id' | 'steward_conversation_id' | 'message_id')[]; transcript: unknown[] }
 
 async function agentFeedbackOwner(ctx: WorkspaceContext, sessionId: string): Promise<FeedbackOwner> {
     const session = await assertSessionInWorkspace(sessionId, actorFromContext(ctx))
     const transcript = await readSessionMessages(sessionId).catch(() => [])
-    return { keys: { agent_id: session.agent_id, session_id: sessionId }, onConflict: 'session_id,message_id', transcript }
+    return { keys: { agent_id: session.agent_id, session_id: sessionId }, onConflict: ['session_id', 'message_id'], transcript }
 }
 
 // A vote on a coworker's message is reached through that coworker, like its conversation. The
@@ -88,7 +85,7 @@ async function agentFeedbackOwner(ctx: WorkspaceContext, sessionId: string): Pro
 async function reachableFeedbackWorkspaceId(id: string): Promise<number> {
     const actor = await requireLightSessionActor()
     if (isAdminActor(actor)) return actor.workspaceId
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'message_feedback', ['agent_id'] as const, { id, workspace_id: actor.workspaceId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'message_feedback', ['agent_id'] as const, { id, workspace_id: actor.workspaceId })
     if (data?.agent_id) await assertAgentInWorkspace(data.agent_id, 'use', actor)
     return actor.workspaceId
 }
@@ -96,7 +93,7 @@ async function reachableFeedbackWorkspaceId(id: string): Promise<number> {
 async function stewardFeedbackOwner(ctx: WorkspaceContext, conversationId: string): Promise<FeedbackOwner | null> {
     if ((await engineSessionOf(ctx, conversationId))?.backend !== 'engine') return null
     const transcript = await readStewardEngineMessages(ctx, conversationId).catch(() => [])
-    return { keys: { steward_conversation_id: conversationId }, onConflict: 'steward_conversation_id,message_id', transcript }
+    return { keys: { steward_conversation_id: conversationId }, onConflict: ['steward_conversation_id', 'message_id'], transcript }
 }
 
 export async function updateMessageFeedbackAction(input: z.input<typeof detailsSchema>): Promise<MessageFeedbackResult> {
@@ -106,11 +103,7 @@ export async function updateMessageFeedbackAction(input: z.input<typeof detailsS
 
     const workspaceId = await reachableFeedbackWorkspaceId(id).catch(() => null)
     if (workspaceId === null) return failure('feedbackNotFound')
-    const { error } = await createServiceRoleClient()
-        .from('message_feedback')
-        .update<MessageFeedbackUpdate>({ category, details: details || null, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('workspace_id', workspaceId)
+    const { error } = await updateRows(serviceScope(), 'message_feedback', { category, details: details || null, updated_at: new Date().toISOString() }, { id, workspace_id: workspaceId })
     if (error) return { ok: false, error: error.message }
     return { ok: true }
 }
@@ -120,7 +113,7 @@ export async function clearMessageFeedbackAction(id: string): Promise<MessageFee
 
     const workspaceId = await reachableFeedbackWorkspaceId(id).catch(() => null)
     if (workspaceId === null) return failure('feedbackNotFound')
-    const { error } = await createServiceRoleClient().from('message_feedback').delete().eq('id', id).eq('workspace_id', workspaceId)
+    const { error } = await deleteRows(serviceScope(), 'message_feedback', { id, workspace_id: workspaceId })
     if (error) return { ok: false, error: error.message }
     return { ok: true }
 }
@@ -133,6 +126,6 @@ export async function fetchSessionFeedbackAction(sessionId: string, scope: Feedb
     } catch {
         return []
     }
-    const { data } = await selectMany(createServiceRoleClient(), 'message_feedback', ['id', 'message_id', 'rating'] as const, scope === 'steward' ? { steward_conversation_id: sessionId } : { session_id: sessionId })
+    const { data } = await selectMany(serviceScope(), 'message_feedback', ['id', 'message_id', 'rating'] as const, scope === 'steward' ? { steward_conversation_id: sessionId } : { session_id: sessionId })
     return (data ?? []).map(row => ({ id: row.id, messageId: row.message_id, rating: row.rating as MessageFeedbackRating }))
 }

@@ -3,7 +3,6 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { stewardClientSchema } from '@lumvika/contracts'
 
 import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import { isPhoneStepPending } from '@lumvika/cloud/phone.server'
 import { logLumvikaUsage, meteredFetch, type OpenRouterUsage } from '@lumvika/cloud/billing.server'
 import { MICROS_PER_USD } from '@lumvika/cloud/billing'
 import { engineSessionOf, loadStewardConversation, saveStewardConversation } from '@/lib/steward/conversation'
@@ -18,7 +17,6 @@ import { sealPendingWidgets } from '@/lib/steward/seal-pending'
 import { loadStewardState } from '@/lib/steward/state'
 import { withoutVoiceMarkers } from '@/lib/steward/strip-voice'
 import { stewardSystemPrompt } from '@/lib/steward/prompt'
-import { PHONE_REQUIRED_MESSAGE } from '@lumvika/cloud/phone'
 import { prepareScript, runScript } from '@/lib/steward/scripted'
 import { stewardActiveTools, stewardTools } from '@/lib/steward/tools'
 import { createStewardTurn } from '@/lib/steward/turn'
@@ -64,8 +62,7 @@ export async function POST(req: Request): Promise<Response> {
 
     // Un anonyme n'a que la carte d'accueil, qui ne passe pas par ici : le Steward ne parle qu'à un
     // compte.
-    if (ctx.authUser.is_anonymous) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    if (await isPhoneStepPending(ctx.supabase, ctx.userId)) return Response.json({ error: PHONE_REQUIRED_MESSAGE }, { status: 403 })
+    if (ctx.authUser.isAnonymous) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const apiKey = stewardHubApiKey()
     if (!apiKey) return Response.json({ error: 'The steward is unavailable' }, { status: 503 })

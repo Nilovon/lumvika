@@ -30,8 +30,7 @@ import { sanitizeIlike } from '@/lib/search/ilike'
 import { ALTERNATIVE_THRESHOLD, MAX_OFFERED_ALTERNATIVES } from '@/lib/services/alternatives'
 import type { AgentServiceStatus, AuthMethodSummary, InstallResult, InstalledService, ResetConnectionResult, ServiceAlternative, ServiceDetails, ServiceSearchResult } from '@/lib/services/types'
 import { triggerWebhookUrl } from '@/lib/triggers/webhook'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectMaybeSingle, selectSingle } from '@/supabase/supabase-helpers'
+import { callRows, queryRows, selectMany, selectMaybeSingle, selectSingle, serviceScope, sql, type DbScope } from '@/lib/db'
 
 // Recall floor for the vector retrieval. Kept low on purpose: pgvector only shortlists
 // candidates, and the Haiku re-rank (lib/services/rerank.ts) does the actual relevance
@@ -63,8 +62,7 @@ function liveManaged<T extends { provider: string }>(managed: T | undefined): T 
 // --- Catalog (UI database) ---
 
 export async function loadManifest(slugOrKey: string): Promise<ServiceManifest | null> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectSingle(supabase, 'services', ['manifest', 'enabled'] as const, { slug: parseServiceRegistryKey(slugOrKey).slug })
+    const { data } = await selectSingle(serviceScope(), 'services', ['manifest', 'enabled'] as const, { slug: parseServiceRegistryKey(slugOrKey).slug })
     if (!data || !data.enabled) return null
     return serviceManifestSchema.parse(data.manifest)
 }
@@ -162,7 +160,7 @@ export async function searchServices(agentId: string, query?: string, category?:
 // tells the caller whether the rows carry meaningful similarities (worth re-ranking) or came
 // from the keyword fallback.
 async function shortlistCandidates(
-    supabase: ReturnType<typeof createServiceRoleClient>,
+    scope: DbScope,
     q: string,
     category: string | undefined,
     vectorCount: number,
@@ -171,20 +169,18 @@ async function shortlistCandidates(
     if (q) {
         const embedding = await embedText(q).catch(() => null)
         if (embedding) {
-            const { data } = await supabase.rpc('match_services', {
+            const { data } = await callRows<CatalogRow & { similarity: number }>(scope, 'match_services', {
                 query_embedding: toVectorLiteral(embedding),
                 match_count: vectorCount,
                 match_threshold: CANDIDATE_FLOOR,
                 filter_category: category ?? undefined,
             })
-            const rows = (data ?? []) as Array<CatalogRow & { similarity: number }>
+            const rows = data ?? []
             if (rows.length > 0) return { rows, viaVector: true }
         }
     }
 
-    const filters: Record<string, unknown> = { enabled: true }
-    if (category) filters.category = category
-    const { data } = await selectMany(supabase, 'services', ['slug', 'name', 'category', 'summary', 'icon', 'manifest', 'verified'] as const, filters, { column: 'name' }, keywordLimit)
+    const { data } = await selectMany(scope, 'services', ['slug', 'name', 'category', 'summary', 'icon', 'manifest', 'verified'] as const, { enabled: true, category: category || undefined }, { column: 'name' }, keywordLimit)
     const ql = q.toLowerCase()
     const rows = (data ?? []).filter(s => !ql || s.name.toLowerCase().includes(ql) || s.summary.toLowerCase().includes(ql) || s.slug.toLowerCase().includes(ql))
     return { rows, viaVector: false }
@@ -197,7 +193,7 @@ const LITERAL_COLS = ['slug', 'name', 'category', 'summary', 'icon', 'manifest',
 // `ilike` OR'd across name, slug and summary, ranked so name/slug hits come before summary-only
 // hits and an exact/prefix name match floats to the top.
 async function literalMatches(
-    supabase: ReturnType<typeof createServiceRoleClient>,
+    scope: DbScope,
     q: string,
     category: string | undefined,
     limit: number,
@@ -211,7 +207,7 @@ async function literalMatches(
         ...(category ? { category } : {}),
         or: { name: { ilike: pattern }, slug: { ilike: pattern }, summary: { ilike: pattern } },
     }
-    const { data } = await selectMany(supabase, 'services', LITERAL_COLS, filters, { column: 'name' }, limit)
+    const { data } = await selectMany(scope, 'services', LITERAL_COLS, filters, { column: 'name' }, limit)
 
     const ql = q.toLowerCase()
     const rank = (s: CatalogRow): number => {
@@ -231,17 +227,17 @@ async function literalMatches(
 // results fill in, deduped by slug. The `installed` map is the only per-agent input — pass an
 // empty map for the agent-less catalog browse.
 async function searchCatalog(installed: Map<string, AgentServiceStatus>, query?: string, category?: string): Promise<ServiceSearchResult[]> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const q = (query ?? '').trim()
 
     if (!q) {
-        const { rows } = await shortlistCandidates(supabase, q, category, CANDIDATE_COUNT)
+        const { rows } = await shortlistCandidates(scope, q, category, CANDIDATE_COUNT)
         return rows.map(s => toSearchResult(s, installed))
     }
 
     const [literal, semantic] = await Promise.all([
-        literalMatches(supabase, q, category, LITERAL_MATCH_LIMIT),
-        semanticCatalog(supabase, installed, q, category),
+        literalMatches(scope, q, category, LITERAL_MATCH_LIMIT),
+        semanticCatalog(scope, installed, q, category),
     ])
 
     const seen = new Set<string>()
@@ -262,12 +258,12 @@ async function searchCatalog(installed: Map<string, AgentServiceStatus>, query?:
 // Semantic half of searchCatalog: vector shortlist + Haiku re-rank, with the keyword substring
 // fallback when embeddings are unavailable. Assumes a non-empty query.
 async function semanticCatalog(
-    supabase: ReturnType<typeof createServiceRoleClient>,
+    scope: DbScope,
     installed: Map<string, AgentServiceStatus>,
     q: string,
     category: string | undefined,
 ): Promise<ServiceSearchResult[]> {
-    const { rows, viaVector } = await shortlistCandidates(supabase, q, category, CANDIDATE_COUNT)
+    const { rows, viaVector } = await shortlistCandidates(scope, q, category, CANDIDATE_COUNT)
 
     if (viaVector) {
         const vrows = rows as Array<CatalogRow & { similarity: number }>
@@ -299,16 +295,16 @@ export async function searchCatalogServices(query?: string, category?: string): 
 // is always false. Ordered by (category, name) for a stable, groupable infinite scroll; the
 // caller keeps loading pages until a short one comes back.
 export async function listCatalogServices(opts?: { category?: string; limit?: number; offset?: number }): Promise<ServiceSearchResult[]> {
-    const supabase = createServiceRoleClient()
     const limit = opts?.limit ?? BROWSE_PAGE_SIZE
     const offset = opts?.offset ?? 0
+    const inCategory = opts?.category ? sql`and category = ${opts.category}` : sql``
 
-    let query = supabase.from('services').select('slug, name, category, summary, icon, manifest, verified').eq('enabled', true)
-    if (opts?.category) query = query.eq('category', opts.category)
+    const { data } = await queryRows<CatalogRow>(
+        serviceScope(),
+        sql`select slug, name, category, summary, icon, manifest, verified from public.services where enabled ${inCategory} order by category asc, name asc limit ${limit} offset ${offset}`,
+    )
 
-    const { data } = await query.order('category', { ascending: true }).order('name', { ascending: true }).range(offset, offset + limit - 1)
-
-    return ((data ?? []) as CatalogRow[]).map(s => toSearchResult(s, new Map()))
+    return (data ?? []).map(s => toSearchResult(s, new Map()))
 }
 
 // Resolve full catalog metadata for a specific set of slugs. Seeds the agent-creation
@@ -316,8 +312,7 @@ export async function listCatalogServices(opts?: { category?: string; limit?: nu
 // browse pages loaded — so their tiles/icons still render.
 export async function getCatalogServicesBySlugs(slugs: string[]): Promise<ServiceSearchResult[]> {
     if (slugs.length === 0) return []
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMany(supabase, 'services', ['slug', 'name', 'category', 'summary', 'icon', 'manifest', 'verified'] as const, { slug: { in: slugs }, enabled: true })
+    const { data } = await selectMany(serviceScope(), 'services', ['slug', 'name', 'category', 'summary', 'icon', 'manifest', 'verified'] as const, { slug: { in: slugs }, enabled: true })
     return (data ?? []).map(s => toSearchResult(s, new Map()))
 }
 
@@ -325,10 +320,10 @@ export async function getCatalogServicesBySlugs(slugs: string[]): Promise<Servic
 // than in the pair table, which keeps pointing at them.
 export async function getServiceAlternatives(slugs: string[]): Promise<Record<string, ServiceAlternative[]>> {
     if (slugs.length === 0) return {}
-    const supabase = createServiceRoleClient()
-    const { data: pairs } = await selectMany(supabase, 'service_alternatives', ['service_slug', 'alternative_slug'] as const, { service_slug: { in: slugs }, probability: { gte: ALTERNATIVE_THRESHOLD } }, { column: 'probability', ascending: false })
+    const scope = serviceScope()
+    const { data: pairs } = await selectMany(scope, 'service_alternatives', ['service_slug', 'alternative_slug'] as const, { service_slug: { in: slugs }, probability: { gte: ALTERNATIVE_THRESHOLD } }, { column: 'probability', ascending: false })
     if (!pairs?.length) return {}
-    const { data: services } = await selectMany(supabase, 'services', ['slug', 'name', 'category', 'icon'] as const, { slug: { in: [...new Set(pairs.map(p => p.alternative_slug))] }, enabled: true })
+    const { data: services } = await selectMany(scope, 'services', ['slug', 'name', 'category', 'icon'] as const, { slug: { in: [...new Set(pairs.map(p => p.alternative_slug))] }, enabled: true })
     const bySlug = new Map((services ?? []).map(s => [s.slug, s]))
     const alternatives: Record<string, ServiceAlternative[]> = {}
     for (const { service_slug, alternative_slug } of pairs) {
@@ -454,10 +449,10 @@ async function installTarget(agentId: string, manifest: ServiceManifest, slugOrK
 // The label of the account a coworker acts with in a paid app, '' when it has none yet, null when
 // the coworker picked none or its account is gone.
 async function boundAccountLabel(agentId: string, appSlug: AppSlug): Promise<string | null> {
-    const supabase = createServiceRoleClient()
-    const { data: binding } = await selectMaybeSingle(supabase, 'app_connection_agents', ['connection_id'] as const, { agent_id: agentId, app_slug: appSlug })
+    const scope = serviceScope()
+    const { data: binding } = await selectMaybeSingle(scope, 'app_connection_agents', ['connection_id'] as const, { agent_id: agentId, app_slug: appSlug })
     if (!binding) return null
-    const { data: connection } = await selectMaybeSingle(supabase, 'app_connections', ['label', 'status'] as const, { id: binding.connection_id })
+    const { data: connection } = await selectMaybeSingle(scope, 'app_connections', ['label', 'status'] as const, { id: binding.connection_id })
     if (!connection || connection.status === 'deleted') return null
     return connection.label ?? ''
 }
@@ -558,8 +553,7 @@ export async function installedFromRegistry(reg: ServiceRegistry): Promise<Insta
     if (slugs.length === 0) return []
 
     // Resolve display metadata from the catalog (best-effort).
-    const supabase = createServiceRoleClient()
-    const { data: svcs } = await selectMany(supabase, 'services', ['slug', 'name', 'icon', 'category'] as const, { slug: { in: slugs } })
+    const { data: svcs } = await selectMany(serviceScope(), 'services', ['slug', 'name', 'icon', 'category'] as const, { slug: { in: slugs } })
     const bySlug = new Map((svcs ?? []).map(s => [s.slug, s]))
 
     return slugs.flatMap(slug =>
@@ -597,9 +591,9 @@ export async function uninstallService(agentId: string, key: string, actor?: Act
     if (entry) await decompileService(conn, engineAgentId, entry, { keepSkills: sharedSkillSlugs(reg, key) })
     await removeRegistryEntry(conn, engineAgentId, key)
     if (entry?.app && isAppSlug(entry.app.appSlug)) {
-        const supabase = createServiceRoleClient()
-        const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['workspace_id'] as const, { id: agentId })
-        if (agent) await unbindAgent(supabase, agent.workspace_id, agentId, entry.app.appSlug)
+        const scope = serviceScope()
+        const { data: agent } = await selectMaybeSingle(scope, 'agents', ['workspace_id'] as const, { id: agentId })
+        if (agent) await unbindAgent(scope, agent.workspace_id, agentId, entry.app.appSlug)
     }
 }
 

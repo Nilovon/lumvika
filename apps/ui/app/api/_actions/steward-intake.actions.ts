@@ -38,7 +38,7 @@ export async function decideIndustryAction(input: string): Promise<TemplateCateg
  */
 export async function saveStewardIntakeAction(intake: StewardIntake): Promise<{ industry: TemplateCategory | null }> {
     const ctx = await requireWorkspaceContext()
-    if (ctx.authUser.is_anonymous) throw new Error('Create your account first.')
+    if (ctx.authUser.isAnonymous) throw new Error('Create your account first.')
 
     const url = intake.companyUrl ? companySiteUrl(intake.companyUrl) : null
     // Free by now in the common case: the board's discoveries started this read three questions ago
@@ -74,7 +74,7 @@ export async function saveStewardIntakeAction(intake: StewardIntake): Promise<{ 
  */
 export async function waiveStewardProfileAction(): Promise<void> {
     const ctx = await requireWorkspaceContext()
-    if (ctx.authUser.is_anonymous) throw new Error('Create your account first.')
+    if (ctx.authUser.isAnonymous) throw new Error('Create your account first.')
 
     const { steward } = await readAnswers(ctx)
     if (!steward?.installedFirst || steward.profileAt) return

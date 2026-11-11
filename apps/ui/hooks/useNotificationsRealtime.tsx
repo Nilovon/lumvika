@@ -17,8 +17,8 @@ import { deliveryFor, recipientReason } from '@/lib/notifications/routing'
 import { useBoardStore } from '@/stores/board.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useUnseenRunsStore } from '@/stores/unseen-runs.store'
-import { useSession } from '@/supabase/session/SessionProvider'
-import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
+import { useSession } from '@/lib/auth/session/SessionProvider'
+import { useRealtimeSubscription } from '@/lib/live/useRealtimeSubscription'
 
 // Turns incoming `notifications` rows into a hub announcement, an optional sound, and (when the tab
 // is hidden) an OS notification. The hub already decided who a row reaches and why; this only picks

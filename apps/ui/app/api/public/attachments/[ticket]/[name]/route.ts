@@ -1,8 +1,7 @@
 import { readAttachmentTicketFromEnv } from '@/lib/apps/attachments'
 import { fileResponseHeaders } from '@/lib/files/content-type'
 import { LinkupError, downloadAttachment } from '@/lib/apps/linkup/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // The public link to a file somebody sent to a connected account, minted by the download tool and
 // the wake payload. The ticket is the only key: signed, good for a day, and only while the account
@@ -28,7 +27,7 @@ type Ticket = NonNullable<ReturnType<typeof readAttachmentTicketFromEnv>>
 async function resolve(ticketToken: string): Promise<{ ok: true; ticket: Ticket; accountId: string } | { ok: false; refusal: Response }> {
     const ticket = readAttachmentTicketFromEnv(ticketToken)
     if (!ticket) return { ok: false, refusal: new Response('This link is invalid or has expired.', { status: 410 }) }
-    const { data: connection } = await selectMaybeSingle(createServiceRoleClient(), 'app_connections', ['provider_account_id', 'status'] as const, { id: ticket.c })
+    const { data: connection } = await selectMaybeSingle(serviceScope(), 'app_connections', ['provider_account_id', 'status'] as const, { id: ticket.c })
     if (!connection?.provider_account_id || GONE_STATUSES.includes(connection.status)) return { ok: false, refusal: new Response('This account is no longer connected.', { status: 410 }) }
     return { ok: true, ticket, accountId: connection.provider_account_id }
 }

@@ -9,21 +9,13 @@ const paid = { subscription_status: 'active', trial_ends_at: null }
 
 describe('progressOf', () => {
     it('reads the five steps and ignores the reward and dismissed rows', () => {
-        const progress = progressOf(new Set(['first_agent', 'schedule', 'payment_method', 'reward', 'dismissed']), 'none')
-        expect(progress).toEqual({ phone: null, first_agent: true, ai_provider: false, invite: false, schedule: true, payment_method: true })
+        const progress = progressOf(new Set(['first_agent', 'schedule', 'payment_method', 'reward', 'dismissed']))
+        expect(progress).toEqual({ first_agent: true, ai_provider: false, invite: false, schedule: true, payment_method: true })
         expect(doneCount(progress)).toBe(3)
     })
 
-    it('leaves the phone out for an account never asked for one, or not read yet', () => {
-        expect(stepsOf(progressOf(new Set(), 'none'))).toHaveLength(5)
-        expect(stepsOf(progressOf(new Set(), null))).toHaveLength(5)
-    })
-
-    it('puts the phone first for an account that was asked for one', () => {
-        const skipped = progressOf(new Set(), 'skipped')
-        expect(stepsOf(skipped)).toHaveLength(6)
-        expect(nextStep(skipped)?.id).toBe('phone')
-        expect(doneCount(progressOf(new Set(), 'verified'))).toBe(1)
+    it('lists the five workspace steps', () => {
+        expect(stepsOf(progressOf(new Set()))).toHaveLength(5)
     })
 })
 
@@ -33,27 +25,15 @@ describe('nextStep', () => {
     })
 
     it('waits on the payment method once the first four are done', () => {
-        const four = progressOf(new Set(['first_agent', 'ai_provider', 'invite', 'schedule']), 'none')
+        const four = progressOf(new Set(['first_agent', 'ai_provider', 'invite', 'schedule']))
         expect(isComplete(four)).toBe(false)
         expect(nextStep(four)?.id).toBe('payment_method')
     })
 
     it('is null once the five are done', () => {
-        const all = progressOf(new Set(['first_agent', 'ai_provider', 'invite', 'schedule', 'payment_method']), 'none')
+        const all = progressOf(new Set(['first_agent', 'ai_provider', 'invite', 'schedule', 'payment_method']))
         expect(isComplete(all)).toBe(true)
         expect(nextStep(all)).toBeNull()
-    })
-
-    it('waits on a skipped phone once the five are done', () => {
-        const five = new Set(['first_agent', 'ai_provider', 'invite', 'schedule', 'payment_method'])
-        expect(isComplete(progressOf(five, 'skipped'))).toBe(false)
-        expect(isComplete(progressOf(five, 'verified'))).toBe(true)
-    })
-
-    it('counts a number no code reaches as the phone done', () => {
-        const five = new Set(['first_agent', 'ai_provider', 'invite', 'schedule', 'payment_method'])
-        expect(isComplete(progressOf(five, 'unverifiable'))).toBe(true)
-        expect(doneCount(progressOf(new Set(), 'unverifiable'))).toBe(1)
     })
 })
 

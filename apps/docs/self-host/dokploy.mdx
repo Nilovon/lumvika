@@ -8,9 +8,9 @@ description: "Run Lumvika on a server managed by Dokploy, with a domain and HTTP
 
 ## Before you start
 
-- A server attached to Dokploy, with at least 8 GB of memory: the app build needs 6. With Supabase on the same server, use 16 GB, or 8 GB and 4 GB of swap.
-- Supabase, on [supabase.com](https://supabase.com) or open source on your server, set up as in [Install](/self-host/install#2-set-up-supabase).
-- Two domains pointing at the server, one for the app and one for the engine: `lumvika.example.com` and `engine.example.com`.
+- A server attached to Dokploy, with at least 8 GB of memory: the app build needs 6.
+- A way to send email, set up as in [Install](/self-host/install#2-set-up-email).
+- Three domains pointing at the server, for the app, the engine and the file store: `lumvika.example.com`, `engine.example.com` and `files.example.com`.
 
 ## 1. Create the service
 
@@ -23,22 +23,21 @@ Paste the content of your `.env` in the **Environment** tab. Start from `.env.ex
 
 ```bash .env
 NEXT_PUBLIC_APP_URL=https://lumvika.example.com
-NEXT_PUBLIC_SUPABASE_URL=<the address of your Supabase>
 LUMVIKA_ENGINE_BROWSER_URL=https://engine.example.com
+NEXT_PUBLIC_STORAGE_URL=https://files.example.com
 ```
-
-The **Site URL** of your Supabase must be the same address as `NEXT_PUBLIC_APP_URL`.
 
 ## 3. Add the domains
 
-In the **Domains** tab, add two domains, both with HTTPS and Let's Encrypt:
+In the **Domains** tab, add three domains, all with HTTPS and Let's Encrypt:
 
 | Host | Service | Port |
 | --- | --- | --- |
 | `lumvika.example.com` | `app` | 3000 |
 | `engine.example.com` | `engine` | 3000 |
+| `files.example.com` | `storage` | 9000 |
 
-The engine needs its own domain: a browser connects to it directly to show a coworker's screen.
+The engine and the file store need their own domains: a browser connects to the engine directly to show a coworker's screen, and loads images straight from the file store.
 
 ## 4. Deploy
 
@@ -53,8 +52,8 @@ Then [sign in](/self-host/install#7-sign-in).
 
 ## 5. Close the published ports
 
-`docker-compose.yml` also publishes the app on port 3000 and the engine on port 3001. Docker opens these ports past `ufw`, so close them in your provider's firewall, and keep only 22, 80 and 443 open.
+`docker-compose.yml` also publishes the app on port 3000, the engine on port 3001 and the file store on port 3002. Docker opens these ports past `ufw`, so close them in your provider's firewall, and keep only 22, 80 and 443 open.
 
 ## Updating
 
-Pull the new version into your clone, then click **Deploy**. The engine keeps its data in the `engine-data` volume. When a release adds database migrations, apply them with `npx supabase db push`.
+Pull the new version into your clone, then click **Deploy**. The engine keeps its data in the `engine-data` volume, the database in `postgres-data` and the files in `storage-data`. The `migrate` step applies the database migrations a release adds before the app starts.

@@ -1,6 +1,6 @@
 import { logger, queue, schedules, task } from '@trigger.dev/sdk/v3'
 import { sweepTrialSequence } from '@/lib/whatsapp/trial-sequence'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 
 type TrialSequencePayload = {
     // Narrows the whole sweep to a few workspaces, for trying the messages end to end.
@@ -10,7 +10,7 @@ type TrialSequencePayload = {
 const trialSequenceQueue = queue({ name: 'whatsapp-trial-sequence', concurrencyLimit: 1 })
 
 async function sweep(payload: TrialSequencePayload) {
-    const report = await sweepTrialSequence(createServiceRoleClient(), new Date(), payload.workspaceIds)
+    const report = await sweepTrialSequence(serviceScope(), new Date(), payload.workspaceIds)
     logger.log('whatsapp trial sequence sweep', report)
     return report
 }
@@ -31,8 +31,8 @@ export const whatsappTrialSequenceSchedule = schedules.task({
     // The next tick is the retry: a message that left is already on its row.
     retry: { maxAttempts: 1 },
     run: async (_payload, { ctx }) => {
-        // apps/ui/.env holds the production Supabase credentials, so a local `pnpm trigger:dev`
-        // session would otherwise read real accounts every fifteen minutes.
+        // A local `pnpm trigger:dev` session may point at a copy of production data, and would
+        // otherwise read real accounts every fifteen minutes.
         if (ctx.environment.type === 'DEVELOPMENT') {
             logger.log('whatsapp trial sequence: skipped, dev environment')
             return null

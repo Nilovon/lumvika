@@ -7,7 +7,7 @@ import { buildSeedPages } from '@/lib/brain/seed-pages'
 import { companySiteUrl } from '@/lib/company/firecrawl'
 import { workEmailSite } from '@/lib/company/work-email-site'
 import { EngineRequestError, seedBrain } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 import { readAnswers, readSignup, type exploreCompanyTask } from './explore-company'
 
 // `exploreKey` asks for a new exploration, the brain's "read my website again". Without it the seed
@@ -37,12 +37,12 @@ export const seedCompanyBrain = task({
 })
 
 export async function seedCompanyBrainRun({ workspaceId, exploreKey }: SeedCompanyBrainPayload) {
-    const supabase = createServiceRoleClient()
-    const answers = await readAnswers(supabase, workspaceId)
+    const scope = serviceScope()
+    const answers = await readAnswers(scope, workspaceId)
 
     // A sign-up that skipped the website still names its company in a work address: without it,
     // every coworker starts on an empty Brain and asks what the company sells.
-    const url = (answers.company_url ? companySiteUrl(answers.company_url) : null) ?? workEmailSite((await readSignup(supabase, workspaceId)).email)
+    const url = (answers.company_url ? companySiteUrl(answers.company_url) : null) ?? workEmailSite((await readSignup(scope, workspaceId)).email)
     if (!url) {
         logger.log('brain seed: no company website, nothing to explore', { workspaceId })
         return null

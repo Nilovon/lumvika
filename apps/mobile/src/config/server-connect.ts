@@ -3,7 +3,7 @@ import { clientConfigSchema } from '@lumvika/contracts'
 import { ApiError, clientHeader, createApiClient } from '@/api/client'
 import type { CustomServer } from '@/config/custom-server'
 
-export type ServerProblem = 'invalid' | 'insecure' | 'unreachable' | 'not-lumvika' | 'outdated'
+export type ServerProblem = 'invalid' | 'insecure' | 'unreachable' | 'not-lumvika'
 
 export type ServerOrigin = { ok: true; origin: string } | { ok: false; problem: ServerProblem }
 
@@ -47,15 +47,10 @@ export function normalizeServerUrl(input: string): ServerOrigin {
     return { ok: true, origin: url.origin }
 }
 
-function reachableOverHttp(url: string): boolean {
-    const parsed = new URL(url)
-    return parsed.protocol === 'https:' || isLocalNetworkHost(parsed.hostname)
-}
-
 type Request = (path: string, init: { signal: AbortSignal }) => Promise<unknown>
 
-// Asks a hub how a phone signs in to it. An address that answers but is not a Lumvika hub, or is one
-// from before the app could pick a server, is told apart from one that does not answer at all.
+// Asks an address whether it is a Lumvika hub, which is also where the phone signs in. An address that
+// answers but is not a hub is told apart from one that does not answer at all.
 export async function lookUpServer(origin: string, request: Request = createApiClient({ baseUrl: origin, clientHeader })): Promise<ServerLookup> {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS)
@@ -70,7 +65,5 @@ export async function lookUpServer(origin: string, request: Request = createApiC
 
     const config = clientConfigSchema.safeParse(payload)
     if (!config.success) return { ok: false, problem: 'not-lumvika' }
-    if (!config.data.server) return { ok: false, problem: 'outdated' }
-    if (!reachableOverHttp(config.data.server.supabaseUrl)) return { ok: false, problem: 'insecure' }
-    return { ok: true, server: { apiUrl: origin, ...config.data.server } }
+    return { ok: true, server: { apiUrl: origin } }
 }

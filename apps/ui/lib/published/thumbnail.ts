@@ -1,11 +1,11 @@
 import 'server-only'
-import type { Database } from '@/app/api/database.types'
 import { capturePage } from '@/lib/og/shot'
 import { mintAccessTicket } from '@/lib/published/access-ticket'
 import { loadPublished } from '@/lib/published/gate'
 import { publishedSiteOrigin } from '@/lib/published/host'
 import { PUBLISHED_BUCKET, thumbnailKeyFor } from '@/lib/services/publish'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope, updateRows } from '@/lib/db'
+import { downloadObject, removeObjects, uploadObject } from '@lumvika/storage'
 
 const THUMB_WIDTH = 1280
 const THUMB_HEIGHT = 800
@@ -17,10 +17,10 @@ function isCapturable(contentType: string): boolean {
 }
 
 async function imageThumbnail(storageKey: string): Promise<Buffer | null> {
-    const { data } = await createServiceRoleClient().storage.from(PUBLISHED_BUCKET).download(storageKey)
+    const { data } = await downloadObject(PUBLISHED_BUCKET, storageKey)
     if (!data) return null
     const { default: sharp } = await import('sharp')
-    return sharp(Buffer.from(await data.arrayBuffer()))
+    return sharp(Buffer.from(data))
         .resize(THUMB_WIDTH * THUMB_SCALE, THUMB_HEIGHT * THUMB_SCALE, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .png()
         .toBuffer()
@@ -55,13 +55,12 @@ export async function captureThumbnail(slug: string, requestUrl: string): Promis
         const body = isImage ? await imageThumbnail(entry.storage_key) : await pageThumbnail(slug, entry.access_version, requestUrl)
         if (!body || body.byteLength === 0) return
 
-        const supabase = createServiceRoleClient()
         const key = thumbnailKeyFor(entry.workspace_id, slug, Date.now())
-        const { error } = await supabase.storage.from(PUBLISHED_BUCKET).upload(key, body, { contentType: 'image/png', upsert: true })
+        const { error } = await uploadObject(PUBLISHED_BUCKET, key, body, { contentType: 'image/png' })
         if (error) throw new Error(error.message)
 
-        await supabase.from('published_files').update<Database['public']['Tables']['published_files']['Update']>({ thumbnail_key: key }).eq('id', entry.id)
-        if (entry.thumbnail_key && entry.thumbnail_key !== key) await supabase.storage.from(PUBLISHED_BUCKET).remove([entry.thumbnail_key])
+        await updateRows(serviceScope(), 'published_files', { thumbnail_key: key }, { id: entry.id })
+        if (entry.thumbnail_key && entry.thumbnail_key !== key) await removeObjects(PUBLISHED_BUCKET, [entry.thumbnail_key])
     } catch (err) {
         console.warn('[published] thumbnail capture failed', slug, err instanceof Error ? err.message : err)
     }

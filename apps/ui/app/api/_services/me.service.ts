@@ -2,8 +2,7 @@ import { displayNameOf, PROFILE_NAME_MAX, readProfile } from '@/lib/auth/user-pr
 import { isSubscriptionEntitled } from '@lumvika/cloud/billing'
 import type { WorkspaceContext } from '@/app/api/_auth/ownership'
 import type { Me, MessageAuthor } from '@lumvika/contracts'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
-import type { User } from '@supabase/supabase-js'
+import { selectMaybeSingle } from '@/lib/db'
 
 export { displayNameOf, readProfile, type UserProfile } from '@/lib/auth/user-profile'
 
@@ -34,6 +33,6 @@ export function readMe(ctx: WorkspaceContext, locale: string | null = null): Me 
 
 // What the app shows its user, with the language their account picked so the iOS app follows it.
 export async function loadMe(ctx: WorkspaceContext): Promise<Me> {
-    const { data } = await selectMaybeSingle(ctx.supabase, 'users', ['locale'] as const, { id: ctx.userId })
+    const { data } = await selectMaybeSingle(ctx.scope, 'users', ['locale'] as const, { id: ctx.userId })
     return readMe(ctx, data?.locale ?? null)
 }

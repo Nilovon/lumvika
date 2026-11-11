@@ -6,8 +6,6 @@ import { PRODUCTION, STAGING } from '@lumvika/cloud-mobile/environments'
 export type Environment = {
     name: 'production' | 'staging' | 'local' | 'custom'
     apiUrl: string
-    supabaseUrl: string
-    supabasePublishableKey: string
 }
 
 // A store build is bound to its environment by the update channel baked in at build time, never by
@@ -20,8 +18,6 @@ export function environmentForChannel(channel: string | null): Environment {
     return {
         name: 'local',
         apiUrl: process.env.EXPO_PUBLIC_API_URL ?? STAGING.apiUrl,
-        supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? STAGING.supabaseUrl,
-        supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? STAGING.supabasePublishableKey,
     }
 }
 

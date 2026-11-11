@@ -21,7 +21,7 @@ describe('environmentForChannel', () => {
 })
 
 describe('environmentAtLaunch', () => {
-    const custom = { apiUrl: 'http://192.168.1.20:3000', supabaseUrl: 'http://192.168.1.20:54421', supabasePublishableKey: 'sb_publishable_local' }
+    const custom = { apiUrl: 'http://192.168.1.20:3000' }
 
     it('puts a server picked in the app before the one the build was made for', () => {
         expect(environmentAtLaunch('production', custom)).toEqual({ name: 'custom', ...custom })

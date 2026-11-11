@@ -5,7 +5,7 @@ import { z } from 'zod'
 //   - the install form rendered identically in the agent settings panel AND in chat
 //   - the compiler that turns it into engine primitives (mcpServers, .env keys, skills)
 // The manifest is stored as JSONB in the `services.manifest` column and validated on read.
-// Secrets collected via `inputs` go to the engine .env / mcp config — never to Supabase.
+// Secrets collected via `inputs` go to the engine .env / mcp config — never to the database.
 
 // The install-form field lives in @lumvika/contracts so templates can describe the very
 // same "value the user must supply" without depending on apps/ui.
@@ -13,7 +13,7 @@ export { inputDefSchema, inputOptionSchema, type InputDef, type InputOption } fr
 
 // Marks an mcp server that authenticates via browser OAuth (authorization-code + PKCE)
 // instead of a pasted credential. The user signs in through a popup; the resulting token
-// is stored in the engine token store (never in Supabase) and injected at connect time.
+// is stored in the engine token store (never in the database) and injected at connect time.
 // Endpoints are discovered from the server at connect — only overrides live here.
 export const mcpOAuthSchema = z.object({
     scopes: z.array(z.string()).optional(),

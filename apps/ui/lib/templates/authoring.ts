@@ -1,6 +1,6 @@
 import type { TemplateCategory, TemplateFaqItem } from '@lumvika/contracts'
 import { z } from 'zod'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
+import { serviceScope } from '@/lib/db'
 import { slugify } from '@/lib/slugify'
 import { failure, isErrorCode, type ActionFailure } from '@/lib/i18n/action-error'
 import { loadServiceCatalog } from './catalog'
@@ -46,7 +46,7 @@ export async function runImageUpload(formData: FormData, folder: TemplateImageFo
     if (!file.type.startsWith('image/')) return failure('chooseImage')
     if (file.size > MAX_IMAGE_BYTES) return failure('imageTooLarge', { max: MAX_IMAGE_BYTES / 1024 / 1024 })
 
-    const url = await uploadTemplateImageBytes(createServiceRoleClient(), await file.arrayBuffer(), folder)
+    const url = await uploadTemplateImageBytes(serviceScope(), await file.arrayBuffer(), folder)
     return { ok: true, url }
 }
 
@@ -64,12 +64,12 @@ export async function runMetaPrefill(input: unknown, currentSlug?: string): Prom
     const parsed = templateBriefSchema.safeParse(input)
     if (!parsed.success) return issues(parsed.error)
 
-    const supabase = createServiceRoleClient()
-    const catalog = await loadServiceCatalog(supabase, parsed.data.connectors)
+    const scope = serviceScope()
+    const catalog = await loadServiceCatalog(scope, parsed.data.connectors)
     const names = new Map([...catalog].map(([slug, entry]) => [slug, entry.name]))
 
     const { title, slugWords, category, tags, metaTitle, metaDescription } = await generateTemplateMeta(withConnectorNames(parsed.data, names))
-    const slug = currentSlug === undefined ? undefined : await uniqueTemplateSlug(supabase, slugify(slugWords) || slugify(title), currentSlug)
+    const slug = currentSlug === undefined ? undefined : await uniqueTemplateSlug(scope, slugify(slugWords) || slugify(title), currentSlug)
 
     return { ok: true, title, slug, category, tags, metaTitle, metaDescription }
 }

@@ -12,7 +12,7 @@ import { AlertCircleIcon, ArchiveIcon, CircleCheckIcon, ClockIcon, LoaderIcon } 
 import { cn } from '@/lib/utils'
 import { useBillingStore } from '@/stores/billing.store'
 import { useSandboxArchiveStore } from '@/stores/sandbox-archive.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { formatDate } from '@lumvika/i18n/format'
 import { ChromeBar } from '@lumvika/ui/chrome'
 import { useLocale, useTranslations } from 'next-intl'

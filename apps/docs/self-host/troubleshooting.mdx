@@ -6,87 +6,61 @@ description: "The problems people meet when hosting Lumvika, what causes them, a
 Start with the logs. Most problems say their cause there in one line.
 
 ```bash
-docker compose logs --since 30m app engine
+docker compose logs --since 30m migrate app engine
 ```
+
+## The app does not start
+
+`docker compose ps -a` shows `migrate` exited with an error, and `app` never started: the app waits for the migrations. Read why:
+
+```bash
+docker compose logs migrate
+```
+
+- **`password authentication failed`**: `POSTGRES_PASSWORD` changed after the first start. Postgres keeps the password it was created with: put the first one back in `.env`.
+- **`did not create the buckets`**: the file store refused `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`, or `S3_ENDPOINT` points at a store that does not answer. The store docker compose runs keeps the keys it was first started with, like Postgres.
+- **`extension "vector" is not available`**: your own `DATABASE_URL` points at a Postgres without pgvector. Install it there, or leave `DATABASE_URL` empty.
+
+After fixing `.env`, run `docker compose up -d` again: `migrate` runs on every start and only applies what is missing.
 
 ## "We could not send your code. Try again."
 
-The sign-in stopped before sending any email: the app could not read the database. Either the schema was never applied, or `SUPABASE_SECRET_KEY` holds the publishable key instead of the secret one. The check says which, and what to run:
+The app could not hand the email to a mailer. The app logs say why, on a line starting with `[auth]` or `[email]`:
 
 ```bash
-node scripts/self-host-check.mjs
+docker compose logs app | grep -E '\[(auth|email)\]'
 ```
 
-The app logs name the cause too, on a line starting with `[email-sign-up]`:
-
-```bash
-docker compose logs app | grep email-sign-up
-```
-
-`Could not find the function public.check_email_exists` means the schema is missing, `permission denied` means the wrong key. After fixing `.env`, run `docker compose up -d`.
+- **`RESEND_API_KEY missing`**: neither `RESEND_API_KEY` nor `SMTP_URL` is set. Set one, then `docker compose up -d`.
+- **A Resend error**: the key is wrong, or `RESEND_FROM` is not on a domain verified in Resend.
+- **An SMTP error**: `SMTP_URL` is wrong, or the server refuses `RESEND_FROM` as a sender.
 
 ## No sign-in code arrives
 
-**With `npx supabase start`**, no email leaves your computer. Every code lands in Mailpit, at [http://localhost:54424](http://localhost:54424).
+1. **The sender.** With Resend and no verified domain, `RESEND_FROM` falls back to Resend's test sender, which only delivers to the address of your Resend account. Verify your domain and set `RESEND_FROM` on it.
+2. **The logs.** With Resend, its dashboard's **Emails** page shows each email and why it bounced. With SMTP, the app logs show the server's answer.
+3. **The spam folder**, with a domain that has no SPF or DKIM records especially.
 
-**With open source Supabase on your server**, emails go through the SMTP server of `supabase-stack/.env`, and `docker logs supabase-auth` shows why one failed.
-
-**With a project on supabase.com**, check in this order:
-
-1. **The mailer.** Set up your own SMTP server in **Authentication > Emails > SMTP Settings**. On the Free plan, a project that keeps Supabase's own mailer cannot edit its templates, so the email arrives without the code. That mailer also sends only 2 emails an hour, and only to the members of your Supabase organization.
-2. **The template.** Once SMTP is saved, the email must carry the code, `{{ .Token }}`. Supabase's default templates only carry a link. Paste the [Lumvika template](/self-host/install#2-set-up-supabase) into **Magic Link**, **Confirm signup** and **Change Email Address**.
-3. **The logs.** **Logs > Auth** in the Supabase dashboard shows each email Supabase tried to send, and why it failed.
-4. **The spam folder**, with the built-in mailer especially.
-
-If the code arrives but is refused, it may have expired (15 minutes with the Lumvika settings), or **Email OTP Length** is not 6.
-
-## The sign-in dialog fails, or "Anonymous sign-in failed" in the logs
-
-A visitor starts as an anonymous user, and signing up turns that user into an account. On a project on supabase.com, turn on **Allow anonymous sign-ins** in **Authentication > Sign In / Providers**, and keep **Confirm email** on.
+A code works for 15 minutes, and five wrong tries discard it: ask for a new one.
 
 ## "permission denied" from Postgres
 
-The database is missing migrations. The schema is built by every file of `supabase/migrations`, in order, and a single missing one leaves tables or grants out.
+The database is missing migrations, or a query ran as the wrong role. `migrate` applies every migration of `packages/db/migrations` that is missing, on every start:
 
 ```bash
-npx supabase migration list      # what is applied, on a linked project
-npx supabase db push             # apply what is missing, on a project on supabase.com
-npx supabase migration up        # the same, on the local stack
+docker compose up -d
+docker compose logs migrate
 ```
 
-With open source Supabase, add `--db-url` and the address from [Install](/self-host/install#2-set-up-supabase) to `migration list` and to `db push --yes`.
+After `git pull`, rebuild first (`docker compose up -d --build`): a release can add migrations.
 
-After `git pull`, run it again: a release can add migrations.
+## Images and avatars do not load
 
-Also check that `SUPABASE_SECRET_KEY` holds the secret key (service_role), not the publishable one. The app does its server-side work with it.
+The browser loads them straight from the file store, at `NEXT_PUBLIC_STORAGE_URL`. Open one image's address in a new tab:
 
-## The app cannot reach Supabase on your machine
-
-Symptoms: the board does not load, and the app logs show `ECONNREFUSED` on port 54421.
-
-Inside the app container, `localhost` is the container itself, not your machine. Start with the profile that adds the relay:
-
-```bash
-docker compose --profile local-supabase up -d --build
-```
-
-And keep `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54421`, the address your browser uses too.
-
-## Tables are missing after `npx supabase start`
-
-If the first start failed partway, the next one reuses a database that never received the migrations: pages fail with `relation "public.services" does not exist`. Rebuild it, which erases its data:
-
-```bash
-npx supabase db reset
-```
-
-## No sign-in code in the email
-
-With open source Supabase, the default emails carry a link and no code. Serve the templates of your clone to the `auth` service, as in [Install](/self-host/install#2-set-up-supabase).
-
-## A Supabase service dies during the build
-
-The server ran out of memory: `dmesg | grep -i "out of memory"` confirms it. Add swap or memory, as in [Install](/self-host/install#2-set-up-supabase), then restart Supabase with `docker compose up -d` in its folder.
+- **It does not answer**: the port (`LUMVIKA_STORAGE_PORT`, 3002 by default) is closed, or the reverse proxy does not forward the storage domain. See [On a server](/self-host/install#on-a-server).
+- **`AccessDenied`**: the bucket is not public yet. Run `docker compose up -d`: `migrate` opens the public buckets.
+- **The address is wrong**: `NEXT_PUBLIC_STORAGE_URL` is baked in by the build. Fix it, then `docker compose up -d --build`.
 
 ## The build fails for lack of memory
 
@@ -108,7 +82,7 @@ Any other value only needs `docker compose up -d`, which recreates the container
 
 The engine docker compose started already belongs to another workspace. It goes to the first workspace that needs an engine, which can be a workspace you created while trying things out.
 
-Either [pair a server](/self-host/servers#add-a-server) for this workspace, or free the compose engine in Supabase Studio (see [Common tasks](/self-host/administration#common-tasks)) and place a coworker again.
+Either [pair a server](/self-host/servers#add-a-server) for this workspace, or free the compose engine in the database (see [Common tasks](/self-host/administration#common-tasks)) and place a coworker again.
 
 ## The app cannot reach your server
 

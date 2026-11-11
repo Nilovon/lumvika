@@ -2,7 +2,6 @@
 
 import { assertAgentInWorkspace, isAdminActor, requireLightSessionActor, visibleAgentIds } from '@/app/api/_auth/access'
 import { requireAdminContext, requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import type { Database } from '@/app/api/database.types'
 import { EMAIL_DELIVERY } from '@lumvika/cloud/email'
 import { isPublishPolicy, isPublishedAccess, shownPolicy, type PublishPolicy } from '@/lib/published/access'
 import {
@@ -19,8 +18,7 @@ import {
 } from '@/lib/services/publish'
 import { publishWithThumbnail } from '@/lib/services/publish-thumbnail'
 import type { PublishedFile } from '@/lib/services/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 import { failure, failureOf, refusalOf, type ActionRefusal } from '@/lib/i18n/action-error'
 import type { ActionResult } from './space.actions'
 
@@ -29,7 +27,7 @@ import type { ActionResult } from './space.actions'
 async function reachablePublishedWorkspaceId(slug: string): Promise<number> {
     const actor = await requireLightSessionActor()
     if (isAdminActor(actor)) return actor.workspaceId
-    const { data } = await selectMaybeSingle(createServiceRoleClient(), 'published_files', ['agent_id'] as const, { workspace_id: actor.workspaceId, slug })
+    const { data } = await selectMaybeSingle(serviceScope(), 'published_files', ['agent_id'] as const, { workspace_id: actor.workspaceId, slug })
     if (data) await assertAgentInWorkspace(data.agent_id, 'use', actor)
     return actor.workspaceId
 }
@@ -120,9 +118,9 @@ export type PublishSettings = { policy: PublishPolicy; publicLinks: number; invi
 
 export async function getPublishSettingsAction(): Promise<PublishSettings | null> {
     try {
-        const { workspace, supabase } = await requireWorkspaceContext()
+        const { workspace, scope } = await requireWorkspaceContext()
         const [{ data }, publicLinks] = await Promise.all([
-            selectMaybeSingle(supabase, 'workspaces', ['publish_policy'] as const, { id: workspace.id }),
+            selectMaybeSingle(scope, 'workspaces', ['publish_policy'] as const, { id: workspace.id }),
             countPublicLinks(workspace.id),
         ])
         return { policy: shownPolicy(data?.publish_policy), publicLinks, invitesAvailable: EMAIL_DELIVERY }
@@ -135,11 +133,8 @@ export async function getPublishSettingsAction(): Promise<PublishSettings | null
 export async function updatePublishPolicyAction(policy: PublishPolicy): Promise<ActionResult<{ closed: number }>> {
     try {
         if (!isPublishPolicy(policy)) return failure('unknownPolicy')
-        const { workspace, supabase } = await requireAdminContext('adminOnlyPublishing')
-        const { error } = await supabase
-            .from('workspaces')
-            .update<Database['public']['Tables']['workspaces']['Update']>({ publish_policy: policy })
-            .eq('id', workspace.id)
+        const { workspace, scope } = await requireAdminContext('adminOnlyPublishing')
+        const { error } = await updateRows(scope, 'workspaces', { publish_policy: policy }, { id: workspace.id })
         if (error) return { ok: false, error: error.message }
         const closed = policy === 'never' ? await closePublicLinks(workspace.id) : 0
         return { ok: true, closed }

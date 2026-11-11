@@ -38,17 +38,13 @@ describe('isLocalNetworkHost', () => {
 describe('lookUpServer', () => {
     const answering = (payload: unknown) => jest.fn(async () => payload)
 
-    it('takes the Supabase project the hub names', async () => {
-        const request = answering({ minBuild: 0, server: { supabaseUrl: 'https://api.example.com', supabasePublishableKey: 'sb_publishable_x' } })
-        expect(await lookUpServer('https://lumvika.example.com', request)).toEqual({
-            ok: true,
-            server: { apiUrl: 'https://lumvika.example.com', supabaseUrl: 'https://api.example.com', supabasePublishableKey: 'sb_publishable_x' },
-        })
+    it('keeps the address of a hub that answers as one', async () => {
+        const request = answering({ minBuild: 0 })
+        expect(await lookUpServer('https://lumvika.example.com', request)).toEqual({ ok: true, server: { apiUrl: 'https://lumvika.example.com' } })
         expect(request).toHaveBeenCalledWith('/api/v1/client', expect.anything())
     })
 
-    it('tells a hub from before server picking apart from an address that is not a hub', async () => {
-        expect(await lookUpServer('https://lumvika.example.com', answering({ minBuild: 0 }))).toEqual({ ok: false, problem: 'outdated' })
+    it('tells an address that is not a hub apart', async () => {
         expect(await lookUpServer('https://example.com', answering(null))).toEqual({ ok: false, problem: 'not-lumvika' })
         const notFound = jest.fn(async () => {
             throw new ApiError(404, 'Not found')
@@ -61,10 +57,5 @@ describe('lookUpServer', () => {
             throw new TypeError('Network request failed')
         })
         expect(await lookUpServer('http://192.168.1.99:3000', offline)).toEqual({ ok: false, problem: 'unreachable' })
-    })
-
-    it('refuses a hub whose Supabase the phone could only reach over the open internet in plain HTTP', async () => {
-        const request = answering({ minBuild: 0, server: { supabaseUrl: 'http://api.example.com', supabasePublishableKey: 'sb_publishable_x' } })
-        expect(await lookUpServer('https://lumvika.example.com', request)).toEqual({ ok: false, problem: 'insecure' })
     })
 })

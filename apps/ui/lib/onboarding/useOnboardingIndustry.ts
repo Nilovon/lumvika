@@ -1,7 +1,7 @@
 'use client'
 
 import { industryFromAnswers } from '@/lib/onboarding/box-name'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useMemo } from 'react'
 
 // The line of business the workspace's onboarding read off the company website. The answers already

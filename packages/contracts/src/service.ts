@@ -134,7 +134,7 @@ export const serviceSearchResultSchema = z.object({
 export type ServiceSearchResultView = z.infer<typeof serviceSearchResultSchema>
 
 // Fixed set of catalog categories. Mirrored by the `services_category_check`
-// constraint in supabase/migrations/20260616000000_service_categories.sql.
+// constraint of `services` in packages/db/src/schema/public.ts.
 // 'other' is the neutral fallback default; no real service should use it.
 export const SERVICE_CATEGORIES = [
     'payments',

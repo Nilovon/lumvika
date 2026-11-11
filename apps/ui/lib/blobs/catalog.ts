@@ -1,4 +1,4 @@
-import { publicUrl } from '@lumvika/storage/s3'
+import { bucketName, publicUrl } from '@lumvika/storage/s3'
 import { ILLUSTRATION_ENTRIES } from '@lumvika/cloud/illustrations'
 
 export type BlobColor =
@@ -37,7 +37,7 @@ export const BLOB_ILLUSTRATIONS: readonly BlobIllustration[] = ILLUSTRATION_ENTR
 // Whether the workspace still carries an icon nobody chose. Seeding one from a company favicon must
 // never overwrite a mark picked by hand.
 export function isBlobUrl(url: string | null | undefined): boolean {
-    return !!url && url.includes(`/${BLOB_BUCKET}/`)
+    return !!url && url.includes(`/${bucketName('blob-illustrations')}/`)
 }
 
 export function getBlobByFile(file: string): BlobIllustration | undefined {

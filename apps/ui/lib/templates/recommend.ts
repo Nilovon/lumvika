@@ -1,14 +1,12 @@
 // No 'server-only' and no Next primitive: the lifecycle sweeper imports this from a Trigger.dev
-// task. The Supabase client is a parameter for the same reason, and `OnboardingAnswers` is a type
+// task. The database scope is a parameter for the same reason, and `OnboardingAnswers` is a type
 // import only, because its module pulls in the browser client.
 import { generateObject } from 'ai'
 import { z } from 'zod'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { TemplateCategory } from '@lumvika/contracts'
-import type { Database } from '@/app/api/database.types'
 import type { OnboardingAnswers } from '@/app/actions/onboarding'
 import { hasOpenRouterKey, openrouter } from '@/lib/ai/openrouter'
-import { selectAll, type Filters } from '@/supabase/supabase-helpers'
+import { selectAll, type DbScope, type Filters } from '@/lib/db'
 import { archiveAgentNames, archivesFromRow } from './archives'
 import { agentsFromRow, connectorsFromRow } from './document'
 import { templateCardStamp, templateEmailCardUrl } from './email-card'
@@ -182,8 +180,8 @@ export function recommendContext(answers: OnboardingAnswers | null, now: Date): 
 }
 
 /** Every installable template, read once and scored in memory for as many accounts as needed. */
-export async function loadRecommendCandidates(supabase: SupabaseClient<Database>): Promise<TemplateCandidate[]> {
-    const { data, error } = await selectAll(supabase, 'templates', RECOMMEND_COLUMNS, RECOMMEND_FILTERS, { column: 'published_at', ascending: false })
+export async function loadRecommendCandidates(scope: DbScope): Promise<TemplateCandidate[]> {
+    const { data, error } = await selectAll(scope, 'templates', RECOMMEND_COLUMNS, RECOMMEND_FILTERS, { column: 'published_at', ascending: false })
     if (error || !data) return []
     return data.map(row => toCandidate(row as unknown as Record<string, unknown>)).filter((candidate): candidate is TemplateCandidate => candidate !== null)
 }

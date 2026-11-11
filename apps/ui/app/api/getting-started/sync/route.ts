@@ -19,14 +19,14 @@ export async function POST(): Promise<Response> {
     if (ctx.workspace.is_sandbox) return Response.json({ visible: false })
 
     const workspaceId = ctx.workspace.id
-    await reportGettingStartedSteps(ctx.supabase, workspaceId)
-    const items = await readGettingStartedItems(ctx.supabase, workspaceId)
+    await reportGettingStartedSteps(ctx.scope, workspaceId)
+    const items = await readGettingStartedItems(ctx.scope, workspaceId)
     if (items.has('dismissed')) return Response.json({ visible: false, dismissed: true })
 
-    const found = (await Promise.all([catchUpEngineSteps(ctx.supabase, workspaceId, items), catchUpPaymentMethod(ctx.supabase, workspaceId, items)])).flat()
-    await markGettingStarted(ctx.supabase, workspaceId, found)
+    const found = (await Promise.all([catchUpEngineSteps(ctx.scope, workspaceId, items), catchUpPaymentMethod(ctx.scope, workspaceId, items)])).flat()
+    await markGettingStarted(ctx.scope, workspaceId, found)
     for (const item of found) items.add(item)
 
-    await grantGettingStartedReward(ctx.supabase, workspaceId, items)
+    await grantGettingStartedReward(ctx.scope, workspaceId, items)
     return Response.json({ visible: true })
 }

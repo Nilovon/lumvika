@@ -12,7 +12,7 @@ vi.mock('@/app/api/_actions/message-feedback.actions', () => ({
 }))
 vi.mock('@/app/api/_auth/ownership', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/ownership')>()),
-    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace: { id: 7 }, supabase: {} }),
+    requireWorkspaceContext: async () => ({ userId: 'user-1', authUser: { id: 'user-1' }, workspace: { id: 7 }, scope: {} }),
 }))
 
 const conversation = await import('./route')

@@ -14,13 +14,32 @@ import type { EngineAgentConfigPatch } from '@/lib/engine/types'
 import { AGENT_SPAN, UNPLACED_COL, agentsOverlap, isPlaced } from '@/lib/board/iso'
 import type { GridPosition } from '@/lib/board/types'
 import { coworkerLanguageFor } from '@/app/api/_services/coworker-language.service'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectSingle } from '@/supabase/supabase-helpers'
+import { deleteRows, insertRow, selectMany, selectSingle, serviceScope, updateRows, type DbScope } from '@/lib/db'
 import { sanitizeIdentifier } from '@/lib/utils'
 import { duplicateAgentName } from '@/lib/copy-name'
 import { PLAN_LIMIT_REASON, hasFreeAgentSlot } from './capacity.service'
 import { getSpaceConnection } from './space.service'
 import { AppError, failure, type ActionFailure } from '@/lib/i18n/action-error'
+
+type AgentRow = Database['public']['Tables']['agents']['Row']
+
+const AGENT_ROW_COLUMNS = [
+    'id',
+    'name',
+    'description',
+    'status',
+    'col',
+    'row',
+    'workspace_id',
+    'created_at',
+    'space_id',
+    'engine_agent_id',
+    'handle',
+    'template_id',
+    'disabled_at',
+    'disabled_reason',
+    'disabled_schedule_slugs',
+] as const satisfies readonly (keyof AgentRow)[]
 
 type CreateAgentParams = {
     name: string
@@ -49,16 +68,16 @@ type CreateAgentParams = {
 // overlapping an existing one, so a freshly created agent lands inside its space instead of
 // waiting in the unplaced toolbar. Returns null when nothing fits, in which case we leave the
 // agent unplaced for manual placement.
-export async function findFreeCellInSpace(supabase: ReturnType<typeof createServiceRoleClient>, spaceId: string): Promise<GridPosition | null> {
-    const [cell] = await findFreeCellsInSpace(supabase, spaceId, 1)
+export async function findFreeCellInSpace(scope: DbScope, spaceId: string): Promise<GridPosition | null> {
+    const [cell] = await findFreeCellsInSpace(scope, spaceId, 1)
     return cell ?? null
 }
 
 // The same scan for several agents landing in one pass: each cell handed out counts as taken for the
 // next, which a per-agent re-read cannot see before the rows are inserted. Shorter than `count` when
 // the space runs out of room.
-export async function findFreeCellsInSpace(supabase: ReturnType<typeof createServiceRoleClient>, spaceId: string, count: number): Promise<GridPosition[]> {
-    const { data: space } = await selectSingle(supabase, 'spaces', ['col_start', 'row_start', 'col_end', 'row_end'] as const, { id: spaceId })
+export async function findFreeCellsInSpace(scope: DbScope, spaceId: string, count: number): Promise<GridPosition[]> {
+    const { data: space } = await selectSingle(scope, 'spaces', ['col_start', 'row_start', 'col_end', 'row_end'] as const, { id: spaceId })
     if (!space) return []
 
     const colMin = Math.min(space.col_start, space.col_end)
@@ -66,7 +85,7 @@ export async function findFreeCellsInSpace(supabase: ReturnType<typeof createSer
     const rowMin = Math.min(space.row_start, space.row_end)
     const rowMax = Math.max(space.row_start, space.row_end)
 
-    const { data: occupants } = await selectMany(supabase, 'agents', ['col', 'row'] as const, { space_id: spaceId })
+    const { data: occupants } = await selectMany(scope, 'agents', ['col', 'row'] as const, { space_id: spaceId })
     const anchors = (occupants ?? []).filter(a => isPlaced(a)).map(a => ({ col: a.col, row: a.row }))
 
     const cells: GridPosition[] = []
@@ -88,8 +107,8 @@ export async function findFreeCellsInSpace(supabase: ReturnType<typeof createSer
 // Moving changes who sees the coworker, so it takes `manage` on the Box it leaves and on the one it
 // joins.
 export async function moveAgentToBox(agentId: string, spaceId: string, actor: Actor): Promise<{ ok: true; position: GridPosition } | ActionFailure> {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['space_id', 'workspace_id'] as const, { id: agentId })
+    const scope = serviceScope()
+    const { data: agent } = await selectSingle(scope, 'agents', ['space_id', 'workspace_id'] as const, { id: agentId })
     if (!agent || agent.workspace_id !== actor.workspaceId) return failure(COWORKER_NOT_FOUND)
     if (agent.space_id === spaceId) return failure('coworkerAlreadyInBox')
     const [from, to] = await Promise.all([readSpaceAccess(actor, agent.space_id), readSpaceAccess(actor, spaceId)])
@@ -99,10 +118,10 @@ export async function moveAgentToBox(agentId: string, spaceId: string, actor: Ac
 
     // Refused rather than moved unplaced: an unplaced agent leaves the board, and the toolbar badge
     // that brings it back is a worse place than the one it already had.
-    const position = await findFreeCellInSpace(supabase, spaceId)
+    const position = await findFreeCellInSpace(scope, spaceId)
     if (!position) return failure('boxFull')
 
-    const { error } = await supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ space_id: spaceId, col: position.col, row: position.row }).eq('id', agentId)
+    const { error } = await updateRows(scope, 'agents', { space_id: spaceId, col: position.col, row: position.row }, { id: agentId })
     if (error) return { ok: false, error: `Failed to move agent: ${error.message}` }
 
     return { ok: true, position }
@@ -124,8 +143,8 @@ function allocateHandle(displayName: string, taken: Set<string>): string {
 // workspace (suffix _2, _3, … on collision), and kept equal to the engine's config.name so
 // @mentions resolve on the engine. Workspace-wide rather than per Box, because every Box of a
 // workspace now runs on the same engine, where one name means one agent.
-export async function deriveUniqueHandle(supabase: ReturnType<typeof createServiceRoleClient>, workspaceId: number, displayName: string, excludeAgentId?: string): Promise<string> {
-    const { data } = await selectMany(supabase, 'agents', ['id', 'handle'] as const, { workspace_id: workspaceId })
+export async function deriveUniqueHandle(scope: DbScope, workspaceId: number, displayName: string, excludeAgentId?: string): Promise<string> {
+    const { data } = await selectMany(scope, 'agents', ['id', 'handle'] as const, { workspace_id: workspaceId })
     const taken = new Set((data ?? []).filter(a => a.id !== excludeAgentId && a.handle).map(a => a.handle as string))
     return allocateHandle(displayName, taken)
 }
@@ -133,8 +152,8 @@ export async function deriveUniqueHandle(supabase: ReturnType<typeof createServi
 // A batch allocates against one growing set: the singular form re-reads the table on every call,
 // so two agents created in the same pass would be handed the same handle, neither being inserted
 // yet.
-export async function deriveUniqueHandles(supabase: ReturnType<typeof createServiceRoleClient>, workspaceId: number, displayNames: string[]): Promise<string[]> {
-    const { data } = await selectMany(supabase, 'agents', ['handle'] as const, { workspace_id: workspaceId })
+export async function deriveUniqueHandles(scope: DbScope, workspaceId: number, displayNames: string[]): Promise<string[]> {
+    const { data } = await selectMany(scope, 'agents', ['handle'] as const, { workspace_id: workspaceId })
     const taken = new Set((data ?? []).filter(a => a.handle).map(a => a.handle as string))
     return displayNames.map(displayName => {
         const handle = allocateHandle(displayName, taken)
@@ -156,24 +175,25 @@ export async function createAgent(params: CreateAgentParams) {
     const enabled = params.enabled ?? (await hasFreeAgentSlot(workspaceId))
 
     const conn = await getSpaceConnection(spaceId)
-    const supabase = createServiceRoleClient()
-    const handle = params.handle ?? (await deriveUniqueHandle(supabase, workspaceId, name))
+    const scope = serviceScope()
+    const handle = params.handle ?? (await deriveUniqueHandle(scope, workspaceId, name))
 
     // The engine scaffolds the agent (SOUL.md, config.json, workspace) and
     // returns its canonical id. We mirror only what the grid UI needs. The engine
     // stores the handle as config.name (mention/resolution key); the free display
     // name goes to displayName (used in the SOUL prompt).
-    const language = config?.language ?? (await coworkerLanguageFor(supabase, workspaceId))
+    const language = config?.language ?? (await coworkerLanguageFor(scope, workspaceId))
     const detail = await engineCreateAgent(conn, {
         config: { ...config, name: handle, displayName: name, description: description || undefined, enabled, ...(language ? { language } : {}) },
         soul: soulMd || undefined,
         install: installMd || undefined,
     })
 
-    const cell = position ?? (await findFreeCellInSpace(supabase, spaceId))
-    const { data: agent, error } = await supabase
-        .from('agents')
-        .insert<Database['public']['Tables']['agents']['Insert']>({
+    const cell = position ?? (await findFreeCellInSpace(scope, spaceId))
+    const { data: agent, error } = await insertRow(
+        scope,
+        'agents',
+        {
             name,
             handle,
             description: description || null,
@@ -184,9 +204,9 @@ export async function createAgent(params: CreateAgentParams) {
             row: cell ? cell.row : UNPLACED_COL,
             disabled_at: enabled ? null : new Date().toISOString(),
             disabled_reason: enabled ? null : PLAN_LIMIT_REASON,
-        })
-        .select()
-        .single()
+        },
+        AGENT_ROW_COLUMNS
+    )
 
     if (error || !agent) {
         // Roll back the engine-side agent so we don't leak orphans.
@@ -222,18 +242,19 @@ export async function importAgent(params: ImportAgentParams) {
     const enabled = await hasFreeAgentSlot(workspaceId)
 
     const conn = await getSpaceConnection(spaceId)
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
     const imported = await importAgentArchive(conn, archive, handle, name)
     // The archive carries its own config, so unlike createAgent the flag has to be applied after
     // the unpack rather than passed into it.
     // The archive may carry the language of the workspace it was captured in: this one's replaces it.
-    await enginePatchAgent(conn, imported.id, { ...(enabled ? {} : { enabled: false }), language: await coworkerLanguageFor(supabase, workspaceId) })
+    await enginePatchAgent(conn, imported.id, { ...(enabled ? {} : { enabled: false }), language: await coworkerLanguageFor(scope, workspaceId) })
 
-    const cell = position ?? (await findFreeCellInSpace(supabase, spaceId))
-    const { data: agent, error } = await supabase
-        .from('agents')
-        .insert<Database['public']['Tables']['agents']['Insert']>({
+    const cell = position ?? (await findFreeCellInSpace(scope, spaceId))
+    const { data: agent, error } = await insertRow(
+        scope,
+        'agents',
+        {
             name,
             handle,
             description: imported.description || null,
@@ -245,9 +266,9 @@ export async function importAgent(params: ImportAgentParams) {
             row: cell ? cell.row : UNPLACED_COL,
             disabled_at: enabled ? null : new Date().toISOString(),
             disabled_reason: enabled ? null : PLAN_LIMIT_REASON,
-        })
-        .select()
-        .single()
+        },
+        AGENT_ROW_COLUMNS
+    )
 
     if (error || !agent) {
         await engineDeleteAgent(conn, imported.id).catch(() => {})
@@ -272,7 +293,7 @@ type DuplicateAgentParams = {
 }
 
 export type DuplicatedAgent = {
-    agent: Database['public']['Tables']['agents']['Row']
+    agent: AgentRow
     schedules: string[]
     triggers: string[]
 }
@@ -291,8 +312,8 @@ function isMissingDuplicateRoute(err: unknown): boolean {
 export async function duplicateAgent(params: DuplicateAgentParams): Promise<DuplicatedAgent> {
     const { agentRowId, workspaceId, spaceId, position } = params
 
-    const supabase = createServiceRoleClient()
-    const { data: source } = await selectSingle(supabase, 'agents', ['name', 'space_id', 'engine_agent_id', 'description', 'template_id', 'workspace_id'] as const, { id: agentRowId })
+    const scope = serviceScope()
+    const { data: source } = await selectSingle(scope, 'agents', ['name', 'space_id', 'engine_agent_id', 'description', 'template_id', 'workspace_id'] as const, { id: agentRowId })
     if (!source || source.workspace_id !== workspaceId || !source.engine_agent_id) throw new AppError(COWORKER_NOT_FOUND)
     // A copy carries its source's whole setup, keys and connected services included, so both Boxes
     // have to be managed: the source like a share link, the copy's like any creation.
@@ -300,7 +321,7 @@ export async function duplicateAgent(params: DuplicateAgentParams): Promise<Dupl
     await assertCanCreateIn(params.actor, workspaceId, spaceId)
     const enabled = await hasFreeAgentSlot(workspaceId)
     const name = duplicateAgentName(source.name)
-    const handle = await deriveUniqueHandle(supabase, workspaceId, name)
+    const handle = await deriveUniqueHandle(scope, workspaceId, name)
     const conn = await getSpaceConnection(spaceId)
 
     let copy
@@ -314,10 +335,11 @@ export async function duplicateAgent(params: DuplicateAgentParams): Promise<Dupl
     // than passed in, exactly as for an import.
     if (!enabled) await enginePatchAgent(conn, copy.id, { enabled: false })
 
-    const cell = position ?? (await findFreeCellInSpace(supabase, spaceId))
-    const { data: agent, error } = await supabase
-        .from('agents')
-        .insert<Database['public']['Tables']['agents']['Insert']>({
+    const cell = position ?? (await findFreeCellInSpace(scope, spaceId))
+    const { data: agent, error } = await insertRow(
+        scope,
+        'agents',
+        {
             name,
             handle,
             description: copy.description || source.description || null,
@@ -331,9 +353,9 @@ export async function duplicateAgent(params: DuplicateAgentParams): Promise<Dupl
             row: cell ? cell.row : UNPLACED_COL,
             disabled_at: enabled ? null : new Date().toISOString(),
             disabled_reason: enabled ? null : PLAN_LIMIT_REASON,
-        })
-        .select()
-        .single()
+        },
+        AGENT_ROW_COLUMNS
+    )
 
     if (error || !agent) {
         await engineDeleteAgent(conn, copy.id).catch(() => {})
@@ -358,8 +380,8 @@ export async function duplicateAgent(params: DuplicateAgentParams): Promise<Dupl
 // Only the schedules that were running are recorded, so resuming restores exactly those and leaves
 // whatever the user had switched off themselves switched off.
 export async function pauseAgentSchedules(id: string): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['engine_agent_id', 'space_id'] as const, { id })
+    const scope = serviceScope()
+    const { data: agent } = await selectSingle(scope, 'agents', ['engine_agent_id', 'space_id'] as const, { id })
     if (!agent?.engine_agent_id) return
 
     const conn = await getSpaceConnection(agent.space_id)
@@ -371,12 +393,12 @@ export async function pauseAgentSchedules(id: string): Promise<void> {
         paused.push(schedule.slug)
     }
 
-    await supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ disabled_schedule_slugs: paused }).eq('id', id)
+    await updateRows(scope, 'agents', { disabled_schedule_slugs: paused }, { id })
 }
 
 export async function resumeAgentSchedules(id: string): Promise<void> {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['engine_agent_id', 'space_id', 'disabled_schedule_slugs'] as const, { id })
+    const scope = serviceScope()
+    const { data: agent } = await selectSingle(scope, 'agents', ['engine_agent_id', 'space_id', 'disabled_schedule_slugs'] as const, { id })
     if (!agent?.engine_agent_id || agent.disabled_schedule_slugs.length === 0) return
 
     const conn = await getSpaceConnection(agent.space_id)
@@ -384,26 +406,26 @@ export async function resumeAgentSchedules(id: string): Promise<void> {
         await updateSchedule(conn, agent.engine_agent_id, slug, { enabled: true })
     }
 
-    await supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ disabled_schedule_slugs: [] }).eq('id', id)
+    await updateRows(scope, 'agents', { disabled_schedule_slugs: [] }, { id })
 }
 
 // The handle follows the name, so what other coworkers write after @ always matches what the user
 // sees. The engine rewrites every `@oldHandle` written into the other agents' souls, skills,
 // schedules and memories in the same PATCH, which is what keeps their calls resolving. The engine
-// is written first: it is the side that can be unreachable, and a handle moved in Supabase alone
+// is written first: it is the side that can be unreachable, and a handle moved in the database alone
 // would be offered in the UI while call_agent still only answers to the old one.
 export async function renameAgent(id: string, newName: string) {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['workspace_id', 'space_id', 'engine_agent_id', 'handle'] as const, { id })
+    const scope = serviceScope()
+    const { data: agent } = await selectSingle(scope, 'agents', ['workspace_id', 'space_id', 'engine_agent_id', 'handle'] as const, { id })
     if (!agent) throw new AppError(COWORKER_NOT_FOUND)
 
-    const handle = await deriveUniqueHandle(supabase, agent.workspace_id, newName, id)
+    const handle = await deriveUniqueHandle(scope, agent.workspace_id, newName, id)
     if (agent.engine_agent_id) {
         const conn = await getSpaceConnection(agent.space_id)
         await enginePatchAgent(conn, agent.engine_agent_id, { name: handle, displayName: newName })
     }
 
-    const { error } = await supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ name: newName, handle }).eq('id', id)
+    const { error } = await updateRows(scope, 'agents', { name: newName, handle }, { id })
     if (error) throw new Error(`Failed to rename agent: ${error.message}`)
 
     return { name: newName, handle, handleChanged: handle !== agent.handle }
@@ -412,15 +434,15 @@ export async function renameAgent(id: string, newName: string) {
 // A handle that no longer follows the name, set on purpose. The engine rewrites the `@oldHandle`
 // references the same way it does for a rename.
 export async function changeAgentHandle(id: string, requestedHandle: string) {
-    const supabase = createServiceRoleClient()
-    const { data: agent } = await selectSingle(supabase, 'agents', ['workspace_id', 'space_id', 'engine_agent_id', 'name', 'handle'] as const, { id })
+    const scope = serviceScope()
+    const { data: agent } = await selectSingle(scope, 'agents', ['workspace_id', 'space_id', 'engine_agent_id', 'name', 'handle'] as const, { id })
     if (!agent) throw new AppError(COWORKER_NOT_FOUND)
 
     const handle = sanitizeIdentifier(requestedHandle).replace(/^_+|_+$/g, '')
     if (!handle) throw new AppError('handleUnusable', { handle: requestedHandle })
 
     if (handle !== agent.handle) {
-        const { data: siblings } = await selectMany(supabase, 'agents', ['id', 'handle'] as const, { workspace_id: agent.workspace_id })
+        const { data: siblings } = await selectMany(scope, 'agents', ['id', 'handle'] as const, { workspace_id: agent.workspace_id })
         if ((siblings ?? []).some(sibling => sibling.id !== id && sibling.handle === handle)) {
             throw new AppError('handleTaken', { handle })
         }
@@ -431,16 +453,16 @@ export async function changeAgentHandle(id: string, requestedHandle: string) {
         await enginePatchAgent(conn, agent.engine_agent_id, { name: handle })
     }
 
-    const { error } = await supabase.from('agents').update<Database['public']['Tables']['agents']['Update']>({ handle }).eq('id', id)
+    const { error } = await updateRows(scope, 'agents', { handle }, { id })
     if (error) throw new Error(`Failed to change the handle: ${error.message}`)
 
     return { name: agent.name, handle }
 }
 
 export async function deleteAgent(id: string) {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: agent } = await selectSingle(supabase, 'agents', ['engine_agent_id', 'space_id'] as const, { id })
+    const { data: agent } = await selectSingle(scope, 'agents', ['engine_agent_id', 'space_id'] as const, { id })
 
     if (!agent) {
         throw new AppError(COWORKER_NOT_FOUND)
@@ -451,7 +473,7 @@ export async function deleteAgent(id: string) {
         await engineDeleteAgent(conn, agent.engine_agent_id).catch(() => {})
     }
 
-    await supabase.from('agents').delete().eq('id', id)
+    await deleteRows(scope, 'agents', { id })
 
     return { success: true }
 }

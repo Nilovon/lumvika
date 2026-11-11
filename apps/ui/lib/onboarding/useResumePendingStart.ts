@@ -4,7 +4,7 @@ import { isSubscriptionEntitled } from '@lumvika/cloud/billing'
 import { useStartPending } from '@/lib/onboarding/useStartPending'
 import { useBillingStore } from '@/stores/billing.store'
 import { hasPendingStart, useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useCallback } from 'react'
 
 // Replays whatever is parked (a first-agent draft or a shared template) after an anonymous user

@@ -17,7 +17,8 @@ export const OAUTH_PROVIDER_CONFIG: Record<OAuthProvider, OAuthProviderConfig> =
 }
 
 // The providers offered on the sign-in page: NEXT_PUBLIC_OAUTH_PROVIDERS (comma-separated) once
-// configured on the Supabase project, else both on Lumvika Cloud and none on a self-hosted install.
+// configured in the auth layer (GOOGLE_CLIENT_ID, APPLE_CLIENT_ID…), else both on Lumvika Cloud and
+// none on a self-hosted install.
 const CONFIGURED_OAUTH_PROVIDERS = process.env.NEXT_PUBLIC_OAUTH_PROVIDERS
 
 export const ENABLED_OAUTH_PROVIDERS: readonly OAuthProvider[] =

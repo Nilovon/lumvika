@@ -3,15 +3,14 @@ import { loadManifest } from '@/app/api/_services/services.service'
 import { authenticateEngineToken, getWorkspaceConnection } from '@/app/api/_services/workspace-engine.service'
 import { ComposioApiError, composioUserId, executeTool, listToolkitTools } from '@/lib/composio/client'
 import { readRegistry, upsertRegistryEntry } from '@/lib/services/registry'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 
 // A Composio service's MCP server, hosted by the UI — sibling of /api/mcp/managed/<provider>,
 // but the third-party token never exists on our side at all: Composio holds it, and every
 // tools/call is forwarded to Composio scoped by a per-agent user_id.
 //
 // Auth model: the engine authenticates via `x-lumvika-key` (its LUMVIKA_API_KEY → space), and
-// `x-lumvika-agent` (the ENGINE agent id) is resolved to the Supabase agent WITHIN that workspace —
+// `x-lumvika-agent` (the ENGINE agent id) is resolved to the agent row WITHIN that workspace —
 // so the user_id is derived server-side and a box can never reach another workspace's
 // connections, even with a forged header. The COMPOSIO_API_KEY stays on this server.
 // An extra account of the app is compiled with `x-lumvika-instance: <instanceId>`, which picks its
@@ -130,8 +129,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         const args = (rpcParams?.arguments ?? {}) as Record<string, unknown>
 
         const engineAgentId = req.headers.get('x-lumvika-agent') ?? ''
-        const supabase = createServiceRoleClient()
-        const { data: agent } = engineAgentId ? await selectMaybeSingle(supabase, 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId }) : { data: null }
+        const { data: agent } = engineAgentId ? await selectMaybeSingle(serviceScope(), 'agents', ['id'] as const, { engine_agent_id: engineAgentId, workspace_id: engine.workspaceId }) : { data: null }
         if (!agent) return rpcError(id, -32603, 'Coworker does not belong to the authenticated workspace')
 
         try {

@@ -9,7 +9,7 @@ import { SkeletonPanelRows } from '@/components/ui/skeleton'
 import { TooltipDisabledReason } from '@/components/ui/tooltip'
 import { ENABLED_OAUTH_PROVIDERS, OAUTH_PROVIDER_CONFIG, type OAuthProvider } from '@/lib/auth/oauth-providers'
 import { ProviderIcon } from '@/lib/engine/provider-icons'
-import { Mail, Smartphone } from '@/lib/icons'
+import { Mail } from '@/lib/icons'
 import { useTranslations } from 'next-intl'
 import type { ComponentType } from 'react'
 
@@ -75,13 +75,11 @@ export type SignInMethodsPanelProps = {
     unavailableReasons?: Partial<Record<OAuthProvider, string>>
     busyProvider?: OAuthProvider | null
     onChangeEmail: () => void
-    // Absent where phone sign-in is not offered: the row is left out.
-    onChangePhone?: () => void
     onConnect: (provider: OAuthProvider) => void
     onDisconnect: (provider: OAuthProvider) => void
 }
 
-export function SignInMethodsPanel({ methods, unavailableReasons, busyProvider = null, onChangeEmail, onChangePhone, onConnect, onDisconnect }: SignInMethodsPanelProps) {
+export function SignInMethodsPanel({ methods, unavailableReasons, busyProvider = null, onChangeEmail, onConnect, onDisconnect }: SignInMethodsPanelProps) {
     const t = useTranslations('account.signIn')
     if (!methods) {
         return (
@@ -91,7 +89,7 @@ export function SignInMethodsPanel({ methods, unavailableReasons, busyProvider =
         )
     }
 
-    const { email, oauth, phone } = methods
+    const { email, oauth } = methods
 
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-sm:pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6">
@@ -117,20 +115,6 @@ export function SignInMethodsPanel({ methods, unavailableReasons, busyProvider =
                     onDisconnect={() => onDisconnect(provider)}
                 />
             ))}
-
-            {onChangePhone && (
-                <PanelRow
-                    leading={<Icon icon={Smartphone} size="sm" />}
-                    title={t('phone.title')}
-                    description={phone ? phone.number : t('phone.empty')}
-                    footer={phone && !phone.signsInHere ? t('phone.otherAccount') : undefined}
-                    actions={
-                        <Button type="button" variant="outline" size="sm" onClick={onChangePhone}>
-                            {phone ? t('change') : t('add')}
-                        </Button>
-                    }
-                />
-            )}
         </div>
     )
 }

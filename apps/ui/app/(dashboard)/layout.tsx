@@ -9,7 +9,7 @@ import { startBackgroundSchedules } from '@lumvika/cloud/tasks'
 import { computerFlag, i18nFlag, publishedAccessFlag, rewindFlag } from '@/flags'
 import { STEWARD_PLACEMENT_COOKIE, parseStewardPlacement } from '@/lib/steward-layout'
 import { STEWARD_OPEN_COOKIE, parseStewardOpen } from '@/lib/steward-open'
-import { SessionProvider } from '@/supabase/session/SessionProvider'
+import { SessionProvider } from '@/lib/auth/session/SessionProvider'
 import { getTranslations } from 'next-intl/server'
 
 export async function generateMetadata(): Promise<Metadata> {

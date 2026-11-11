@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fakeSupabase } from '@/test/supabase-fake'
+import { fakeScope } from '@/test/db-fake'
 import { sendWhatsAppTemplate } from './client'
 import { loadWhatsAppRecipient } from './recipient'
 import { deliverWhatsApp } from './send'
@@ -12,7 +12,7 @@ vi.mock('./store', () => ({ applyWhatsAppFailure: vi.fn(), claimWhatsAppMessage:
 
 const MESSAGE = paymentFailedMessage({ imageUrl: 'https://app.lumvika.com/og/board?scene=x', team: 'Inbox Assistant', path: 'w/acme?billing=1' })
 
-const deliver = () => deliverWhatsApp(fakeSupabase().client, { userId: 'user-1', workspaceId: 7, agentId: 'agent-1', message: MESSAGE, language: 'en', dedupeKey: 'payment_failed:in_1' })
+const deliver = () => deliverWhatsApp(fakeScope(), { userId: 'user-1', workspaceId: 7, agentId: 'agent-1', message: MESSAGE, language: 'en', dedupeKey: 'payment_failed:in_1' })
 
 beforeEach(() => {
     vi.resetAllMocks()

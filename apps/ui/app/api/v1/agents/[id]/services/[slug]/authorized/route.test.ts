@@ -16,7 +16,7 @@ vi.mock('@/app/api/_services/services.service', () => ({
 vi.mock('@/lib/managed/registry', () => ({ getManagedProvider: () => ({ id: 'acme', oauth: { tokenEndpoint: 'https://acme.test/token', clientIdEnv: 'ACME_CLIENT_ID', clientSecretEnv: 'ACME_CLIENT_SECRET' } }) }))
 vi.mock('@/app/api/_auth/ownership', async importOriginal => ({
     ...(await importOriginal<typeof import('@/app/api/_auth/ownership')>()),
-    requireWorkspaceContext: async () => ({ userId: 'user-1', userEmail: null, authUser: { id: 'user-1' }, workspace: { id: 7 }, role: 'member', boxScope: 'all', supabase: {} }),
+    requireWorkspaceContext: async () => ({ userId: 'user-1', userEmail: null, authUser: { id: 'user-1' }, workspace: { id: 7 }, role: 'member', boxScope: 'all', scope: {} }),
 }))
 
 const { POST } = await import('./route')

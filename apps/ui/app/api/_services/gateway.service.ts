@@ -2,8 +2,7 @@ import { spaceAccessMap, type Actor } from '@/app/api/_auth/access'
 import { getSession, listRuns, listSessions } from '@/lib/engine/client'
 import type { AgentLink, AgentStatus } from '@/lib/board/types'
 import type { EngineConnection } from '@/lib/engine/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle, selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, serviceScope } from '@/lib/db'
 import { findWorkspaceEngine } from './workspace-engine.service'
 
 // Result of verifying that a Space points at a real, reachable lumvika-engine whose
@@ -70,7 +69,7 @@ function statusFromEngine(statuses: Map<string, string> | null, engineAgentId: s
 
 export type AgentHealthResult = {
     statuses: Record<string, AgentStatus | 'unconfigured'>
-    // Appels agent→agent en cours (call_agent). source/target = ids Supabase.
+    // Appels agent→agent en cours (call_agent). source/target = ids de la table agents.
     links: AgentLink[]
     // The Boxes the caller reaches right now: the board drops one it still draws that is not listed,
     // its access having been taken away since it loaded.
@@ -96,11 +95,11 @@ async function resolveCaller(conn: EngineConnection, engineAgentId: string): Pro
 // up as the source of a link.
 export async function checkAllAgentsHealth(actor: Actor): Promise<AgentHealthResult> {
     const { workspaceId } = actor
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
     const [{ data: workspaceAgents }, { data: workspace }, accessBySpace] = await Promise.all([
-        selectMany(supabase, 'agents', ['id', 'engine_agent_id', 'space_id'] as const, { workspace_id: workspaceId }),
-        selectMaybeSingle(supabase, 'workspaces', ['boxes_disabled_at', 'boxes_archived_at'] as const, { id: workspaceId }),
+        selectMany(scope, 'agents', ['id', 'engine_agent_id', 'space_id'] as const, { workspace_id: workspaceId }),
+        selectMaybeSingle(scope, 'workspaces', ['boxes_disabled_at', 'boxes_archived_at'] as const, { id: workspaceId }),
         spaceAccessMap(actor),
     ])
     const spaceIds = [...accessBySpace].filter(([, access]) => access !== 'none').map(([id]) => id)
@@ -115,9 +114,9 @@ export async function checkAllAgentsHealth(actor: Actor): Promise<AgentHealthRes
         return { statuses: Object.fromEntries(agents.map(agent => [agent.id, 'offline' as const])), links: [], spaceIds }
     }
 
-    // engine agent id → Supabase id, pour retrouver l'agent appelant.
-    const engineToSupabase = new Map<string, string>()
-    for (const a of agents) if (a.engine_agent_id) engineToSupabase.set(a.engine_agent_id, a.id)
+    // engine agent id → id de la table agents, pour retrouver l'agent appelant.
+    const engineToAgentId = new Map<string, string>()
+    for (const a of agents) if (a.engine_agent_id) engineToAgentId.set(a.engine_agent_id, a.id)
 
     // One machine per workspace, so one /agents call answers for the whole board however many
     // Boxes it is drawn in.
@@ -137,7 +136,7 @@ export async function checkAllAgentsHealth(actor: Actor): Promise<AgentHealthRes
             if (!conn) return null
             const originEngineId = await resolveCaller(conn, agent.engine_agent_id as string)
             if (!originEngineId) return null
-            const source = engineToSupabase.get(originEngineId)
+            const source = engineToAgentId.get(originEngineId)
             if (!source || source === agent.id) return null
             return { source, target: agent.id } satisfies AgentLink
         })

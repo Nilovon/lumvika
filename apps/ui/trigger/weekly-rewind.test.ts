@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { buildWorkspaceRewind } from '@/lib/rewind/build'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
 import { runContext } from '@/test/trigger-sdk'
-import { buildRewind, weeklyRewindSchedule } from './weekly-rewind'
 
 const features = vi.hoisted(() => ({ REWIND_RELEASED: true }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
 
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@trigger.dev/sdk/v3', async () => (await import('@/test/trigger-sdk')).triggerSdkMock())
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/lib/rewind/build', () => ({ buildWorkspaceRewind: vi.fn() }))
 vi.mock('@/lib/features', () => features)
+
+const { buildWorkspaceRewind } = await import('@/lib/rewind/build')
+const { buildRewind, weeklyRewindSchedule } = await import('./weekly-rewind')
 
 // Monday 21 September 2026: the last completed week starts on the 14th.
 const NOW = new Date('2026-09-21T05:00:00.000Z')
@@ -20,14 +20,10 @@ const runSchedule = (env: Parameters<typeof runContext>[0] = 'PRODUCTION') => ((
 const runBuild = (payload: unknown) => ((buildRewind as unknown as { run: Run }).run)(payload, runContext())
 
 function withRows(agentWorkspaceIds: number[], tornDownIds: number[] = []) {
-    const db = fakeSupabase((table, calls: readonly SupabaseCall[]) => {
-        const range = calls.find(call => call.method === 'range')
-        if (range && range.args[0] !== 0) return { data: [] }
-        if (table === 'agents') return { data: agentWorkspaceIds.map(workspace_id => ({ workspace_id })) }
+    db.answer(call => {
+        if (call.table === 'agents') return { data: agentWorkspaceIds.map(workspace_id => ({ workspace_id })) }
         return { data: tornDownIds.map(id => ({ id })) }
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
-    return db
 }
 
 function dispatched() {
@@ -37,6 +33,7 @@ function dispatched() {
 describe('weeklyRewindSchedule', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        db.reset()
         features.REWIND_RELEASED = true
         vi.useFakeTimers({ toFake: ['Date'] })
         vi.setSystemTime(NOW)
@@ -45,7 +42,7 @@ describe('weeklyRewindSchedule', () => {
 
     it('skips the dev environment', async () => {
         await expect(runSchedule('DEVELOPMENT')).resolves.toBeNull()
-        expect(createServiceRoleClient).not.toHaveBeenCalled()
+        expect(db.calls).toEqual([])
     })
 
     it('dispatches nothing until the feature is released', async () => {
@@ -67,13 +64,13 @@ describe('weeklyRewindSchedule', () => {
     })
 
     it('leaves out the workspaces whose Boxes were torn down', async () => {
-        const db = withRows([1, 2, 3], [2])
+        withRows([1, 2, 3], [2])
 
         await runSchedule()
 
         expect(dispatched()).toEqual([[1, 3]])
-        const [workspaces] = db.chainsOn('workspaces')
-        expect(workspaces).toContainEqual({ table: 'workspaces', method: 'not', args: ['boxes_deleted_at', 'is', null] })
+        const [workspaces] = db.callsTo('selectAll', 'workspaces')
+        expect(workspaces.args[1]).toEqual({ boxes_deleted_at: { notNull: true } })
     })
 
     it('fits 500 workspaces in one batch', async () => {
@@ -96,7 +93,7 @@ describe('weeklyRewindSchedule', () => {
 describe('buildRewind', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(createServiceRoleClient).mockReturnValue(fakeSupabase().client)
+        db.reset()
         vi.mocked(buildWorkspaceRewind).mockResolvedValue({ agents: 1 } as never)
     })
     afterEach(() => vi.useRealTimers())

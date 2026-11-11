@@ -4,7 +4,7 @@ import { SkillProposalBlock as SkillProposalBlockBase } from '@lumvika/ui/chat'
 import { boxAccessFor } from '@/lib/board/box-access'
 import { useBoxManageReason } from '@/hooks/useBoxManageReason'
 import { useBoardStore } from '@/stores/board.store'
-import { useOptionalSession } from '@/supabase/session/SessionProvider'
+import { useOptionalSession } from '@/lib/auth/session/SessionProvider'
 import type { EngineSkillProposal } from '@/lib/engine/types'
 
 export type SkillProposalBlockProps = {

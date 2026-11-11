@@ -2,7 +2,7 @@
 // tokens; Lumvika executes tools scoped by user_id. The org-wide COMPOSIO_API_KEY can act for
 // ANY user_id, so this module is server-only and the key never reaches an engine or a manifest.
 //
-// user_id convention: `<namespace>_agent_<agents.id>` (the Supabase UUID — stable across box
+// user_id convention: `<namespace>_agent_<agents.id>` (the database UUID — stable across box
 // migrations, unlike engine agent ids which are only unique per engine). Derived server-side
 // on every path, never accepted from a caller. The namespace matters because staging runs on
 // a clone of the prod database: the same agent id exists in both, and without the prefix a

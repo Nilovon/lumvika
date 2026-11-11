@@ -41,7 +41,7 @@ async function upload(req: Request) {
         if (bytes.byteLength > STEWARD_MAX_UPLOAD_BYTES) {
             return Response.json({ error: `${name} is over the ${STEWARD_MAX_UPLOAD_BYTES / MB} MB limit.` }, { status: 413 })
         }
-        await uploadPrivateFile(ctx.supabase, STEWARD_FILES_BUCKET, stewardFileKey(ctx, sessionId, path), bytes, mediaContentType(name) ?? 'application/octet-stream')
+        await uploadPrivateFile(ctx.scope, STEWARD_FILES_BUCKET, stewardFileKey(ctx, sessionId, path), bytes, mediaContentType(name) ?? 'application/octet-stream')
         return Response.json({ path, bytes: bytes.byteLength }, { status: 201 })
     } catch (err) {
         return Response.json({ error: err instanceof Error ? err.message : 'Failed to save the file' }, { status: 500 })

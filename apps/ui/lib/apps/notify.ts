@@ -1,9 +1,7 @@
 // No 'server-only': the archive, restore and trial sweeps that call this run as Trigger.dev tasks.
 import * as React from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { AgentNotification, renderEmail } from '@lumvika/emails'
 import { emailTranslator } from '@lumvika/emails/i18n'
-import type { Database } from '@/app/api/database.types'
 import { APP_URL, REPLY_TO, TRANSACTIONAL_FROM, getResendClient, redirectDelivery } from '@/lib/email/client'
 import { sendThrottled } from '@/lib/email/throttle'
 import { buildUnsubscribeUrl, listUnsubscribeHeaders } from '@/lib/email/unsubscribeToken'
@@ -12,10 +10,7 @@ import { recipientLocale } from '@/lib/i18n/recipient-locale'
 import { translatorFor } from '@/lib/i18n/server-translator'
 import { noticeText, type NoticeCopy } from '@/lib/notifications/notice-copy'
 import { wantsCategoryEmail } from '@/lib/notifications/prefs'
-import { selectMany } from '@/supabase/supabase-helpers'
-
-type Client = SupabaseClient<Database>
-type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
+import { insertRows, selectMany, type DbScope } from '@/lib/db'
 
 export const APP_NOTICE_EVENT = 'app_notice'
 
@@ -30,9 +25,9 @@ export type AppNotice = {
 
 // The bell for the whole workspace, and an email to the members who keep billing emails on. Never
 // throws: a notice that fails must not undo the change it reports.
-export async function notifyWorkspace(supabase: Client, workspaceId: number, notice: AppNotice): Promise<void> {
+export async function notifyWorkspace(scope: DbScope, workspaceId: number, notice: AppNotice): Promise<void> {
     try {
-        const { error } = await supabase.from('notifications').insert<NotificationInsert>({
+        const { error } = await insertRows(scope, 'notifications', {
             workspace_id: workspaceId,
             space_id: null,
             agent_id: null,
@@ -44,27 +39,27 @@ export async function notifyWorkspace(supabase: Client, workspaceId: number, not
             notified_at: new Date().toISOString(),
         })
         if (error) throw new Error(error.message)
-        if (notice.email) await emailMembers(supabase, workspaceId, notice)
+        if (notice.email) await emailMembers(scope, workspaceId, notice)
     } catch (err) {
         console.error(`[apps] notice to workspace ${workspaceId} failed`, err)
     }
 }
 
-async function emailMembers(supabase: Client, workspaceId: number, notice: AppNotice): Promise<void> {
+async function emailMembers(scope: DbScope, workspaceId: number, notice: AppNotice): Promise<void> {
     const resend = getResendClient()
     if (!resend) return
 
-    const { data: admins } = await selectMany(supabase, 'workspace_members', ['user_id'] as const, { workspace_id: workspaceId, role: 'admin' })
+    const { data: admins } = await selectMany(scope, 'workspace_members', ['user_id'] as const, { workspace_id: workspaceId, role: 'admin' })
     const userIds = (admins ?? []).map(admin => admin.user_id)
     if (userIds.length === 0) return
-    const { data: users } = await selectMany(supabase, 'users', ['id', 'email_notification_prefs'] as const, { id: userIds })
+    const { data: users } = await selectMany(scope, 'users', ['id', 'email_notification_prefs'] as const, { id: userIds })
     const recipients = (users ?? []).filter(user => wantsCategoryEmail(user.email_notification_prefs, 'billing'))
 
     await Promise.allSettled(
         recipients.map(async user => {
-            const recipient = await loadRecipient(supabase, user.id)
+            const recipient = await loadRecipient(scope, user.id)
             if (!recipient) return
-            const locale = await recipientLocale(supabase, user.id, workspaceId)
+            const locale = await recipientLocale(scope, user.id, workspaceId)
             const unsubscribeUrl = buildUnsubscribeUrl(user.id)
             const subject = emailTranslator(locale)('subjects.appNotice', { appName: notice.appName })
             const message = noticeText({ message: notice.message, metadata: { notice: notice.copy } }, await translatorFor(locale, 'notifications.notices'))

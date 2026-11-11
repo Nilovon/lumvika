@@ -51,7 +51,7 @@ export type AffiliateApiEndpoint = keyof typeof AFFILIATE_API_ENDPOINTS
 const CLIENT_IP_HEADERS = ['cf-connecting-ip', 'true-client-ip', 'x-real-ip']
 
 // What the vendor needs to identify a visit, and nothing more. Cookies are deliberately absent:
-// this route now shares an origin with the Supabase session, which is ours to keep.
+// this route now shares an origin with the session cookie, which is ours to keep.
 const FORWARDED_HEADERS = ['accept', 'accept-language', 'content-type', 'origin', 'referer', 'user-agent']
 
 function clientIp(headers: Headers): string | null {

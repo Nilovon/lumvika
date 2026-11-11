@@ -1,6 +1,6 @@
 // Whether the visitor has a real session on app.lumvika.com, told to the landing and to nobody
-// else. The Supabase auth cookie is host-only on the app and must stay that way: widening its
-// domain would hand the refresh token to every sibling subdomain, docs.lumvika.com included, which
+// else. The session cookie is host-only on the app and must stay that way: widening its domain
+// would hand the session token to every sibling subdomain, docs.lumvika.com included, which
 // is hosted by a third party. So the app writes this flag beside it on the parent domain, with
 // nothing in it but the fact that someone is signed in.
 //

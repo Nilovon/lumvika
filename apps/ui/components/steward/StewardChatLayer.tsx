@@ -29,7 +29,7 @@ import type { StewardArrival } from '@/lib/steward/phase'
 import { isStewardWidgetTool } from '@/lib/steward/tool-defs'
 import { cn } from '@/lib/utils'
 import { isLifetimePlan, isSubscriptionEntitled } from '@lumvika/cloud/billing'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 import { isKickoffText, stripKickoff } from '@/lib/steward/kickoff-marker'
 

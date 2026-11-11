@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { isSubscriptionEntitled, trialOffer } from '@lumvika/cloud/billing'
 import { startPlan } from '@lumvika/cloud/billing.client'
 import { cn } from '@/lib/utils'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 // A plan or a key lives on the workspace's machine, and only a workspace on a plan has one: before
 // that, whatever the user pastes has nowhere to go.

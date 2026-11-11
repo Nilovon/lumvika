@@ -1,8 +1,6 @@
 import { isPublicStatus, isSeoDescriptionLength, type TemplateDocument } from '@lumvika/contracts'
-import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { revalidateLanding } from '@/lib/landing-revalidate'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { insertRows, selectMaybeSingle, updateRows, type DbScope } from '@/lib/db'
 import { resolveAgentConnectors } from './connectors'
 import { documentToRow } from './document'
 import { describeSecretHit, scanDocumentForSecrets } from './secret-scan'
@@ -14,12 +12,12 @@ export type TemplateWriteResult = { ok: true; slug: string; warnings: string[] }
 
 // `currentSlug` is the row the caller is about to write: a template keeps its own slug instead
 // of being pushed to `-2` every time its metadata is regenerated.
-export async function uniqueTemplateSlug(supabase: SupabaseClient<Database>, base: string, currentSlug?: string): Promise<string> {
+export async function uniqueTemplateSlug(scope: DbScope, base: string, currentSlug?: string): Promise<string> {
     for (let i = 1; ; i++) {
         const candidate = i === 1 ? base : `${base}-${i}`
         if (candidate === currentSlug) return candidate
 
-        const { data } = await selectMaybeSingle(supabase, 'templates', ['id'] as const, { slug: candidate })
+        const { data } = await selectMaybeSingle(scope, 'templates', ['id'] as const, { slug: candidate })
         if (!data) return candidate
     }
 }
@@ -43,11 +41,11 @@ function publishGate(doc: TemplateDocument): string[] {
 // at save time, so an author can price a draft before finishing their Stripe onboarding. Every
 // write path funnels through buildRow, so this one insertion covers the admin editor, the review
 // approval and anything added later.
-async function paidPublishBlockers(supabase: SupabaseClient<Database>, doc: TemplateDocument): Promise<string[]> {
+async function paidPublishBlockers(scope: DbScope, doc: TemplateDocument): Promise<string[]> {
     if (!isPublicStatus(doc.status) || doc.pricingModel === 'free') return []
     if (!doc.creatorId) return ['A paid template must belong to a creator account']
 
-    const { data } = await selectMaybeSingle(supabase, 'creator_accounts', ['charges_enabled', 'payouts_enabled'] as const, { user_id: doc.creatorId })
+    const { data } = await selectMaybeSingle(scope, 'creator_accounts', ['charges_enabled', 'payouts_enabled'] as const, { user_id: doc.creatorId })
     if (!data?.charges_enabled || !data.payouts_enabled) return ['The creator cannot receive payouts yet, so this template cannot be published as paid']
 
     return []
@@ -55,30 +53,28 @@ async function paidPublishBlockers(supabase: SupabaseClient<Database>, doc: Temp
 
 type BuiltRow = { ok: false; error: string } | { ok: true; row: ReturnType<typeof documentToRow>; warnings: string[] }
 
-async function buildRow(supabase: SupabaseClient<Database>, doc: TemplateDocument): Promise<BuiltRow> {
-    const { connectors, warnings: connectorWarnings } = await resolveAgentConnectors(supabase, doc.agents)
+async function buildRow(scope: DbScope, doc: TemplateDocument): Promise<BuiltRow> {
+    const { connectors, warnings: connectorWarnings } = await resolveAgentConnectors(scope, doc.agents)
 
     // The scan is a heuristic, so a false positive must never cost the author their draft:
     // it only turns blocking on the way to the public page.
     const publishing = isPublicStatus(doc.status)
     const secretHits = scanDocumentForSecrets(doc).map(describeSecretHit)
-    const blocking = [...publishGate(doc), ...(await paidPublishBlockers(supabase, doc)), ...(publishing ? secretHits : [])]
+    const blocking = [...publishGate(doc), ...(await paidPublishBlockers(scope, doc)), ...(publishing ? secretHits : [])]
     if (blocking.length > 0) return { ok: false, error: blocking.join('. ') }
 
     return { ok: true, row: documentToRow(doc, connectors), warnings: [...connectorWarnings, ...secretHits] }
 }
 
-export async function createTemplate(supabase: SupabaseClient<Database>, doc: TemplateDocument): Promise<TemplateWriteResult> {
-    const built = await buildRow(supabase, doc)
+export async function createTemplate(scope: DbScope, doc: TemplateDocument): Promise<TemplateWriteResult> {
+    const built = await buildRow(scope, doc)
     if (!built.ok) return { ok: false, status: 400, error: built.error }
 
-    const { data: clash, error: readError } = await selectMaybeSingle(supabase, 'templates', ['id'] as const, { slug: doc.slug })
+    const { data: clash, error: readError } = await selectMaybeSingle(scope, 'templates', ['id'] as const, { slug: doc.slug })
     if (readError) return { ok: false, status: 500, error: readError.message }
     if (clash) return { ok: false, status: 409, error: `A template with slug "${doc.slug}" already exists` }
 
-    const { error } = await supabase
-        .from('templates')
-        .insert<Database['public']['Tables']['templates']['Insert']>({ ...built.row, published_at: isPublicStatus(doc.status) ? new Date().toISOString() : null })
+    const { error } = await insertRows(scope, 'templates', { ...built.row, published_at: isPublicStatus(doc.status) ? new Date().toISOString() : null })
     if (error) return { ok: false, status: 500, error: error.message }
 
     // A draft has no landing page, so revalidating it would ping a 404 on every creation.
@@ -91,29 +87,26 @@ export async function createTemplate(supabase: SupabaseClient<Database>, doc: Te
 export type TemplateReviewPatch = { submitted_at?: string | null; review_note?: string | null }
 
 export async function updateTemplateBySlug(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     slug: string,
     doc: TemplateDocument,
     review: TemplateReviewPatch = {},
 ): Promise<TemplateWriteResult> {
-    const { data: existing, error: readError } = await selectMaybeSingle(supabase, 'templates', ['id', 'slug', 'category', 'published_at'] as const, { slug })
+    const { data: existing, error: readError } = await selectMaybeSingle(scope, 'templates', ['id', 'slug', 'category', 'published_at'] as const, { slug })
     if (readError) return { ok: false, status: 500, error: readError.message }
     if (!existing) return { ok: false, status: 404, error: `No template found with slug "${slug}"` }
 
-    const built = await buildRow(supabase, doc)
+    const built = await buildRow(scope, doc)
     if (!built.ok) return { ok: false, status: 400, error: built.error }
 
     if (doc.slug !== slug) {
-        const { data: clash } = await selectMaybeSingle(supabase, 'templates', ['id'] as const, { slug: doc.slug })
+        const { data: clash } = await selectMaybeSingle(scope, 'templates', ['id'] as const, { slug: doc.slug })
         if (clash) return { ok: false, status: 409, error: `A template with slug "${doc.slug}" already exists` }
     }
 
     const published_at = isPublicStatus(doc.status) ? (existing.published_at ?? new Date().toISOString()) : null
 
-    const { error } = await supabase
-        .from('templates')
-        .update<Database['public']['Tables']['templates']['Update']>({ ...built.row, ...review, published_at, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
+    const { error } = await updateRows(scope, 'templates', { ...built.row, ...review, published_at, updated_at: new Date().toISOString() }, { id: existing.id })
     if (error) return { ok: false, status: 500, error: error.message }
 
     // A slug change orphans the old landing path, so both have to be revalidated.

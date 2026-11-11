@@ -1,6 +1,6 @@
 // What the workspace is called when nobody has told us anything yet. Written by the just-in-time
-// provisioning in supabase/middleware.ts, on the first page view of a visitor we know nothing about,
-// and treated everywhere else as "still unnamed".
+// provisioning in app/api/_services/user-provisioning.service.ts, on the first page view of a visitor
+// we know nothing about, and treated everywhere else as "still unnamed".
 export const DEFAULT_WORKSPACE_NAME = 'My workspace'
 
 // Long enough for a real company name, short enough that the pill does not have to truncate it.

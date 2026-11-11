@@ -4,7 +4,6 @@ import { runContext } from '@/test/trigger-sdk'
 import { whatsappAccessEndingSchedule, whatsappAccessEndingSweep } from './whatsapp-access-ending'
 
 vi.mock('@trigger.dev/sdk/v3', async () => (await import('@/test/trigger-sdk')).triggerSdkMock())
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn(() => ({})) }))
 vi.mock('@/lib/whatsapp/access-ending', () => ({ sweepAccessEnding: vi.fn() }))
 
 const REPORT = { considered: 1, sent: [7], skipped: [] }

@@ -25,8 +25,8 @@ import { publishedOgImage } from '@/lib/published/og-image'
 import { verifyPassword } from '@/lib/published/password'
 import { resolveSitePath, siteObjectKey } from '@/lib/published/site-path'
 import { PUBLISHED_BUCKET } from '@/lib/services/publish'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
+import { downloadObject, signedUrl as signStorageUrl } from '@lumvika/storage'
 
 // What `<slug>.lumvika.site` serves, reached only through the host rewrite in proxy.ts: the site's
 // files once the visitor may open the link, and the reserved `/__lumvika/` paths (the gate's forms,
@@ -77,8 +77,8 @@ function intoPage(slug: string, request: Request, next: string, entry: Published
 }
 
 async function signedUrl(key: string): Promise<string | null> {
-    const { data } = await createServiceRoleClient().storage.from(PUBLISHED_BUCKET).createSignedUrl(key, SIGNED_URL_TTL_SECONDS)
-    return data?.signedUrl ?? null
+    const { data } = await signStorageUrl(PUBLISHED_BUCKET, key, SIGNED_URL_TTL_SECONDS)
+    return data
 }
 
 const RELAYED_MEDIA_HEADERS = ['Content-Length', 'Content-Range', 'Accept-Ranges'] as const
@@ -109,7 +109,7 @@ async function streamMedia(entry: PublishedEntry, request: Request, key: string,
 async function previewMetaFor(entry: PublishedEntry, request: Request) {
     const [brand, { data: agent }] = await Promise.all([
         loadWorkspaceBrand(entry.workspace_id),
-        selectMaybeSingle(createServiceRoleClient(), 'agents', ['name'] as const, { id: entry.agent_id }),
+        selectMaybeSingle(serviceScope(), 'agents', ['name'] as const, { id: entry.agent_id }),
     ])
     return {
         title: entry.title ?? 'Published page',
@@ -122,16 +122,16 @@ async function previewMetaFor(entry: PublishedEntry, request: Request) {
 async function serveObject(entry: PublishedEntry, request: Request, key: string, contentType: string): Promise<Response> {
     if (isStreamedMedia(contentType)) return streamMedia(entry, request, key, contentType)
 
-    const { data: blob } = await createServiceRoleClient().storage.from(PUBLISHED_BUCKET).download(key)
-    if (!blob) return notFound()
+    const { data: bytes } = await downloadObject(PUBLISHED_BUCKET, key)
+    if (!bytes) return notFound()
 
     const html = isHtmlContentType(contentType)
     // A page answers fresh every time: who may open it can change from one request to the next.
     const cacheControl = html ? 'private, no-cache' : entry.access === 'public' ? 'public, max-age=300' : 'private, max-age=300'
     const headers = { ...BASE_HEADERS, 'Content-Type': contentType, 'Cache-Control': cacheControl }
-    if (!html) return new Response(blob.stream(), { headers })
+    if (!html) return new Response(new Uint8Array(bytes), { headers })
 
-    let page = injectBadge(await blob.text(), entry.slug)
+    let page = injectBadge(new TextDecoder().decode(bytes), entry.slug)
     if (entry.access === 'public') page = injectPreviewMeta(page, await previewMetaFor(entry, request))
     return new Response(page, { headers })
 }
@@ -166,26 +166,26 @@ async function serveRaw(entry: PublishedEntry, request: Request): Promise<Respon
 
     if (!download && isStreamedMedia(contentType)) return streamMedia(entry, request, entry.storage_key, contentType)
 
-    const { data: blob } = await createServiceRoleClient().storage.from(PUBLISHED_BUCKET).download(entry.storage_key)
-    if (!blob) return notFound()
+    const { data: bytes } = await downloadObject(PUBLISHED_BUCKET, entry.storage_key)
+    if (!bytes) return notFound()
     // Served from the page's own origin, so a file a browser would run scripts in (HTML, SVG) only
     // ever comes down as an attachment, never as a document of this host.
     const attachment = download || !isInlineSafeContentType(contentType)
     const headers: Record<string, string> = {
         ...BASE_HEADERS,
         'Content-Type': attachment ? 'application/octet-stream' : contentType,
-        'Content-Length': String(blob.size),
+        'Content-Length': String(bytes.byteLength),
         'Cache-Control': entry.access === 'public' ? 'public, max-age=300' : 'private, max-age=300',
     }
     if (attachment) headers['Content-Disposition'] = contentDisposition(name)
-    return new Response(blob.stream(), { headers })
+    return new Response(new Uint8Array(bytes), { headers })
 }
 
 async function thumbnailDataUrl(key: string | null): Promise<string | null> {
     if (!key) return null
-    const { data } = await createServiceRoleClient().storage.from(PUBLISHED_BUCKET).download(key)
+    const { data } = await downloadObject(PUBLISHED_BUCKET, key)
     if (!data) return null
-    return `data:${data.type || 'image/png'};base64,${Buffer.from(await data.arrayBuffer()).toString('base64')}`
+    return `data:image/png;base64,${Buffer.from(data).toString('base64')}`
 }
 
 // Satori only draws raster images it can fetch: a workspace logo is re-encoded to PNG, and left out
@@ -207,7 +207,7 @@ async function serveOgImage(entry: PublishedEntry): Promise<Response> {
     const locked = entry.access !== 'public'
     const [brand, { data: agent }, thumbnail] = await Promise.all([
         loadWorkspaceBrand(entry.workspace_id),
-        selectMaybeSingle(createServiceRoleClient(), 'agents', ['name'] as const, { id: entry.agent_id }),
+        selectMaybeSingle(serviceScope(), 'agents', ['name'] as const, { id: entry.agent_id }),
         locked ? null : thumbnailDataUrl(entry.thumbnail_key),
     ])
     const image = await publishedOgImage({

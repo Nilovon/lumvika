@@ -11,7 +11,7 @@ const callableEngineAgentIds = vi.fn<(...args: unknown[]) => Promise<string[] | 
 vi.mock('@/app/api/_auth/access', () => ({ workspaceActor: (workspaceId: number) => ({ kind: 'workspace', workspaceId }), callableEngineAgentIds }))
 vi.mock('@/app/api/_services/chat.service', () => ({ ensureSessionRow, resolveAgentTarget }))
 vi.mock('@/lib/engine/client', () => ({ chat: engineChat, getAgent: engineGetAgent }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany }))
 
 const { startAgentSetup } = await import('./setup-handoff')
 

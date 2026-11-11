@@ -3,7 +3,6 @@
 import { accountLabel } from '@/lib/auth/placeholder-email'
 import { actorFromContext, keepVisible, manageableSpaceIds } from '@/app/api/_auth/access'
 import { requireAdminContext, requireWorkspaceContext, type WorkspaceContext } from '@/app/api/_auth/ownership'
-import type { Database } from '@/app/api/database.types'
 import { getAppOrigin } from '@/lib/app-origin'
 import { isWorkspaceApiEntitled } from '@lumvika/cloud/billing'
 import { apiKeyPrefix, generateApiKey, hashApiKey } from '@/lib/mcp/api-keys'
@@ -11,7 +10,7 @@ import { mcpAccountUrl } from '@/lib/mcp/connect'
 import { IMPORT_KEY_TTL_MS } from '@/lib/mcp/import-scope'
 import { buildImportPrompt } from '@/lib/agent-import/prompt'
 import { importSource, isImportSourceId, type ImportSourceId } from '@/lib/agent-import/sources'
-import { selectAll, selectCount, selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { insertRows, selectAll, selectCount, selectMany, selectMaybeSingle, updateRows } from '@/lib/db'
 
 import { AppError, failure, failureOf, type ErrorCode } from '@/lib/i18n/action-error'
 import type { ActionResult } from './space.actions'
@@ -40,7 +39,7 @@ export type ApiKeyView = {
 // The key id comes from the client, so ownership is proven before anything is written: without
 // this check a member could revoke another workspace's key by guessing its uuid.
 async function assertKeyInWorkspace(ctx: WorkspaceContext, id: string): Promise<void> {
-    const { data: key } = await selectMaybeSingle(ctx.supabase, 'api_keys', ['workspace_id'] as const, { id })
+    const { data: key } = await selectMaybeSingle(ctx.scope, 'api_keys', ['workspace_id'] as const, { id })
     if (!key || key.workspace_id !== ctx.workspace.id) throw new AppError('keyNotFound')
 }
 
@@ -50,7 +49,7 @@ export async function listApiKeysAction(): Promise<ActionResult<{ keys: ApiKeyVi
         // A revoked key is dead and cannot come back, so it only adds noise here. The row stays in
         // the database for the admin view, which is where its history is still worth something.
         const { data } = await selectAll(
-            ctx.supabase,
+            ctx.scope,
             'api_keys',
             API_KEY_COLUMNS,
             { workspace_id: ctx.workspace.id, revoked_at: { isNull: true } },
@@ -88,13 +87,13 @@ export async function createApiKeyAction(rawName: string): Promise<ActionResult<
         if (!name) return failure('keyNameRequired')
         if (name.length > MAX_NAME_LENGTH) return failure('nameTooLongDot', { max: MAX_NAME_LENGTH })
 
-        const { data: activeCount } = await selectCount(ctx.supabase, 'api_keys', { workspace_id: ctx.workspace.id, revoked_at: { isNull: true }, scope: 'account' })
+        const { data: activeCount } = await selectCount(ctx.scope, 'api_keys', { workspace_id: ctx.workspace.id, revoked_at: { isNull: true }, scope: 'account' })
         if ((activeCount ?? 0) >= MAX_ACTIVE_KEYS) {
             return failure('tooManyActiveKeys', { max: MAX_ACTIVE_KEYS })
         }
 
         const key = generateApiKey()
-        const { error } = await ctx.supabase.from('api_keys').insert<Database['public']['Tables']['api_keys']['Insert']>({
+        const { error } = await insertRows(ctx.scope, 'api_keys', {
             workspace_id: ctx.workspace.id,
             name,
             key_prefix: apiKeyPrefix(key),
@@ -123,7 +122,7 @@ export async function createImportKeyAction(sourceId: ImportSourceId, requestedS
         const spaceId = await importDestination(ctx, requestedSpaceId)
         const key = generateApiKey()
         const expiresAt = new Date(Date.now() + IMPORT_KEY_TTL_MS).toISOString()
-        const { error } = await ctx.supabase.from('api_keys').insert<Database['public']['Tables']['api_keys']['Insert']>({
+        const { error } = await insertRows(ctx.scope, 'api_keys', {
             workspace_id: ctx.workspace.id,
             name: `Import · ${importSource(sourceId).label}`,
             key_prefix: apiKeyPrefix(key),
@@ -146,7 +145,7 @@ export async function createImportKeyAction(sourceId: ImportSourceId, requestedS
 // several. The one asked for when the member manages it, otherwise the first one they manage.
 async function importDestination(ctx: WorkspaceContext, requested: string | null): Promise<string> {
     const [{ data: all }, manageable] = await Promise.all([
-        selectMany(ctx.supabase, 'spaces', ['id'] as const, { workspace_id: ctx.workspace.id }, { column: 'created_at', ascending: true }),
+        selectMany(ctx.scope, 'spaces', ['id'] as const, { workspace_id: ctx.workspace.id }, { column: 'created_at', ascending: true }),
         manageableSpaceIds(actorFromContext(ctx)),
     ])
     const spaces = keepVisible(all ?? [], manageable, space => space.id)
@@ -159,7 +158,7 @@ export async function revokeApiKeyAction(id: string): Promise<ActionResult> {
         const ctx = await requireAdminContext(API_KEYS_ADMIN_ONLY)
         await assertKeyInWorkspace(ctx, id)
 
-        const { error } = await ctx.supabase.from('api_keys').update<Database['public']['Tables']['api_keys']['Update']>({ revoked_at: new Date().toISOString() }).eq('id', id)
+        const { error } = await updateRows(ctx.scope, 'api_keys', { revoked_at: new Date().toISOString() }, { id })
         if (error) return { ok: false, error: error.message }
         return { ok: true }
     } catch (err) {

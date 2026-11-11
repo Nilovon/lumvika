@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { FakeSupabase } from '@/test/supabase-fake'
-
 const actions = vi.hoisted(() => ({
     createAgentWithSetupAction: vi.fn(),
     installTemplateAction: vi.fn(),
@@ -13,7 +11,6 @@ const actions = vi.hoisted(() => ({
 vi.mock('@/app/api/_actions/agent.actions', () => ({ deleteAgentAction: vi.fn(), duplicateAgentAction: actions.duplicateAgentAction, moveAgentAction: vi.fn(), renameAgentAction: vi.fn() }))
 vi.mock('@/app/api/_actions/chat.actions', () => ({ startKickoffAction: actions.startKickoffAction }))
 vi.mock('@/app/api/_actions/services.actions', () => ({ createAgentWithSetupAction: actions.createAgentWithSetupAction }))
-vi.mock('@/app/api/_actions/session.actions', () => ({ fetchSessionActiveRun: vi.fn() }))
 vi.mock('@/app/api/_actions/space.actions', () => ({ claimSpaceAction: vi.fn(), deleteSpaceAction: vi.fn(), renameSpaceAction: vi.fn() }))
 vi.mock('@/app/api/_actions/agent-share.actions', () => ({ installSharedAgentAction: actions.installSharedAgentAction }))
 vi.mock('@/app/api/_actions/template.actions', () => ({ installTemplateAction: actions.installTemplateAction }))
@@ -21,14 +18,18 @@ vi.mock('@/lib/confetti', () => ({ fireLumvikaConfetti: vi.fn() }))
 vi.mock('@/lib/templates/install-feedback', () => ({ reportDuplicate: vi.fn(), reportInstall: vi.fn(), reportShareInstall: vi.fn() }))
 vi.mock('@lumvika/analytics/client', () => ({ track: vi.fn() }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), warning: vi.fn(), success: vi.fn() } }))
-// The store builds its client once, at import: the fake lives here so a test can read its writes
-// and make a table refuse them.
-const db = vi.hoisted(() => ({ fake: undefined as unknown as FakeSupabase, refusing: new Set<string>() }))
-vi.mock('@/supabase/client', async () => {
-    const { fakeSupabase } = await import('@/test/supabase-fake')
-    db.fake = fakeSupabase(table => (db.refusing.has(table) ? { error: { message: 'refused' } } : undefined))
-    return { createClient: () => db.fake.client }
-})
+const board = vi.hoisted(() => ({
+    loadBoardAction: vi.fn(),
+    listLiveSessionsAction: vi.fn(),
+    sweepZombieSessionsAction: vi.fn(),
+    setAgentPositionAction: vi.fn(),
+    discardPlacingAgentAction: vi.fn(),
+    setSessionStatusAction: vi.fn(),
+    markSessionsHandledAction: vi.fn(),
+    updateSpaceRectAction: vi.fn(),
+    moveSpaceAction: vi.fn(),
+}))
+vi.mock('@/app/api/_actions/board-store.actions', () => board)
 
 import { UNPLACED_COL } from '@/lib/board/iso'
 import type { BoxViewer } from '@/lib/board/box-access'
@@ -48,9 +49,8 @@ const agent = (id: string, spaceId: string, col: number, row: number): IsoAgent 
 beforeEach(() => {
     vi.clearAllMocks()
     useBoardStore.setState(INITIAL, true)
-    db.refusing.clear()
-    db.fake.calls.length = 0
-    db.fake.chains.length = 0
+    board.setAgentPositionAction.mockResolvedValue({ ok: true })
+    board.moveSpaceAction.mockResolvedValue({ ok: true })
 })
 
 function beginTemplate(agentNames = ['Scout', 'Writer', 'Closer']) {
@@ -180,7 +180,7 @@ describe('moveSpace', () => {
     const positionOf = (id: string) => useBoardStore.getState().agents.find(a => a.id === id)?.position
     const settled = () => vi.waitFor(() => expect(useBoardStore.getState()._movingSpaceId).toBeNull())
 
-    it('carries the placed agents of the Box by the same step, and writes each of them', async () => {
+    it('carries the placed agents of the Box by the same step, and writes them with it', async () => {
         useBoardStore.getState().moveSpace('s1', MOVED, ADMIN)
 
         expect(useBoardStore.getState().spaces.find(s => s.id === 's1')).toMatchObject(MOVED)
@@ -189,20 +189,18 @@ describe('moveSpace', () => {
         expect(positionOf('neighbour')).toEqual({ col: 10, row: 1 })
 
         await settled()
-        expect(db.fake.writes('spaces').map(w => w.payload)).toEqual([MOVED])
-        expect(db.fake.writes('agents').map(w => w.payload)).toEqual([{ col: 1, row: 21 }])
+        expect(board.moveSpaceAction.mock.calls).toEqual([[{ spaceId: 's1', rect: MOVED, carried: [{ id: 'carried', col: 1, row: 21 }] }]])
         expect(toast.error).not.toHaveBeenCalled()
     })
 
-    it('puts the Box and its agents back, on screen and in the database, when a write is refused', async () => {
-        db.refusing.add('agents')
+    it('puts the Box and its agents back on screen when the move is refused', async () => {
+        board.moveSpaceAction.mockResolvedValue({ ok: false })
         useBoardStore.getState().moveSpace('s1', MOVED, ADMIN)
         await settled()
 
         expect(useBoardStore.getState().spaces.find(s => s.id === 's1')).toMatchObject({ col_start: 0, row_start: 0, col_end: 7, row_end: 9 })
         expect(positionOf('carried')).toEqual({ col: 1, row: 1 })
-        expect(db.fake.writes('spaces').map(w => w.payload)).toEqual([MOVED, { col_start: 0, row_start: 0, col_end: 7, row_end: 9 }])
-        expect(db.fake.writes('agents').map(w => w.payload)).toEqual([{ col: 1, row: 21 }, { col: 1, row: 1 }])
+        expect(board.moveSpaceAction).toHaveBeenCalledTimes(1)
         expect(toast.error).toHaveBeenCalledWith(expect.objectContaining({ props: { id: 'builder.boardToasts.moveBoxFailed' } }), expect.anything())
     })
 
@@ -234,20 +232,20 @@ describe('the board writes for a member who only uses the Box', () => {
         useBoardStore.getState().moveAgent('scout', { col: 3, row: 3 }, 'used', MEMBER)
         useBoardStore.getState().moveAgent('scout', { col: 11, row: 4 }, 'managed', MEMBER)
         expect(positionOf('scout')).toEqual({ col: 1, row: 1 })
-        expect(db.fake.writes('agents')).toEqual([])
+        expect(board.setAgentPositionAction).not.toHaveBeenCalled()
         expect(toast.error).toHaveBeenCalledWith(expect.objectContaining({ props: { refusal: { error: REASON, code: 'boxManagerOnly' } } }), expect.anything())
     })
 
     it('does not drop a coworker in a Box they only use', () => {
         useBoardStore.getState().moveAgent('writer', { col: 3, row: 3 }, 'used', MEMBER)
         expect(useBoardStore.getState().agents.find(a => a.id === 'writer')).toMatchObject({ spaceId: 'managed', position: { col: 10, row: 1 } })
-        expect(db.fake.writes('agents')).toEqual([])
+        expect(board.setAgentPositionAction).not.toHaveBeenCalled()
     })
 
     it('moves a coworker inside a Box they manage', () => {
         useBoardStore.getState().moveAgent('writer', { col: 12, row: 3 }, 'managed', MEMBER)
         expect(positionOf('writer')).toEqual({ col: 12, row: 3 })
-        expect(db.fake.writes('agents').map(w => w.payload)).toEqual([{ col: 12, row: 3, space_id: 'managed' }])
+        expect(board.setAgentPositionAction).toHaveBeenCalledWith({ agentId: 'writer', col: 12, row: 3, spaceId: 'managed' })
     })
 
     it('does not resize, move, rename or delete a Box they only use', async () => {
@@ -259,8 +257,8 @@ describe('the board writes for a member who only uses the Box', () => {
         store.deleteSpace('used', MEMBER)
 
         expect(useBoardStore.getState().spaces.find(s => s.id === 'used')).toMatchObject({ col_start: 0, row_start: 0, col_end: 7, row_end: 9 })
-        expect(db.fake.writes('spaces')).toEqual([])
-        expect(db.fake.writes('agents')).toEqual([])
+        expect(board.updateSpaceRectAction).not.toHaveBeenCalled()
+        expect(board.moveSpaceAction).not.toHaveBeenCalled()
         expect(renameSpaceAction).not.toHaveBeenCalled()
         expect(deleteSpaceAction).not.toHaveBeenCalled()
     })
@@ -286,7 +284,7 @@ describe('the board writes for a member who only uses the Box', () => {
 
     it('lets an admin write every Box', () => {
         useBoardStore.getState().updateSpace('used', { col_end: 8 }, ADMIN)
-        expect(db.fake.writes('spaces').map(w => w.payload)).toEqual([{ col_end: 8 }])
+        expect(board.updateSpaceRectAction).toHaveBeenCalledWith('used', { col_end: 8 })
     })
 })
 

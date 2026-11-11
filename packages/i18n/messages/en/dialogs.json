@@ -76,17 +76,13 @@
         "newBox.suggestedNames": "Box names offered as chips under the Box name field: a Box groups coworkers by company division. Short, one or two words, title case where the language uses it."
     },
     "account": {
-        "emailChangeNeedsCurrentAddress": "This change still has to be confirmed from your current address.",
         "emailUpdated": "Email updated",
-        "phoneUpdated": "Phone number updated",
         "connectFailed": "Could not connect {provider}. Try again.",
         "disconnectFailed": "Could not disconnect {provider}. Try again.",
         "onlySignInMethod": "{provider} is the only sign-in method connected to this account.",
         "disconnected": "{provider} disconnected",
         "changeEmail": "Change email",
         "addEmail": "Add email",
-        "changePhone": "Change phone number",
-        "addPhone": "Add phone number",
         "googleNeedsBrowser": "Open Lumvika in your browser to connect Google."
     },
     "members": {
@@ -262,10 +258,6 @@
             "title": "Welcome",
             "subtitle": "Sign in or create your account to get started."
         }
-    },
-    "phoneVerification": {
-        "title": "One last step",
-        "subtitle": "Add your phone number."
     },
     "boxAccess": {
         "title": "Access to {box}",

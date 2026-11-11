@@ -1,7 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication'
 
+import { authClient } from '@/auth/auth-client'
 import { SignInError } from '@/auth/sign-in'
-import { supabase } from '@/auth/supabase'
 
 const FAILED = 'We could not sign you in with Apple. Try again.'
 
@@ -16,12 +16,13 @@ export async function signInWithApple(): Promise<boolean> {
     }
     if (!credential.identityToken) throw new SignInError(FAILED, 'apple')
 
-    const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken })
-    if (error) throw new SignInError(FAILED, 'apple')
+    // Apple hands the name over on the very first sign-in only, and leaves it out of the token: sent
+    // with it, or the account would never have one.
+    const firstName = credential.fullName?.givenName ?? undefined
+    const lastName = credential.fullName?.familyName ?? undefined
+    const user = firstName || lastName ? { name: { firstName, lastName } } : undefined
 
-    // Apple hands the name over on the very first sign-in only, and leaves it out of the token: kept
-    // where the web reads it, or the account would never have one.
-    const fullName = [credential.fullName?.givenName, credential.fullName?.familyName].filter(Boolean).join(' ')
-    if (fullName) await supabase.auth.updateUser({ data: { full_name: fullName } })
+    const { error } = await authClient.signIn.social({ provider: 'apple', idToken: { token: credential.identityToken, user } })
+    if (error) throw new SignInError(FAILED, 'apple')
     return true
 }

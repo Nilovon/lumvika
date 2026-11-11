@@ -9,9 +9,8 @@ import { loadPublished, loadWorkspaceBrand, safeNextPath } from '@/lib/published
 import { publishedSiteOrigin } from '@/lib/published/host'
 import { openPublishedHref } from '@/lib/published/links'
 import { UsersIcon } from '@/lib/icons'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { createClient } from '@/supabase/server'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getAuthUser } from '@/lib/auth/session/getServerSession'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 import { getTranslations } from 'next-intl/server'
 
 export const dynamic = 'force-dynamic'
@@ -39,11 +38,10 @@ export default async function PublishedAuthPage({ searchParams }: { searchParams
     if (!entry) return <GateScreen brand={{ name: 'Lumvika', iconUrl: null }} lock={null} mark={<LumvikaTile />} title={t('linkOff.title')} subtitle={t('linkOff.subtitle')} />
 
     const returnTo = openPublishedHref(slug, next)
-    const { data } = await (await createClient()).auth.getUser()
-    const user = data.user
-    if (!user || user.is_anonymous) redirect(`/auth?next=${encodeURIComponent(returnTo)}`)
+    const user = await getAuthUser()
+    if (!user || user.isAnonymous) redirect(`/auth?next=${encodeURIComponent(returnTo)}`)
 
-    const { data: membership } = await selectMaybeSingle(createServiceRoleClient(), 'workspace_members', ['user_id'] as const, { user_id: user.id, workspace_id: entry.workspace_id })
+    const { data: membership } = await selectMaybeSingle(serviceScope(), 'workspace_members', ['user_id'] as const, { user_id: user.id, workspace_id: entry.workspace_id })
     if (membership) {
         const origin = publishedSiteOrigin(slug)
         if (!origin) redirect(`/p/${slug}`)

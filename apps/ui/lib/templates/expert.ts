@@ -1,8 +1,6 @@
 import { isPublicStatus, templateDocumentObject, type TemplateDocument, type TemplatePricing, type TemplatePricingModel, type TemplateStatus } from '@lumvika/contracts'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
-import type { Database } from '@/app/api/database.types'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, type DbScope } from '@/lib/db'
 import { agentsFromRow } from './document'
 
 // What an expert may author, and nothing else. The admin editor owns the slug, the visibility
@@ -157,11 +155,11 @@ export type ExpertProfile = { id: string; slug: string; name: string; avatarUrl:
 
 // The whole mapping: a template belongs to a user, and the credited expert is the optional fiche
 // that user points at. Nothing is written here, and no fiche is auto-provisioned.
-export async function resolveExpertForUser(supabase: SupabaseClient<Database>, userId: string): Promise<ExpertProfile | null> {
-    const { data: account } = await selectMaybeSingle(supabase, 'users', ['expert_profile_id'] as const, { id: userId })
+export async function resolveExpertForUser(scope: DbScope, userId: string): Promise<ExpertProfile | null> {
+    const { data: account } = await selectMaybeSingle(scope, 'users', ['expert_profile_id'] as const, { id: userId })
     if (!account?.expert_profile_id) return null
 
-    const { data } = await selectMaybeSingle(supabase, 'experts', ['id', 'slug', 'name', 'avatar_url', 'status'] as const, { id: account.expert_profile_id })
+    const { data } = await selectMaybeSingle(scope, 'experts', ['id', 'slug', 'name', 'avatar_url', 'status'] as const, { id: account.expert_profile_id })
     if (!data) return null
     return { id: data.id, slug: data.slug, name: data.name, avatarUrl: data.avatar_url, status: data.status }
 }

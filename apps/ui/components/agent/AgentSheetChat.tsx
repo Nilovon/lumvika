@@ -6,8 +6,7 @@ import type { MentionAgent } from '@/components/chat/MentionAutocomplete'
 import { useAgentSkillSummaries } from '@/hooks/useAgentSkillSummaries'
 import { NEW_THREAD_TITLE } from '@/hooks/useSessionTabs'
 import { useBoardStore } from '@/stores/board.store'
-import { createClient } from '@/supabase/client'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { getSessionOriginAgentAction } from '@/app/api/_actions/session-reads.actions'
 import { AgentBuddy } from '@lumvika/ui/iso-grid'
 import { Stripes } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
@@ -54,8 +53,9 @@ export function AgentSheetChat({ uid, active, agentId, sessionId, onSessionCreat
     useEffect(() => {
         setOriginAgentId(null)
         if (!sessionId) return
-        selectMaybeSingle(createClient(), 'sessions', ['origin_agent_id'] as const, { id: sessionId })
-            .then(({ data }) => setOriginAgentId(data?.origin_agent_id ?? null))
+        getSessionOriginAgentAction(sessionId)
+            .then(setOriginAgentId)
+            .catch(() => {})
     }, [sessionId])
     const originAgentName = originAgentId ? (boardAgents.find(a => a.id === originAgentId)?.name ?? t('agentSheetChat.anotherCoworker')) : null
 

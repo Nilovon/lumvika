@@ -31,7 +31,7 @@ export default defineConfig({
             provider: 'v8',
             // React components are left out: the suite runs in a bare Node environment, so a `.tsx`
             // file only ever shows up here as noise.
-            include: ['app/**/*.ts', 'lib/**/*.ts', 'trigger/**/*.ts', 'ee/**/*.ts', 'supabase/**/*.ts', 'stores/**/*.ts', 'hooks/**/*.ts', 'proxy.ts'],
+            include: ['app/**/*.ts', 'lib/**/*.ts', 'trigger/**/*.ts', 'ee/**/*.ts', 'stores/**/*.ts', 'hooks/**/*.ts', 'proxy.ts'],
             exclude: ['**/*.test.ts', 'app/api/database.types.ts'],
             reporter: ['text-summary', 'html'],
         },

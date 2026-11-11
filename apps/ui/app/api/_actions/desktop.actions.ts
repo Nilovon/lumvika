@@ -24,7 +24,7 @@ function failed(err: unknown): Failure {
 // account yet has a workspace too, and gets none of it.
 async function memberDesktop(): Promise<WorkspaceDesktop> {
     const ctx = await requireWorkspaceContext()
-    if (ctx.authUser.is_anonymous) throw new DesktopUnavailableError('desktopNeedsAccount')
+    if (ctx.authUser.isAnonymous) throw new DesktopUnavailableError('desktopNeedsAccount')
     return resolveWorkspaceDesktop(ctx.workspace.id)
 }
 

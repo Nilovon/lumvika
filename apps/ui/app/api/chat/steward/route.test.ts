@@ -1,18 +1,15 @@
 import { requireWorkspaceContext } from '@/app/api/_auth/ownership'
-import { isPhoneStepPending } from '@lumvika/cloud/phone.server'
 import { logLumvikaUsage } from '@lumvika/cloud/billing.server'
 import { saveStewardConversation } from '@/lib/steward/conversation'
 import { prepareScript } from '@/lib/steward/scripted'
 import { loadStewardState } from '@/lib/steward/state'
 import { createStewardTurn } from '@/lib/steward/turn'
-import { PHONE_REQUIRED_MESSAGE } from '@lumvika/cloud/phone'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { BILLING_ENABLED } from '@lumvika/cloud/billing'
 import { POST } from './route'
 
 vi.mock('@/app/api/_auth/ownership', () => ({ requireWorkspaceContext: vi.fn() }))
-vi.mock('@lumvika/cloud/phone.server', () => ({ isPhoneStepPending: vi.fn() }))
 vi.mock('@lumvika/cloud/billing.server', async importOriginal => ({ ...(await importOriginal<typeof import('@lumvika/cloud/billing.server')>()), logLumvikaUsage: vi.fn() }))
 vi.mock('@/lib/steward/conversation', () => ({ engineSessionOf: vi.fn().mockResolvedValue(null), loadStewardConversation: vi.fn(), saveStewardConversation: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@/lib/steward/state', () => ({ loadStewardState: vi.fn() }))
@@ -28,23 +25,20 @@ describe('POST /api/chat/steward', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.stubEnv('LUMVIKA_MAX_API_KEY', 'key')
-        vi.mocked(requireWorkspaceContext).mockResolvedValue({ userId: 'user-1', authUser: { is_anonymous: false }, workspace: { id: 7 }, supabase: {} } as never)
+        vi.mocked(requireWorkspaceContext).mockResolvedValue({ userId: 'user-1', authUser: { isAnonymous: false }, workspace: { id: 7 }, scope: {} } as never)
         vi.mocked(loadStewardState).mockResolvedValue({ phase: 'waitlist' } as never)
     })
 
-    it('turns away an account that still owes its phone number before reading where the workspace stands', async () => {
-        vi.mocked(isPhoneStepPending).mockResolvedValue(true)
+    it('turns away an anonymous visitor before reading where the workspace stands', async () => {
+        vi.mocked(requireWorkspaceContext).mockResolvedValue({ userId: 'user-1', authUser: { isAnonymous: true }, workspace: { id: 7 }, scope: {} } as never)
 
         const response = await POST(request())
 
-        expect(response.status).toBe(403)
-        expect(await response.json()).toEqual({ error: PHONE_REQUIRED_MESSAGE })
+        expect(response.status).toBe(401)
         expect(loadStewardState).not.toHaveBeenCalled()
     })
 
-    it('lets an account that owes nothing through to the steward', async () => {
-        vi.mocked(isPhoneStepPending).mockResolvedValue(false)
-
+    it('lets an account through to the steward', async () => {
         const response = await POST(request())
 
         expect(response.status).toBe(423)
@@ -59,7 +53,6 @@ describe('POST /api/chat/steward', () => {
         const openRouterStream = () => new Response(`${frames.map(frame => `data: ${JSON.stringify(frame)}\n\n`).join('')}data: [DONE]\n\n`, { headers: { 'content-type': 'text/event-stream' } })
 
         beforeEach(() => {
-            vi.mocked(isPhoneStepPending).mockResolvedValue(false)
             vi.mocked(loadStewardState).mockResolvedValue({ phase: 'plan', answers: {} } as never)
             vi.mocked(prepareScript).mockResolvedValue(null as never)
             vi.mocked(createStewardTurn).mockReturnValue({ state: () => ({ phase: 'plan', steward: {} }) } as never)

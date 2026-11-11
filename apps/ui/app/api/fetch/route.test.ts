@@ -6,11 +6,11 @@ import { scrapePage } from '@/lib/company/firecrawl'
 import { POST } from './route'
 
 const insert = vi.fn()
-const from = vi.fn(() => ({ insert }))
+const insertedInto = vi.fn()
 
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ authenticateEngineToken: vi.fn() }))
 vi.mock('@/lib/company/firecrawl', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/company/firecrawl')>()), scrapePage: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn(() => ({ from })) }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), insertRows: (_scope: unknown, table: string, row: unknown) => (insertedInto(table), insert(row)) }))
 
 const WORKSPACE_ID = 7
 const PAGE_URL = 'https://www.g2.com/products/slack/reviews'
@@ -67,7 +67,7 @@ describe('POST /api/fetch', () => {
         expect(response.status).toBe(200)
         await expect(response.json()).resolves.toEqual({ markdown: '# Reviews', rawHtml: '<title>Reviews</title>' })
         expect(scrapePage).toHaveBeenCalledWith(PAGE_URL)
-        expect(from).toHaveBeenCalledWith('web_fetch_events')
+        expect(insertedInto).toHaveBeenCalledWith('web_fetch_events')
         expect(insert).toHaveBeenCalledWith(
             expect.objectContaining({ workspace_id: WORKSPACE_ID, engine_agent_id: 'surfer', url: PAGE_URL, host: 'www.g2.com', direct_status: 403, outcome: 'ok', provider_status: 200, page_status: 200, content_chars: 9 }),
         )

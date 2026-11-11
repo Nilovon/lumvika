@@ -52,7 +52,7 @@ import { useTemplateFlowStore } from '@/stores/template-flow.store'
 import { templateCardImage } from '@/lib/templates/card-image'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
 
 const TRANSITION_MS = 300
@@ -66,7 +66,7 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
     // Le tunnel guidé n'affiche pas de tabs : un onglet resté ouvert avant ne doit pas y cacher le chat.
     const onRoutines = useStewardStore(state => state.tab === 'routines') && !guided
     const intakeOpen = useStewardStore(state => state.intake)
-    const { isAnonymous, workspace, phoneStep } = useSession()
+    const { isAnonymous, workspace } = useSession()
     const pendingIntake = useOnboardingStore(state => state.pendingIntake)
     const gated = isAnonymous && pendingIntake !== null && !intakeOpen
     const { messages, sendMessage, status, error, stop, stopping, regenerate, answerWidget, dismissWidget, pendingWidget, restoreDone, composerBackend, backend, contextStats, runError, reconnecting, activeRunId } = useStewardChat()
@@ -184,10 +184,10 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
     )
 
     // Arrived on a template or a shared coworker: until it is installed the column is its tunnel.
-    // The account and the phone code take the whole of it, the rest is the conversation itself,
-    // where the trial, the purchase and the build already live.
-    const arrivalStep = guided && arrival && !arrival.installed ? arrivalStepOf({ isAnonymous, phonePending: phoneStep === 'pending', messages }) : null
-    const arrivalWall = arrivalStep === 'account' || arrivalStep === 'phone' ? arrivalStep : null
+    // The account takes the whole of it, the rest is the conversation itself, where the trial, the
+    // purchase and the build already live.
+    const arrivalStep = guided && arrival && !arrival.installed ? arrivalStepOf({ isAnonymous, messages }) : null
+    const arrivalWall = arrivalStep === 'account'
     const linkTemplate = useTemplateFlowStore(state => state.linkTemplate)
     const arrivalPick = useMemo<ArrivalPick | null>(() => {
         if (!arrival) return null
@@ -440,7 +440,7 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
                 {arrivalStep && arrivalPick && (
                     <div className={cn('flex flex-col gap-6 px-5 pt-14', arrivalWall ? 'min-h-0 flex-1 overflow-y-auto pb-5' : 'shrink-0')}>
                         <ArrivalHeader pick={arrivalPick} step={arrivalStep} paid={!!arrival?.paid || arrivalStep === 'purchase'} />
-                        {arrivalWall && <ArrivalWall step={arrivalWall} />}
+                        {arrivalWall && <ArrivalWall />}
                     </div>
                 )}
                 <div className={onRoutines || arrivalWall ? 'hidden' : 'contents'}>

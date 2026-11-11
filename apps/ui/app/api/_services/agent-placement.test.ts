@@ -1,8 +1,7 @@
-import { selectMany, selectSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectSingle, updateRows } from '@/lib/db'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { readSpaceAccess, workspaceActor, type Actor } from '@/app/api/_auth/access'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 import { findFreeCellInSpace, moveAgentToBox } from './agent.service'
 
@@ -15,8 +14,7 @@ vi.mock('@/lib/engine/client', () => ({
     patchAgent: vi.fn(),
     updateSchedule: vi.fn(),
 }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany: vi.fn(), selectSingle: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany: vi.fn(), selectSingle: vi.fn(), updateRows: vi.fn() }))
 vi.mock('@/lib/copy-name', () => ({ duplicateAgentName: vi.fn() }))
 vi.mock('./capacity.service', () => ({ PLAN_LIMIT_REASON: 'plan_limit', hasFreeAgentSlot: vi.fn() }))
 vi.mock('./space.service', () => ({ getSpaceConnection: vi.fn() }))
@@ -46,14 +44,14 @@ describe('findFreeCellInSpace', () => {
 
 describe('moveAgentToBox', () => {
     const update = vi.fn()
-    const eq = vi.fn()
 
     beforeEach(() => {
         vi.clearAllMocks()
-        eq.mockResolvedValue({ error: null })
-        update.mockReturnValue({ eq })
-        vi.mocked(createServiceRoleClient).mockReturnValue({ from: () => ({ update }) } as never)
-        vi.mocked(selectSingle).mockImplementation(((_client: unknown, table: string) =>
+        vi.mocked(updateRows).mockImplementation((async (_scope: unknown, _table: unknown, patch: unknown) => {
+            update(patch)
+            return { data: [], error: null }
+        }) as never)
+        vi.mocked(selectSingle).mockImplementation(((_scope: unknown, table: string) =>
             Promise.resolve(table === 'agents' ? { data: { space_id: 'from', workspace_id: 1 } } : { data: { col_start: 10, row_start: 0, col_end: 17, row_end: 7 } })) as never)
         vi.mocked(selectMany).mockResolvedValue({ data: [] } as never)
         vi.mocked(readSpaceAccess).mockResolvedValue('manage')
@@ -66,7 +64,7 @@ describe('moveAgentToBox', () => {
 
     it('refuses a full Box rather than leaving the agent unplaced', async () => {
         vi.mocked(selectMany).mockResolvedValue({ data: [{ col: 10, row: 0 }, { col: 12, row: 0 }, { col: 14, row: 0 }, { col: 16, row: 0 }] } as never)
-        vi.mocked(selectSingle).mockImplementation(((_client: unknown, table: string) =>
+        vi.mocked(selectSingle).mockImplementation(((_scope: unknown, table: string) =>
             Promise.resolve(table === 'agents' ? { data: { space_id: 'from', workspace_id: 1 } } : { data: { col_start: 10, row_start: 0, col_end: 17, row_end: 1 } })) as never)
 
         await expect(moveAgentToBox('agent', 'to', admin)).resolves.toEqual({ ok: false, error: 'That Box has no room left. Free a cell in it first.', code: 'boxFull' })

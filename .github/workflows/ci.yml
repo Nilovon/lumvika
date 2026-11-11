@@ -27,16 +27,40 @@ jobs:
       - run: pnpm --filter lumvika test
       - run: pnpm --filter lumvika-engine test
 
-  migrations:
-    name: Migrations and seed on a fresh database
+  database:
+    name: Migrations, seed and row level security on a fresh database
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.0-pg17
+        env:
+          POSTGRES_USER: lumvika
+          POSTGRES_PASSWORD: lumvika
+          POSTGRES_DB: lumvika
+        ports:
+          - 54432:5432
+        options: >-
+          --health-cmd "pg_isready -U lumvika -d lumvika"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+      storage:
+        image: rustfs/rustfs:1.0.4
+        env:
+          RUSTFS_ACCESS_KEY: lumvika
+          RUSTFS_SECRET_KEY: lumvika-secret
+        ports:
+          - 54437:9000
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          version: 2.113.0
-      - run: supabase db start
-      - run: supabase db reset --local
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/db.mjs migrate
+      - run: pnpm --filter @lumvika/db test
 
   # The images take ~20 minutes to build: a pull request only builds them when it touches what
   # goes into them beyond the code the other jobs already check, and every push to master and
@@ -85,7 +109,6 @@ jobs:
           push: false
           build-args: |
             NEXT_PUBLIC_APP_URL=http://localhost:3000
-            NEXT_PUBLIC_SUPABASE_URL=http://localhost:54421
-            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=ci
+            NEXT_PUBLIC_STORAGE_URL=http://localhost:3002
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app

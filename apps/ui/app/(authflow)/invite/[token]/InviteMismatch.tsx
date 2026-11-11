@@ -2,18 +2,17 @@
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { createClient } from '@/supabase/client'
+import { authClient } from '@/lib/auth/auth-client'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 export function InviteMismatch({ inviteEmail, currentEmail, workspaceName }: { inviteEmail: string; currentEmail: string; workspaceName: string }) {
     const t = useTranslations('auth.invite')
     const [loading, setLoading] = useState(false)
-    const supabase = createClient()
 
     const switchAccount = async () => {
         setLoading(true)
-        await supabase.auth.signOut()
+        await authClient.signOut()
         window.location.href = `/auth?email=${encodeURIComponent(inviteEmail)}&next=${encodeURIComponent(window.location.pathname)}`
     }
 

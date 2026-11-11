@@ -1,25 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase, type FakeSupabase } from '@/test/supabase-fake'
 import { activeAgentLimit, assertEngineEntitlement, freeAgentSlots, hasFreeAgentSlot, isPlanLimited, PLAN_LIMIT_REASON } from './capacity.service'
 vi.mock('@lumvika/cloud/billing', async importOriginal => ({ ...(await importOriginal<object>()), ...(await import('@/test/cloud-fakes')).CLOUD_ENTITLEMENTS }))
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 
 let workspace: { max_agents: number | null; subscription_status: string | null } | null
 let activeAgents: number
-let db: FakeSupabase
 
 beforeEach(() => {
     workspace = { max_agents: 5, subscription_status: 'active' }
     activeAgents = 0
-    db = fakeSupabase(table => {
-        if (table === 'workspaces') return { data: workspace }
-        if (table === 'agents') return { count: activeAgents }
+    db.reset()
+    db.answer(call => {
+        if (call.table === 'workspaces') return workspace ? { data: workspace } : { error: { code: 'NOT_ONE_ROW', message: 'Expected one row' } }
+        if (call.helper === 'selectCount' && call.table === 'agents') return { data: activeAgents }
         return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
 })
 
 describe('isPlanLimited', () => {
@@ -70,24 +68,21 @@ describe('freeAgentSlots', () => {
     it('answers Infinity for an unlimited workspace without counting', async () => {
         workspace = { max_agents: null, subscription_status: 'active' }
         await expect(freeAgentSlots(1)).resolves.toBe(Infinity)
-        expect(db.chainsOn('agents')).toHaveLength(0)
+        expect(db.callsTo('selectCount', 'agents')).toHaveLength(0)
     })
 
     it('answers zero without a plan without counting', async () => {
         workspace = { max_agents: 5, subscription_status: null }
         await expect(freeAgentSlots(1)).resolves.toBe(0)
-        expect(db.chainsOn('agents')).toHaveLength(0)
+        expect(db.callsTo('selectCount', 'agents')).toHaveLength(0)
     })
 
     it('subtracts the active agents from the limit', async () => {
         activeAgents = 2
         await expect(freeAgentSlots(1)).resolves.toBe(3)
-        expect(db.chainsOn('agents')[0].map(call => [call.method, ...call.args])).toEqual([
-            ['from', 'agents'],
-            ['select', '*', { count: 'exact', head: true }],
-            ['eq', 'workspace_id', 1],
-            ['is', 'disabled_at', null],
-        ])
+        const [count] = db.callsTo('selectCount', 'agents')
+        expect(count.args).toEqual([{ workspace_id: 1, disabled_at: { isNull: true } }])
+        expect(count.scope.kind).toBe('service')
     })
 
     it('never goes below zero when more agents run than the plan allows', async () => {

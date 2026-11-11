@@ -2,32 +2,15 @@ import { z } from 'zod'
 
 // Sign-in from the iOS app. The hub answers a refusal with `error` to show and `reason` to count.
 
+// The channels a message reaches a phone by, for the WhatsApp features.
 export const phoneChannelSchema = z.enum(['sms', 'whatsapp'])
 export type PhoneChannel = z.infer<typeof phoneChannelSchema>
 
-export const phoneCodeRequestSchema = z.object({
-    phone: z.string().trim().min(1).max(32),
-    country: z.string().length(2),
-    channel: phoneChannelSchema,
-})
-export type PhoneCodeRequest = z.infer<typeof phoneCodeRequestSchema>
-
-export const phoneCodeSentSchema = z.object({ channel: phoneChannelSchema })
-
-export const phoneSignInRequestSchema = phoneCodeRequestSchema.extend({ code: z.string().trim().min(4).max(10) })
-export type PhoneSignInRequest = z.infer<typeof phoneSignInRequestSchema>
-
-export const appSessionSchema = z.object({
-    created: z.boolean(),
-    session: z.object({ accessToken: z.string(), refreshToken: z.string() }),
-})
-export type AppSession = z.infer<typeof appSessionSchema>
-
 export const emailCodeRequestSchema = z.object({ email: z.string().trim().email().max(320) })
 
-// `mailed` when the hub sent the code still good for this address again, or holds it back because it
-// left less than a minute ago. Otherwise the app asks Supabase for a new one. Whether the address had
-// an account is not said here: that would tell anyone who holds one, before any code is checked.
+// The hub opens the account of a new address and answers `mailed: false`: the app then asks the auth
+// server for the code itself. Whether the address had an account is not said here: that would tell
+// anyone who holds one, before any code is checked.
 export const emailCodePreparedSchema = z.object({ mailed: z.boolean() })
 
 export const signInRefusalSchema = z.object({

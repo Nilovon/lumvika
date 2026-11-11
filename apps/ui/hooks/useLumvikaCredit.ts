@@ -1,7 +1,7 @@
 'use client'
 
 import { lumvikaCreditOf, type LumvikaCredit } from '@/lib/engine/ai-sources'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 
 export function useLumvikaCredit(): LumvikaCredit {
     const { workspace } = useSession()

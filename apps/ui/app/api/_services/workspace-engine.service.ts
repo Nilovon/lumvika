@@ -1,12 +1,10 @@
 import { assertEngineEntitlement } from '@/app/api/_services/capacity.service'
 import { pushBoxPlan } from '@/app/api/_services/engine-plan.service'
-import type { Database } from '@/app/api/database.types'
 import { claimPoolEngine } from '@lumvika/cloud/engines'
 import { requestCompanyBrainSeed } from '@/lib/brain/request-seed'
 import { buildBaseUrl } from '@/lib/engine/base-url'
 import type { EngineConnection } from '@/lib/engine/types'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle, selectMaybeSingleWithJoins } from '@/supabase/supabase-helpers'
+import { insertRows, selectMaybeSingle, selectMaybeSingleWithJoins, serviceScope } from '@/lib/db'
 import { AppError, failure, type ActionFailure } from '@/lib/i18n/action-error'
 
 // One workspace, one machine. The engine lives in `engine_pool`, claimed by a workspace, and every
@@ -14,7 +12,7 @@ import { AppError, failure, type ActionFailure } from '@/lib/i18n/action-error'
 // address a machine.
 //
 // The key never leaves the server, and it never leaves this file's read either: `engine_pool` is
-// service-role only, which is the reason the binding lives there rather than on `workspaces`.
+// reached by the service scope only, which is the reason the binding lives there rather than on `workspaces`.
 
 const ENGINE_COLUMNS = ['id', 'engine_host', 'engine_api_key', 'provider_server_id'] as const
 
@@ -33,8 +31,7 @@ export type WorkspaceEngine = {
 }
 
 export async function findWorkspaceEngine(workspaceId: number): Promise<WorkspaceEngine | null> {
-    const supabase = createServiceRoleClient()
-    const { data } = await selectMaybeSingle(supabase, 'engine_pool', ENGINE_COLUMNS, { claimed_by_workspace_id: workspaceId })
+    const { data } = await selectMaybeSingle(serviceScope(), 'engine_pool', ENGINE_COLUMNS, { claimed_by_workspace_id: workspaceId })
     if (!data?.engine_host) return null
     return {
         instanceId: data.id,
@@ -61,7 +58,7 @@ export async function ensureWorkspaceEngine(workspaceId: number, { forRestore = 
     if (existing) return { ok: true, instanceId: existing.instanceId }
 
     if (!forRestore) {
-        const { data: workspace } = await selectMaybeSingle(createServiceRoleClient(), 'workspaces', ['boxes_archived_at'] as const, { id: workspaceId })
+        const { data: workspace } = await selectMaybeSingle(serviceScope(), 'workspaces', ['boxes_archived_at'] as const, { id: workspaceId })
         if (workspace?.boxes_archived_at) return failure('workspaceRestoring')
     }
 
@@ -96,11 +93,10 @@ export async function syncEnginePlan(workspaceId: number): Promise<void> {
 // by hand from the admin. It has no provider server behind it, so the pool never tries to power
 // it on, resize it or destroy it.
 export async function attachCustomEngine(workspaceId: number, params: { engineHost: string; engineApiKey: string }): Promise<void> {
-    const supabase = createServiceRoleClient()
     const existing = await findWorkspaceEngine(workspaceId)
     if (existing) throw new Error('This workspace already has an engine. Detach it first.')
 
-    const { error } = await supabase.from('engine_pool').insert<Database['public']['Tables']['engine_pool']['Insert']>({
+    const { error } = await insertRows(serviceScope(), 'engine_pool', {
         provider: 'incus',
         provider_server_id: null,
         engine_host: params.engineHost,
@@ -118,9 +114,8 @@ export type AuthenticatedWorkspace = { workspaceId: number; isSandbox: boolean }
 // as nobody.
 export async function authenticateEngineToken(token: string): Promise<AuthenticatedWorkspace | null> {
     if (!token) return null
-    const supabase = createServiceRoleClient()
     const { data } = await selectMaybeSingleWithJoins(
-        supabase,
+        serviceScope(),
         'engine_pool',
         ['claimed_by_workspace_id'] as const,
         { workspace: { table: 'workspaces', foreignKey: 'workspaces', columns: ['id', 'is_sandbox'] } as const },

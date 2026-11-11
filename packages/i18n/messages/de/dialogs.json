@@ -1,16 +1,12 @@
 {
     "account": {
-        "emailChangeNeedsCurrentAddress": "Diese Änderung muss noch über deine aktuelle Adresse bestätigt werden.",
         "emailUpdated": "E-Mail aktualisiert",
-        "phoneUpdated": "Telefonnummer aktualisiert",
         "connectFailed": "Verbinden mit {provider} fehlgeschlagen. Versuch es noch mal.",
         "disconnectFailed": "Trennen von {provider} fehlgeschlagen. Versuch es noch mal.",
         "onlySignInMethod": "{provider} ist die einzige Anmeldemethode dieses Kontos.",
         "disconnected": "{provider} getrennt",
         "changeEmail": "E-Mail ändern",
         "addEmail": "E-Mail hinzufügen",
-        "changePhone": "Telefonnummer ändern",
-        "addPhone": "Telefonnummer hinzufügen",
         "googleNeedsBrowser": "Öffne Lumvika im Browser, um Google zu verbinden."
     },
     "members": {
@@ -186,10 +182,6 @@
             "title": "Willkommen",
             "subtitle": "Melde dich an oder erstelle ein Konto, um loszulegen."
         }
-    },
-    "phoneVerification": {
-        "title": "Ein letzter Schritt",
-        "subtitle": "Gib deine Telefonnummer an."
     },
     "boxAccess": {
         "title": "Zugriff auf {box}",

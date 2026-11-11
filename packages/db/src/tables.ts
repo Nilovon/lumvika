@@ -26,8 +26,7 @@ export function tableOf<T extends TableName>(name: T): PublicTables[T] {
     return table
 }
 
-// The shape the app was written against when Supabase generated it, now derived from the drizzle
-// schema, so `Database['public']['Tables']['agents']['Row']` and `Tables<'agents'>` still read.
+// The shape the app was written against, derived from the drizzle schema, so `Database['public']['Tables']['agents']['Row']` and `Tables<'agents'>` still read.
 export type Database = {
     public: {
         Tables: { [T in TableName]: { Row: TableRow<T>; Insert: TableInsert<T>; Update: TableUpdate<T> } }

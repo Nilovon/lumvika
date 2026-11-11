@@ -6,11 +6,11 @@ import { ComposioApiError, composioUserId, executeTool, listToolkitTools } from 
 import { readRegistry, type RegistryEntry, upsertRegistryEntry } from '@/lib/services/registry'
 import type { EngineConnection } from '@/lib/engine/types'
 import { serviceManifestSchema } from '@/lib/services/manifest'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 import { POST } from './route'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/app/api/_services/services.service', () => ({ loadManifest: vi.fn() }))
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ authenticateEngineToken: vi.fn(), getWorkspaceConnection: vi.fn() }))
 vi.mock('@/lib/services/registry', () => ({ readRegistry: vi.fn(), upsertRegistryEntry: vi.fn() }))
@@ -30,13 +30,13 @@ const manifest = serviceManifestSchema.parse({
     authMethods: [{ id: 'composio', kind: 'composio', composio: { toolkit: 'gmail', authConfigId: 'ac_1', allowedTools: ['GMAIL_SEND_EMAIL', 'GMAIL_LIST_THREADS'] } }],
 })
 
-function eqValue(calls: readonly SupabaseCall[], column: string): unknown {
-    return calls.find(call => call.method === 'eq' && call.args[0] === column)?.args[1]
+function filterValue(call: DbCall, column: string): unknown {
+    return (call.args[1] as Record<string, unknown>)[column]
 }
 
-function resolve(table: string, calls: readonly SupabaseCall[]) {
-    if (table !== 'agents') return undefined
-    const match = AGENTS.find(agent => agent.workspace_id === eqValue(calls, 'workspace_id') && agent.engine_agent_id === eqValue(calls, 'engine_agent_id'))
+function resolve(call: DbCall) {
+    if (call.table !== 'agents') return undefined
+    const match = AGENTS.find(agent => agent.workspace_id === filterValue(call, 'workspace_id') && agent.engine_agent_id === filterValue(call, 'engine_agent_id'))
     return { data: match ? { id: match.id } : null }
 }
 
@@ -57,13 +57,11 @@ function toolCall(name: string) {
 }
 
 describe('POST /api/mcp/composio/[slug]', () => {
-    let db: FakeSupabase
-
     beforeEach(() => {
         vi.clearAllMocks()
         vi.spyOn(console, 'warn').mockImplementation(() => {})
-        db = fakeSupabase(resolve)
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
+        db.reset()
+        db.answer(resolve)
         vi.mocked(authenticateEngineToken).mockImplementation(async token => (token === BOX_KEY ? { workspaceId: WORKSPACE_ID, isSandbox: false } : null))
         vi.mocked(loadManifest).mockResolvedValue(manifest)
         vi.mocked(executeTool).mockResolvedValue({ successful: true, data: { id: 'msg-1' }, error: null })
@@ -106,7 +104,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
         const response = await POST(request(toolCall('GMAIL_DELETE_EVERYTHING')), context())
 
         expect(await response.json()).toEqual({ jsonrpc: '2.0', id: 1, error: { code: -32601, message: 'Unknown tool: GMAIL_DELETE_EVERYTHING' } })
-        expect(db.chainsOn('agents')).toHaveLength(0)
+        expect(db.callsTo('selectMaybeSingle', 'agents')).toHaveLength(0)
         expect(executeTool).not.toHaveBeenCalled()
     })
 
@@ -126,7 +124,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
         const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-agent': 'engine-foreign' }), context())
 
         expect(await response.json()).toMatchObject({ error: { code: -32603, message: 'Coworker does not belong to the authenticated workspace' } })
-        expect(eqValue(db.chainsOn('agents')[0], 'workspace_id')).toBe(WORKSPACE_ID)
+        expect(filterValue(db.callsTo('selectMaybeSingle', 'agents')[0], 'workspace_id')).toBe(WORKSPACE_ID)
         expect(executeTool).not.toHaveBeenCalled()
     })
 
@@ -134,7 +132,7 @@ describe('POST /api/mcp/composio/[slug]', () => {
         const response = await POST(request(toolCall('GMAIL_SEND_EMAIL'), { 'x-lumvika-agent': '' }), context())
 
         expect(await response.json()).toMatchObject({ error: { code: -32603 } })
-        expect(db.chainsOn('agents')).toHaveLength(0)
+        expect(db.callsTo('selectMaybeSingle', 'agents')).toHaveLength(0)
         expect(executeTool).not.toHaveBeenCalled()
     })
 

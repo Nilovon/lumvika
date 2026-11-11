@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeSupabase, type FakeSupabase } from '@/test/supabase-fake'
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 
 const mocks = vi.hoisted(() => ({
     getAdminEmail: vi.fn(),
@@ -18,14 +19,12 @@ vi.mock('@/lib/auth/admin', () => ({
     },
 }))
 vi.mock('@/app/api/_auth/access', () => ({ assertSpaceAccess: mocks.assertSpaceAccess }))
-vi.mock('@/supabase/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/server', () => ({ createClient: vi.fn() }))
+vi.mock('@/lib/auth/session/getServerSession', () => ({ getServerSession: mocks.getServerSession, getSessionWorkspace: mocks.getServerSession }))
+vi.mock('@/lib/auth/session/request', () => ({ getRequestScope: vi.fn() }))
 vi.mock('@/lib/templates/entitlement', () => ({ hasTemplateEntitlement: mocks.hasTemplateEntitlement, templateAccessByWorkspace: mocks.templateAccessByWorkspace }))
 vi.mock('@/lib/templates/install', () => ({ installTemplate: mocks.installTemplate }))
 vi.mock('@/lib/templates/library', () => ({ LIBRARY_COLUMNS: ['id', 'slug', 'status', 'creator_id'], toLibraryTemplates: (rows: { slug: string }[]) => rows.map(row => ({ slug: row.slug })) }))
 
-const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const { getSharedTemplateAction, installTemplateAction } = await import('./template.actions')
 
 const WORKSPACE_ID = 7
@@ -40,14 +39,13 @@ function template(overrides: Partial<Template> = {}): Template {
     return { id: 'template-1', slug: 'crm', status: 'published', creator_id: AUTHOR, pricing_model: 'free', ...overrides }
 }
 
-function database(row: Template | null, subscriptionStatus: string | null = 'active'): FakeSupabase {
-    const db = fakeSupabase(table => {
-        if (table === 'templates') return { data: row }
-        if (table === 'workspaces') return { data: { subscription_status: subscriptionStatus } }
+function database(row: Template | null, subscriptionStatus: string | null = 'active') {
+    db.reset()
+    db.answer(call => {
+        if (call.table === 'templates') return { data: row }
+        if (call.table === 'workspaces') return { data: { subscription_status: subscriptionStatus } }
         return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
-    return db
 }
 
 function signedInAs(userId: string | null) {
@@ -110,11 +108,11 @@ describe('installTemplateAction', () => {
     })
 
     it('refuses a Box of another workspace before reading the template', async () => {
-        const db = database(template())
+        database(template())
         mocks.assertSpaceAccess.mockRejectedValue(new Error('Box not found'))
 
         await expect(installTemplateAction({ slug: 'crm', spaceId: SPACE_ID })).resolves.toEqual({ ok: false, error: 'Box not found' })
-        expect(db.chainsOn('templates')).toHaveLength(0)
+        expect(db.calls.filter(call => call.table === 'templates')).toHaveLength(0)
     })
 
     it('asks for manage on the Box, so a member who only uses it installs nothing', async () => {

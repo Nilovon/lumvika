@@ -8,7 +8,7 @@ import { realEmail } from '@/lib/auth/placeholder-email'
 import { openCrisp, sendToCrisp } from '@/lib/crisp'
 import { CircleCheckIcon, LifeBuoyIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { useSession } from '@/supabase/session/SessionProvider'
+import { useSession } from '@/lib/auth/session/SessionProvider'
 import { StewardOutcomeRow } from './StewardOutcomeRow'
 
 // The steward handing a stuck user to a person. Nothing leaves before they click: the click sends

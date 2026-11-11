@@ -1,8 +1,7 @@
-import { selectMany, selectSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectSingle, updateRows } from '@/lib/db'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { patchAgent } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
 
 import { changeAgentHandle, renameAgent } from './agent.service'
 
@@ -15,15 +14,13 @@ vi.mock('@/lib/engine/client', () => ({
     patchAgent: vi.fn(),
     updateSchedule: vi.fn(),
 }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany: vi.fn(), selectSingle: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany: vi.fn(), selectSingle: vi.fn(), updateRows: vi.fn() }))
 vi.mock('@/lib/copy-name', () => ({ duplicateAgentName: vi.fn() }))
 vi.mock('./capacity.service', () => ({ PLAN_LIMIT_REASON: 'plan_limit', hasFreeAgentSlot: vi.fn() }))
 vi.mock('./space.service', () => ({ getSpaceConnection: vi.fn().mockResolvedValue('conn') }))
 
 describe('renameAgent', () => {
     const update = vi.fn()
-    const eq = vi.fn()
 
     function siblings(rows: { id: string; handle: string }[]) {
         vi.mocked(selectMany).mockResolvedValue({ data: rows } as never)
@@ -31,9 +28,10 @@ describe('renameAgent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
-        eq.mockResolvedValue({ error: null })
-        update.mockReturnValue({ eq })
-        vi.mocked(createServiceRoleClient).mockReturnValue({ from: () => ({ update }) } as never)
+        vi.mocked(updateRows).mockImplementation((async (_scope: unknown, _table: unknown, patch: unknown) => {
+            update(patch)
+            return { data: [], error: null }
+        }) as never)
         vi.mocked(selectSingle).mockResolvedValue({ data: { workspace_id: 7, space_id: 'box', engine_agent_id: 'eng1', handle: 'scout' } } as never)
     })
 
@@ -46,7 +44,7 @@ describe('renameAgent', () => {
         expect(vi.mocked(patchAgent).mock.invocationCallOrder[0]).toBeLessThan(update.mock.invocationCallOrder[0])
     })
 
-    it('writes nothing in Supabase when the engine refuses the rename', async () => {
+    it('writes nothing in the database when the engine refuses the rename', async () => {
         siblings([{ id: 'a1', handle: 'scout' }])
         vi.mocked(patchAgent).mockRejectedValueOnce(new Error('engine down'))
 
@@ -72,18 +70,18 @@ describe('renameAgent', () => {
 
 describe('changeAgentHandle', () => {
     const update = vi.fn()
-    const eq = vi.fn()
 
     beforeEach(() => {
         vi.clearAllMocks()
-        eq.mockResolvedValue({ error: null })
-        update.mockReturnValue({ eq })
-        vi.mocked(createServiceRoleClient).mockReturnValue({ from: () => ({ update }) } as never)
+        vi.mocked(updateRows).mockImplementation((async (_scope: unknown, _table: unknown, patch: unknown) => {
+            update(patch)
+            return { data: [], error: null }
+        }) as never)
         vi.mocked(selectSingle).mockResolvedValue({ data: { workspace_id: 7, space_id: 'box', engine_agent_id: 'eng1', name: 'Scout', handle: 'scout' } } as never)
         vi.mocked(selectMany).mockResolvedValue({ data: [{ id: 'a1', handle: 'scout' }] } as never)
     })
 
-    it('writes nothing in Supabase when the engine refuses the handle', async () => {
+    it('writes nothing in the database when the engine refuses the handle', async () => {
         vi.mocked(patchAgent).mockRejectedValueOnce(new Error('engine down'))
 
         await expect(changeAgentHandle('a1', 'ranger')).rejects.toThrow('engine down')

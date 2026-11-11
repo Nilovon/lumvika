@@ -12,7 +12,7 @@ vi.mock('@/app/api/_auth/ownership', async importOriginal => {
     const actual = await importOriginal<typeof import('@/app/api/_auth/ownership')>()
     const requireWorkspaceContext = async () => {
         if (!signedIn) throw new actual.UnauthenticatedError()
-        return { userId: 'user-1', workspace, role, supabase: {} }
+        return { userId: 'user-1', workspace, role, scope: {} }
     }
     return {
         ...actual,

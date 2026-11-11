@@ -2,7 +2,7 @@
 // own (a single app, credentials in env), so the user never registers anything with the
 // provider. Runs on lumvika.com because it has the TLS domain + registered redirect_uri the
 // raw-IP engine lacks. The resulting token is handed to the ENGINE token store (never
-// Supabase), exactly like lib/mcp-oauth.ts, but with a fixed client instead of discovery/DCR.
+// the database), exactly like lib/mcp-oauth.ts, but with a fixed client instead of discovery/DCR.
 //
 // Server-only. Import from route handlers.
 

@@ -9,8 +9,7 @@ import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { readFirstName } from '@/lib/naming/first-name'
 import { loadServiceCatalog } from '@/lib/templates/catalog'
 import { LIBRARY_COLUMNS, toLibraryTemplates, type LibraryRow } from '@/lib/templates/library'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMany, selectMaybeSingle, serviceScope } from '@/lib/db'
 import { actorFromContext, isAdminActor, spaceAccessMap } from '@/app/api/_auth/access'
 import { AGENT_COLUMNS, SPACE_COLUMNS } from './board-map'
 import { stewardHubApiKey } from './hub-api-key'
@@ -34,13 +33,13 @@ async function describeIntent(ctx: WorkspaceContext, intent: KickoffIntent): Pro
         const { apps: picked = [], ...prompt } = intent
         // The slugs come from a URL anyone can write: only the ones the catalogue carries are ever
         // named to an agent.
-        const catalog = picked.length ? await loadServiceCatalog(ctx.supabase, picked) : null
+        const catalog = picked.length ? await loadServiceCatalog(ctx.scope, picked) : null
         const apps = picked.filter(slug => catalog?.has(slug))
         return { ...prompt, ...(apps.length ? { apps } : {}), description: intent.text }
     }
 
     if (intent.kind === 'template') {
-        const { data } = await selectMaybeSingle(ctx.supabase, 'templates', LIBRARY_COLUMNS, { slug: intent.slug, status: ['published', 'unlisted'] })
+        const { data } = await selectMaybeSingle(ctx.scope, 'templates', LIBRARY_COLUMNS, { slug: intent.slug, status: ['published', 'unlisted'] })
         const [template] = data ? toLibraryTemplates([data as LibraryRow], ctx.userId) : []
         if (!template) return intent
         const connectors = template.connectors.map(connector => connector.slug).join(', ')
@@ -48,18 +47,18 @@ async function describeIntent(ctx: WorkspaceContext, intent: KickoffIntent): Pro
         return { ...intent, title: template.title, ...(coworker && !others.length ? { coworker } : {}), ...(isPaid(template.pricing) && !template.owned ? { paid: template.pricing } : {}), description: `the template "${template.title}" (${template.tagline}), ${template.archiveAgentNames.length} coworkers${connectors ? `, apps: ${connectors}` : ''}` }
     }
 
-    // A share link is read with the service role, as the card that shows it is: the token is the
+    // A share link is read with the service scope, as the card that shows it is: the token is the
     // only credential, and the sender's workspace is not this one.
-    const preview = await readAgentShare(createServiceRoleClient(), intent.token)
+    const preview = await readAgentShare(serviceScope(), intent.token)
     return preview ? { ...intent, title: preview.agent.name, description: `a shared coworker, "${preview.agent.name}"${preview.agent.role ? ` - ${preview.agent.role}` : ''}` } : intent
 }
 
 export async function loadStewardState(ctx: WorkspaceContext, acceptLanguage: string | null, intent: KickoffIntent | null = null, client: StewardClient = 'web'): Promise<StewardState> {
     const actor = actorFromContext(ctx)
     const [onboarding, { data: spaces }, { data: agents }, reach] = await Promise.all([
-        selectMaybeSingle(ctx.supabase, 'workspace_onboarding', ['answers'] as const, { workspace_id: ctx.workspace.id }),
-        selectMany(ctx.supabase, 'spaces', SPACE_COLUMNS, { workspace_id: ctx.workspace.id }, { column: 'created_at' }),
-        selectMany(ctx.supabase, 'agents', AGENT_COLUMNS, { workspace_id: ctx.workspace.id }, { column: 'created_at' }),
+        selectMaybeSingle(ctx.scope, 'workspace_onboarding', ['answers'] as const, { workspace_id: ctx.workspace.id }),
+        selectMany(ctx.scope, 'spaces', SPACE_COLUMNS, { workspace_id: ctx.workspace.id }, { column: 'created_at' }),
+        selectMany(ctx.scope, 'agents', AGENT_COLUMNS, { workspace_id: ctx.workspace.id }, { column: 'created_at' }),
         isAdminActor(actor) ? Promise.resolve(null) : spaceAccessMap(actor),
     ])
     // A member's steward sees the board through their Boxes. The phase still reads the whole
@@ -79,7 +78,7 @@ export async function loadStewardState(ctx: WorkspaceContext, acceptLanguage: st
     const pastOnboarding = ctx.workspace.is_sandbox || stewardPhase(input) === 'companion'
     // The pool is only asked for an account still in the funnel: a companion has its machine, and
     // an anonymous visitor is never stamped, or bot traffic would fill the list.
-    const waitlisted = !pastOnboarding && !ctx.authUser.is_anonymous && (await resolveEngineWaitlist(ctx.workspace.id))
+    const waitlisted = !pastOnboarding && !ctx.authUser.isAnonymous && (await resolveEngineWaitlist(ctx.workspace.id))
     // Read before the phase for once: whether the link still resolves is what decides if it is
     // installed ahead of the welcome card. Only worth a read while it can change anything: a
     // companion was not brought here by a link, it was already home.
@@ -89,7 +88,7 @@ export async function loadStewardState(ctx: WorkspaceContext, acceptLanguage: st
     // A workspace that is already running (paying, or holding agents) is a companion and its funnel
     // will never run, so nothing else would ever stamp it. Left unstamped, every gate that waits on
     // the onboarding (a parked template link, the hero prompt) would wait forever.
-    if (phase === 'companion' && !onboardingCompletedAt && !ctx.workspace.is_sandbox && !ctx.authUser.is_anonymous) await stampWorkspaceOnboarded(ctx).catch(err => console.error('Error stamping workspace onboarded', err))
+    if (phase === 'companion' && !onboardingCompletedAt && !ctx.workspace.is_sandbox && !ctx.authUser.isAnonymous) await stampWorkspaceOnboarded(ctx).catch(err => console.error('Error stamping workspace onboarded', err))
 
     return {
         phase,
@@ -97,8 +96,8 @@ export async function loadStewardState(ctx: WorkspaceContext, acceptLanguage: st
         answers,
         steward,
         onboardingCompletedAt,
-        firstName: readFirstName(ctx.authUser.user_metadata),
-        language: accountLanguage((await selectMaybeSingle(ctx.supabase, 'users', ['locale'] as const, { id: ctx.userId })).data?.locale) ?? steward.language ?? preferredLanguage(acceptLanguage),
+        firstName: readFirstName(ctx.authUser.isAnonymous ? undefined : { name: ctx.authUser.name }),
+        language: accountLanguage((await selectMaybeSingle(ctx.scope, 'users', ['locale'] as const, { id: ctx.userId })).data?.locale) ?? steward.language ?? preferredLanguage(acceptLanguage),
         entitled,
         trialing,
         trialSpent: !!ctx.workspace.trial_ends_at,

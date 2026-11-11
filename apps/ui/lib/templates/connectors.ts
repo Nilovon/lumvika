@@ -1,6 +1,5 @@
 import type { TemplateConnector } from '@lumvika/contracts'
-import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { DbScope } from '@/lib/db'
 import { loadServiceCatalog } from './catalog'
 
 // The template level connector list is never authored: it is the union of what the captured
@@ -8,13 +7,13 @@ import { loadServiceCatalog } from './catalog'
 // `services`. Every write path goes through this so a removed agent never leaves an orphan
 // connector on the public page.
 export async function resolveAgentConnectors(
-    supabase: SupabaseClient<Database>,
+    scope: DbScope,
     agents: { connectorSlugs: string[] }[],
 ): Promise<{ connectors: TemplateConnector[]; warnings: string[] }> {
     const slugs = [...new Set(agents.flatMap(agent => agent.connectorSlugs))]
     if (slugs.length === 0) return { connectors: [], warnings: [] }
 
-    const catalog = await loadServiceCatalog(supabase, slugs)
+    const catalog = await loadServiceCatalog(scope, slugs)
     // A slug comes from the agent's own registry, which is not constrained to our catalog, so
     // an unknown one is kept and only warned about: it would otherwise make an already
     // captured template unsaveable.

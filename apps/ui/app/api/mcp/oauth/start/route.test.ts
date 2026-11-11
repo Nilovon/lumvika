@@ -1,15 +1,14 @@
 import { decodeContext } from '@/lib/mcp-oauth'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { getServerSession } from '@/supabase/session/getServerSession'
-import { fakeSupabase } from '@/test/supabase-fake'
+import { getServerSession } from '@/lib/auth/session/getServerSession'
 import type { NextResponse } from 'next/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { POST } from './route'
 
 const mocks = vi.hoisted(() => ({ lookup: vi.fn() }))
 vi.mock('node:dns/promises', () => ({ lookup: mocks.lookup }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/supabase/session/getServerSession', () => {
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
+vi.mock('@/lib/auth/session/getServerSession', () => {
     const session = vi.fn()
     return { getServerSession: session, getSessionWorkspace: session }
 })
@@ -49,12 +48,13 @@ beforeEach(() => {
     vi.clearAllMocks()
     agentWorkspace = SESSION_WORKSPACE
     role = 'admin'
-    const db = fakeSupabase(table => {
+    db.reset()
+    db.answer(({ helper, table }) => {
+        if (!helper.startsWith('select')) return undefined
         if (table === 'agents') return { data: { workspace_id: agentWorkspace, space_id: 'space-1', engine_agent_id: 'engine-agent' } }
         if (table === 'spaces') return { data: { id: 'space-1', workspace_id: agentWorkspace, visibility: 'workspace' } }
         return undefined
     })
-    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
     vi.mocked(getServerSession).mockImplementation(async () => ({ user: { id: 'user-1', workspace_id: SESSION_WORKSPACE }, membership: { role, box_scope: 'all' }, workspaceRefused: false }) as never)
     documents = { [RESOURCE_METADATA_URL]: { authorization_servers: ['https://auth.acme.test'] }, [AUTH_SERVER_METADATA_URL]: AUTH_SERVER_METADATA }
     vi.stubGlobal('fetch', fetchMock)

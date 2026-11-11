@@ -3,18 +3,16 @@ import { type WorkspaceContext } from '@/app/api/_auth/ownership'
 import { createSessionRow, getSessionEngineContext, lastRunError, listSessionRuns, readUsageSeed, resolveAgentTarget } from '@/app/api/_services/chat.service'
 import { transformEngineMessages } from '@/lib/chat/engine-history'
 import { cancelRun, getSession, getSessionMessages, listRuns, listSessions, listSkillProposals } from '@/lib/engine/client'
-import { createClient } from '@/supabase/server'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
-import { fakeSupabase } from '@/test/supabase-fake'
+import { getRequestScope } from '@/lib/auth/session/request'
+import { callRows, selectMany, selectMaybeSingle, updateRows } from '@/lib/db'
+import { fakeScope } from '@/test/db-fake'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { adoptEngineSession, cancelSessionRuns, EMPTY_SESSION_SNAPSHOT, listAgentConversations, listAgentThreads, listWorkspaceConversationOverview, markSessionsHandled, readSessionSnapshot, searchWorkspaceConversations, THREAD_FEED_LIMIT } from './conversation.service'
 
-vi.mock('@/supabase/supabase-helpers', () => ({ selectMany: vi.fn(), selectMaybeSingle: vi.fn() }))
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), selectMany: vi.fn(), selectMaybeSingle: vi.fn(), selectCount: vi.fn(), callRows: vi.fn(), updateRows: vi.fn(async () => ({ data: [], error: null })) }))
 vi.mock('@/lib/i18n/recipient-locale', () => ({ recipientLocale: vi.fn(async () => 'en') }))
-vi.mock('@/supabase/server', () => ({ createClient: vi.fn() }))
+vi.mock('@/lib/auth/session/request', () => ({ getRequestScope: vi.fn(async () => fakeScope('user', 'me')) }))
 vi.mock('@/app/api/_auth/access', async importOriginal => {
     const actual = await importOriginal<typeof import('@/app/api/_auth/access')>()
     return { ...actual, assertAgentAccess: vi.fn(), assertSessionInWorkspace: vi.fn(), visibleSpaceIds: vi.fn(actual.visibleSpaceIds) }
@@ -23,7 +21,7 @@ vi.mock('@/app/api/_services/chat.service', () => ({ createSessionRow: vi.fn(), 
 vi.mock('@/lib/engine/client', () => ({ cancelRun: vi.fn(), getSession: vi.fn(), getSessionMessages: vi.fn(), listRuns: vi.fn(), listSessions: vi.fn(), listSkillProposals: vi.fn() }))
 vi.mock('@/lib/chat/engine-history', () => ({ transformEngineMessages: vi.fn() }))
 
-const ctx = { userId: 'admin', role: 'admin', boxScope: 'all', supabase: {}, workspace: { id: 7 } } as unknown as WorkspaceContext
+const ctx = { userId: 'admin', role: 'admin', boxScope: 'all', scope: fakeScope(), workspace: { id: 7 } } as unknown as WorkspaceContext
 const memberCtx = { ...ctx, userId: 'member', role: 'member' } as WorkspaceContext
 const adminActor: Actor = { kind: 'user', userId: 'admin', workspaceId: 7, role: 'admin', boxScope: 'all' }
 const reached = (agent = { workspace_id: 7, space_id: 'space-1', engine_agent_id: 'engine-agent' }) => ({ actor: adminActor, access: 'manage' as const, agent })
@@ -31,6 +29,8 @@ const reached = (agent = { workspace_id: 7, space_id: 'space-1', engine_agent_id
 function session(agentId: string, id: string, updatedAt: string, status = 'idle') {
     return { id, agent_id: agentId, title: `${id} title`, status, updated_at: updatedAt, created_at: updatedAt, engine_session_id: `engine-${id}`, source: 'dashboard', kind: 'thread' }
 }
+
+const sessionWrites = () => vi.mocked(updateRows).mock.calls.filter(call => call[1] === 'sessions').map(call => ({ payload: call[2], filters: call[3] as Record<string, unknown> }))
 
 // selectMany is called three times in order: agents, the latest scan, then the pending count.
 function answers(agents: { id: string }[], recent: ReturnType<typeof session>[], pending: { agent_id: string }[]) {
@@ -106,51 +106,44 @@ describe('markSessionsHandled', () => {
     beforeEach(() => vi.clearAllMocks())
 
     it('only clears conversations of the workspace agents, even when a foreign session id is passed', async () => {
-        const db = fakeSupabase()
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [{ id: 'a' }, { id: 'b' }], error: null } as never)
 
         await markSessionsHandled(ctx, ['own-session', 'foreign-session'])
 
         expect(vi.mocked(selectMany).mock.calls[0][3]).toEqual({ workspace_id: 7 })
-        const [write] = db.writes('sessions')
+        const [write] = sessionWrites()
         expect(write.payload).toEqual({ status: 'idle' })
-        expect(write.filters.map(call => call.args)).toEqual([
-            ['agent_id', ['a', 'b']],
-            ['status', expect.arrayContaining(['awaiting_question', 'awaiting_approval', 'awaiting_connector'])],
-            ['id', ['own-session', 'foreign-session']],
-        ])
+        expect(write.filters).toEqual({
+            agent_id: ['a', 'b'],
+            status: expect.arrayContaining(['awaiting_question', 'awaiting_approval', 'awaiting_connector']),
+            id: ['own-session', 'foreign-session'],
+        })
     })
 
     it('clears every waiting conversation of the workspace on all, without an id filter', async () => {
-        const db = fakeSupabase()
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [{ id: 'a' }], error: null } as never)
 
         await markSessionsHandled(ctx, 'all')
 
-        expect(db.writes('sessions')[0].filters.map(call => call.args[0])).toEqual(['agent_id', 'status'])
+        const filters = sessionWrites()[0].filters
+        expect(Object.keys(filters).filter(column => filters[column] !== undefined)).toEqual(['agent_id', 'status'])
     })
 
     it("never clears a conversation of a coworker outside the member's Boxes, even on all", async () => {
-        const db = fakeSupabase()
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
         vi.mocked(visibleSpaceIds).mockResolvedValueOnce(new Set(['open']))
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [{ id: 'a', space_id: 'open' }, { id: 'hidden', space_id: 'closed' }], error: null } as never)
 
         await markSessionsHandled(memberCtx, 'all')
 
-        expect(db.writes('sessions')[0].filters[0].args).toEqual(['agent_id', ['a']])
+        expect(sessionWrites()[0].filters.agent_id).toEqual(['a'])
     })
 
     it('writes nothing when the workspace has no agent', async () => {
-        const db = fakeSupabase()
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [], error: null } as never)
 
         await markSessionsHandled(ctx, ['foreign-session'])
 
-        expect(db.writes('sessions')).toHaveLength(0)
+        expect(sessionWrites()).toHaveLength(0)
     })
 })
 
@@ -198,7 +191,6 @@ describe('cancelSessionRuns', () => {
 describe('adoptEngineSession', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(createServiceRoleClient).mockReturnValue(fakeSupabase().client)
         vi.mocked(assertAgentAccess).mockResolvedValue(reached())
         vi.mocked(resolveAgentTarget).mockResolvedValue({ conn: {}, engineAgentId: 'engine-agent' } as never)
         vi.mocked(createSessionRow).mockResolvedValue('new-session' as never)
@@ -353,7 +345,6 @@ describe('listAgentConversations', () => {
         vi.clearAllMocks()
         vi.mocked(assertAgentAccess).mockResolvedValue(reached())
         vi.mocked(resolveAgentTarget).mockRejectedValue(new Error('no box'))
-        vi.mocked(createServiceRoleClient).mockReturnValue({} as never)
     })
 
     function rows(...sessions: ReturnType<typeof session>[]) {
@@ -361,7 +352,7 @@ describe('listAgentConversations', () => {
     }
 
     function unseenRuns(result: { data: { session_id: string; agent_id: string }[] | null; error: unknown }) {
-        vi.mocked(createClient).mockResolvedValue({ rpc: vi.fn().mockResolvedValue(result) } as never)
+        vi.mocked(callRows).mockResolvedValue(result as never)
     }
 
     it('marks a conversation whose run finished since the last read, for this agent only', async () => {
@@ -405,10 +396,9 @@ describe('listAgentThreads', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.mocked(assertAgentAccess).mockResolvedValue(reached())
-        vi.mocked(createServiceRoleClient).mockReturnValue({} as never)
     })
 
-    it('reads the newest threads of the coworker from Supabase alone, General left out', async () => {
+    it('reads the newest threads of the coworker from the database alone, General left out', async () => {
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [{ ...session('a', 's2', '2026-11-08T10:00:00Z'), automation_name: 'Daily check', outcome: 'done', origin_agent_id: null, first_message: 'Check the funnel' }], error: null } as never)
 
         const threads = await listAgentThreads('a', adminActor)
@@ -422,7 +412,7 @@ describe('listAgentThreads', () => {
     it('exposes the kind and the opening time of every conversation in the history', async () => {
         vi.mocked(resolveAgentTarget).mockRejectedValue(new Error('no box'))
         vi.mocked(selectMany).mockResolvedValueOnce({ data: [{ ...session('a', 'g', '2026-11-08T10:00:00Z'), kind: 'general' }], error: null } as never)
-        vi.mocked(createClient).mockResolvedValue({ rpc: vi.fn().mockResolvedValue({ data: [], error: null }) } as never)
+        vi.mocked(callRows).mockResolvedValue({ data: [], error: null } as never)
 
         const conversations = await listAgentConversations({ ...ctx, userId: 'me' } as WorkspaceContext, 'a')
 

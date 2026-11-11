@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { dispatchAccountTool } from '@/app/api/_services/mcp-account.service'
 import { executeDb, getAgent } from '@/lib/engine/client'
 import { hashApiKey } from '@/lib/mcp/api-keys'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 
 import { POST } from './route'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/lib/engine/client')
 vi.mock('@/app/api/_services/mcp-account.service', async importOriginal => {
     const actual = await importOriginal<typeof import('@/app/api/_services/mcp-account.service')>()
@@ -52,19 +52,30 @@ const SPACES: Record<string, { workspace_id: number }> = {
     'box-foreign': { workspace_id: FOREIGN_WORKSPACE_ID },
 }
 
-function eqValue(calls: readonly SupabaseCall[], column: string): unknown {
-    return calls.find(call => call.method === 'eq' && call.args[0] === column)?.args[1]
+const isRead = (call: DbCall) => call.helper.startsWith('select')
+
+function filtersOf(call: DbCall): Record<string, unknown> {
+    if (call.helper === 'selectCount') return call.args[0] as Record<string, unknown>
+    return (call.helper.endsWith('WithJoins') ? call.args[2] : call.args[1]) as Record<string, unknown>
 }
 
-function resolveRow(table: string, calls: readonly SupabaseCall[]) {
-    if (table === 'api_keys') return { data: API_KEYS[eqValue(calls, 'key_hash') as string] ?? null }
-    if (table === 'agents') {
-        const row = AGENTS[eqValue(calls, 'id') as string]
+function filterValue(call: DbCall, column: string): unknown {
+    return filtersOf(call)[column]
+}
+
+const readsOn = (table: string) => db.calls.filter(call => call.table === table && isRead(call))
+const writesOn = (table: string) => db.calls.filter(call => call.table === table && !isRead(call))
+
+function resolveRow(call: DbCall) {
+    if (!isRead(call)) return undefined
+    if (call.table === 'api_keys') return { data: API_KEYS[filterValue(call, 'key_hash') as string] ?? null }
+    if (call.table === 'agents') {
+        const row = AGENTS[filterValue(call, 'id') as string]
         return { data: row ? { ...row, engine_agent_id: 'engine-agent', template_id: null, disabled_at: null, disabled_reason: null, workspaces: { subscription_status: 'active', is_sandbox: false } } : null }
     }
-    if (table === 'spaces') return { data: SPACES[eqValue(calls, 'id') as string] ?? null }
-    if (table === 'workspace_members') return { data: MEMBERS[`${eqValue(calls, 'user_id')}:${eqValue(calls, 'workspace_id')}`] ?? null }
-    if (table === 'workspaces') return { data: { subscription_status: 'active', is_sandbox: false } }
+    if (call.table === 'spaces') return { data: SPACES[filterValue(call, 'id') as string] ?? null }
+    if (call.table === 'workspace_members') return { data: MEMBERS[`${filterValue(call, 'user_id')}:${filterValue(call, 'workspace_id')}`] ?? null }
+    if (call.table === 'workspaces') return { data: { subscription_status: 'active', is_sandbox: false } }
     return undefined
 }
 
@@ -84,13 +95,11 @@ async function callTool(name: string, args: Record<string, unknown>) {
 }
 
 describe('POST /api/mcp/account', () => {
-    let db: FakeSupabase
-
     beforeEach(() => {
         vi.clearAllMocks()
         vi.spyOn(console, 'error').mockImplementation(() => undefined)
-        db = fakeSupabase(resolveRow)
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
+        db.reset()
+        db.answer(resolveRow)
     })
 
     it('refuses a request without a key', async () => {
@@ -116,8 +125,8 @@ describe('POST /api/mcp/account', () => {
         const response = await POST(mcpRequest(REVOKED_KEY, toolCall('list_agents', {})))
 
         expect(response.status).toBe(401)
-        expect(eqValue(db.chainsOn('api_keys')[0], 'key_hash')).toBe(hashApiKey(REVOKED_KEY))
-        expect(db.writes('api_keys')).toEqual([])
+        expect(filterValue(readsOn('api_keys')[0], 'key_hash')).toBe(hashApiKey(REVOKED_KEY))
+        expect(writesOn('api_keys')).toEqual([])
     })
 
     it('acts as the workspace for a key without a recorded creator', async () => {
@@ -143,7 +152,7 @@ describe('POST /api/mcp/account', () => {
         const response = await POST(mcpRequest(LIVE_KEY, toolCall('list_agents', { workspaceId: FOREIGN_WORKSPACE_ID })))
 
         expect(response.status).toBe(200)
-        expect(eqValue(db.chainsOn('agents')[0], 'workspace_id')).toBe(WORKSPACE_ID)
+        expect(filterValue(readsOn('agents')[0], 'workspace_id')).toBe(WORKSPACE_ID)
     })
 
     it('answers get_agent on an agent of another workspace with a tool error', async () => {

@@ -1,7 +1,6 @@
 import 'server-only'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
-import type { Database } from '@/app/api/database.types'
+import type { DbScope } from '@/lib/db'
 import type { RoutedMember, NotificationRecipients } from '@/lib/notifications/routing'
 import type { StoredNotification } from '@/lib/notifications/inbound'
 
@@ -26,4 +25,4 @@ export type PushContext = {
 }
 
 // The mobile app talks to Lumvika Cloud only, so a self-hosted hub has no device to push to.
-export async function pushNotification(_supabase: SupabaseClient<Database>, _context: PushContext): Promise<void> {}
+export async function pushNotification(_scope: DbScope, _context: PushContext): Promise<void> {}

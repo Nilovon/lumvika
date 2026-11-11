@@ -1,6 +1,5 @@
 import { OG_VERSION } from '@/lib/og/capture'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMany } from '@/supabase/supabase-helpers'
+import { selectMany, serviceScope } from '@/lib/db'
 
 const OG_ENTRY_COLUMNS = ['slug', 'title', 'image_url', 'image_dark_url', 'published_at', 'updated_at'] as const
 
@@ -16,9 +15,8 @@ export type ChangelogOgEntry = {
 }
 
 export async function getLatestChangelogEntries(): Promise<ChangelogOgEntry[]> {
-    const supabase = createServiceRoleClient()
     const { data, error } = await selectMany(
-        supabase,
+        serviceScope(),
         'changelog_entries',
         OG_ENTRY_COLUMNS,
         { published_at: { lte: new Date().toISOString() } },

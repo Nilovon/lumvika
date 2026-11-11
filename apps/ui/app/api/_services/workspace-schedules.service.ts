@@ -1,8 +1,7 @@
 import { keepVisible, visibleSpaceIds, type Actor } from '@/app/api/_auth/access'
 import type { AgentSchedule } from '@/lib/board/next-runs'
 import { listSchedules } from '@/lib/engine/client'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle, selectMany } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, selectMany, serviceScope } from '@/lib/db'
 import { findWorkspaceEngine } from './workspace-engine.service'
 
 // The engine only lists schedules per agent, so this fans out over the workspace's agents on its one
@@ -10,10 +9,10 @@ import { findWorkspaceEngine } from './workspace-engine.service'
 // in the Boxes the caller reaches.
 export async function listWorkspaceSchedules(actor: Actor): Promise<AgentSchedule[]> {
     const { workspaceId } = actor
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const [{ data: agents }, { data: workspace }, spaces] = await Promise.all([
-        selectMany(supabase, 'agents', ['id', 'engine_agent_id', 'disabled_at', 'space_id'] as const, { workspace_id: workspaceId }),
-        selectMaybeSingle(supabase, 'workspaces', ['boxes_disabled_at', 'boxes_archived_at'] as const, { id: workspaceId }),
+        selectMany(scope, 'agents', ['id', 'engine_agent_id', 'disabled_at', 'space_id'] as const, { workspace_id: workspaceId }),
+        selectMaybeSingle(scope, 'workspaces', ['boxes_disabled_at', 'boxes_archived_at'] as const, { id: workspaceId }),
         visibleSpaceIds(actor),
     ])
 

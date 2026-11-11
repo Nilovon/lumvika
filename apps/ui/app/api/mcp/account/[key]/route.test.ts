@@ -4,13 +4,13 @@ import { dispatchAccountTool } from '@/app/api/_services/mcp-account.service'
 import { deleteAgent } from '@/app/api/_services/agent.service'
 import { hashApiKey } from '@/lib/mcp/api-keys'
 import { IMPORT_TOOL_NAMES } from '@/lib/mcp/import-scope'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase, writeMethodOf, type FakeSupabase, type SupabaseCall } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 
 import { POST as accountPOST } from '../route'
 import { POST as keyPOST } from './route'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/app/api/_services/mcp-account.service', () => ({ dispatchAccountTool: vi.fn() }))
 vi.mock('@/app/api/_services/agent.service', () => ({ deleteAgent: vi.fn() }))
 
@@ -31,13 +31,19 @@ const API_KEYS: Record<string, () => Record<string, unknown>> = {
 
 let bindWins = true
 
-function resolveRow(table: string, calls: readonly SupabaseCall[]) {
-    if (table === 'api_keys' && writeMethodOf(calls) === 'update' && calls.some(call => call.method === 'select')) return { data: bindWins ? [{ id: 'key-import' }] : [] }
-    if (table === 'api_keys' && !writeMethodOf(calls)) {
-        const hash = calls.find(call => call.method === 'eq' && call.args[0] === 'key_hash')?.args[1] as string
+const bindPatches = () =>
+    db
+        .callsTo('updateRows', 'api_keys')
+        .map(call => call.args[0] as Record<string, unknown>)
+        .filter(patch => patch.bound_agent_id)
+
+function resolveRow(call: DbCall) {
+    if (call.helper === 'updateRows' && call.table === 'api_keys' && (call.args[0] as Record<string, unknown>).bound_agent_id) return { data: bindWins ? [{ id: 'key-import' }] : [] }
+    if (call.helper === 'selectMaybeSingle' && call.table === 'api_keys') {
+        const hash = (call.args[1] as Record<string, unknown>).key_hash as string
         return { data: API_KEYS[hash]?.() ?? null }
     }
-    if (table === 'workspaces') return { data: { subscription_status: 'active', is_sandbox: false } }
+    if (call.helper === 'selectMaybeSingle' && call.table === 'workspaces') return { data: { subscription_status: 'active', is_sandbox: false } }
     return undefined
 }
 
@@ -54,14 +60,12 @@ async function toolResult(response: Response) {
 }
 
 describe('the import key on the account MCP', () => {
-    let db: FakeSupabase
-
     beforeEach(() => {
         vi.clearAllMocks()
         vi.spyOn(console, 'error').mockImplementation(() => undefined)
         bindWins = true
-        db = fakeSupabase(resolveRow)
-        vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
+        db.reset()
+        db.answer(resolveRow)
         vi.mocked(dispatchAccountTool).mockResolvedValue({ agentId: 'agent-new' })
     })
 
@@ -94,8 +98,7 @@ describe('the import key on the account MCP', () => {
         const { isError } = await toolResult(await viaPath(IMPORT_KEY, toolCall('create_agent', { name: 'Atlas' })))
 
         expect(isError).toBe(false)
-        const bind = db.writes('api_keys').find(write => (write.payload as Record<string, unknown>).bound_agent_id)
-        expect(bind?.payload).toEqual({ bound_agent_id: 'agent-new' })
+        expect(bindPatches()).toEqual([{ bound_agent_id: 'agent-new' }])
         expect(deleteAgent).not.toHaveBeenCalled()
     })
 

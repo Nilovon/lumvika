@@ -5,8 +5,7 @@ import { assertCanManageShare, shareManageableAgentIds } from '@/lib/agents/shar
 import { createAgentShare, planAgentShare } from '@/lib/agents/share-create'
 import { listWorkspaceShares, revokeAgentShare } from '@/lib/agents/share-read'
 import { requireAgreement, requireConfirmation, requireString } from '@/lib/mcp/args'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope } from '@/lib/db'
 import { dispatchTemplateTool } from './mcp-templates.service'
 
 // The sharing half of the account MCP server (app/api/mcp/account/route.ts). It sits between the
@@ -35,14 +34,14 @@ function describeInclude(include: AgentShareInclude): string {
 }
 
 export async function dispatchShareTool(actor: Actor, name: string, args: Record<string, unknown>): Promise<unknown> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
     const workspaceId = actor.workspaceId
 
     switch (name) {
         case 'plan_agent_share': {
             const agentId = requireId(args, 'agentId')
             await assertAgentInWorkspace(agentId, 'manage', actor)
-            const plan = await planAgentShare(supabase, agentId, workspaceId)
+            const plan = await planAgentShare(scope, agentId, workspaceId)
             return {
                 agentId,
                 agentName: plan.agentName,
@@ -68,16 +67,16 @@ export async function dispatchShareTool(actor: Actor, name: string, args: Record
             const userId = actor.kind === 'user' ? actor.userId : await workspaceFounderUserId(workspaceId)
             if (!userId) throw new Error('This workspace has no member, so no author can be resolved from this key.')
 
-            const { token, url, warnings, reused } = await createAgentShare(supabase, { agentRowId: agentId, workspaceId, userId, include })
+            const { token, url, warnings, reused } = await createAgentShare(scope, { agentRowId: agentId, workspaceId, userId, include })
             // The token is the capability. It travels inside the URL because that is the product,
             // never as a field of its own that invites recomposing a link instead of copying it.
-            const { data: share } = await selectMaybeSingle(supabase, 'agent_shares', ['id'] as const, { token })
+            const { data: share } = await selectMaybeSingle(scope, 'agent_shares', ['id'] as const, { token })
 
             return { shareId: share?.id ?? null, url, include, reused, warnings, expires: 'never' }
         }
 
         case 'list_agent_shares': {
-            const [all, manageable] = await Promise.all([listWorkspaceShares(supabase, workspaceId), shareManageableAgentIds(actor)])
+            const [all, manageable] = await Promise.all([listWorkspaceShares(scope, workspaceId), shareManageableAgentIds(actor)])
             const shares = keepVisible(all, manageable, share => share.sourceAgentId)
             return {
                 shares: shares.map(share => ({
@@ -96,8 +95,8 @@ export async function dispatchShareTool(actor: Actor, name: string, args: Record
         case 'revoke_agent_share': {
             requireConfirmation(args, 'the shared copy of this coworker and the archive behind it')
             const shareId = requireId(args, 'shareId')
-            await assertCanManageShare(supabase, shareId, actor)
-            await revokeAgentShare(supabase, shareId, workspaceId)
+            await assertCanManageShare(scope, shareId, actor)
+            await revokeAgentShare(scope, shareId, workspaceId)
             return { shareId, revoked: true }
         }
 

@@ -1,12 +1,11 @@
 import type { Database } from '@/app/api/database.types'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { bucketName, removeObjects } from '@lumvika/storage'
 
 import { uploadPublicImage } from '@/lib/images/upload'
 import { CARD_HEIGHT, CARD_SCALE, CARD_THEMES, CARD_WIDTH, type CardTheme } from '@/lib/og/size'
 import { capturePage } from '@/lib/og/shot'
 import { site } from '@/lib/site'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { selectMaybeSingle } from '@/supabase/supabase-helpers'
+import { selectMaybeSingle, serviceScope, updateRows, type DbScope } from '@/lib/db'
 
 import { agentsFromRow } from './document'
 import { TEMPLATE_MEDIA_BUCKET } from './images'
@@ -32,24 +31,25 @@ export type TemplateCardRender = { urls: TemplateCardUrls; changed: boolean }
 
 type TemplateCardRow = Pick<Database['public']['Tables']['templates']['Row'], (typeof CARD_COLUMNS)[number]>
 
-const PUBLIC_PREFIX = `/object/public/${TEMPLATE_MEDIA_BUCKET}/${CARD_FOLDER}/`
+const publicPrefix = () => `/${bucketName(TEMPLATE_MEDIA_BUCKET)}/${CARD_FOLDER}/`
 
 // The row holds public URLs, and removing an object needs the path inside the bucket. Anything that
 // is not a capture of ours yields nothing and is left alone: an authored cover lives in the same
 // bucket, and passing one here must never delete it.
 function cardStoragePath(url: string | null): string | null {
     if (!url) return null
-    const at = url.indexOf(PUBLIC_PREFIX)
+    const prefix = publicPrefix()
+    const at = url.indexOf(prefix)
     if (at === -1) return null
-    return `${CARD_FOLDER}/${decodeURIComponent(url.slice(at + PUBLIC_PREFIX.length).split('?')[0])}`
+    return `${CARD_FOLDER}/${decodeURIComponent(url.slice(at + prefix.length).split('?')[0])}`
 }
 
 // Exported for the one caller outside a regeneration: deleting a template, which otherwise leaves
 // its pair of webp behind in the bucket forever.
-export async function removeCards(supabase: SupabaseClient<Database>, urls: (string | null)[]): Promise<void> {
+export async function removeCards(_scope: DbScope, urls: (string | null)[]): Promise<void> {
     const paths = urls.map(cardStoragePath).filter((path): path is string => path !== null)
     if (paths.length === 0) return
-    await supabase.storage.from(TEMPLATE_MEDIA_BUCKET).remove(paths)
+    await removeObjects(TEMPLATE_MEDIA_BUCKET, paths)
 }
 
 // The job runs outside any request (a write fires it and returns), so there is no incoming URL to
@@ -58,7 +58,7 @@ function appOrigin(): string {
     return process.env.NEXT_PUBLIC_APP_URL ?? site.url
 }
 
-async function captureTheme(supabase: SupabaseClient<Database>, slug: string, theme: CardTheme): Promise<string> {
+async function captureTheme(scope: DbScope, slug: string, theme: CardTheme): Promise<string> {
     const capture = await capturePage(`/render/templates/${encodeURIComponent(slug)}/card?theme=${theme}`, {
         requestUrl: appOrigin(),
         width: CARD_WIDTH,
@@ -70,16 +70,13 @@ async function captureTheme(supabase: SupabaseClient<Database>, slug: string, th
         fresh: true,
     })
 
-    return uploadPublicImage(supabase, capture.body, TEMPLATE_MEDIA_BUCKET, CARD_FOLDER, { maxSize: CARD_MAX_SIZE })
+    return uploadPublicImage(scope, capture.body, TEMPLATE_MEDIA_BUCKET, CARD_FOLDER, { maxSize: CARD_MAX_SIZE })
 }
 
-async function writeCards(supabase: SupabaseClient<Database>, row: TemplateCardRow, dark: string | null, light: string | null): Promise<void> {
+async function writeCards(scope: DbScope, row: TemplateCardRow, dark: string | null, light: string | null): Promise<void> {
     // `updated_at` is deliberately untouched: it is the author's timestamp, and moving it here would
     // make every regeneration look like an edit.
-    const { error } = await supabase
-        .from('templates')
-        .update<Database['public']['Tables']['templates']['Update']>({ card_image_dark_url: dark, card_image_light_url: light })
-        .eq('id', row.id)
+    const { error } = await updateRows(scope, 'templates', { card_image_dark_url: dark, card_image_light_url: light }, { id: row.id })
     if (error) throw new Error(error.message)
     // The previous pair stays in the bucket: every name is new, and a page cached before this write
     // (ISR, a tab left open, a lazy image not yet scrolled to) still asks for it.
@@ -91,9 +88,9 @@ async function writeCards(supabase: SupabaseClient<Database>, row: TemplateCardR
  * backfill script) can say what happened.
  */
 export async function captureTemplateCard(slug: string): Promise<TemplateCardRender> {
-    const supabase = createServiceRoleClient()
+    const scope = serviceScope()
 
-    const { data: row, error } = await selectMaybeSingle(supabase, 'templates', CARD_COLUMNS, { slug })
+    const { data: row, error } = await selectMaybeSingle(scope, 'templates', CARD_COLUMNS, { slug })
     if (error) throw new Error(error.message)
     if (!row) throw new Error(`No template found with slug "${slug}"`)
 
@@ -103,7 +100,7 @@ export async function captureTemplateCard(slug: string): Promise<TemplateCardRen
     // be an empty frame. The cards fall back to the authored cover instead.
     if (agentsFromRow.parse(row.agents).length === 0) {
         if (!current.dark && !current.light) return { urls: current, changed: false }
-        await writeCards(supabase, row, null, null)
+        await writeCards(scope, row, null, null)
         return { urls: { dark: null, light: null }, changed: true }
     }
 
@@ -111,16 +108,16 @@ export async function captureTemplateCard(slug: string): Promise<TemplateCardRen
     // templates in parallel, and each capture is a real browser on a shared service.
     const uploaded: Partial<Record<CardTheme, string>> = {}
     try {
-        for (const theme of CARD_THEMES) uploaded[theme] = await captureTheme(supabase, slug, theme)
+        for (const theme of CARD_THEMES) uploaded[theme] = await captureTheme(scope, slug, theme)
     } catch (failure) {
         // Half a pair is worse than the previous one: the row keeps pointing at the old images, so
         // what was already uploaded is dropped rather than left behind in the bucket.
-        await removeCards(supabase, Object.values(uploaded)).catch(() => {})
+        await removeCards(scope, Object.values(uploaded)).catch(() => {})
         throw failure
     }
 
     const urls: TemplateCardUrls = { dark: uploaded.dark ?? null, light: uploaded.light ?? null }
-    await writeCards(supabase, row, urls.dark, urls.light)
+    await writeCards(scope, row, urls.dark, urls.light)
     return { urls, changed: true }
 }
 

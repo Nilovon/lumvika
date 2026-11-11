@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 import { useUnseenRunsStore } from '@/stores/unseen-runs.store'
-import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
+import { useRealtimeSubscription } from '@/lib/live/useRealtimeSubscription'
 
 // Loads the finished runs this member has not opened yet, and keeps every tab in step: a
 // conversation opened in one tab, or answered from the phone, leaves the list everywhere. New runs

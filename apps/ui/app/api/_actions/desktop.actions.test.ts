@@ -20,7 +20,7 @@ const conn = { baseUrl: 'https://engine.test', apiKey: 'box-key' }
 describe('openDesktopAction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireWorkspaceContext).mockResolvedValue({ authUser: { is_anonymous: false }, workspace: { id: 7 } } as never)
+        vi.mocked(requireWorkspaceContext).mockResolvedValue({ authUser: { isAnonymous: false }, workspace: { id: 7 } } as never)
         vi.mocked(assertAgentInWorkspace).mockResolvedValue({ workspace_id: 7, space_id: null, engine_agent_id: 'engine-agent' } as never)
         vi.mocked(resolveWorkspaceDesktop).mockResolvedValue({ conn, socketBase: 'wss://host.test/box/10/desktop/ws' })
         vi.mocked(desktopSocketUrl).mockReturnValue('wss://host.test/box/10/desktop/ws?ticket=t')
@@ -58,7 +58,7 @@ describe('openDesktopAction', () => {
 describe('startTakeoverAction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireWorkspaceContext).mockResolvedValue({ authUser: { is_anonymous: false }, workspace: { id: 7 } } as never)
+        vi.mocked(requireWorkspaceContext).mockResolvedValue({ authUser: { isAnonymous: false }, workspace: { id: 7 } } as never)
         vi.mocked(assertAgentInWorkspace).mockResolvedValue({ workspace_id: 7, space_id: null, engine_agent_id: 'engine-agent' } as never)
         vi.mocked(resolveWorkspaceDesktop).mockResolvedValue({ conn, socketBase: 'wss://host.test/box/10/desktop/ws' })
         vi.mocked(engine.startTakeover).mockResolvedValue(undefined)
@@ -78,7 +78,7 @@ describe('startTakeoverAction', () => {
 describe('finishTakeoverAction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireWorkspaceContext).mockResolvedValue({ authUser: { is_anonymous: false }, workspace: { id: 7 } } as never)
+        vi.mocked(requireWorkspaceContext).mockResolvedValue({ authUser: { isAnonymous: false }, workspace: { id: 7 } } as never)
         vi.mocked(assertAgentInWorkspace).mockResolvedValue({ workspace_id: 7, space_id: null, engine_agent_id: 'engine-agent' } as never)
         vi.mocked(resolveWorkspaceDesktop).mockResolvedValue({ conn, socketBase: 'wss://host.test/box/10/desktop/ws' })
     })

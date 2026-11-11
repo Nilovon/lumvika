@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { compileService, decompileService } from '@/lib/services/compiler'
 import { type RegistryEntry, type ServiceRegistry, readRegistry, removeRegistryEntry, upsertRegistryEntry } from '@/lib/services/registry'
 import { resolveAgentTarget } from '@/app/api/_services/chat.service'
-import { createServiceRoleClient } from '@/supabase/serviceRole'
-import { fakeSupabase } from '@/test/supabase-fake'
+import type { DbCall } from '@/test/db-fake'
 import { dispatchHubTool, getServiceDetails, installService, installedFromRegistry, listInstalledServices, markServiceAuthorized, resetServiceConnection, searchServices, uninstallService } from './services.service'
 
-vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+const db = await vi.hoisted(async () => (await import('@/test/db-fake')).fakeDb())
+vi.mock('@/lib/db', async importOriginal => ({ ...(await importOriginal<object>()), ...db.helpers }))
 vi.mock('@/app/api/_services/chat.service', () => ({ resolveAgentTarget: vi.fn(async () => ({ conn: {}, engineAgentId: 'engine-agent' })) }))
 vi.mock('@/lib/services/compiler', () => ({
     compileService: vi.fn(async () => ({ toolNames: [], oauth: null, managed: null, composio: { toolkit: 'gmail', serverName: 'gmail' }, app: null })),
@@ -30,8 +30,8 @@ const MANIFESTS: Record<string, unknown> = {
     'linkedin-pro': { slug: 'linkedin-pro', name: 'LinkedIn Pro', authMethods: [composioMethod] },
 }
 
-function eqSlug(calls: readonly { method: string; args: unknown[] }[]): unknown {
-    return calls.find(call => call.method === 'eq' && call.args[0] === 'slug')?.args[1]
+function slugFilterOf(call: DbCall): unknown {
+    return (call.args[1] as Record<string, unknown> | undefined)?.slug
 }
 
 const entry = (over: Partial<RegistryEntry> = {}): RegistryEntry => ({ status: 'active', config: {}, mcpServers: [], envKeys: [], skills: [], installedAt: '2026-10-01', ...over })
@@ -42,19 +42,18 @@ function useRegistry(reg: ServiceRegistry) {
 
 beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(createServiceRoleClient).mockReturnValue(
-        fakeSupabase((table, calls) => {
-            if (table !== 'services') return undefined
-            const slug = eqSlug(calls)
-            if (typeof slug === 'string') return { data: MANIFESTS[slug] ? { manifest: MANIFESTS[slug], enabled: true } : null }
-            return {
-                data: [
-                    { slug: 'gmail', name: 'Gmail', icon: null, category: 'productivity', summary: '', manifest: MANIFESTS.gmail, verified: true },
-                    { slug: 'notion', name: 'Notion', icon: null, category: 'productivity', summary: '', manifest: { slug: 'notion', name: 'Notion' }, verified: true },
-                ],
-            }
-        }).client,
-    )
+    db.reset()
+    db.answer(call => {
+        if (call.table !== 'services') return undefined
+        const slug = slugFilterOf(call)
+        if (typeof slug === 'string') return { data: MANIFESTS[slug] ? { manifest: MANIFESTS[slug], enabled: true } : null }
+        return {
+            data: [
+                { slug: 'gmail', name: 'Gmail', icon: null, category: 'productivity', summary: '', manifest: MANIFESTS.gmail, verified: true },
+                { slug: 'notion', name: 'Notion', icon: null, category: 'productivity', summary: '', manifest: { slug: 'notion', name: 'Notion' }, verified: true },
+            ],
+        }
+    })
 })
 
 describe('installService', () => {
@@ -142,13 +141,11 @@ describe('resetServiceConnection', () => {
     const app = { appSlug: 'whatsapp', serverName: 'whatsapp_pro' }
 
     function useBinding(connection: { label: string | null; status: string } | null) {
-        vi.mocked(createServiceRoleClient).mockReturnValue(
-            fakeSupabase(table => {
-                if (table === 'app_connection_agents') return { data: connection ? { connection_id: 'conn' } : null }
-                if (table === 'app_connections') return { data: connection }
-                return undefined
-            }).client,
-        )
+        db.answer(call => {
+            if (call.table === 'app_connection_agents') return { data: connection ? { connection_id: 'conn' } : null }
+            if (call.table === 'app_connections') return { data: connection }
+            return undefined
+        })
     }
 
     it('keeps a paid app active while its coworker is still bound to an account', async () => {
