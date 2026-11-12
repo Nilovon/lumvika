@@ -161,7 +161,14 @@
         "restore": "Restore project",
         "restoreConfirmTitle": "Restore {name}?",
         "restoreConfirmDescription": "The project comes back to the list as active, and issues can be added again.",
-        "restored": "{name} is restored"
+        "restored": "{name} is restored",
+        "teamLabel": "Team",
+        "noTeam": "No team",
+        "teamHint": "The project shows on its team's page.",
+        "goalLabel": "Goal",
+        "noGoal": "No goal",
+        "goalHint": "Its issues count toward the goal's progress.",
+        "optionsUnavailable": "Teams and goals could not be loaded."
     },
     "access": {
         "title": "Access to {project}",

@@ -155,7 +155,14 @@
         "restore": "Projekt wiederherstellen",
         "restoreConfirmTitle": "{name} wiederherstellen?",
         "restoreConfirmDescription": "Das Projekt kommt als aktiv zurück in die Liste, und es können wieder Tickets hinzugefügt werden.",
-        "restored": "{name} ist wiederhergestellt"
+        "restored": "{name} ist wiederhergestellt",
+        "teamLabel": "Team",
+        "noTeam": "Kein Team",
+        "teamHint": "Das Projekt erscheint auf der Seite seines Teams.",
+        "goalLabel": "Ziel",
+        "noGoal": "Kein Ziel",
+        "goalHint": "Seine Tickets zählen zum Fortschritt des Ziels.",
+        "optionsUnavailable": "Teams und Ziele konnten nicht geladen werden."
     },
     "access": {
         "title": "Zugriff auf {project}",
