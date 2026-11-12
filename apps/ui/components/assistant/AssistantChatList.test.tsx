@@ -89,12 +89,12 @@ describe('AssistantChatList', () => {
 })
 
 describe('AssistantStateNotice', () => {
-    it('asks for a server update on an engine that predates the assistant', () => {
+    it('asks for a machine update on an engine that predates the assistant', () => {
         render(createElement(AssistantStateNotice, { blocker: 'outdated', onRetry: vi.fn() }))
-        expect(text()).toContain('Update your server to use Chat')
+        expect(text()).toContain('Update your machine to use Chat')
     })
 
-    it('retries an unreachable server and opens the providers when there is no model', () => {
+    it('retries an unreachable machine and opens the providers when there is no model', () => {
         const onRetry = vi.fn()
         render(createElement(AssistantStateNotice, { blocker: 'unreachable', onRetry }))
         act(() => container!.querySelector('button')!.click())
