@@ -34,7 +34,10 @@ import { useSession } from '@/supabase/session/SessionProvider'
 // elle partage leur axe : posée dans une rangée, elle déborde d'autant au-dessus qu'en dessous
 // (--orb-overhang), au lieu de s'aligner par le bord.
 const CORNER_CLASSES: Record<StewardCorner, string> = {
-    'top-left': 'top-[calc(var(--chrome-edge)+var(--chrome-size)+var(--chrome-gap)+var(--board-inset,0px))] left-[calc(var(--chrome-edge)+var(--board-inset-start,var(--board-inset,0px)))]',
+    // `--steward-orb-top-row` is 1 once the sidebar has taken the workspace pill out of that corner:
+    // the orb then sits in the first row, on the axis of the other top pills.
+    'top-left':
+        'top-[calc(var(--chrome-edge)+var(--board-inset,0px)+(1-var(--steward-orb-top-row,0))*(var(--chrome-size)+var(--chrome-gap))-var(--steward-orb-top-row,0)*var(--orb-overhang))] left-[calc(var(--chrome-edge)+var(--board-inset-start,var(--board-inset,0px)))]',
     'top-right': 'top-[calc(var(--chrome-edge)-var(--orb-overhang)+var(--board-inset,0px))] right-[calc(var(--chrome-edge)+var(--chrome-size)+var(--chrome-gap)+var(--board-inset,0px))]',
     'bottom-left':
         'bottom-[calc(var(--chrome-edge)-var(--orb-overhang)+var(--board-inset,0px)+var(--consent-inset))] left-[calc(var(--chrome-edge)+var(--board-corner-width,var(--chrome-size))+var(--chrome-gap)+var(--board-inset-start,var(--board-inset,0px)))]',

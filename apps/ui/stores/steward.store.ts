@@ -22,6 +22,13 @@ type StewardState = {
     open: boolean | null
     /** La colonne s'est effacée devant une sheet d'agent : elle revient quand la sheet se referme. */
     yieldedToSheet: boolean
+    /**
+     * A page outside the board is too narrow to keep its card beside the docked column: the column
+     * does not dock there. It waits behind its orb and opens over the page, by `overlayOpen`, which
+     * no page carries to the next and no preference remembers.
+     */
+    squeezed: boolean
+    overlayOpen: boolean
     /** Où la colonne se pose. `null` tant que le client n'a pas tranché, comme `open`. */
     placement: StewardPlacement | null
     /** La place que viserait la colonne si on la lâchait, tant qu'elle est tenue par son en-tête. */
@@ -104,6 +111,8 @@ type StewardState = {
     accountSwitches: number
     toggle: () => void
     close: () => void
+    setSqueezed: (squeezed: boolean) => void
+    closeOverlay: () => void
     yieldToSheet: () => void
     reclaimFromSheet: () => void
     openForFunnel: () => void
@@ -152,6 +161,8 @@ type StewardState = {
 export const useStewardStore = create<StewardState>()((set, get) => ({
     open: null,
     yieldedToSheet: false,
+    squeezed: false,
+    overlayOpen: false,
     placement: null,
     dropTarget: null,
     tab: 'assistant',
@@ -179,14 +190,26 @@ export const useStewardStore = create<StewardState>()((set, get) => ({
     // met la colonne en retrait (BoardChatSplit) sans la fermer pour de bon, même quand c'est le
     // Steward qui l'ouvre pour montrer ce qu'il vient de faire.
     toggle: () => {
+        if (get().squeezed) {
+            set({ overlayOpen: !get().overlayOpen })
+            return
+        }
         const next = get().open !== true
         applyOpen(set, next)
         rememberStewardOpen(next)
     },
     close: () => {
+        if (get().squeezed) {
+            set({ overlayOpen: false })
+            return
+        }
         set({ open: false, yieldedToSheet: false })
         rememberStewardOpen(false)
     },
+    setSqueezed: squeezed => {
+        if (get().squeezed !== squeezed) set({ squeezed, overlayOpen: false })
+    },
+    closeOverlay: () => set({ overlayOpen: false }),
     // Pas une préférence : la colonne reviendra d'elle-même, ni le cookie ni le localStorage n'en savent rien.
     yieldToSheet: () => set({ open: false, yieldedToSheet: true }),
     reclaimFromSheet: () => {
@@ -239,6 +262,10 @@ export const useStewardStore = create<StewardState>()((set, get) => ({
     setIntakePreview: intakePreview => set({ intakePreview }),
     // Un geste, comme `toggle` : l'ouverture devient la préférence.
     askSteward: text => {
+        if (get().squeezed) {
+            set({ overlayOpen: true, pendingPrompt: text, tab: 'assistant' })
+            return
+        }
         applyOpen(set, true)
         rememberStewardOpen(true)
         set({ pendingPrompt: text, tab: 'assistant' })
@@ -290,7 +317,7 @@ export const selectStewardBackend = (state: StewardState): StewardBackend => sta
 export const selectStewardVisible = (state: StewardState): boolean => state.surface !== 'none'
 
 /** Pour tous ceux qui n'ont rien à faire du `null` : non tranché, la colonne n'est pas ouverte. */
-export const selectStewardOpen = (state: StewardState) => state.open === true
+export const selectStewardOpen = (state: StewardState) => (state.squeezed ? state.overlayOpen : state.open === true)
 
 /**
  * L'état que la bête affiche. Le travail en cours l'emporte toujours ; sinon c'est l'ouverture du

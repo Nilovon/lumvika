@@ -1,12 +1,24 @@
 'use client'
 
 import { useReducedMotion } from 'motion/react'
-import { type CSSProperties, useEffect, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
+import { type CSSProperties, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useResolvedIsMobile } from '@lumvika/ui/primitives/use-is-mobile'
 
 import { StewardColumn } from '@/components/steward/StewardColumn'
 import { StewardDropPreview } from '@/components/steward/StewardDropPreview'
 import { ProviderStatusBanner } from '@/components/layout/ProviderStatusBanner'
-import { DEFAULT_STEWARD_PLACEMENT, type StewardPlacement, dockedStewardSide, loadStewardPlacement } from '@/lib/steward-layout'
+import {
+    DEFAULT_STEWARD_PLACEMENT,
+    SHELL_SIDEBAR_EXPANDED_WIDTH,
+    SHELL_SIDEBAR_RAIL_WIDTH,
+    type StewardCorner,
+    type StewardPlacement,
+    dockedStewardSide,
+    loadStewardOrbCorner,
+    loadStewardPlacement,
+    stewardDockSqueezeQuery,
+} from '@/lib/steward-layout'
 import { loadStewardOpen } from '@/lib/steward-open'
 import { cn } from '@/lib/utils'
 import { useBoardStore } from '@/stores/board.store'
@@ -38,9 +50,32 @@ type BoardChatSplitProps = {
 export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, children }: BoardChatSplitProps) {
     const visible = useStewardStore(selectStewardVisible)
     const requested = useStewardStore(state => state.open)
-    const resolved = requested ?? initialOpen
+    const overlayOpen = useStewardStore(state => state.overlayOpen)
+    const preferredPlacement = useStewardStore(state => state.placement) ?? initialPlacement ?? DEFAULT_STEWARD_PLACEMENT
+    const pathname = usePathname()
+
+    // Every page but the board docks the column only where its card keeps a comfortable width.
+    // Elsewhere the column floats over the page from the orb's corner, and only while it is asked to.
+    const sidebarWidth = sidebar ? (sidebar.collapsed ? SHELL_SIDEBAR_RAIL_WIDTH : SHELL_SIDEBAR_EXPANDED_WIDTH) : 0
+    const tooNarrowToDock = useResolvedIsMobile(stewardDockSqueezeQuery({ dockWidth: preferredPlacement.dockWidth, sidebarWidth }))
+    const squeezed = pathname !== '/' && preferredPlacement.mode === 'dock' && tooNarrowToDock === true
+    useEffect(() => {
+        useStewardStore.getState().setSqueezed(squeezed)
+    }, [squeezed])
+    useEffect(() => {
+        useStewardStore.getState().closeOverlay()
+    }, [pathname])
+    // Read as the column opens, from the orb it unfolds from: the orb may have been dragged meanwhile.
+    const [overlayCorner, setOverlayCorner] = useState<StewardCorner>('bottom-right')
+    const [overlayCornerReadFor, setOverlayCornerReadFor] = useState(overlayOpen)
+    if (overlayOpen !== overlayCornerReadFor) {
+        setOverlayCornerReadFor(overlayOpen)
+        if (overlayOpen) setOverlayCorner(loadStewardOrbCorner())
+    }
+    const placement = useMemo<StewardPlacement>(() => (squeezed ? { ...preferredPlacement, mode: 'float', corner: overlayCorner } : preferredPlacement), [squeezed, overlayCorner, preferredPlacement])
+
+    const resolved = squeezed ? overlayOpen : (requested ?? initialOpen)
     const open = visible ? resolved : false
-    const placement = useStewardStore(state => state.placement) ?? initialPlacement ?? DEFAULT_STEWARD_PLACEMENT
     const dragging = useStewardStore(state => state.dropTarget !== null)
     const docked = dockedStewardSide({ open, placement, dragging })
     const reduceMotion = useReducedMotion()
@@ -94,7 +129,7 @@ export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, childre
             {/* Se connecter à un autre compte sans recharger repart d'une colonne neuve, qui relit
                 la phase et la conversation de ce compte-là. */}
             <div className={visible ? 'contents' : 'hidden'}>
-                <StewardColumn key={accountSwitches} open={open} placement={placement} />
+                <StewardColumn key={accountSwitches} open={open} placement={placement} preferredPlacement={preferredPlacement} overPage={squeezed} />
             </div>
         </div>
     )
@@ -117,7 +152,8 @@ export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, childre
             className={cn(
                 'relative h-dvh w-full overflow-hidden p-0 md:p-2 bg-frame flex flex-col [--board-inset:0px] md:[--board-inset:9px] [--steward-dock-track:min(var(--steward-dock-w),60vw)]',
                 // The sidebar's width plus its gap to the card, as AppSidebar draws it: a rail below `lg`.
-                sidebar && 'md:[--shell-sidebar-w:52px] md:[--board-inset-start:calc(9px+var(--shell-sidebar-w))]',
+                // With the sidebar the workspace pill leaves the card's top-left corner, and the orb parked there moves up into its row.
+                sidebar && 'md:[--shell-sidebar-w:52px] md:[--board-inset-start:calc(9px+var(--shell-sidebar-w))] md:[--steward-orb-top-row:1]',
                 sidebar && !sidebar.collapsed && 'lg:[--shell-sidebar-w:240px]'
             )}
         >

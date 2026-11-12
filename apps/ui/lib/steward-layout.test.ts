@@ -9,6 +9,7 @@ import {
     resolveCorner,
     resolveDropTarget,
     serializeStewardPlacement,
+    stewardDockSqueezeQuery,
 } from './steward-layout'
 
 const viewport = { width: 1440, height: 900 }
@@ -90,5 +91,13 @@ describe('dockedStewardSide', () => {
         expect(dockedStewardSide({ open: false, placement: left, dragging: false })).toBeNull()
         expect(dockedStewardSide({ open: true, placement: left, dragging: true })).toBeNull()
         expect(dockedStewardSide({ open: true, placement: floating, dragging: false })).toBeNull()
+    })
+})
+
+describe('stewardDockSqueezeQuery', () => {
+    it('keeps 640px of card beside the sidebar and the dock', () => {
+        expect(stewardDockSqueezeQuery({ dockWidth: 480, sidebarWidth: 240 })).toBe('(min-width: 768px) and (max-width: 1375.98px)')
+        expect(stewardDockSqueezeQuery({ dockWidth: 360, sidebarWidth: 52 })).toBe('(min-width: 768px) and (max-width: 1067.98px)')
+        expect(stewardDockSqueezeQuery({ dockWidth: 480, sidebarWidth: 0 })).toBe('(min-width: 768px) and (max-width: 1135.98px)')
     })
 })

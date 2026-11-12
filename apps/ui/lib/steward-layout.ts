@@ -130,6 +130,25 @@ export function sameStewardPlacement(a: StewardPlacement, b: StewardPlacement): 
     return serializeStewardPlacement(a) === serializeStewardPlacement(b)
 }
 
+/** The narrowest content card a page keeps beside the docked column. */
+export const STEWARD_DOCK_MIN_CONTENT_WIDTH = 640
+/** The frame's padding on both sides of the card (`md:p-2`). */
+const FRAME_PADDING_X = 16
+/** The sidebar's share of the frame, gap included, as BoardChatSplit publishes it in `--shell-sidebar-w`. */
+export const SHELL_SIDEBAR_RAIL_WIDTH = 52
+export const SHELL_SIDEBAR_EXPANDED_WIDTH = 240
+
+/**
+ * The widths, from `md` up, where docking the column would leave a page's card narrower than
+ * STEWARD_DOCK_MIN_CONTENT_WIDTH. `sidebarWidth` is what the sidebar takes from `lg` up (0 without
+ * one): under `lg` it is a rail, and with any dock width the threshold already lies above `lg`. At
+ * the threshold the `60vw` cap of the track never bites, so the dock width counts in full.
+ */
+export function stewardDockSqueezeQuery({ dockWidth, sidebarWidth }: { dockWidth: number; sidebarWidth: number }): string {
+    const minViewportWidth = STEWARD_DOCK_MIN_CONTENT_WIDTH + FRAME_PADDING_X + sidebarWidth + dockWidth
+    return `(min-width: 768px) and (max-width: ${minViewportWidth - 0.02}px)`
+}
+
 /** Le côté dont la colonne occupe une piste de grille, ou `null` quand elle flotte, se déplace ou est fermée. */
 export function dockedStewardSide({ open, placement, dragging }: { open: boolean | null; placement: StewardPlacement; dragging: boolean }): StewardDockSide | null {
     if (open === false || dragging || placement.mode !== 'dock') return null

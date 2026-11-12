@@ -104,6 +104,36 @@ describe('yielding to a sheet', () => {
     })
 })
 
+describe('on a page too narrow to dock', () => {
+    it('opens and closes over the page without touching the column or the preference', () => {
+        useStewardStore.setState({ open: true })
+        useStewardStore.getState().setSqueezed(true)
+        expect(selectStewardOpen(useStewardStore.getState())).toBe(false)
+
+        useStewardStore.getState().toggle()
+        expect(selectStewardOpen(useStewardStore.getState())).toBe(true)
+        useStewardStore.getState().close()
+        expect(selectStewardOpen(useStewardStore.getState())).toBe(false)
+
+        expect(useStewardStore.getState().open).toBe(true)
+        expect(rememberStewardOpen).not.toHaveBeenCalled()
+    })
+
+    it('opens over the page to take a prompt, and folds back when the page changes or widens', () => {
+        useStewardStore.getState().setSqueezed(true)
+        useStewardStore.getState().askSteward('hello')
+        expect(useStewardStore.getState()).toMatchObject({ overlayOpen: true, pendingPrompt: 'hello' })
+
+        useStewardStore.getState().closeOverlay()
+        expect(useStewardStore.getState().overlayOpen).toBe(false)
+
+        useStewardStore.getState().toggle()
+        useStewardStore.getState().setSqueezed(false)
+        expect(useStewardStore.getState().overlayOpen).toBe(false)
+        expect(useStewardStore.getState().open).toBeNull()
+    })
+})
+
 describe('backend', () => {
     it('talks to the hub through the onboarding and to the engine past it', () => {
         const store = useStewardStore.getState()
