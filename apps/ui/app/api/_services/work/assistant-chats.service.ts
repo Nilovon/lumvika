@@ -143,10 +143,18 @@ export async function archiveAssistantChat(scope: WorkScope, actor: Actor, chatI
     return writeOwnChat(scope, actor, chatId, { archived_at: archived ? new Date().toISOString() : null })
 }
 
-export async function deleteAssistantChat(scope: WorkScope, actor: Actor, chatId: string): Promise<void> {
+// What became of the conversation on the engine: erased, never started there, or still there because
+// the server is too old to erase it or did not answer.
+export type TranscriptErasure = 'erased' | 'none' | 'outdated' | 'unreachable'
+
+// The transcript goes first, then the row. A server that cannot erase it does not keep the chat in
+// the list: the person asked for it to go, and is told what stayed on the server.
+export async function deleteAssistantChat(scope: WorkScope, actor: Actor, chatId: string, eraseTranscript: (engineSessionId: string) => Promise<Exclude<TranscriptErasure, 'none'>>): Promise<TranscriptErasure> {
     const row = await getOwnAssistantChat(scope, actor, chatId)
+    const transcript = row.engine_session_id ? await eraseTranscript(row.engine_session_id) : 'none'
     const { error } = await clientOf(scope).from('assistant_chats').delete().eq('id', chatId).eq('workspace_id', scope.workspaceId).eq('user_id', row.user_id)
     if (error) throw new Error(`Failed to delete the chat: ${error.message}`)
+    return transcript
 }
 
 // After a message reached the engine: the conversation it continues, when it last moved, and the

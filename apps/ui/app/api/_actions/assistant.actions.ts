@@ -6,7 +6,7 @@ import type { UIMessage } from 'ai'
 import { actorFromContext, type Actor } from '@/app/api/_auth/access'
 import { requireWorkspaceContext, type WorkspaceContext } from '@/app/api/_auth/ownership'
 import { projectAccessMap } from '@/app/api/_auth/project-access'
-import { assistantAvailability, assistantEngineOf, readAssistantRunState, readAssistantTranscript, type AssistantAvailability } from '@/app/api/_services/assistant-engine.service'
+import { assistantAvailability, assistantEngineOf, eraseAssistantTranscript, readAssistantRunState, readAssistantTranscript, type AssistantAvailability } from '@/app/api/_services/assistant-engine.service'
 import { listMemberProfiles } from '@/app/api/_services/members.service'
 import {
     archiveAssistantChat,
@@ -17,6 +17,7 @@ import {
     updateAssistantChat,
     type AssistantChatAccess,
     type AssistantChatList,
+    type TranscriptErasure,
 } from '@/app/api/_services/work/assistant-chats.service'
 import { toAssistantChat } from '@/app/api/_services/work/mappers'
 import { failureOf } from '@/lib/i18n/action-error'
@@ -129,11 +130,12 @@ export async function archiveAssistantChatAction(chatId: string, archived: boole
     }
 }
 
-export async function deleteAssistantChatAction(chatId: string): Promise<ActionResult> {
+export async function deleteAssistantChatAction(chatId: string): Promise<ActionResult<{ transcript: TranscriptErasure }>> {
     try {
         const { actor, scope } = await caller()
-        await deleteAssistantChat(scope, actor, chatId)
-        return { ok: true }
+        const conn = await assistantEngineOf(scope.workspaceId)
+        const transcript = await deleteAssistantChat(scope, actor, chatId, engineSessionId => eraseAssistantTranscript(conn, engineSessionId))
+        return { ok: true, transcript }
     } catch (err) {
         return failureOf(err)
     }

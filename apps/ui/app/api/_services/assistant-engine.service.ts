@@ -1,14 +1,15 @@
 import 'server-only'
 
-import { ASSISTANT_AGENT_ID, ENGINE_CAPABILITY_ASSISTANT, type AssistantBrief, type MessageAuthor } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, ENGINE_CAPABILITY_ASSISTANT, ENGINE_CAPABILITY_ASSISTANT_SESSION_DELETE, type AssistantBrief, type MessageAuthor } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 
 import { ADMIN_ONLY, AuthorizationError, requireWorkspaceContext } from '@/app/api/_auth/ownership'
 import { lastRunError, listSessionRuns } from '@/app/api/_services/chat.service'
+import type { TranscriptErasure } from '@/app/api/_services/work/assistant-chats.service'
 import { findWorkspaceEngine, NoEngineError } from '@/app/api/_services/workspace-engine.service'
 import { transformEngineMessages } from '@/lib/chat/engine-history'
 import { QUEUED_RETRY_DELAYS_MS, startChat } from '@/lib/chat/start-chat'
-import { cancelRun, getEngineHealth, getSessionMessages, listRuns, reconnectRun } from '@/lib/engine/client'
+import { cancelRun, deleteSession, getEngineHealth, getSessionMessages, listRuns, reconnectRun } from '@/lib/engine/client'
 import type { EngineConnection } from '@/lib/engine/types'
 
 // The workspace engine as the plain Chat sees it. The assistant is one engine agent for every member,
@@ -87,4 +88,31 @@ export async function resolveAssistantModelTarget(access: 'use' | 'manage'): Pro
     const conn = await assistantEngineOf(ctx.workspace.id)
     if (!conn) throw new NoEngineError()
     return { conn, engineAgentId: ASSISTANT_AGENT_ID, contentLocked: false }
+}
+
+// A run stopped a moment ago may still hold its conversation while it writes its last step: a few
+// short tries cover that, without a queue to come back later.
+export const ERASE_RETRY_DELAYS_MS = [300, 1_000, 2_000]
+
+const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+// Erases the conversation on the engine: stops what still runs on it, then deletes it. An engine
+// without the route keeps it ('outdated'); one that does not answer, or still holds it after the
+// tries, too ('unreachable').
+export async function eraseAssistantTranscript(conn: EngineConnection | null, engineSessionId: string, wait: (ms: number) => Promise<unknown> = pause): Promise<Exclude<TranscriptErasure, 'none'>> {
+    if (!conn) return 'unreachable'
+    try {
+        const health = await getEngineHealth(conn)
+        if (!health.capabilities.includes(ENGINE_CAPABILITY_ASSISTANT_SESSION_DELETE)) return 'outdated'
+        await cancelAssistantRuns(conn, engineSessionId).catch(() => {})
+        for (const delay of [0, ...ERASE_RETRY_DELAYS_MS]) {
+            if (delay) await wait(delay)
+            const res = await deleteSession(conn, ASSISTANT_AGENT_ID, engineSessionId)
+            if (res.ok || res.status === 404) return 'erased'
+            if (res.status !== 409) return 'unreachable'
+        }
+        return 'unreachable'
+    } catch {
+        return 'unreachable'
+    }
 }

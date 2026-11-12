@@ -61,7 +61,9 @@ describe('getAssistantChat', () => {
         await expect(getAssistantChat(scope, teammate, 'chat-1')).resolves.toMatchObject({ access: 'reader' })
         await expect(getOwnAssistantChat(scope, teammate, 'chat-1')).rejects.toMatchObject({ code: 'assistantChatReadOnly' })
         await expect(updateAssistantChat(scope, teammate, 'chat-1', { title: 'Mine now' })).rejects.toMatchObject({ code: 'assistantChatReadOnly' })
-        await expect(deleteAssistantChat(scope, teammate, 'chat-1')).rejects.toMatchObject({ code: 'assistantChatReadOnly' })
+        const erase = vi.fn()
+        await expect(deleteAssistantChat(scope, teammate, 'chat-1', erase)).rejects.toMatchObject({ code: 'assistantChatReadOnly' })
+        expect(erase).not.toHaveBeenCalled()
     })
 
     it('hides a shared chat about a project the member does not see, and an archived one', async () => {
@@ -134,7 +136,24 @@ describe('updating a chat', () => {
         const { scope, rows } = setup({ assistant_chats: [chat()] })
         expect((await archiveAssistantChat(scope, me, 'chat-1', true)).archived_at).not.toBeNull()
         expect((await archiveAssistantChat(scope, me, 'chat-1', false)).archived_at).toBeNull()
-        await deleteAssistantChat(scope, me, 'chat-1')
+        expect(await deleteAssistantChat(scope, me, 'chat-1', vi.fn())).toBe('none')
+        expect(rows.assistant_chats).toHaveLength(0)
+    })
+
+    it('erases the conversation on the engine before the row', async () => {
+        const { scope, rows } = setup({ assistant_chats: [chat({ engine_session_id: 'engine-1' })] })
+        const erase = vi.fn(async () => {
+            expect(rows.assistant_chats).toHaveLength(1)
+            return 'erased' as const
+        })
+        expect(await deleteAssistantChat(scope, me, 'chat-1', erase)).toBe('erased')
+        expect(erase).toHaveBeenCalledWith('engine-1')
+        expect(rows.assistant_chats).toHaveLength(0)
+    })
+
+    it.each(['outdated', 'unreachable'] as const)('still deletes the row when the server keeps the conversation (%s), and says so', async outcome => {
+        const { scope, rows } = setup({ assistant_chats: [chat({ engine_session_id: 'engine-1' })] })
+        expect(await deleteAssistantChat(scope, me, 'chat-1', async () => outcome)).toBe(outcome)
         expect(rows.assistant_chats).toHaveLength(0)
     })
 })

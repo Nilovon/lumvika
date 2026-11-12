@@ -39,7 +39,7 @@
     },
     "delete": {
         "title": "Diesen Chat löschen?",
-        "description": "„{title}“ verschwindet endgültig aus deinen Chats, für dich und alle, mit denen du ihn geteilt hast. Das lässt sich nicht rückgängig machen.",
+        "description": "„{title}“ und die ganze Unterhaltung werden endgültig gelöscht, für dich und alle, mit denen du ihn geteilt hast. Das lässt sich nicht rückgängig machen.",
         "confirm": "Löschen"
     },
     "toasts": {
@@ -47,7 +47,9 @@
         "unshared": "Dieser Chat ist wieder privat.",
         "archived": "Chat archiviert.",
         "restored": "Chat wiederhergestellt.",
-        "deleted": "Chat gelöscht."
+        "deleted": "Chat gelöscht.",
+        "deletedOutdated": "Der Chat ist hier entfernt. Seine Nachrichten bleiben auf deinem Server, auf dem eine ältere Version von Lumvika läuft, die sie nicht löschen kann.",
+        "deletedUnreachable": "Der Chat ist hier entfernt. Seine Nachrichten konnten nicht von deinem Server gelöscht werden, weil er nicht geantwortet hat."
     },
     "project": {
         "label": "Projekt",

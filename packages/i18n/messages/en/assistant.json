@@ -48,7 +48,7 @@
     },
     "delete": {
         "title": "Delete this chat?",
-        "description": "“{title}” leaves your chats for good, for you and for anyone you shared it with. This cannot be undone.",
+        "description": "“{title}” and its whole conversation are erased for good, for you and for anyone you shared it with. This cannot be undone.",
         "confirm": "Delete"
     },
     "toasts": {
@@ -56,7 +56,9 @@
         "unshared": "This chat is private again.",
         "archived": "Chat archived.",
         "restored": "Chat restored.",
-        "deleted": "Chat deleted."
+        "deleted": "Chat deleted.",
+        "deletedOutdated": "The chat is removed here. Its messages stay on your server, which runs an older version of Lumvika that cannot erase them.",
+        "deletedUnreachable": "The chat is removed here. Its messages could not be erased from your server, which did not answer."
     },
     "project": {
         "label": "Project",

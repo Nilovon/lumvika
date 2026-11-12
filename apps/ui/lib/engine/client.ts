@@ -500,6 +500,12 @@ export async function getSessionMessages(conn: EngineConnection, agentId: string
     return engineMessagesListSchema.parse(await res.json()).messages
 }
 
+// Erases one conversation for good. Only the built-in assistant takes it; the status says the rest
+// (404 for a conversation already gone, 409 while a run is still going on it).
+export async function deleteSession(conn: EngineConnection, agentId: string, sessionId: string): Promise<Response> {
+    return fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(agentId)}/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: buildHeaders(conn), signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) })
+}
+
 // --- Chat (SSE, AI-SDK UI message stream protocol) ---
 
 // Returns the raw fetch Response so the caller can read the `x-session-id`
