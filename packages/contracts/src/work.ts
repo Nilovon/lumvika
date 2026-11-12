@@ -64,6 +64,28 @@ export function isIssueClosed(status: IssueStatus): boolean {
 // The statuses from which an agent run may take an issue to work on it.
 export const ISSUE_CHECKOUT_STATUSES = ['todo', 'in_progress', 'blocked'] as const satisfies readonly IssueStatus[]
 
+// What a coworker may move one of its own issues to with `work_update_status`. Backlog is a person's
+// call: an agent hands an issue back with `todo` or explains with `blocked`.
+export const AGENT_ISSUE_STATUSES = ['todo', 'in_progress', 'in_review', 'done', 'blocked', 'cancelled'] as const satisfies readonly IssueStatus[]
+export type AgentIssueStatus = (typeof AGENT_ISSUE_STATUSES)[number]
+
+// The `work` tool family of a coworker, answered by the hub (`work-hub.service.ts`).
+export const WORK_TOOL_NAMES = ['work_inbox', 'work_get_issue', 'work_checkout', 'work_update_status', 'work_comment', 'work_create_issue', 'work_list_issues', 'work_list_projects'] as const
+export type WorkToolName = (typeof WORK_TOOL_NAMES)[number]
+
+// Why the hub wakes a coworker on an issue. `heartbeat` is the engine's own sweep of assigned work.
+export const ISSUE_WAKE_REASONS = ['assigned', 'ready', 'reopened', 'comment', 'heartbeat'] as const
+export const issueWakeReasonSchema = z.enum(ISSUE_WAKE_REASONS)
+export type IssueWakeReason = z.infer<typeof issueWakeReasonSchema>
+
+export const issueRunRequestSchema = z.object({
+    ref: z.string().min(1).max(20),
+    title: z.string().min(1).max(300),
+    reason: issueWakeReasonSchema,
+    note: z.string().max(2000).optional(),
+})
+export type IssueRunRequest = z.infer<typeof issueRunRequestSchema>
+
 export const PROJECT_KEY_PATTERN = /^[A-Z][A-Z0-9]{1,5}$/
 export const projectKeySchema = z.string().trim().toUpperCase().regex(PROJECT_KEY_PATTERN, { message: 'projectKeyInvalid' })
 
@@ -127,7 +149,7 @@ export type ActivityAction = z.infer<typeof activityActionSchema>
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const nullableText = (max: number) => z.string().max(max).nullable()
 
-export const issueCountsSchema = z.record(issueStatusSchema, z.number().int().nonnegative())
+export const issueCountsSchema = z.partialRecord(issueStatusSchema, z.number().int().nonnegative())
 export type IssueCounts = Partial<Record<IssueStatus, number>>
 
 export const projectSummarySchema = z.object({
