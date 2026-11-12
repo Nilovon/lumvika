@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from '@/components/ui/skeleton'
 import { CheckIcon } from '@/lib/icons'
 
-export type PickerEntry = { ref: WorkMemberRef; name: string; hint?: string }
+import type { PickerEntry } from '@/components/channels/picker-entries'
+
 
 type MemberPickerDialogProps = {
     open: boolean

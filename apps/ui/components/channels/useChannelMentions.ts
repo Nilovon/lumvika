@@ -52,6 +52,21 @@ export function mentionTokens(candidates: readonly MentionCandidate[]): Composer
     return candidates.map(candidate => ({ text: `@${candidate.label}`, kind: 'agent' }))
 }
 
+// The tokens a sent message draws: each label as written here, and as the text spells it (`@echo`
+// for `@Echo`), since a mention is read back whatever its case.
+export function mentionTokensIn(body: string, candidates: readonly MentionCandidate[]): ComposerMention[] {
+    const tokens = mentionTokens(candidates)
+    const known = new Set(tokens.map(token => token.text))
+    for (const candidate of candidates) {
+        for (const match of body.matchAll(new RegExp(`(?<=^|\\s)@${escapeRegExp(candidate.label)}${LABEL_END}`, 'gi'))) {
+            if (known.has(match[0])) continue
+            known.add(match[0])
+            tokens.push({ text: match[0], kind: 'agent' })
+        }
+    }
+    return tokens
+}
+
 type MentionState = { query: string; start: number }
 
 export function useChannelMentions(candidates: MentionCandidate[], onValueChange?: (text: string) => void) {

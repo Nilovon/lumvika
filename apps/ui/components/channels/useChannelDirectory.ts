@@ -3,7 +3,7 @@
 import type { MemberProfile, WorkAuthor } from '@lumvika/contracts'
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 
-import { listMemberProfilesAction } from '@/app/api/_actions/members.actions'
+import { listMemberProfilesAction, listWorkspaceMembersAction } from '@/app/api/_actions/members.actions'
 import type { ChannelCoworker } from '@/app/api/_services/work/channels.service'
 import { useBoardStore } from '@/stores/board.store'
 
@@ -11,14 +11,23 @@ import { useBoardStore } from '@/stores/board.store'
 // of the board the person sees plus any a channel showed them (a coworker of a Box they do not reach
 // still signs its messages).
 
-export type DirectoryPerson = { id: string; name: string | null; photo: string | null }
+// `email` tells apart two people who share a name, as the Members dialog does.
+export type DirectoryPerson = { id: string; name: string | null; photo: string | null; email: string | null }
 export type DirectoryCoworker = { id: string; name: string; handle: string | null; reachable: boolean }
 
-let peopleCache: MemberProfile[] | null = null
-let peopleRead: Promise<MemberProfile[]> | null = null
+type Person = MemberProfile & { email: string | null }
 
-function readPeople(): Promise<MemberProfile[]> {
-    peopleRead ??= listMemberProfilesAction()
+let peopleCache: Person[] | null = null
+let peopleRead: Promise<Person[]> | null = null
+
+async function readPeopleOnce(): Promise<Person[]> {
+    const [profiles, members] = await Promise.all([listMemberProfilesAction(), listWorkspaceMembersAction().catch(() => null)])
+    const emails = new Map(members?.ok ? members.members.map(member => [member.userId, member.email]) : [])
+    return profiles.map(profile => ({ ...profile, email: emails.get(profile.id) ?? null }))
+}
+
+function readPeople(): Promise<Person[]> {
+    peopleRead ??= readPeopleOnce()
         .then(people => (peopleCache = people))
         .catch(() => peopleCache ?? [])
         .finally(() => (peopleRead = null))
@@ -57,7 +66,7 @@ export type ChannelDirectory = {
 }
 
 export function useChannelDirectory(): ChannelDirectory {
-    const [people, setPeople] = useState<MemberProfile[] | null>(peopleCache)
+    const [people, setPeople] = useState<Person[] | null>(peopleCache)
     const boardAgents = useBoardStore(state => state.agents)
     const version = useSyncExternalStore(subscribe, () => seenVersion, () => 0)
 
@@ -71,7 +80,7 @@ export function useChannelDirectory(): ChannelDirectory {
         }
     }, [])
 
-    const directoryPeople = useMemo(() => people?.map(person => ({ id: person.id, name: person.name, photo: person.avatarUrl })) ?? null, [people])
+    const directoryPeople = useMemo(() => people?.map(person => ({ id: person.id, name: person.name, photo: person.avatarUrl, email: person.email })) ?? null, [people])
     const peopleById = useMemo(() => new Map((directoryPeople ?? []).map(person => [person.id, person])), [directoryPeople])
 
     const coworkers = useMemo(() => {

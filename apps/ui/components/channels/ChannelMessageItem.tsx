@@ -2,7 +2,7 @@
 
 import type { ChannelMessage, WorkAuthor, WorkMemberRef } from '@lumvika/contracts'
 import { useLocale, useTranslations } from 'next-intl'
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { deleteChannelMessageAction, editChannelMessageAction } from '@/app/api/_actions/channels.actions'
@@ -28,7 +28,7 @@ type ChannelMessageItemProps = {
     canManage: boolean
     directory: ChannelDirectory
     authorName: (author: WorkAuthor) => string
-    tokens: ComposerMention[]
+    tokensOf: (body: string) => ComposerMention[]
     mentionsOf: (body: string) => WorkMemberRef[]
     onReply?: () => void
     onChanged: (message: ChannelMessage) => void
@@ -38,7 +38,7 @@ type ChannelMessageItemProps = {
     footer?: ReactNode
 }
 
-export function ChannelMessageItem({ message, continued, me, canManage, directory, authorName, tokens, mentionsOf, onReply, onChanged, onRetry, onDiscard, footer }: ChannelMessageItemProps) {
+export function ChannelMessageItem({ message, continued, me, canManage, directory, authorName, tokensOf, mentionsOf, onReply, onChanged, onRetry, onDiscard, footer }: ChannelMessageItemProps) {
     const t = useTranslations('channels.message')
     const locale = useLocale()
     const errorText = useErrorText()
@@ -48,6 +48,7 @@ export function ChannelMessageItem({ message, continued, me, canManage, director
     const [confirmingDelete, setConfirmingDelete] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const longPress = useLongPress(() => setMenuOpen(true))
+    const tokens = useMemo(() => tokensOf(message.body), [tokensOf, message.body])
 
     const landed = !message.sendState
     const mine = !!me && refKey(me) === refKey(message.author)

@@ -11,6 +11,7 @@ import { ChannelFormDialog } from '@/components/channels/ChannelFormDialog'
 import { ChannelList } from '@/components/channels/ChannelList'
 import { ChannelView } from '@/components/channels/ChannelView'
 import { MemberPickerDialog } from '@/components/channels/MemberPickerDialog'
+import { personEntries } from '@/components/channels/picker-entries'
 import { useAuthorName } from '@/components/channels/useAuthorName'
 import { useChannelDirectory } from '@/components/channels/useChannelDirectory'
 import { useChannelList } from '@/components/channels/useChannelList'
@@ -122,7 +123,7 @@ export function ChannelsScreen({ channelId: initialChannelId }: { channelId?: st
                 onOpenChange={open => setDialog(open ? 'dm' : null)}
                 title={t('picker.dmTitle')}
                 description={t('picker.dmDescription')}
-                people={directory.people?.filter(person => person.id !== userId).map(person => ({ ref: { kind: 'user' as const, userId: person.id }, name: person.name ?? t('message.unnamed') })) ?? null}
+                people={directory.people ? personEntries(directory.people, t('message.unnamed'), userId) : null}
                 coworkers={directory.coworkers.filter(coworker => coworker.reachable).map(coworker => ({ ref: { kind: 'agent' as const, agentId: coworker.id }, name: coworker.name, hint: coworker.handle ? `@${coworker.handle}` : undefined }))}
                 directory={directory}
                 onPick={startDm}

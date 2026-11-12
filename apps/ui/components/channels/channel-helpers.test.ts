@@ -6,8 +6,9 @@ vi.mock('@/app/api/_actions/members.actions', () => ({}))
 vi.mock('@/stores/board.store', () => ({ useBoardStore: () => [] }))
 vi.mock('@/supabase/useRealtimeSubscription', () => ({ useRealtimeSubscription: () => {} }))
 
-const { isAnswering, messageFromRow } = await import('./channel-rows')
-const { mentionCandidates, mentionsIn } = await import('./useChannelMentions')
+const { isAnswering, messageFromRow, turnAsOf } = await import('./channel-rows')
+const { mentionCandidates, mentionsIn, mentionTokensIn } = await import('./useChannelMentions')
+const { personEntries } = await import('./picker-entries')
 const { reconcile } = await import('./useChannelMessages')
 const { channelHref } = await import('./useChannelRoute')
 
@@ -15,9 +16,9 @@ type ChannelDirectory = import('./useChannelDirectory').ChannelDirectory
 
 function directory(): ChannelDirectory {
     const people = [
-        { id: 'anna', name: 'Anna Schmidt', photo: null },
-        { id: 'anna2', name: 'Anna Weber', photo: null },
-        { id: 'ben', name: 'Ben', photo: null },
+        { id: 'anna', name: 'Anna Schmidt', photo: null, email: 'anna.s@acme.test' },
+        { id: 'anna2', name: 'Anna Weber', photo: null, email: 'anna.w@acme.test' },
+        { id: 'ben', name: 'Ben', photo: null, email: 'ben@acme.test' },
     ]
     const coworkers = [
         { id: 'ada', name: 'Ada', handle: 'ada', reachable: true },
@@ -50,6 +51,13 @@ describe('mentions in the composer', () => {
         ])
         expect(mentionsIn('@Benjamin', candidates)).toEqual([])
     })
+
+    it('draws a mention whatever case it was typed in', () => {
+        const candidates = mentionCandidates(directory(), [], 'Teammate')
+        const drawn = mentionTokensIn('hey @ADA and @ada, not mail@Ada', candidates).map(token => token.text)
+        expect(drawn).toEqual(expect.arrayContaining(['@ada', '@ADA']))
+        expect(drawn.filter(text => text.toLowerCase() === '@ada')).toHaveLength(2)
+    })
 })
 
 describe('reconcile', () => {
@@ -69,10 +77,22 @@ describe('realtime rows and routes', () => {
         expect(messageFromRow({ ...row, deleted_at: 'then' })).toMatchObject({ body: '', mentions: [] })
     })
 
-    it('stops showing a turn its request lost', () => {
+    it('reads a turn its run never reported back on as timed out', () => {
         const turn = { id: 't', channelId: 'c', agentId: 'ada', threadMessageId: 'm', triggerMessageId: 'm', status: 'answering' as const, failure: null, replyMessageId: null, createdAt: new Date(Date.now() - 60_000).toISOString(), finishedAt: null }
         expect(isAnswering(turn)).toBe(true)
-        expect(isAnswering({ ...turn, createdAt: new Date(Date.now() - 20 * 60_000).toISOString() })).toBe(false)
+        expect(turnAsOf(turn)).toBe(turn)
+        const stale = { ...turn, createdAt: new Date(Date.now() - 20 * 60_000).toISOString() }
+        expect(isAnswering(stale)).toBe(false)
+        expect(turnAsOf(stale)).toMatchObject({ status: 'failed', failure: 'timeout' })
+    })
+
+    it('tells apart two people who share a name by their email only', () => {
+        const people = [...directory().people!, { id: 'anna3', name: 'Anna Weber', photo: null, email: 'weber@other.test' }]
+        expect(personEntries(people, 'Teammate', 'ben').map(entry => [entry.name, entry.hint])).toEqual([
+            ['Anna Schmidt', undefined],
+            ['Anna Weber', 'anna.w@acme.test'],
+            ['Anna Weber', 'weber@other.test'],
+        ])
     })
 
     it('writes the side pane in the URL', () => {

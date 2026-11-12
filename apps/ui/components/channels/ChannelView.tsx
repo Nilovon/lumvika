@@ -12,6 +12,7 @@ import { ChannelDetailsPanel } from '@/components/channels/ChannelDetailsPanel'
 import { ChannelFormDialog } from '@/components/channels/ChannelFormDialog'
 import { ChannelHeader } from '@/components/channels/ChannelHeader'
 import { MemberPickerDialog } from '@/components/channels/MemberPickerDialog'
+import { personEntries } from '@/components/channels/picker-entries'
 import { MessageStream, MessageStreamSkeleton } from '@/components/channels/MessageStream'
 import { OutsiderPrompt, type OutsiderOffer } from '@/components/channels/OutsiderPrompt'
 import { ThreadPane } from '@/components/channels/ThreadPane'
@@ -19,7 +20,7 @@ import { refKey } from '@/components/channels/channel-rows'
 import { useAuthorName } from '@/components/channels/useAuthorName'
 import type { ChannelDirectory } from '@/components/channels/useChannelDirectory'
 import { useChannelDetail } from '@/components/channels/useChannelDetail'
-import { mentionCandidates, mentionsIn, mentionTokens } from '@/components/channels/useChannelMentions'
+import { mentionCandidates, mentionsIn, mentionTokensIn } from '@/components/channels/useChannelMentions'
 import { useChannelMessages } from '@/components/channels/useChannelMessages'
 import type { ChannelSidePane } from '@/components/channels/useChannelRoute'
 import { useMarkChannelRead } from '@/components/channels/useMarkChannelRead'
@@ -54,7 +55,7 @@ export function ChannelView({ channelId, listItem, userId, side, directory, onNa
 
     const memberRefs = useMemo(() => detail?.members.map(row => row.member) ?? [], [detail])
     const candidates = useMemo(() => mentionCandidates(directory, memberRefs, t('message.unnamed')), [directory, memberRefs, t])
-    const tokens = useMemo(() => mentionTokens(candidates), [candidates])
+    const tokensOf = useCallback((body: string) => mentionTokensIn(body, candidates), [candidates])
     const mentionsOf = useCallback((body: string) => mentionsIn(body, candidates), [candidates])
 
     const dmPeer = detail?.kind === 'dm' ? (memberRefs.find(ref => !me || refKey(ref) !== refKey(me)) ?? null) : null
@@ -121,7 +122,7 @@ export function ChannelView({ channelId, listItem, userId, side, directory, onNa
         )
     }
 
-    const listProps = { me, canManage, directory, authorName, tokens, mentionsOf, onChanged: stream.replace, onRetry: (clientId: string) => void stream.retry(clientId), onDiscard: stream.discard }
+    const listProps = { me, canManage, directory, authorName, tokensOf, mentionsOf, onChanged: stream.replace, onRetry: (clientId: string) => void stream.retry(clientId), onDiscard: stream.discard }
     const isDmWithCoworker = dmPeer?.kind === 'agent'
     const empty = detail ? (
         <EmptyState
@@ -211,7 +212,7 @@ export function ChannelView({ channelId, listItem, userId, side, directory, onNa
                         onOpenChange={setAdding}
                         title={t('picker.addTitle', { name: detail.name })}
                         description={t('picker.addDescription')}
-                        people={directory.people?.map(person => ({ ref: { kind: 'user' as const, userId: person.id }, name: person.name ?? t('message.unnamed') })) ?? null}
+                        people={directory.people ? personEntries(directory.people, t('message.unnamed')) : null}
                         coworkers={directory.coworkers.filter(coworker => coworker.reachable).map(coworker => ({ ref: { kind: 'agent' as const, agentId: coworker.id }, name: coworker.name, hint: coworker.handle ? `@${coworker.handle}` : undefined }))}
                         directory={directory}
                         taken={new Set(memberRefs.map(refKey))}
