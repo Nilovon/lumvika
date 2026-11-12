@@ -2,13 +2,14 @@ import { ASSISTANT_AGENT_ID } from '@lumvika/contracts'
 import type { MiddlewareHandler } from 'hono'
 
 // The assistant is rewritten from code at every boot and serves every member of the workspace. The
-// hub may talk to it, read it, read one conversation it already knows the id of, follow, read and
+// hub may talk to it, read and erase one conversation it already knows the id of, follow, read and
 // stop a run, and pin the workspace default model. Listing its conversations is left out: the hub
 // keeps who owns which in its own table and never needs the whole list.
 const ASSISTANT_OPEN_ROUTES: Array<{ method: string; path: RegExp }> = [
     { method: 'GET', path: /^\/agents\/assistant$/ },
     { method: 'POST', path: /^\/agents\/assistant\/chat$/ },
     { method: 'GET', path: /^\/agents\/assistant\/sessions\/[^/]+\/messages$/ },
+    { method: 'DELETE', path: /^\/agents\/assistant\/sessions\/[^/]+$/ },
     { method: 'GET', path: /^\/agents\/assistant\/runs$/ },
     { method: 'GET', path: /^\/agents\/assistant\/runs\/[^/]+$/ },
     { method: 'GET', path: /^\/agents\/assistant\/runs\/[^/]+\/stream$/ },

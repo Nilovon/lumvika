@@ -49,6 +49,9 @@ export const ENGINE_CAPABILITY_CUSTOM = 'connections.custom'
 // The engine runs the built-in assistant of the plain Chat (`ASSISTANT_AGENT_ID`).
 export const ENGINE_CAPABILITY_ASSISTANT = 'assistant'
 
+// `DELETE /agents/assistant/sessions/:sid` erases one conversation of the assistant for good.
+export const ENGINE_CAPABILITY_ASSISTANT_SESSION_DELETE = 'assistant.sessions.delete'
+
 // What the last `lumvika update` on a box did, as `/health` reports it.
 export const engineLastUpdateSchema = z.object({
     status: z.enum(['running', 'error', 'restarting', 'success']),
