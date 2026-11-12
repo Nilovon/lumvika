@@ -87,7 +87,7 @@
         "commentsTab": "Kommentare ({count})",
         "activityTab": "Verlauf",
         "waitingOnPerson": "{name} wartet in der Unterhaltung auf eine Antwort",
-        "waitingOnPersonHint": "Antworte dort, dann arbeitet es an diesem Ticket weiter.",
+        "waitingOnPersonHint": "Antworte dort, dann arbeitet er an diesem Ticket weiter.",
         "coworkerBacklogHint": "Der Coworker legt los, sobald dieses Ticket auf Zu erledigen steht.",
         "moveToTodo": "Auf Zu erledigen setzen"
     },
@@ -128,8 +128,8 @@
         "coworkerBacklogHint": "Im Backlog wird niemand geweckt: Der Coworker legt los, sobald das Ticket auf Zu erledigen steht."
     },
     "engine": {
-        "outdated": "Der Server dieses Workspaces ist zu alt, um Coworker an Tickets arbeiten zu lassen. Aktualisiere ihn, dann kann der Coworker loslegen; die Zuweisung bleibt bestehen.",
-        "unreachable": "Der Server dieses Workspaces antwortet gerade nicht, deshalb kann der Coworker noch nicht mit dem Ticket anfangen. Die Zuweisung bleibt bestehen.",
-        "noEngine": "Noch läuft kein Server für diesen Workspace, deshalb können Coworker nicht an Tickets arbeiten. Die Zuweisung bleibt bestehen."
+        "outdated": "Die Maschine dieses Workspaces ist zu alt, um Coworker an Tickets arbeiten zu lassen. Aktualisiere sie, dann kann der Coworker loslegen; die Zuweisung bleibt bestehen.",
+        "unreachable": "Die Maschine dieses Workspaces antwortet gerade nicht, deshalb kann der Coworker noch nicht mit dem Ticket anfangen. Die Zuweisung bleibt bestehen.",
+        "noEngine": "Noch läuft keine Maschine für diesen Workspace, deshalb können Coworker nicht an Tickets arbeiten. Die Zuweisung bleibt bestehen."
     }
 }

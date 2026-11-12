@@ -136,8 +136,8 @@
         "coworkerBacklogHint": "Backlog wakes nobody: the coworker starts once the issue moves to Todo."
     },
     "engine": {
-        "outdated": "This workspace's server is too old to run coworkers on issues. Update it and the coworker can start; the assignment is kept.",
-        "unreachable": "This workspace's server does not answer right now, so the coworker cannot start on the issue yet. The assignment is kept.",
-        "noEngine": "No server runs this workspace yet, so coworkers cannot work on issues. The assignment is kept."
+        "outdated": "This workspace's machine is too old to run coworkers on issues. Update it and the coworker can start; the assignment is kept.",
+        "unreachable": "This workspace's machine does not answer right now, so the coworker cannot start on the issue yet. The assignment is kept.",
+        "noEngine": "No machine runs this workspace yet, so coworkers cannot work on issues. The assignment is kept."
     }
 }
