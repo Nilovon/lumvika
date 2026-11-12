@@ -1,7 +1,9 @@
 {
     "_context": {
         "generic": "Fallback when an action failed for a reason the screen cannot explain.",
-        "whatsappNumberRefused": "{message} is the provider's own explanation, in English."
+        "whatsappNumberRefused": "{message} is the provider's own explanation, in English.",
+        "projectKeyTaken": "{key} is a project key such as ENG, kept as written.",
+        "issueNotFound": "An issue is a work item of a project (a task or a bug), as in Linear or Jira."
     },
     "generic": "Something went wrong. Please try again.",
     "notAuthenticated": "Not authenticated",
@@ -442,5 +444,25 @@
     "fileChangedOnBox": "This file changed on the Box since you opened it.",
     "saveThisFileFailed": "Failed to save this file",
     "templateSubscriptionEnded": "This coworker came from a template subscription that has ended. Buy the template again to bring it back.",
-    "noFreeCoworkerSlot": "No free coworker slot on your plan. Start Pro for unlimited coworkers, or delete a coworker to make room."
+    "noFreeCoworkerSlot": "No free coworker slot on your plan. Start Pro for unlimited coworkers, or delete a coworker to make room.",
+    "invalidInput": "Some of this is not valid. Check it and try again.",
+    "textTooLong": "This text is too long.",
+    "commentRequired": "Write a comment first.",
+    "messageRequired": "Write a message first.",
+    "projectNotFound": "Project not found",
+    "projectManagerOnly": "Only an admin or a manager of this project can do this",
+    "projectKeyInvalid": "A project key is 2 to 6 capital letters or digits, starting with a letter.",
+    "projectKeyTaken": "Another project already uses the key {key}.",
+    "projectArchived": "This project is archived. Restore it to add issues.",
+    "issueNotFound": "Issue not found",
+    "issueTransitionNotAllowed": "This issue cannot move to that status from where it is.",
+    "issueChangedMeanwhile": "This issue changed in the meantime. Refresh and try again.",
+    "issueParentInvalid": "A sub-issue belongs to the same project as its parent, and never under itself.",
+    "assigneeNotInWorkspace": "This person or coworker is not part of the workspace.",
+    "commentNotFound": "Comment not found",
+    "commentAuthorOnly": "Only the author can edit this comment.",
+    "channelNotFound": "Channel not found",
+    "channelManagerOnly": "Only an admin or the creator of this channel can do this",
+    "teamNotFound": "Team not found",
+    "goalNotFound": "Goal not found"
 }
