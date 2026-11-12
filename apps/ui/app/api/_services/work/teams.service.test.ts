@@ -1,0 +1,156 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { workDatabase, type Row, type Tables } from '@/test/work-fake'
+
+vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+
+const { createServiceRoleClient } = await import('@/supabase/serviceRole')
+const { addTeamMember, createTeam, deleteTeam, isTeamLead, listTeamOverviews, removeTeamMember, setTeamMemberRole, teamNamesByAgent, updateTeam } = await import('./teams.service')
+
+type Actor = import('@/app/api/_auth/access').Actor
+
+const WORKSPACE = 7
+const ME = { kind: 'user', userId: 'me' } as const
+const member: Actor = { kind: 'user', userId: 'me', workspaceId: WORKSPACE, role: 'member', boxScope: 'all' }
+
+function team(overrides: Row = {}): Row {
+    return { id: 'team-1', workspace_id: WORKSPACE, name: 'Growth', description: null, color: '#2563eb', created_at: '2026-11-01T00:00:00.000Z', updated_at: '2026-11-01T00:00:00.000Z', ...overrides }
+}
+
+function teamMember(overrides: Row = {}): Row {
+    return { id: 'tm-1', team_id: 'team-1', workspace_id: WORKSPACE, user_id: 'me', agent_id: null, role: 'member', created_at: '2026-11-01T00:00:00.000Z', updated_at: '2026-11-01T00:00:00.000Z', ...overrides }
+}
+
+function setup(tables: Partial<Tables> = {}, refuse?: Record<string, { code?: string; message: string }>) {
+    const rows: Tables = {
+        teams: [],
+        team_members: [],
+        projects: [],
+        project_members: [],
+        activity_events: [],
+        workspace_members: [{ user_id: 'me', workspace_id: WORKSPACE }],
+        agents: [{ id: 'agent-1', workspace_id: WORKSPACE }],
+        ...tables,
+    }
+    const db = workDatabase(rows, { refuse })
+    vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
+    return { db, rows, scope: { workspaceId: WORKSPACE, supabase: db.client } }
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('createTeam and updateTeam', () => {
+    it('creates a team and logs it', async () => {
+        const { rows, scope } = setup()
+        const created = await createTeam(scope, ME, { name: '  Growth ', color: '#2563eb' })
+        expect(created).toMatchObject({ name: 'Growth', color: '#2563eb', members: [] })
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.created', entity_type: 'team', entity_id: created.id })
+    })
+
+    it('names the refusal when another team holds the name', async () => {
+        const { scope } = setup({}, { teams: { code: '23505', message: 'duplicate key' } })
+        await expect(createTeam(scope, ME, { name: 'Growth' })).rejects.toMatchObject({ code: 'teamNameTaken', params: { name: 'Growth' } })
+    })
+
+    it('refuses an invalid colour and an empty name before writing', async () => {
+        const { db, scope } = setup()
+        await expect(createTeam(scope, ME, { name: ' ' })).rejects.toMatchObject({ code: 'nameRequired' })
+        await expect(createTeam(scope, ME, { name: 'Ops', color: 'blue' })).rejects.toMatchObject({ code: 'invalidInput' })
+        expect(db.writes('teams')).toHaveLength(0)
+    })
+
+    it('writes only what changed', async () => {
+        const { db, rows, scope } = setup({ teams: [team()] })
+        await updateTeam(scope, ME, 'team-1', { description: 'Pipeline and SEO' })
+        expect(db.writes('teams')[0].payload).toEqual({ description: 'Pipeline and SEO' })
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.updated', metadata: { fields: ['description'] } })
+    })
+
+    it('reads a team of another workspace as missing', async () => {
+        const { scope } = setup({ teams: [team({ workspace_id: 99 })] })
+        await expect(updateTeam(scope, ME, 'team-1', { name: 'x' })).rejects.toMatchObject({ code: 'teamNotFound' })
+        await expect(deleteTeam(scope, ME, 'team-1')).rejects.toMatchObject({ code: 'teamNotFound' })
+    })
+
+    it('deletes a team and logs it as its last update', async () => {
+        const { rows, scope } = setup({ teams: [team()] })
+        await deleteTeam(scope, ME, 'team-1')
+        expect(rows.teams).toEqual([])
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.updated', metadata: { deleted: true, name: 'Growth' } })
+    })
+})
+
+describe('team members', () => {
+    it('adds a person and a coworker, and refuses a stranger', async () => {
+        const { rows, scope } = setup({ teams: [team()] })
+
+        await addTeamMember(scope, ME, 'team-1', { member: { kind: 'user', userId: 'me' } })
+        const withCoworker = await addTeamMember(scope, ME, 'team-1', { member: { kind: 'agent', agentId: 'agent-1' } })
+        await expect(addTeamMember(scope, ME, 'team-1', { member: { kind: 'agent', agentId: 'agent-x' } })).rejects.toMatchObject({ code: 'assigneeNotInWorkspace' })
+
+        expect(withCoworker.members.map(entry => entry.member)).toEqual([
+            { kind: 'user', userId: 'me' },
+            { kind: 'agent', agentId: 'agent-1' },
+        ])
+        expect(rows.activity_events.map(event => [event.action, event.metadata])).toEqual([
+            ['team.member_added', { userId: 'me', agentId: null, role: 'member' }],
+            ['team.member_added', { userId: null, agentId: 'agent-1', role: 'member' }],
+        ])
+    })
+
+    it('names a member added twice', async () => {
+        const { scope } = setup({ teams: [team()] }, { team_members: { code: '23505', message: 'duplicate key' } })
+        await expect(addTeamMember(scope, ME, 'team-1', { member: { kind: 'user', userId: 'me' } })).rejects.toMatchObject({ code: 'teamMemberAlreadyIn' })
+    })
+
+    it('keeps one lead: naming one hands the other back to member', async () => {
+        const { rows, scope } = setup({ teams: [team()], team_members: [teamMember({ role: 'lead' }), teamMember({ id: 'tm-2', user_id: null, agent_id: 'agent-1' })] })
+
+        const updated = await setTeamMemberRole(scope, ME, 'team-1', 'tm-2', 'lead')
+
+        expect(updated.members.map(entry => [entry.id, entry.role])).toEqual([
+            ['tm-1', 'member'],
+            ['tm-2', 'lead'],
+        ])
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.updated', metadata: { fields: ['members'], member: { kind: 'agent', agentId: 'agent-1' }, role: 'lead' } })
+    })
+
+    it('removes a member and logs who left', async () => {
+        const { rows, scope } = setup({ teams: [team()], team_members: [teamMember()] })
+        const updated = await removeTeamMember(scope, ME, 'team-1', 'tm-1')
+        expect(updated.members).toEqual([])
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.member_removed', metadata: { userId: 'me', agentId: null } })
+        await expect(removeTeamMember(scope, ME, 'team-1', 'tm-1')).rejects.toMatchObject({ code: 'teamMemberNotFound' })
+    })
+
+    it('knows who leads a team', async () => {
+        const { scope } = setup({ teams: [team()], team_members: [teamMember({ role: 'lead' })] })
+        await expect(isTeamLead(scope, 'team-1', 'me')).resolves.toBe(true)
+        await expect(isTeamLead(scope, 'team-1', 'teammate')).resolves.toBe(false)
+    })
+})
+
+describe('listTeamOverviews and teamNamesByAgent', () => {
+    it('lists each team with its members and the projects the actor sees', async () => {
+        const { scope } = setup({
+            teams: [team(), team({ id: 'team-2', name: 'Ops' })],
+            team_members: [teamMember({ team_id: 'team-2', user_id: null, agent_id: 'agent-1', role: 'lead' })],
+            projects: [
+                { id: 'p-1', workspace_id: WORKSPACE, key: 'WEB', name: 'Website', status: 'active', team_id: 'team-1', visibility: 'workspace', archived_at: null },
+                { id: 'p-2', workspace_id: WORKSPACE, key: 'HR', name: 'Hiring', status: 'active', team_id: 'team-1', visibility: 'restricted', archived_at: null },
+            ],
+        })
+
+        const overviews = await listTeamOverviews(scope, member)
+
+        expect(overviews.map(overview => [overview.name, overview.projects.map(project => project.key), overview.members.map(entry => entry.role)])).toEqual([
+            ['Growth', ['WEB'], []],
+            ['Ops', [], ['lead']],
+        ])
+    })
+
+    it('names the teams of each coworker', async () => {
+        const { scope } = setup({ teams: [team(), team({ id: 'team-2', name: 'Ops' })], team_members: [teamMember({ team_id: 'team-2', user_id: null, agent_id: 'agent-1' }), teamMember({ id: 'tm-2', user_id: null, agent_id: 'agent-1' })] })
+        expect(Object.fromEntries(await teamNamesByAgent(scope))).toEqual({ 'agent-1': ['Growth', 'Ops'] })
+    })
+})
