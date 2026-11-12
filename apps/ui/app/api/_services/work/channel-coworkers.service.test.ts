@@ -19,7 +19,7 @@ const { resolveMemberIdentities } = await import('@/app/api/_services/members.se
 const { findWorkspaceEngine } = await import('@/app/api/_services/workspace-engine.service')
 const { startChat } = await import('@/lib/chat/start-chat')
 const { EngineUnreachableError, getRun } = await import('@/lib/engine/client')
-const { answerPlacement, channelRunEndingOf, claimTurn, coworkerPrompt, coworkersSummoned, failureOfRun, finishChannelTurnForRun, listChannelTurns, reactToChannelMessage, startCoworkerTurn, STALE_TURN_MS } = await import('./channel-coworkers.service')
+const { answerPlacement, answerWhatCameMeanwhile, channelRunEndingOf, claimTurn, coworkerPrompt, coworkersSummoned, failureOfRun, finishChannelTurnForRun, listChannelTurns, reactToChannelMessage, startCoworkerTurn, STALE_TURN_MS } = await import('./channel-coworkers.service')
 const { postChannelMessage } = await import('./channels.service')
 
 type ChannelPerson = import('./channels.service').ChannelPerson
@@ -64,7 +64,7 @@ function setup(tables: Partial<Tables> = {}) {
         ],
         ...tables,
     }
-    const db = workDatabase(rows)
+    const db = workDatabase(rows, { unique: { channel_agent_turns: (row, existing) => row.status === 'answering' && existing.status === 'answering' && row.agent_id === existing.agent_id && row.thread_message_id === existing.thread_message_id } })
     vi.mocked(createServiceRoleClient).mockReturnValue(db.client)
     return { db, rows, scope: { workspaceId: WORKSPACE, supabase: db.client } }
 }
@@ -307,6 +307,86 @@ describe('finishing from the run-end webhook', () => {
         expect(channelRunEndingOf({ event: 'agent.notification', kind: 'info', runId: 'run-1' })).toBeNull()
         const { scope } = setup()
         await expect(finishChannelTurnForRun(scope, { runId: 'someone-elses-run', ending: 'done' })).resolves.toBe('none')
+    })
+})
+
+describe('messages that come while the coworker is still answering', () => {
+    const done = { event: 'agent.message.completed', kind: 'done', runId: 'run-1', source: null, metadata: { status: 'done' } }
+
+    async function busyThread() {
+        runEnds({ status: 'running', output: null })
+        const { rows, scope } = setup()
+        const root = await postChannelMessage(scope, ANNA, 'pub', { body: '@ada draft the plan' })
+        await reactToChannelMessage(scope, anna, root)
+        await drainAfter()
+        const first = await postChannelMessage(scope, ANNA, 'pub', { body: 'and keep it short', parentMessageId: root.id })
+        await reactToChannelMessage(scope, anna, first)
+        const second = await postChannelMessage(scope, ANNA, 'pub', { body: 'in French please', parentMessageId: root.id })
+        await reactToChannelMessage(scope, anna, second)
+        await drainAfter()
+        engineAccepts({ 'x-run-id': 'run-2', 'x-session-id': 'sess-1' })
+        return { rows, scope, root, second }
+    }
+
+    it('keeps one answer running, then answers everything that came meanwhile once', async () => {
+        const { rows, scope, second } = await busyThread()
+        expect(startChat).toHaveBeenCalledTimes(1)
+        expect(rows.channel_agent_turns).toHaveLength(1)
+
+        runEnds({ status: 'done', output: 'Here is the plan.' })
+        await finishChannelTurnForRun(scope, channelRunEndingOf(done)!)
+        await drainAfter()
+
+        expect(startChat).toHaveBeenCalledTimes(2)
+        const prompt = vi.mocked(startChat).mock.calls[1][2].message
+        expect(prompt).toContain('- Anna: and keep it short')
+        expect(vi.mocked(startChat).mock.calls[1][2]).toMatchObject({ sessionId: 'sess-1' })
+        expect(prompt).toContain('Anna wrote:\nin French please')
+        expect(rows.channel_agent_turns).toEqual([expect.objectContaining({ status: 'answered' }), expect.objectContaining({ trigger_message_id: second.id, status: 'answered', requested_by: 'anna' })])
+        expect(rows.channel_messages.filter(row => row.author_agent_id === 'ada')).toHaveLength(2)
+    })
+
+    it('still answers them when the first answer failed', async () => {
+        const { rows, scope } = await busyThread()
+        runEnds({ status: 'error', output: null, error: 'AI_APICallError: Internal server error' })
+        await finishChannelTurnForRun(scope, channelRunEndingOf({ ...done, kind: 'error', metadata: { status: 'error' } })!)
+        runEnds({ status: 'done', output: 'Voici le plan.' })
+        await drainAfter()
+        expect(startChat).toHaveBeenCalledTimes(2)
+        expect(rows.channel_agent_turns.map(turn => turn.status)).toEqual(['failed', 'answered'])
+    })
+
+    it('waits while the answer still runs, and starts nothing once nothing new is left', async () => {
+        runEnds({ status: 'running', output: null })
+        const { rows, scope } = setup()
+        const root = await postChannelMessage(scope, ANNA, 'pub', { body: '@ada draft the plan' })
+        await reactToChannelMessage(scope, anna, root)
+        await drainAfter()
+        const place = { channelId: 'pub', agentId: 'ada', threadMessageId: root.id }
+        await postChannelMessage(scope, ANNA, 'pub', { body: 'and in French', parentMessageId: root.id })
+        await expect(answerWhatCameMeanwhile(scope, place)).resolves.toBe(false)
+        expect(startChat).toHaveBeenCalledTimes(1)
+
+        engineAccepts({ 'x-run-id': 'run-2', 'x-session-id': 'sess-1' })
+        runEnds({ status: 'done', output: 'Here is the plan.' })
+        await finishChannelTurnForRun(scope, channelRunEndingOf(done)!)
+        await drainAfter()
+        expect(startChat).toHaveBeenCalledTimes(2)
+        await expect(answerWhatCameMeanwhile(scope, place)).resolves.toBe(false)
+        await drainAfter()
+        expect(startChat).toHaveBeenCalledTimes(2)
+        expect(rows.channel_agent_turns.map(turn => turn.status)).toEqual(['answered', 'answered'])
+    })
+
+    it('starts nothing after an answer when nobody wrote meanwhile', async () => {
+        runEnds({ status: 'running', output: null })
+        const { scope } = setup()
+        await reactToChannelMessage(scope, anna, await postChannelMessage(scope, ANNA, 'pub', { body: '@ada draft the plan' }))
+        await drainAfter()
+        runEnds({ status: 'done', output: 'Here is the plan.' })
+        await finishChannelTurnForRun(scope, channelRunEndingOf(done)!)
+        await drainAfter()
+        expect(startChat).toHaveBeenCalledTimes(1)
     })
 })
 

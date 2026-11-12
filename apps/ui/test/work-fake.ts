@@ -69,8 +69,12 @@ function single(calls: readonly SupabaseCall[]): boolean {
 
 // An in-memory database behind the fake client: reads filter `tables`, writes change it, and a
 // write that selects its rows back returns them. `refuse` makes the chains on a table fail, and
-// `onInsert` stands in for a trigger (the issue number).
-export function workDatabase(tables: Tables, options: { refuse?: Record<string, { code?: string; message: string }>; rpc?: Record<string, (args: Row) => unknown>; onInsert?: Record<string, (row: Row) => void> } = {}): FakeSupabase {
+// `onInsert` stands in for a trigger (the issue number), `unique` for a unique index: an insert it
+// finds a clash for fails the way Postgres does.
+export function workDatabase(
+    tables: Tables,
+    options: { refuse?: Record<string, { code?: string; message: string }>; rpc?: Record<string, (args: Row) => unknown>; onInsert?: Record<string, (row: Row) => void>; unique?: Record<string, (row: Row, existing: Row) => boolean> } = {},
+): FakeSupabase {
     return fakeSupabase((table, calls): SupabaseResult | undefined => {
         if (table.startsWith('rpc:')) return { data: options.rpc?.[table.slice(4)]?.((calls[0].args[1] ?? {}) as Row) ?? null }
         const refusal = options.refuse?.[table]
@@ -82,6 +86,8 @@ export function workDatabase(tables: Tables, options: { refuse?: Record<string, 
 
         if (write === 'insert' || write === 'upsert') {
             const payloads = ([] as Row[]).concat(writeCall?.args[0] as Row | Row[])
+            const clashes = options.unique?.[table]
+            if (write === 'insert' && clashes && payloads.some(payload => rows.some(existing => clashes(payload, existing)))) return { error: { code: '23505', message: 'duplicate key value violates unique constraint' }, data: null }
             const inserted = payloads.map(payload => ({ id: `${table}-${++nextId}`, created_at: new Date(Date.now() + nextId).toISOString(), ...payload }))
             for (const row of inserted) options.onInsert?.[table]?.(row)
             rows.push(...inserted)

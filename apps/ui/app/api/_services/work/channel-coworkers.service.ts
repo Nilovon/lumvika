@@ -3,7 +3,7 @@ import 'server-only'
 import { classifyChatError, type ChannelKind, type ChannelMessage, type WorkMemberRef } from '@lumvika/contracts'
 import { after } from 'next/server'
 
-import { callableEngineAgentIds, readAgentAccess } from '@/app/api/_auth/access'
+import { callableEngineAgentIds, memberActor, readAgentAccess } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
 import { resolveMemberIdentities } from '@/app/api/_services/members.service'
 import { getChannel, getChannelMessage, listThread, postChannelMessage, type ChannelPerson } from '@/app/api/_services/work/channels.service'
@@ -118,14 +118,18 @@ async function finishTurn(scope: WorkScope, turnId: string, patch: TurnUpdate): 
     if (error) console.error('[channels] failed to close the coworker turn', turnId, error.message)
 }
 
-async function failTurn(scope: WorkScope, turnId: string, failure: TurnFailure): Promise<void> {
-    await finishTurn(scope, turnId, { status: 'failed', failure })
+type TurnPlace = { channelId: string; agentId: string; threadMessageId: string }
+
+async function failTurn(scope: WorkScope, turn: ChannelAgentTurn, failure: TurnFailure): Promise<void> {
+    await finishTurn(scope, turn.id, { status: 'failed', failure })
+    followUpAfter(scope, turn)
 }
 
 type TurnRequest = { channelId: string; agentId: string; threadMessageId: string; triggerMessageId: string; requestedBy: string | null }
 
 // One answer per coworker and thread at a time: the partial unique index refuses a second while the
-// first runs. A turn left answering by a request that died is closed first, so it blocks nobody.
+// first runs, and what it was asked is answered once the first ends (answerWhatCameMeanwhile). A turn
+// left answering by a request that died is closed first, so it blocks nobody.
 export async function claimTurn(scope: WorkScope, request: TurnRequest, initial: { status: 'answering' } | { status: 'failed'; failure: TurnFailure } = { status: 'answering' }): Promise<ChannelAgentTurn | null> {
     const supabase = clientOf(scope)
     await closeStaleTurns(scope, request.channelId)
@@ -152,14 +156,49 @@ export async function claimTurn(scope: WorkScope, request: TurnRequest, initial:
 
 // No background job: a turn that outlived the limit is closed by the next read or post in its channel.
 export async function closeStaleTurns(scope: WorkScope, channelId: string, now = Date.now()): Promise<void> {
-    const { error } = await clientOf(scope)
+    const { data, error } = await clientOf(scope)
         .from('channel_agent_turns')
         .update<TurnUpdate>({ status: 'failed', failure: 'timeout', finished_at: new Date(now).toISOString() })
         .eq('channel_id', channelId)
         .eq('workspace_id', scope.workspaceId)
         .eq('status', 'answering')
         .lt('created_at', new Date(now - STALE_TURN_MS).toISOString())
-    if (error) console.error('[channels] failed to close the stale coworker turns', channelId, error.message)
+        .select('channel_id,agent_id,thread_message_id')
+    if (error) return void console.error('[channels] failed to close the stale coworker turns', channelId, error.message)
+    for (const row of data ?? []) followUpAfter(scope, { channelId: row.channel_id, agentId: row.agent_id, threadMessageId: row.thread_message_id })
+}
+
+// A message that summons a coworker still answering in the same thread finds its turn taken. It is
+// not lost: once that answer ends, however it ends, one more turn answers whatever came in
+// meanwhile. Its trigger is the newest of those messages, and the conversation it reads carries the
+// others. At most one turn per coworker and thread runs, so at most one follow-up waits behind it,
+// and only a person's message ever calls for one. Answers whether it started one, for the tests.
+export async function answerWhatCameMeanwhile(scope: WorkScope, place: TurnPlace): Promise<boolean> {
+    const { data: newest } = await selectMany(
+        clientOf(scope),
+        'channel_agent_turns',
+        ['status', 'trigger_message_id'] as const,
+        { workspace_id: scope.workspaceId, channel_id: place.channelId, agent_id: place.agentId, thread_message_id: place.threadMessageId },
+        { column: 'created_at', ascending: false },
+        1,
+    )
+    const last = newest?.[0]
+    if (!last || last.status === 'answering') return false
+    const channel = await getChannel(scope, place.channelId)
+    if (channel.archivedAt) return false
+    const [since, thread, agentMembers] = await Promise.all([getChannelMessage(scope, last.trigger_message_id), listThread(scope, place.channelId, place.threadMessageId).catch(() => null), agentMembersOf(scope, place.channelId)])
+    if (!thread) return false
+    const waiting = thread.replies.filter((reply, index) => reply.createdAt > since.createdAt && coworkersSummoned({ channelKind: channel.kind, message: reply, agentMembers, thread: { root: thread.root, replies: thread.replies.slice(0, index + 1) } }).agentIds.includes(place.agentId))
+    const trigger = waiting.at(-1)
+    if (trigger?.author.kind !== 'user') return false
+    const person = await memberActor(scope.workspaceId, trigger.author.userId)
+    if (person?.kind !== 'user') return false
+    await summonCoworkers(scope, person, trigger, [place.agentId])
+    return true
+}
+
+function followUpAfter(scope: WorkScope, place: TurnPlace): void {
+    runAfterResponse(() => answerWhatCameMeanwhile(scope, place))
 }
 
 export async function listChannelTurns(scope: WorkScope, channelId: string, limit = 200): Promise<ChannelAgentTurn[]> {
@@ -308,11 +347,11 @@ export async function startCoworkerTurn(scope: WorkScope, request: AnswerRequest
     try {
         const supabase = clientOf(scope)
         const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['id', 'name', 'engine_agent_id', 'disabled_at'] as const, { id: turn.agentId, workspace_id: scope.workspaceId })
-        if (!agent) return failTurn(scope, turn.id, 'failed')
-        if (agent.disabled_at) return failTurn(scope, turn.id, 'coworker_disabled')
-        if (!agent.engine_agent_id) return failTurn(scope, turn.id, 'failed')
+        if (!agent) return failTurn(scope, turn, 'failed')
+        if (agent.disabled_at) return failTurn(scope, turn, 'coworker_disabled')
+        if (!agent.engine_agent_id) return failTurn(scope, turn, 'failed')
         const engine = await findWorkspaceEngine(scope.workspaceId)
-        if (!engine) return failTurn(scope, turn.id, 'engine_unreachable')
+        if (!engine) return failTurn(scope, turn, 'engine_unreachable')
 
         const [channel, context, callableAgentIds, { data: known }] = await Promise.all([
             getChannel(scope, turn.channelId),
@@ -328,7 +367,7 @@ export async function startCoworkerTurn(scope: WorkScope, request: AnswerRequest
         const ownConversation = !sent.ok && sent.busy
         if (!sent.ok && sent.sessionGone) await forgetSession(scope, turn.channelId, turn.agentId)
         if (!sent.ok && (sent.sessionGone || sent.busy)) sent = await sendToEngine(engine.conn, agent.engine_agent_id, params, busyDelays)
-        if (!sent.ok) return failTurn(scope, turn.id, sent.failure)
+        if (!sent.ok) return failTurn(scope, turn, sent.failure)
 
         await recordTurnRun(scope, turn.id, sent.runId)
         // The conversation stays the channel's: no `sessions` row mirrors it, since everyone who uses
@@ -340,7 +379,7 @@ export async function startCoworkerTurn(scope: WorkScope, request: AnswerRequest
         if (run && run.status !== 'running') await finishChannelTurnForRun(scope, { runId: sent.runId, ending: run.status === 'cancelled' ? 'cancelled' : run.status === 'error' ? 'error' : 'done' })
     } catch (err) {
         console.error('[channels] the coworker could not answer', { turn: turn.id, err: String(err) })
-        await failTurn(scope, turn.id, err instanceof EngineUnreachableError ? 'engine_unreachable' : 'failed')
+        await failTurn(scope, turn, err instanceof EngineUnreachableError ? 'engine_unreachable' : 'failed')
     }
 }
 
@@ -396,11 +435,13 @@ export async function finishChannelTurnForRun(scope: WorkScope, report: ChannelR
         .select('id')
     if (error) throw new Error(`Failed to close the coworker turn: ${error.message}`)
     if (!claimed || claimed.length === 0) return 'already'
-    if (!closing.body) return closing.status
 
-    const [channel, trigger] = await Promise.all([getChannel(scope, turn.channel_id), getChannelMessage(scope, turn.trigger_message_id)])
-    const reply = await postChannelMessage(scope, { kind: 'agent', agentId: turn.agent_id }, turn.channel_id, { body: closing.body.slice(0, 40_000), parentMessageId: answerPlacement(channel.kind, trigger).replyParentId })
-    await clientOf(scope).from('channel_agent_turns').update<TurnUpdate>({ reply_message_id: reply.id }).eq('id', turn.id).eq('workspace_id', scope.workspaceId)
+    if (closing.body) {
+        const [channel, trigger] = await Promise.all([getChannel(scope, turn.channel_id), getChannelMessage(scope, turn.trigger_message_id)])
+        const reply = await postChannelMessage(scope, { kind: 'agent', agentId: turn.agent_id }, turn.channel_id, { body: closing.body.slice(0, 40_000), parentMessageId: answerPlacement(channel.kind, trigger).replyParentId })
+        await clientOf(scope).from('channel_agent_turns').update<TurnUpdate>({ reply_message_id: reply.id }).eq('id', turn.id).eq('workspace_id', scope.workspaceId)
+    }
+    followUpAfter(scope, { channelId: turn.channel_id, agentId: turn.agent_id, threadMessageId: turn.thread_message_id })
     return closing.status
 }
 
