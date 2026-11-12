@@ -23,7 +23,7 @@ export function ProjectAccessSummary({ project, canManage, onChanged }: { projec
         <OverviewSection title={t('accessTitle')}>
             <div className="flex items-start gap-2.5">
                 <VisibilityIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <p className="text-sm">{restricted ? t('accessRestricted', { count: project.members.length }) : t('accessWorkspace')}</p>
+                <p className="text-sm">{restricted ? t('accessRestricted', { count: project.members.length }) : project.members.length > 0 ? t('accessWorkspaceNamed', { count: project.members.length }) : t('accessWorkspace')}</p>
             </div>
             {project.members.length > 0 && (
                 <div className="flex items-center -space-x-1">

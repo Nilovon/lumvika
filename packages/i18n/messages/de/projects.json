@@ -162,7 +162,8 @@
         "goalLabel": "Ziel",
         "noGoal": "Kein Ziel",
         "goalHint": "Seine Tickets zählen zum Fortschritt des Ziels.",
-        "optionsUnavailable": "Teams und Ziele konnten nicht geladen werden."
+        "optionsUnavailable": "Teams und Ziele konnten nicht geladen werden.",
+        "accessWorkspaceNamed": "Alle im Workspace, die alle Boxes sehen, können dieses Projekt öffnen. {count, plural, one {# Person ist} other {# Personen sind}} mit eigenem Zugriff eingetragen."
     },
     "access": {
         "title": "Zugriff auf {project}",

@@ -5,6 +5,7 @@ import { workDatabase, type Row, type Tables } from '@/test/work-fake'
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 
 const { createServiceRoleClient } = await import('@/supabase/serviceRole')
+const { projectAccessOf } = await import('@/app/api/_auth/project-access')
 const { archiveProject, createProject, getProjectByKey, grantProjectMember, listProjects, revokeProjectMember, updateProject } = await import('./projects.service')
 
 type Actor = import('@/app/api/_auth/access').Actor
@@ -82,11 +83,22 @@ describe('createProject', () => {
         await expect(createProject(scope, ME, { key: 'OPS', name: 'Ops', teamId: 'team-x' })).rejects.toMatchObject({ code: 'teamNotFound' })
     })
 
-    it('needs no row for an agent or a project open to the workspace', async () => {
+    it('needs no row for an agent', async () => {
         const { rows, scope } = setup()
         await createProject(scope, { kind: 'agent', agentId: 'agent-1' }, { key: 'BOT', name: 'Bots', visibility: 'restricted' })
-        await createProject(scope, ME, { key: 'OPEN', name: 'Open' })
         expect(rows.project_members).toEqual([])
+    })
+
+    it('lets a member who creates a project open to the workspace manage it, and one scoped to their Boxes open it', async () => {
+        for (const boxScope of ['all', 'assigned'] as const) {
+            const { rows, scope } = setup()
+            const created = await createProject(scope, ME, { key: 'OPEN', name: 'Open' })
+            const grant = rows.project_members.find(row => row.project_id === created.id && row.user_id === 'me')
+            expect(grant).toMatchObject({ access: 'manage' })
+            const member: Actor = { kind: 'user', userId: 'me', workspaceId: created.workspace_id, role: 'member', boxScope }
+            expect(projectAccessOf(member, created, grant!.access as 'manage')).toBe('manage')
+            expect(projectAccessOf(member, created, null)).toBe(boxScope === 'all' ? 'use' : 'none')
+        }
     })
 })
 

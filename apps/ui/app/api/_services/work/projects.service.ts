@@ -60,7 +60,9 @@ function leadColumns(lead: WorkMemberRef | null | undefined): Pick<ProjectUpdate
     return { lead_user_id: columns.userId, lead_agent_id: columns.agentId }
 }
 
-// A person who creates a restricted project manages it: without the row they would not even see it.
+// A person who creates a project manages it, whatever its visibility: a member does not manage a
+// project open to the workspace on their role alone, and a member who reaches only the Boxes named
+// to them would not even see it without the row.
 async function grantCreatorManage(scope: WorkScope, projectId: string, author: WorkAuthor): Promise<void> {
     if (author.kind !== 'user') return
     const { error } = await clientOf(scope)
@@ -97,7 +99,7 @@ export async function createProject(scope: WorkScope, author: WorkAuthor, input:
     if (error?.code === UNIQUE_VIOLATION) throw new AppError('projectKeyTaken', { key: fields.key })
     if (error || !data) throw new Error(`Failed to create the project: ${error?.message}`)
 
-    if (visibility === 'restricted') await grantCreatorManage(scope, data.id, author)
+    await grantCreatorManage(scope, data.id, author)
     await recordActivity(scope, { action: 'project.created', entityType: 'project', entityId: data.id, projectId: data.id, author, metadata: { key: data.key, name: data.name } })
     return data
 }

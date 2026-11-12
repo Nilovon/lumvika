@@ -168,7 +168,8 @@
         "goalLabel": "Goal",
         "noGoal": "No goal",
         "goalHint": "Its issues count toward the goal's progress.",
-        "optionsUnavailable": "Teams and goals could not be loaded."
+        "optionsUnavailable": "Teams and goals could not be loaded.",
+        "accessWorkspaceNamed": "Everyone in the workspace who sees all Boxes can open this project. {count, plural, one {# person is} other {# people are}} named on it with their own access."
     },
     "access": {
         "title": "Access to {project}",
