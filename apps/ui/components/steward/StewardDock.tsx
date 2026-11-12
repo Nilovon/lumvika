@@ -2,6 +2,7 @@
 
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from 'motion/react'
 import { useTranslations } from 'next-intl'
+import { usePathname } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { CHROME_SIZE } from '@lumvika/ui/chrome'
 import type { OrbGaze } from '@lumvika/ui/steward'
@@ -113,8 +114,10 @@ export function StewardDock() {
 
     // The pill is the Steward's composer while its column is closed: what is typed or said in it
     // leaves from here, the run shows in it and the answer above it. The control center anchors to
-    // the ball and a drag carries it away, so the pill steps aside for both without going away.
-    const pillAvailable = isMobile === false && tooNarrow === false && assistantReady && !!workspace && !isAnonymous && !open
+    // the ball and a drag carries it away, so the pill steps aside for both without going away. It
+    // belongs to the board: on a page it would lie over the page's own composer and its send button.
+    const onBoard = usePathname() === '/'
+    const pillAvailable = onBoard && isMobile === false && tooNarrow === false && assistantReady && !!workspace && !isAnonymous && !open
     const pillVisible = pillAvailable && !centerOpen && !dragging
     const setPillAvailable = useStewardStore(state => state.setPillAvailable)
     useEffect(() => {

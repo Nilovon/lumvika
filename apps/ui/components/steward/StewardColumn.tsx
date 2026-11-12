@@ -239,12 +239,20 @@ export function StewardColumn({ open, placement, preferredPlacement, overPage }:
     // L'orbe en tête de colonne est décorative : Escape et le bouton de l'en-tête sont les deux
     // seules sorties, et le tunnel les condamne toutes les deux : la carte d'accueil vit ici. Ouvrir un agent ne fait que mettre la colonne en retrait (BoardChatSplit) :
     // elle revient quand sa sheet se referme.
+    // An Escape typed in the page beside it (a mention menu, a quick add, an inline editor) belongs to
+    // the page: only one typed in the column, or with nothing focused, closes it.
+    const panelRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         if (!open || guided) return
         // Un Escape tapé dans une dialog ouverte par-dessus (le compte, le checkout) ferme la dialog,
         // pas la colonne d'où elle a été ouverte.
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key !== 'Escape' || (event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"], [role="menu"]'))) return
+            if (event.key !== 'Escape' || event.defaultPrevented) return
+            const target = event.target instanceof Element ? event.target : null
+            if (target?.closest('[role="dialog"], [role="alertdialog"], [role="menu"]')) return
+            const inColumn = !!target && !!panelRef.current?.contains(target)
+            const nothingFocused = !target || target === document.body || target === document.documentElement
+            if (!inColumn && !nothingFocused) return
             useStewardStore.getState().close()
         }
         window.addEventListener('keydown', onKeyDown)
@@ -332,7 +340,6 @@ export function StewardColumn({ open, placement, preferredPlacement, overPage }:
     const { rate: rateMessage, votes } = feedback
     const messageActions = useMemo(() => (backend === 'engine' ? { onRegenerate: regenerate, onRate: rateMessage, ratingOf: (messageId: string) => votes.get(messageId)?.rating ?? null } : null), [backend, regenerate, rateMessage, votes])
 
-    const panelRef = useRef<HTMLDivElement>(null)
     const { onPointerDown: onHeaderPointerDown, dragOrigin } = useStewardDrag({ panelRef, placement })
     const dragging = useStewardStore(state => state.dropTarget !== null)
     const floating = placement.mode === 'float' || dragging
