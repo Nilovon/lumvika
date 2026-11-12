@@ -8,7 +8,7 @@ import { ATTENTION_NOTIFICATION_COLUMNS, attentionDetailsOf, attentionNotificati
 import { sanitizeIlike } from '@/lib/search/ilike'
 import { cancelRun, getSession, getSessionMessages, listRuns, listSessions, listSkillProposals } from '@/lib/engine/client'
 import type { EngineSkillProposal, SessionSource } from '@/lib/engine/types'
-import { ATTENTION_STATUSES, needsHuman, sessionStatusSchema, type AgentConversationsOverview, type Conversation, type ConversationHit, type SessionKind, type SessionOutcome, type SessionStatus, type ToHandleList } from '@lumvika/contracts'
+import { ATTENTION_STATUSES, needsHuman, sessionSourceForClient, sessionStatusSchema, type AgentConversationsOverview, type Conversation, type ConversationHit, type SessionKind, type SessionOutcome, type SessionStatus, type ToHandleList } from '@lumvika/contracts'
 import type { Database } from '@/app/api/database.types'
 import { createClient } from '@/supabase/server'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
@@ -145,7 +145,9 @@ export async function listAgentThreads(agentId: string, actor?: Actor): Promise<
 }
 
 // The app's list of a coworker's conversations: the history, plus what the inbox knows of each one,
-// whether a run finished since the caller last opened it, and what a waiting one asks.
+// whether a run finished since the caller last opened it, and what a waiting one asks. Like every
+// conversation the app reads, its source goes through `sessionSourceForClient`: builds in people's
+// hands fail the whole list on a source they were not compiled with.
 export async function listAgentConversations(ctx: WorkspaceContext, agentId: string): Promise<Conversation[]> {
     const entries = await listAgentSessions(agentId, actorFromContext(ctx))
     const waiting = entries.flatMap(entry => (entry.id && needsHuman(entry.status) ? [{ id: entry.id, agent_id: entry.agentId, engine_session_id: entry.engineSessionId, title: entry.title, updated_at: entry.updatedAt }] : []))
@@ -163,6 +165,7 @@ export async function listAgentConversations(ctx: WorkspaceContext, agentId: str
 
     return entries.map(entry => ({
         ...entry,
+        source: sessionSourceForClient(entry.source),
         ...(unseenIds && { unseen: !!entry.id && unseenIds.has(entry.id) }),
         ask: entry.id ? (details[entry.id]?.message ?? null) : null,
     }))
@@ -209,7 +212,7 @@ export async function listWorkspaceConversationOverview(ctx: WorkspaceContext): 
             engineSessionId: row.engine_session_id,
             title: row.title,
             status: row.status,
-            source: (row.source ?? 'dashboard') as SessionSource,
+            source: sessionSourceForClient(row.source),
             updatedAt: row.updated_at,
             // Resolving the origin agent would cost a second lookup for a label the row never
             // shows: the Chats screen prints the status, the agent's own history prints the name.
