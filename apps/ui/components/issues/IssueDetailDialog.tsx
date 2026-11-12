@@ -55,11 +55,21 @@ function IssueDetailBody({ issueRef, onIssueChange, onOpenIssue }: { issueRef: s
     const [tab, setTab] = useState<'comments' | 'activity'>('comments')
     const [askingReason, setAskingReason] = useState(false)
 
-    if (detail.state.status === 'loading') return <IssueDetailSkeleton />
+    // Described in every state, the skeleton included: the dialog announces its content before it arrives.
+    const description = <DialogDescription className="sr-only">{t('srDescription', { ref: issueRef })}</DialogDescription>
+    if (detail.state.status === 'loading') {
+        return (
+            <>
+                {description}
+                <IssueDetailSkeleton />
+            </>
+        )
+    }
     if (detail.state.status === 'missing') {
         return (
             <>
                 <DialogTitle className="sr-only">{issueRef}</DialogTitle>
+                {description}
                 <EmptyState icon={TicketIcon} title={t('notFound')} description={detail.state.message} className="py-16" />
             </>
         )
@@ -93,7 +103,7 @@ function IssueDetailBody({ issueRef, onIssueChange, onOpenIssue }: { issueRef: s
                     </Button>
                 </div>
                 <IssueTitleEditor title={issue.title} onSave={title => detail.update({ title })} />
-                <DialogDescription className="sr-only">{t('srDescription', { ref: issue.ref })}</DialogDescription>
+                {description}
             </header>
 
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:grid md:grid-cols-[minmax(0,1fr)_16rem] md:overflow-hidden">

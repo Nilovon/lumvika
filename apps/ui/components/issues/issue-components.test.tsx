@@ -21,12 +21,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/app/api/_actions/members.actions', () => ({ listMemberProfilesAction: async () => mocks.people }))
 vi.mock('@/stores/board.store', () => ({ useBoardStore: (select: (state: { agents: typeof mocks.agents }) => unknown) => select({ agents: mocks.agents }) }))
 vi.mock('@/supabase/session/SessionProvider', () => ({ useSession: () => ({ workspace: { id: 1 }, user: { id: 'me' } }) }))
+vi.mock('@/components/issues/useIssueDetail', () => ({ useIssueDetail: () => ({ state: { status: 'loading' }, comments: null, activity: null }) }))
 vi.mock('@lumvika/ui/iso-grid', () => ({ AgentBuddy: ({ agentId }: { agentId: string }) => createElement('span', { 'data-buddy': agentId }) }))
 
 const { IssueStatusPicker } = await import('@/components/issues/IssueStatusPicker')
 const { IssueRow } = await import('@/components/issues/IssueRow')
 const { AssigneePicker } = await import('@/components/issues/AssigneePicker')
 const { IssuePriorityIndicator } = await import('@/components/issues/IssuePriorityIndicator')
+const { IssueDetailDialog } = await import('@/components/issues/IssueDetailDialog')
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
 
@@ -172,5 +174,17 @@ describe('AssigneePicker', () => {
         await act(async () => ada.click())
 
         expect(onChange).not.toHaveBeenCalled()
+    })
+})
+
+describe('IssueDetailDialog', () => {
+    it('is titled and described while its issue loads', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        await mount(<IssueDetailDialog issueRef="ENG-12" onOpenChange={() => {}} />)
+        const dialog = document.querySelector('[role="dialog"]')
+        const describedBy = dialog?.getAttribute('aria-describedby')
+        expect(describedBy && document.getElementById(describedBy)?.textContent).toBeTruthy()
+        expect(warn.mock.calls.flat().join(' ')).not.toMatch(/Description/)
+        warn.mockRestore()
     })
 })
