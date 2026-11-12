@@ -57,6 +57,7 @@ import { ensureSessionRow, resolveAgentTarget } from './chat.service'
 import { followCoworker, recordSessionParticipant } from './notification-audience.service'
 import { resolveSpaceTarget } from './space.service'
 import { dispatchShareTool } from './mcp-shares.service'
+import { dispatchWorkAccountTool, isWorkAccountTool } from './mcp-work.service'
 import { allocateServiceInstance, listCatalogServices, listInstalledServices, loadManifest, searchCatalogServices, toAuthMethodSummaries, uninstallService } from './services.service'
 import { readTeamStatus } from './team-status.service'
 import { getWorkspaceConnection, NoEngineError } from './workspace-engine.service'
@@ -966,6 +967,7 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
             // runs anything. The ungated one has to come first so an unknown name does not pay a
             // gate it was never aiming at. The last default is the one that answers for a name no
             // file knows.
+            if (isWorkAccountTool(name)) return await dispatchWorkAccountTool(actor, name, args)
             return await dispatchShareTool(actor, name, args)
     }
 }
