@@ -1,8 +1,32 @@
 {
     "title": "Meine Arbeit",
     "description": "Tickets, die dir zugewiesen sind oder denen du folgst.",
+    "tabs": {
+        "label": "Listen meiner Arbeit",
+        "assigned": "Mir zugewiesen",
+        "created": "Von mir erstellt",
+        "coworkers": "Meine Coworker"
+    },
+    "count": "{count, plural, one {# Ticket} other {# Tickets}}",
+    "closed": "Abgeschlossen",
+    "workingNow": "Arbeitet gerade",
+    "workingCount": "{count, plural, one {# Coworker arbeitet gerade} other {# Coworker arbeiten gerade}}",
+    "projectChip": "Projekt {name}",
+    "loadFailed": "Deine Arbeit konnte nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "goToProjects": "Zu den Projekten",
     "empty": {
-        "title": "Meine Arbeit kommt bald",
-        "description": "Hier erscheint bald jedes Ticket, das dir zugewiesen ist, egal wer mit dir daran arbeitet."
+        "assigned": {
+            "title": "Dir ist nichts zugewiesen",
+            "description": "Wenn dir jemand ein Ticket gibt, erscheint es hier, in der Reihenfolge, in der du es bearbeiten würdest."
+        },
+        "created": {
+            "title": "Du hast noch kein Ticket erstellt",
+            "description": "Die Tickets, die du in einem Projekt anlegst, erscheinen hier, damit du immer weißt, wo sie stehen."
+        },
+        "coworkers": {
+            "title": "Noch arbeitet kein Coworker für dich",
+            "description": "Weise einem Coworker ein Ticket zu, in einem Projekt, das du leitest, oder bei einem Ticket, das du erstellt hast, und verfolge es hier."
+        }
     }
 }

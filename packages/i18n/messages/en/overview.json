@@ -1,11 +1,87 @@
 {
     "_context": {
-        "empty.description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task."
+        "description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task.",
+        "needsYou.waiting": "Conversations in which an AI coworker stopped to ask the reader something.",
+        "coworkers.status": "The live state of an AI coworker.",
+        "throughput.title": "Chart of how many issues were created and completed each day.",
+        "firstRun.recruit.title": "A coworker is an AI agent of the workspace."
     },
     "title": "Overview",
     "description": "How your workspace is doing, at a glance.",
-    "empty": {
-        "title": "Your overview is coming soon",
-        "description": "Projects, issues and what your coworkers did will be summed up here."
+    "loadFailed": "The overview could not be loaded",
+    "retry": "Try again",
+    "needsYou": {
+        "label": "What needs you",
+        "toReview": "To review",
+        "blocked": "Blocked",
+        "waiting": "Waiting in conversations",
+        "assigned": "Assigned to me"
+    },
+    "coworkers": {
+        "title": "Coworkers right now",
+        "all": "Open the office",
+        "workingOn": "Working on {ref}: {title}",
+        "status": {
+            "working": "Working",
+            "waiting": "Waiting on a person",
+            "error": "Needs a look",
+            "idle": "Idle",
+            "off": "Off"
+        },
+        "more": "{count, plural, one {# more coworker} other {# more coworkers}}",
+        "empty": "No coworker yet. Recruit one from the office."
+    },
+    "projects": {
+        "title": "Active projects",
+        "all": "All projects",
+        "progress": "{done} of {total} done",
+        "noIssues": "No issues yet",
+        "inReview": "{count} in review",
+        "blocked": "{count} blocked",
+        "empty": "No active project. Start one to plan the work with your coworkers."
+    },
+    "goals": {
+        "title": "Goals in progress",
+        "all": "All goals",
+        "progress": "{done} of {total} done",
+        "noIssues": "No issues linked yet",
+        "target": "Due {date}",
+        "empty": "No goal in progress. A goal ties projects to what they are for."
+    },
+    "recent": {
+        "title": "Recent activity",
+        "all": "See all activity",
+        "empty": "Nothing happened yet."
+    },
+    "throughput": {
+        "title": "Issue throughput",
+        "description": "Created and completed per day, last 14 days",
+        "created": "Created",
+        "completed": "Completed",
+        "summary": "{created, plural, one {# created} other {# created}}, {completed, plural, one {# completed} other {# completed}}",
+        "showTable": "Show as table",
+        "showChart": "Show as chart",
+        "day": "Day",
+        "quiet": "No issue was created or completed in the last 14 days."
+    },
+    "firstRun": {
+        "title": "Welcome to your workspace",
+        "description": "Three steps, and your coworkers start working on real issues with you.",
+        "step": "Step {number}",
+        "recruit": {
+            "title": "Recruit a coworker",
+            "description": "Pick one from the templates or describe the one you need.",
+            "action": "Recruit a coworker"
+        },
+        "project": {
+            "title": "Create a project",
+            "description": "A project holds the issues of one piece of work, with a short key like WEB.",
+            "action": "Create a project"
+        },
+        "assign": {
+            "title": "Assign an issue",
+            "description": "Give an issue to a coworker: it picks it up on its own and comes back when a person should look.",
+            "action": "Open projects"
+        }
     }
 }

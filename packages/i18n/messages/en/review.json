@@ -1,11 +1,82 @@
 {
     "_context": {
-        "empty.description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task."
+        "description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task.",
+        "mine": "Badge on an item the reader created or whose project they lead.",
+        "tabs.conversations": "Conversations with AI coworkers that stopped to ask the reader something (an approval, a question, a connection).",
+        "handed.finished": "{name} is the person or AI coworker who moved the issue to review.",
+        "asks": "What a coworker conversation is waiting on, shown as a badge."
     },
     "title": "Review",
     "description": "Work your coworkers hand back for a look.",
+    "tabs": {
+        "label": "What waits on a person",
+        "toReview": "To review",
+        "blocked": "Blocked",
+        "conversations": "Waiting in conversations"
+    },
+    "mine": "Yours",
+    "handed": {
+        "finished": "Finished by {name}",
+        "blocked": "Blocked by {name}"
+    },
+    "lastComment": "Last comment from {name}",
+    "noComment": "No comment yet. Open the issue to see what was done.",
+    "blockedReasonTitle": "Why it is blocked",
+    "noReason": "No reason given. Open the issue to see what it needs.",
+    "actions": {
+        "approve": "Approve",
+        "requestChanges": "Request changes",
+        "unblock": "Unblock",
+        "open": "Open"
+    },
+    "toasts": {
+        "approved": "{ref} approved and done",
+        "changesRequested": "{ref} went back to work with your comment",
+        "unblocked": "{ref} is back in Todo"
+    },
+    "requestChanges": {
+        "title": "Request changes on {ref}",
+        "description": "Say what to change. Your comment is posted on the issue, then it goes back to In progress.",
+        "label": "What should change",
+        "placeholder": "The menu needs the brand colors, and the search field should come first.",
+        "confirm": "Send back"
+    },
+    "unblock": {
+        "title": "Unblock {ref}",
+        "description": "The issue goes back to Todo. Add a comment if whoever picks it up needs to know what changed.",
+        "label": "Comment",
+        "placeholder": "The export of the old CMS is in the shared folder.",
+        "confirm": "Unblock"
+    },
+    "asks": {
+        "awaiting_approval": "Approval",
+        "awaiting_question": "Question",
+        "awaiting_connector": "Connection",
+        "awaiting_ack": "Heads-up",
+        "error": "Error",
+        "waiting_human": "Waiting"
+    },
+    "conversation": {
+        "open": "Open conversation"
+    },
+    "loadFailed": "The review queue could not be loaded",
+    "retry": "Try again",
+    "allClear": {
+        "title": "Nothing waits on you",
+        "description": "When a coworker finishes an issue, gets blocked or asks you something, it shows up here."
+    },
     "empty": {
-        "title": "Review is coming soon",
-        "description": "Issues a coworker finished and wants you to check will wait here."
+        "toReview": {
+            "title": "Nothing to review",
+            "description": "When a coworker or a teammate moves an issue to In review, it waits here for your look."
+        },
+        "blocked": {
+            "title": "Nothing is blocked",
+            "description": "An issue that cannot move on shows up here, with the reason and who must do what."
+        },
+        "conversations": {
+            "title": "No conversation waits on you",
+            "description": "When a coworker stops to ask for an approval, an answer or a connection, the conversation shows up here."
+        }
     }
 }

@@ -1,11 +1,37 @@
 {
     "_context": {
-        "empty.description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task."
+        "description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task.",
+        "tabs.coworkers": "Tab listing the issues held by AI coworkers that the reader created or whose project they lead.",
+        "workingNow": "Shown on an issue a coworker (an AI agent) is working on at this moment."
     },
     "title": "My work",
     "description": "Issues assigned to you and the ones you follow.",
+    "tabs": {
+        "label": "My work lists",
+        "assigned": "Assigned to me",
+        "created": "Created by me",
+        "coworkers": "My coworkers"
+    },
+    "count": "{count, plural, one {# issue} other {# issues}}",
+    "closed": "Closed",
+    "workingNow": "Working now",
+    "workingCount": "{count, plural, one {# coworker working now} other {# coworkers working now}}",
+    "projectChip": "Project {name}",
+    "loadFailed": "Your work could not be loaded",
+    "retry": "Try again",
+    "goToProjects": "Go to projects",
     "empty": {
-        "title": "My work is coming soon",
-        "description": "Every issue assigned to you will show up here, whoever works on it with you."
+        "assigned": {
+            "title": "Nothing is assigned to you",
+            "description": "When someone hands you an issue, it shows up here, in the order you would work on it."
+        },
+        "created": {
+            "title": "You have not created an issue yet",
+            "description": "The issues you open in a project show up here, so you always know where they are."
+        },
+        "coworkers": {
+            "title": "No coworker works for you yet",
+            "description": "Assign an issue to a coworker, in a project you lead or on an issue you created, and follow it here."
+        }
     }
 }

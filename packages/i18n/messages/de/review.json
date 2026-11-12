@@ -1,8 +1,75 @@
 {
     "title": "Prüfung",
     "description": "Arbeit, die deine Coworker dir zum Prüfen zurückgeben.",
+    "tabs": {
+        "label": "Was auf eine Person wartet",
+        "toReview": "Zu prüfen",
+        "blocked": "Blockiert",
+        "conversations": "Wartet in Unterhaltungen"
+    },
+    "mine": "Deins",
+    "handed": {
+        "finished": "Fertiggestellt von {name}",
+        "blocked": "Blockiert von {name}"
+    },
+    "lastComment": "Letzter Kommentar von {name}",
+    "noComment": "Noch kein Kommentar. Öffne das Ticket, um zu sehen, was gemacht wurde.",
+    "blockedReasonTitle": "Warum es blockiert ist",
+    "noReason": "Kein Grund angegeben. Öffne das Ticket, um zu sehen, was es braucht.",
+    "actions": {
+        "approve": "Freigeben",
+        "requestChanges": "Änderungen anfordern",
+        "unblock": "Freischalten",
+        "open": "Öffnen"
+    },
+    "toasts": {
+        "approved": "{ref} freigegeben und erledigt",
+        "changesRequested": "{ref} ist mit deinem Kommentar zurück in Arbeit",
+        "unblocked": "{ref} ist zurück in Zu erledigen"
+    },
+    "requestChanges": {
+        "title": "Änderungen an {ref} anfordern",
+        "description": "Sag, was geändert werden soll. Dein Kommentar wird im Ticket gepostet, dann geht es zurück auf In Arbeit.",
+        "label": "Was soll sich ändern",
+        "placeholder": "Das Menü braucht die Markenfarben, und das Suchfeld sollte zuerst kommen.",
+        "confirm": "Zurückschicken"
+    },
+    "unblock": {
+        "title": "{ref} freischalten",
+        "description": "Das Ticket geht zurück auf Zu erledigen. Füge einen Kommentar hinzu, wenn die nächste Person wissen muss, was sich geändert hat.",
+        "label": "Kommentar",
+        "placeholder": "Der Export des alten CMS liegt im geteilten Ordner.",
+        "confirm": "Freischalten"
+    },
+    "asks": {
+        "awaiting_approval": "Freigabe",
+        "awaiting_question": "Frage",
+        "awaiting_connector": "Verbindung",
+        "awaiting_ack": "Hinweis",
+        "error": "Fehler",
+        "waiting_human": "Wartet"
+    },
+    "conversation": {
+        "open": "Unterhaltung öffnen"
+    },
+    "loadFailed": "Die Prüfliste konnte nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "allClear": {
+        "title": "Nichts wartet auf dich",
+        "description": "Wenn ein Coworker ein Ticket fertigstellt, blockiert ist oder dich etwas fragt, erscheint es hier."
+    },
     "empty": {
-        "title": "Prüfung kommt bald",
-        "description": "Hier warten bald Tickets, die ein Coworker erledigt hat und die du prüfen sollst."
+        "toReview": {
+            "title": "Nichts zu prüfen",
+            "description": "Wenn ein Coworker oder jemand aus dem Team ein Ticket auf In Prüfung setzt, wartet es hier auf deinen Blick."
+        },
+        "blocked": {
+            "title": "Nichts ist blockiert",
+            "description": "Ein Ticket, das nicht weiterkommt, erscheint hier, mit dem Grund und wer was tun muss."
+        },
+        "conversations": {
+            "title": "Keine Unterhaltung wartet auf dich",
+            "description": "Wenn ein Coworker anhält, um eine Freigabe, eine Antwort oder eine Verbindung zu erbitten, erscheint die Unterhaltung hier."
+        }
     }
 }
