@@ -7,8 +7,10 @@ import { hasAccess, memberActor, readAgentAccess } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
 import { resolveAgentTargetForTrigger } from '@/app/api/_services/chat.service'
 import { ISSUE_COLUMNS, type IssueRow } from '@/app/api/_services/work/columns'
+import { sessionsPausedOnPerson } from '@/app/api/_services/work/paused-runs'
 import { clientOf, type WorkScope } from '@/app/api/_services/work/refs'
 import { EngineRequestError, startIssueRun } from '@/lib/engine/client'
+import { PLATFORM_RELEASED } from '@/lib/features'
 import { coworkerRuleOf, normalizeNotificationPrefs } from '@/lib/notifications/prefs'
 import type { NotificationRecipients } from '@/lib/notifications/routing'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
@@ -137,11 +139,19 @@ async function authorMayWake(scope: WorkScope, author: WorkAuthor, agentId: stri
     return !!actor && hasAccess(await readAgentAccess(actor, agentId), 'use')
 }
 
+// No coworker is woken with the platform switched off, nor on an issue whose conversation waits on a
+// person: that conversation goes on when they answer it, and a second run would start the work over.
+async function issueMayWake(scope: WorkScope, issue: Pick<IssueRow, 'session_id'>): Promise<boolean> {
+    if (!PLATFORM_RELEASED) return false
+    if (!issue.session_id) return true
+    return !(await sessionsPausedOnPerson(scope, [issue.session_id])).has(issue.session_id)
+}
+
 export async function applyIssueChange(scope: WorkScope, change: IssueChange): Promise<void> {
     const issue = await readIssue(scope, change.issueId)
     if (!issue) return
     const candidate = wakeFor(change, issue)
-    const wakeup = candidate && (await authorMayWake(scope, change.author, candidate.agentId)) ? candidate : null
+    const wakeup = candidate && (await issueMayWake(scope, issue)) && (await authorMayWake(scope, change.author, candidate.agentId)) ? candidate : null
     const notice = noticeFor(change, issue)
     await Promise.all([
         wakeup ? wake(issue, wakeup).catch(err => console.error('[work] failed to wake the coworker', { issue: issue.ref, err: String(err) })) : null,

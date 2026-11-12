@@ -4791,6 +4791,15 @@ export type Database = {
         Args: { p_micros: number; p_workspace_id: number }
         Returns: undefined
       }
+      issue_touches: {
+        Args: { p_issue_ids: string[]; p_workspace_id: number }
+        Returns: {
+          assignee_touched_at: string
+          issue_id: string
+          others_touched_at: string
+          person_commented_at: string
+        }[]
+      }
       manageable_agent_ids: { Args: never; Returns: string[] }
       manageable_project_ids: { Args: never; Returns: string[] }
       manageable_space_ids: { Args: never; Returns: string[] }

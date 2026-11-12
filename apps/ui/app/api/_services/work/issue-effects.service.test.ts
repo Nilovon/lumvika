@@ -12,6 +12,7 @@ vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/app/api/_services/chat.service', () => ({ resolveAgentTargetForTrigger: vi.fn() }))
 vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), memberActor: vi.fn(), readAgentAccess: vi.fn() }))
 vi.mock('@/lib/engine/client', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/engine/client')>()), startIssueRun: vi.fn() }))
+vi.mock('@/lib/features', () => ({ PLATFORM_RELEASED: true }))
 vi.mock('next/server', () => ({
     after: (task: () => Promise<unknown>) => {
         if (!afterTasks.inRequest) throw new Error('`after` was called outside a request scope')
@@ -20,6 +21,7 @@ vi.mock('next/server', () => ({
 }))
 
 const { applyIssueChange, noticeFor, reactToIssueChange, wakeFor } = await import('./issue-effects.service')
+const features = await import('@/lib/features')
 type IssueChange = import('./issue-effects.service').IssueChange
 
 const WORKSPACE = 7
@@ -151,6 +153,27 @@ describe('applyIssueChange', () => {
         await applyIssueChange(scope, { kind: 'commented', issueId: 'issue-1', body: 'Shorter please', author: ANNA })
         expect(resolveAgentTargetForTrigger).toHaveBeenCalledWith(WRITER)
         expect(startIssueRun).toHaveBeenCalledWith(conn, 'engine-writer', { ref: 'ENG-12', title: 'Write the launch post', reason: 'comment', note: 'Shorter please' })
+    })
+
+    it('wakes nobody on an issue whose conversation waits on a person, and wakes again once it does not', async () => {
+        const { rows, scope } = setup({ issues: [issue({ session_id: 'session-row' })], sessions: [{ id: 'session-row', engine_session_id: 'engine-session', status: 'awaiting_question' }] })
+        await applyIssueChange(scope, { kind: 'commented', issueId: 'issue-1', body: 'Any news?', author: ANNA })
+        expect(startIssueRun).not.toHaveBeenCalled()
+
+        rows.sessions[0].status = 'idle'
+        await applyIssueChange(scope, { kind: 'commented', issueId: 'issue-1', body: 'Any news?', author: ANNA })
+        expect(startIssueRun).toHaveBeenCalledTimes(1)
+    })
+
+    it('wakes nobody with the platform switched off', async () => {
+        const { scope } = setup()
+        vi.mocked(features).PLATFORM_RELEASED = false
+        try {
+            await applyIssueChange(scope, { kind: 'assigned', issueId: 'issue-1', author: ANNA })
+        } finally {
+            vi.mocked(features).PLATFORM_RELEASED = true
+        }
+        expect(startIssueRun).not.toHaveBeenCalled()
     })
 
     it('keeps quiet when the person commenting or moving the issue may not use its coworker', async () => {

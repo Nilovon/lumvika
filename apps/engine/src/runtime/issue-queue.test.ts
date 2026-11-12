@@ -28,7 +28,7 @@ vi.mock('../agents/registry.js', () => ({
 }))
 vi.mock('./issue-runner.js', () => ({
     issueRunInFlight: (agentId: string) => state.inFlight.has(agentId),
-    issueWokenSince: (agentId: string) => state.woken[agentId] ?? [],
+    issueWakesSince: (agentId: string) => (state.woken[agentId] ?? []).map(ref => ({ ref, at: Date.parse('2026-11-12T10:00:00.000Z') })),
     fireIssueRun: async (agentId: string, request: unknown) => {
         state.fired.push({ agentId, request })
         if (state.fireError) throw state.fireError
@@ -90,7 +90,7 @@ describe('sweepIssueQueue', () => {
         const [url, init] = fetchMock.mock.calls[0]
         expect(url).toBe('https://hub.test/api/hub/work-queue')
         expect(init.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer engine-token' })
-        expect(JSON.parse(init.body as string)).toEqual({ coworkers: [{ agentId: 'writer', skipRefs: ['ENG-3'] }], liveRunIds: ['run-live'] })
+        expect(JSON.parse(init.body as string)).toEqual({ coworkers: [{ agentId: 'writer', skipRefs: ['ENG-3'], wokenAt: { 'ENG-3': '2026-11-12T10:00:00.000Z' } }], liveRunIds: ['run-live'] })
         expect(state.fired).toEqual([{ agentId: 'writer', request: { ref: 'ENG-12', title: 'Launch post', reason: 'heartbeat' } }])
     })
 

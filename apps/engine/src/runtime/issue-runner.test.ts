@@ -49,7 +49,7 @@ vi.mock('./headless-run.js', () => ({
 }))
 
 const { afterEach, beforeEach, describe, expect, it } = await import('vitest')
-const { buildIssueRunMessage, fireIssueRun, issueRunInFlight, issueWokenSince } = await import('./issue-runner.js')
+const { buildIssueRunMessage, fireIssueRun, issueRunInFlight, issueWakesSince, rememberedWakeCount, WOKEN_MEMORY_MS } = await import('./issue-runner.js')
 const { armBudgetLatch, clearBudgetLatch } = await import('./budget-latch.js')
 const { armPlanLimitLatch, clearPlanLimitLatch } = await import('../connections/plan-limits.js')
 const { registerRunAbort, unregisterRunAbort } = await import('./run-control.js')
@@ -90,7 +90,7 @@ describe('fireIssueRun', () => {
         expect(state.runs[0]).toMatchObject({ agentId: 'writer', sessionId: 'sess-1', trigger: { source: 'issue', slug: 'ENG-12', name: 'Write the launch post' } })
         expect(state.runs[0].message).toContain('work_checkout ENG-12')
         expect(issueRunInFlight('writer')).toBe(true)
-        expect(issueWokenSince('writer', Date.now() - 1000)).toEqual(['ENG-12'])
+        expect(issueWakesSince('writer', Date.now() - 1000)).toEqual([{ ref: 'ENG-12', at: expect.any(Number) }])
     })
 
     it('runs one issue at a time per coworker, and frees the coworker when the run settles', async () => {
@@ -138,6 +138,21 @@ describe('fireIssueRun', () => {
         expect(state.runs).toHaveLength(0)
     })
 
+    it('forgets wakes older than it needs, so its memory stays bounded', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        const start = Date.now()
+        for (let n = 1; n <= 5; n++) {
+            await fireIssueRun('writer', { ...request, ref: `OLD-${n}` })
+            state.runs.at(-1)!.finish({ kind: 'done' })
+            await flush()
+        }
+        vi.setSystemTime(start + WOKEN_MEMORY_MS + 1000)
+        await fireIssueRun('writer', request)
+        expect(issueWakesSince('writer', 0).map(wake => wake.ref)).toEqual(['ENG-12'])
+        expect(rememberedWakeCount()).toBe(1)
+        vi.useRealTimers()
+    })
+
     it('frees the coworker when the run cannot start', async () => {
         state.launchError = new Error('no model')
         await expect(fireIssueRun('writer', request)).rejects.toThrow('no model')
@@ -158,6 +173,12 @@ describe('buildIssueRunMessage', () => {
         const message = buildIssueRunMessage({ ...request, reason: 'comment', note: 'Shorter please\nand in French' })
         expect(message).toContain('A person just commented on it.')
         expect(message).toContain('> Shorter please\n> and in French')
+    })
+
+    it('tells a run woken on an issue in review to answer rather than take it, and to stop on an issue taken away', () => {
+        const message = buildIssueRunMessage({ ...request, reason: 'comment', note: 'Why this title?' })
+        expect(message).toContain('If it is in_review, a person is checking your work: answer them with work_comment')
+        expect(message).toContain('reassigned or moved by someone else, stop')
     })
 
     it('words every reason', () => {

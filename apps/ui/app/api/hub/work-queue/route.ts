@@ -10,7 +10,9 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 export const dynamic = 'force-dynamic'
 
 const bodySchema = z.object({
-    coworkers: z.array(z.object({ agentId: z.string().min(1), skipRefs: z.array(z.string()).max(500).default([]) })).max(500),
+    // `wokenAt`: when each skipped issue was woken. Absent from an engine older than it, which then
+    // keeps every skipped issue back for its cooldown.
+    coworkers: z.array(z.object({ agentId: z.string().min(1), skipRefs: z.array(z.string()).max(500).default([]), wokenAt: z.record(z.string(), z.string()).optional() })).max(500),
     liveRunIds: z.array(z.string()).max(5000),
 })
 

@@ -2,12 +2,13 @@ import { z } from 'zod'
 import { getAgent } from '../agents/registry.js'
 import { env } from '../config/env.js'
 import { logger } from '../lib/logger.js'
-import { fireIssueRun, issueRunInFlight, issueWokenSince } from './issue-runner.js'
+import { fireIssueRun, issueRunInFlight, issueWakesSince } from './issue-runner.js'
 import { agentHasLiveRun, liveRunIds } from './run-control.js'
 
 const SWEEP_INTERVAL_MS = 5 * 60_000
 // An issue handed to its coworker is not handed again within the hour, even when the run that took it
-// left nothing behind on the board (a model that failed, a run stopped by hand).
+// left nothing behind on the board (a model that failed, a run stopped by hand). The hub still hands it
+// when someone else touched it after that wake: `wokenAt` tells it when the wake was.
 const REWAKE_COOLDOWN_MS = 60 * 60_000
 const TIMEOUT_MS = 20_000
 
@@ -16,7 +17,7 @@ const queueSchema = z.object({ runs: z.array(z.object({ agentId: z.string(), ref
 let lastSweepAt = 0
 let sweeping = false
 
-type IdleCoworker = { agentId: string; skipRefs: string[] }
+type IdleCoworker = { agentId: string; skipRefs: string[]; wokenAt: Record<string, string> }
 
 async function idleCoworkers(agentIds: string[], now: number): Promise<IdleCoworker[]> {
     const idle: IdleCoworker[] = []
@@ -24,7 +25,8 @@ async function idleCoworkers(agentIds: string[], now: number): Promise<IdleCowor
         const agent = await getAgent(agentId).catch(() => null)
         if (!agent || agent.config.kind !== 'user' || agent.config.ephemeral || !agent.config.enabled || !agent.config.tools.work) continue
         if (agentHasLiveRun(agentId) || issueRunInFlight(agentId)) continue
-        idle.push({ agentId, skipRefs: issueWokenSince(agentId, now - REWAKE_COOLDOWN_MS) })
+        const wakes = issueWakesSince(agentId, now - REWAKE_COOLDOWN_MS)
+        idle.push({ agentId, skipRefs: wakes.map(wake => wake.ref), wokenAt: Object.fromEntries(wakes.map(wake => [wake.ref, new Date(wake.at).toISOString()])) })
     }
     return idle
 }

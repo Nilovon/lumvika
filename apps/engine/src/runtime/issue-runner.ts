@@ -18,16 +18,30 @@ export type IssueRunOutcome = { started: true; runId: string; sessionId: string 
 // the coworker's inbox on the next heartbeat instead of racing the first run for the checkout.
 const inFlight = new Map<string, { runId: string; ref: string }>()
 const lastWokenAt = new Map<string, number>()
+// Longer than the heartbeat's cooldown, which is all the memory is for: older wakes are forgotten so
+// the map does not grow with every issue a long-lived engine ever worked.
+export const WOKEN_MEMORY_MS = 2 * 60 * 60_000
+
+function forgetWakesBefore(cutoff: number): void {
+    for (const [key, at] of lastWokenAt) if (at < cutoff) lastWokenAt.delete(key)
+}
 
 export function issueRunInFlight(agentId: string): boolean {
     return inFlight.has(agentId)
 }
 
+export type IssueWake = { ref: string; at: number }
+
 // When each issue was last handed to its coworker, so the heartbeat does not hand it again while a
-// run that did nothing with it is still recent.
-export function issueWokenSince(agentId: string, since: number): string[] {
+// run that did nothing with it is still recent, unless someone touched it since (the hub decides).
+export function issueWakesSince(agentId: string, since: number): IssueWake[] {
+    forgetWakesBefore(Date.now() - WOKEN_MEMORY_MS)
     const prefix = `${agentId}/`
-    return [...lastWokenAt].filter(([key, at]) => key.startsWith(prefix) && at >= since).map(([key]) => key.slice(prefix.length))
+    return [...lastWokenAt].filter(([key, at]) => key.startsWith(prefix) && at >= since).map(([key, at]) => ({ ref: key.slice(prefix.length), at }))
+}
+
+export function rememberedWakeCount(): number {
+    return lastWokenAt.size
 }
 
 const REASON_LINES: Record<IssueWakeReason, string> = {
@@ -46,6 +60,8 @@ export function buildIssueRunMessage(request: IssueRunRequest): string {
         `1. Read it with work_get_issue ${request.ref}, then take it with work_checkout ${request.ref}. If the checkout says another run holds it, stop there.`,
         "2. Do the work, following the project's instructions, and post what matters with work_comment. Split work that is too big into sub-issues with work_create_issue and assign them.",
         '3. Finish with work_update_status: done for an issue a coworker created, in_review for any other, or blocked with who must do what when you cannot go on.',
+        'If it is in_review, a person is checking your work: answer them with work_comment, and only if they ask for changes move it back with work_update_status in_progress, then take it.',
+        'If a work tool says the issue was reassigned or moved by someone else, stop working on it at once.',
         '',
         'Work only on this issue in this conversation: your next issue gets a conversation of its own.',
     )
@@ -74,6 +90,7 @@ export async function fireIssueRun(agentId: string, request: IssueRunRequest): P
     const raced = inFlight.get(agentId)
     if (raced) return { started: false, reason: 'busy', runId: raced.runId }
     inFlight.set(agentId, { runId: '', ref: request.ref })
+    forgetWakesBefore(Date.now() - WOKEN_MEMORY_MS)
     lastWokenAt.set(`${agentId}/${request.ref}`, Date.now())
 
     try {
