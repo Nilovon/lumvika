@@ -96,13 +96,31 @@ function normalizeHandle(value: string): string {
     return value.trim().replace(/^@/, '').toLowerCase()
 }
 
+function unknownCoworker(value: string): string {
+    return `No coworker goes by "${value}". Pass a handle as team_status or the issue lists show it, or 'me'.`
+}
+
 async function resolveAssignee(caller: Caller, value: string): Promise<WorkMemberRef> {
     const wanted = normalizeHandle(value)
     if (SELF_NAMES.has(wanted)) return { kind: 'agent', agentId: caller.agentId }
     const coworkers = [...(await coworkersOf(caller.scope)).values()]
     const match = coworkers.find(c => c.handle?.toLowerCase() === wanted) ?? coworkers.find(c => c.name.toLowerCase() === wanted)
-    if (!match) throw new Error(`No coworker goes by "${value}". Pass a handle as team_status or the issue lists show it, or 'me'.`)
+    if (!match) throw new Error(unknownCoworker(value))
     return { kind: 'agent', agentId: match.id }
+}
+
+// Whom a coworker may hand an issue to: itself, a coworker of its own Box, or someone on its
+// reporting line (its manager, its direct reports). Anyone else answers like a handle nobody has, so
+// a coworker never learns of, nor sets to work, one in a Box its people may not reach.
+async function resolveDelegate(caller: Caller, value: string): Promise<WorkMemberRef> {
+    const assignee = await resolveAssignee(caller, value)
+    if (assignee.kind !== 'agent' || assignee.agentId === caller.agentId) return assignee
+    const { data: pair } = await selectMany(clientOf(caller.scope), 'agents', ['id', 'space_id', 'reports_to_agent_id'] as const, { workspace_id: caller.scope.workspaceId, id: [caller.agentId, assignee.agentId] })
+    const self = pair?.find(agent => agent.id === caller.agentId)
+    const other = pair?.find(agent => agent.id === assignee.agentId)
+    const related = !!self && !!other && (self.space_id === other.space_id || self.reports_to_agent_id === other.id || other.reports_to_agent_id === self.id)
+    if (!related) throw new Error(unknownCoworker(value))
+    return assignee
 }
 
 async function requireIssue(caller: Caller, ref: unknown): Promise<IssueDetail> {
@@ -192,8 +210,9 @@ async function getIssueForAgent(caller: Caller, args: Record<string, unknown>) {
         assignee: label(issue.assignee),
         assignedBy: label(assignedBy),
         createdBy: label(issue.createdBy),
-        // Who checks the work: a person who asked for it reviews it, a coworker's issue can close itself.
-        askedByAPerson: issue.createdBy.kind === 'user',
+        // Who checks the work: only an issue a coworker created can close itself; one a person, the
+        // system or an API key filed goes to review.
+        needsReview: issue.createdBy.kind !== 'agent',
         checkedOut: !!issue.checkoutRunId,
         project: project ? { key: project.key, name: project.name, instructions: project.instructions, lead: label(project.lead_user_id ? { kind: 'user', userId: project.lead_user_id } : project.lead_agent_id ? { kind: 'agent', agentId: project.lead_agent_id } : null) } : null,
         goal: goal ? { title: goal.title, status: goal.status } : null,
@@ -234,9 +253,9 @@ async function updateStatus(caller: Caller, args: Record<string, unknown>) {
     if (!isMine(caller, issue)) throw new Error(`${issue.ref} is not assigned to you: only its assignee moves it. Comment on it instead.`)
     const blockedReason = asString(args.blockedReason)?.trim()
     if (to === 'blocked' && !blockedReason) throw new Error('Say who must do what in blockedReason, e.g. "Anna must share the Stripe API key".')
-    const askedByPerson = issue.createdBy.kind === 'user'
-    if (to === 'done' && askedByPerson) throw new Error(`${issue.ref} was asked for by a person: move it to in_review so they can check the work.`)
-    if (to === 'cancelled' && askedByPerson) throw new Error(`${issue.ref} was asked for by a person, who alone can cancel it. Move it to blocked and say why it should be dropped.`)
+    const createdByCoworker = issue.createdBy.kind === 'agent'
+    if (to === 'done' && !createdByCoworker) throw new Error(`${issue.ref} was not created by a coworker: move it to in_review so a person can check the work.`)
+    if (to === 'cancelled' && !createdByCoworker) throw new Error(`${issue.ref} was not created by a coworker, so only a person can cancel it. Move it to blocked and say why it should be dropped.`)
     if (issue.status !== to && !canTransitionIssue(issue.status, to)) {
         throw new Error(`${issue.ref} cannot go from ${issue.status} to ${to}. From ${issue.status} it can go to: ${ISSUE_TRANSITIONS[issue.status].join(', ')}.`)
     }
@@ -271,7 +290,7 @@ async function create(caller: Caller, args: Record<string, unknown>) {
     const projectId = parent?.projectId ?? (projectKey ? (await requireProjectByKey(caller, projectKey)).id : null)
     if (!projectId) throw new Error('Name the project with projectKey, or the issue it belongs under with parentRef.')
     const assigneeName = asString(args.assignee)
-    const assignee = assigneeName ? await resolveAssignee(caller, assigneeName) : null
+    const assignee = assigneeName ? await resolveDelegate(caller, assigneeName) : null
     const status = args.status === 'backlog' || args.status === 'todo' ? args.status : assignee ? 'todo' : 'backlog'
 
     const issue = await createIssue(caller.scope, authorOf(caller), {

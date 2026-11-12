@@ -32,7 +32,7 @@ export function workTools(ctx: RunContext): ToolSet {
         }),
         work_update_status: tool({
             description:
-                'Move one of your issues, optionally with a comment on what you did. in_review: finished work a person asked for. done: finished work a coworker created. blocked: you cannot go on; blockedReason names who must do what ("Anna must share the Stripe key"). todo: hand it back. cancelled: a coworker-created issue no longer needed.',
+                'Move one of your issues, optionally with a comment on what you did. done: finished work a coworker created. in_review: any other finished work. blocked: you cannot go on; blockedReason names who must do what ("Anna must share the Stripe key"). todo: hand it back. cancelled: a coworker-created issue no longer needed.',
             inputSchema: z.object({
                 ref,
                 status: z.enum(AGENT_ISSUE_STATUSES),
@@ -48,13 +48,13 @@ export function workTools(ctx: RunContext): ToolSet {
         }),
         work_create_issue: tool({
             description:
-                "Create an issue, or a sub-issue with parentRef. This is how you split and delegate work: assign it to a coworker's handle (it is woken to work on it) or to 'me'. Assigned issues start in todo, others in backlog. Write a description the assignee can act on alone.",
+                "Create an issue, or a sub-issue with parentRef, to split and delegate work: an assigned coworker is woken to work on it. Assigned issues start in todo, others in backlog. Write a description the assignee can act on alone.",
             inputSchema: z.object({
                 title: z.string().min(1).max(300),
                 description: z.string().max(100_000).optional(),
                 projectKey: z.string().optional().describe('Project key (ENG). Not needed with parentRef.'),
                 parentRef: z.string().optional(),
-                assignee: z.string().optional().describe("A coworker's handle, or 'me'."),
+                assignee: z.string().optional().describe("'me', or the handle of a coworker in your Box, your manager or a direct report."),
                 priority: z.enum(ISSUE_PRIORITIES).optional(),
                 dueDate: z.string().optional().describe('YYYY-MM-DD.'),
                 status: z.enum(['backlog', 'todo']).optional(),

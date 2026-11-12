@@ -55,8 +55,8 @@ function issue(overrides: Row = {}): Row {
 function setup(tables: Partial<Tables> = {}) {
     const rows: Tables = {
         agents: [
-            { id: ME, workspace_id: WORKSPACE, name: 'Writer', handle: 'writer' },
-            { id: PEER, workspace_id: WORKSPACE, name: 'Scout', handle: 'scout' },
+            { id: ME, workspace_id: WORKSPACE, name: 'Writer', handle: 'writer', space_id: 'box-1', reports_to_agent_id: null },
+            { id: PEER, workspace_id: WORKSPACE, name: 'Scout', handle: 'scout', space_id: 'box-1', reports_to_agent_id: null },
             { id: 'agent-far', workspace_id: 99, name: 'Far', handle: 'far' },
         ],
         projects: [
@@ -182,7 +182,7 @@ describe('work_get_issue', () => {
             assignee: 'you',
             assignedBy: 'Anna',
             createdBy: 'Anna',
-            askedByAPerson: true,
+            needsReview: true,
             project: { key: 'ENG', name: 'Engineering', instructions: 'Write in plain English.', lead: 'a teammate' },
             goal: { title: 'Launch v2', status: 'active' },
             parent: { ref: 'ENG-1', title: 'Launch', status: 'todo' },
@@ -241,8 +241,16 @@ describe('work_update_status', () => {
     it('closes work a coworker created, and refuses to close or cancel what a person asked for', async () => {
         setup({ issues: [issue({ status: 'in_progress' }), issue({ id: 'mine', number: 2, status: 'in_progress', created_by_user_id: null, created_by_agent_id: PEER })] })
         await expect(call('work_update_status', { ref: 'ENG-1', status: 'done' })).rejects.toThrow('move it to in_review')
-        await expect(call('work_update_status', { ref: 'ENG-1', status: 'cancelled' })).rejects.toThrow('who alone can cancel it')
+        await expect(call('work_update_status', { ref: 'ENG-1', status: 'cancelled' })).rejects.toThrow('only a person can cancel it')
         expect(await call('work_update_status', { ref: 'ENG-2', status: 'done' })).toEqual({ ref: 'ENG-2', status: 'done' })
+    })
+
+    it('sends an issue filed by the system or an API key to review too', async () => {
+        setup({ issues: [issue({ status: 'in_progress', created_by_user_id: null, created_by_agent_id: null })] })
+        await expect(call('work_update_status', { ref: 'ENG-1', status: 'done' })).rejects.toThrow('move it to in_review')
+        await expect(call('work_update_status', { ref: 'ENG-1', status: 'cancelled' })).rejects.toThrow('only a person can cancel it')
+        expect(await call('work_get_issue', { ref: 'ENG-1' })).toMatchObject({ needsReview: true })
+        expect(await call('work_update_status', { ref: 'ENG-1', status: 'in_review' })).toEqual({ ref: 'ENG-1', status: 'in_review' })
     })
 
     it('needs who must do what to block, and lets go of the run that blocked', async () => {
@@ -295,6 +303,22 @@ describe('work_create_issue', () => {
         expect(await call('work_create_issue', { title: 'Someday', projectKey: 'ENG' })).toEqual({ ref: 'ENG-11', status: 'backlog' })
         expect(await call('work_create_issue', { title: 'Later', projectKey: 'ENG', assignee: 'writer', status: 'backlog' })).toEqual({ ref: 'ENG-12', status: 'backlog' })
         expect(rows.issues.map(row => row.assignee_agent_id)).toEqual([ME, null, ME])
+    })
+
+    it('hands work only to its own Box or its reporting line, and answers anyone else like an unknown handle', async () => {
+        const { rows } = setup()
+        rows.agents.push(
+            { id: 'agent-legal', workspace_id: WORKSPACE, name: 'Legal', handle: 'legal', space_id: 'box-legal', reports_to_agent_id: null },
+            { id: 'agent-boss', workspace_id: WORKSPACE, name: 'Boss', handle: 'boss', space_id: 'box-exec', reports_to_agent_id: null },
+            { id: 'agent-intern', workspace_id: WORKSPACE, name: 'Intern', handle: 'intern', space_id: 'box-other', reports_to_agent_id: ME },
+        )
+        rows.agents[0].reports_to_agent_id = 'agent-boss'
+
+        await expect(call('work_create_issue', { title: 'Review the contract', projectKey: 'ENG', assignee: '@legal' })).rejects.toThrow('No coworker goes by "@legal"')
+        await expect(call('work_create_issue', { title: 'Review the contract', projectKey: 'ENG', assignee: 'Legal' })).rejects.toThrow('No coworker goes by "Legal"')
+        expect(await call('work_create_issue', { title: 'Sign off', projectKey: 'ENG', assignee: '@boss' })).toMatchObject({ status: 'todo' })
+        expect(await call('work_create_issue', { title: 'Gather quotes', projectKey: 'ENG', assignee: '@intern' })).toMatchObject({ status: 'todo' })
+        expect(rows.issues.map(row => row.assignee_agent_id)).toEqual(['agent-boss', 'agent-intern'])
     })
 
     it('refuses what it cannot place or assign', async () => {
