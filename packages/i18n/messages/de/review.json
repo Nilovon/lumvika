@@ -1,0 +1,8 @@
+{
+    "title": "Prüfung",
+    "description": "Arbeit, die deine Coworker dir zum Prüfen zurückgeben.",
+    "empty": {
+        "title": "Prüfung kommt bald",
+        "description": "Hier warten bald Tickets, die ein Coworker erledigt hat und die du prüfen sollst."
+    }
+}

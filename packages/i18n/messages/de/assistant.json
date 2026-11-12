@@ -1,0 +1,11 @@
+{
+    "title": "Chat",
+    "description": "Sprich mit dem Assistenten, ohne einen Coworker zu öffnen.",
+    "empty": {
+        "title": "Chat kommt bald",
+        "description": "Hier führst du bald einfache Unterhaltungen mit dem Assistenten."
+    },
+    "detail": {
+        "back": "Alle Chats"
+    }
+}

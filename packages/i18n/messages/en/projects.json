@@ -1,0 +1,14 @@
+{
+    "_context": {
+        "empty.description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task."
+    },
+    "title": "Projects",
+    "description": "Work that people and coworkers do together.",
+    "empty": {
+        "title": "Projects are coming soon",
+        "description": "Projects will group the issues people and coworkers work on together."
+    },
+    "detail": {
+        "back": "All projects"
+    }
+}

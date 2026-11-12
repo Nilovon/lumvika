@@ -1,0 +1,14 @@
+{
+    "_context": {
+        "empty.description": "Placeholder shown until the area ships."
+    },
+    "title": "Channels",
+    "description": "Conversations your team and coworkers share.",
+    "empty": {
+        "title": "Channels are coming soon",
+        "description": "Shared channels for people and coworkers will live here."
+    },
+    "detail": {
+        "back": "All channels"
+    }
+}

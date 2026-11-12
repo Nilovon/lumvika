@@ -1,0 +1,11 @@
+{
+    "_context": {
+        "empty.description": "Placeholder shown until the area ships."
+    },
+    "title": "Activity",
+    "description": "Everything that happened in your workspace.",
+    "empty": {
+        "title": "Activity is coming soon",
+        "description": "A feed of what people and coworkers did will live here."
+    }
+}

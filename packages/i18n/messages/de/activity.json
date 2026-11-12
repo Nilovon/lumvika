@@ -1,0 +1,8 @@
+{
+    "title": "Aktivität",
+    "description": "Alles, was in deinem Workspace passiert ist.",
+    "empty": {
+        "title": "Aktivität kommt bald",
+        "description": "Hier siehst du bald, was Menschen und Coworker getan haben."
+    }
+}

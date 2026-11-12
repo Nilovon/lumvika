@@ -1,0 +1,11 @@
+{
+    "_context": {
+        "empty.description": "Placeholder shown until the area ships."
+    },
+    "title": "Teams",
+    "description": "Who works with whom, people and coworkers alike.",
+    "empty": {
+        "title": "Teams are coming soon",
+        "description": "Your org chart, people and coworkers in their teams, will live here."
+    }
+}

@@ -26,7 +26,13 @@
         "providerStatus.headlineLong.one": "Same as headline.one, with a second sentence, on wide screens.",
         "providerStatus.headlineLong.many": "Same as headline.many, with a second sentence, on wide screens.",
         "workspaceMenu.summary.limits": "Under the workspace name. {agents} is a number. {seats} is already translated (\"3 seats\").",
-        "workspaceMenu.summary.limitsUnlimited": "Under the workspace name, when the plan has no coworker limit. {seats} is already translated (\"3 seats\")."
+        "workspaceMenu.summary.limitsUnlimited": "Under the workspace name, when the plan has no coworker limit. {seats} is already translated (\"3 seats\").",
+        "nav.items.office": "Sidebar entry for the isometric board, where the coworkers sit in their Boxes.",
+        "nav.items.work": "Sidebar entry: the issues assigned to the person reading. \"Issue\" is a work item of a project, never a coworker's scheduled task.",
+        "nav.items.review": "Sidebar entry: the queue of work a coworker hands back for a person to check and approve.",
+        "nav.groups.collaborate": "Heading of the sidebar group holding Channels and Teams.",
+        "nav.search": "Sidebar row that opens the command palette.",
+        "controlCenter.headings.goTo": "Heading of the palette section listing the areas of the app to navigate to."
     },
     "loading": "Loading...",
     "theme": "Theme",
@@ -186,7 +192,8 @@
             "recentConversations": "Recent conversations",
             "assistant": "Assistant",
             "open": "Open",
-            "moveTo": "Move to"
+            "moveTo": "Move to",
+            "goTo": "Go to"
         },
         "agent": {
             "desktop": "Desktop",
@@ -231,12 +238,47 @@
             "account": "Account",
             "notifications": "Notifications",
             "shortcuts": "Keyboard shortcuts",
-            "whats_new": "What's new"
+            "whats_new": "What's new",
+            "go_overview": "Go to Overview",
+            "go_office": "Go to the Office",
+            "go_chat": "Go to Chat",
+            "go_work": "Go to My work",
+            "go_projects": "Go to Projects",
+            "go_goals": "Go to Goals",
+            "go_review": "Go to Review",
+            "go_channels": "Go to Channels",
+            "go_teams": "Go to Teams",
+            "go_activity": "Go to Activity"
         }
     },
     "boxNameSuggestions": "Or pick a name",
     "dashboard": {
         "metaTitle": "Dashboard",
         "metaDescription": "Your Boxes and coworkers on Lumvika."
+    },
+    "nav": {
+        "label": "Navigation",
+        "drawerDescription": "Every area of your workspace.",
+        "open": "Open navigation",
+        "search": "Search",
+        "help": "Help",
+        "collapse": "Collapse sidebar",
+        "expand": "Expand sidebar",
+        "groups": {
+            "work": "Work",
+            "collaborate": "Collaborate"
+        },
+        "items": {
+            "overview": "Overview",
+            "office": "Office",
+            "chat": "Chat",
+            "work": "My work",
+            "projects": "Projects",
+            "goals": "Goals",
+            "review": "Review",
+            "channels": "Channels",
+            "teams": "Teams",
+            "activity": "Activity"
+        }
     }
 }

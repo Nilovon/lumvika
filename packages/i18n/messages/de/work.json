@@ -1,0 +1,8 @@
+{
+    "title": "Meine Arbeit",
+    "description": "Tickets, die dir zugewiesen sind oder denen du folgst.",
+    "empty": {
+        "title": "Meine Arbeit kommt bald",
+        "description": "Hier erscheint bald jedes Ticket, das dir zugewiesen ist, egal wer mit dir daran arbeitet."
+    }
+}

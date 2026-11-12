@@ -7,7 +7,9 @@
         "workspace": { "de": "Workspace" },
         "credit": { "de": "Guthaben (a balance), Credit / Credits (a count: \"500 Credits\")" },
         "skill": { "de": "Skill" },
-        "run": { "de": "Ausführung" }
+        "run": { "de": "Ausführung" },
+        "issue": { "de": "Ticket (a work item of a project; never Aufgabe, which names a coworker's scheduled task)" },
+        "issues": { "de": "Tickets" }
     },
     "tone": {
         "de": "Duzen (du), as recent German SaaS products do. Short, plain product German; nouns capitalized. No anglicisms beyond the glossary."

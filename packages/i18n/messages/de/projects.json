@@ -1,0 +1,11 @@
+{
+    "title": "Projekte",
+    "description": "Arbeit, die Menschen und Coworker gemeinsam erledigen.",
+    "empty": {
+        "title": "Projekte kommen bald",
+        "description": "Projekte bündeln bald die Tickets, an denen Menschen und Coworker gemeinsam arbeiten."
+    },
+    "detail": {
+        "back": "Alle Projekte"
+    }
+}

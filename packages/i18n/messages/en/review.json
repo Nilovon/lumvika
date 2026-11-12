@@ -1,0 +1,11 @@
+{
+    "_context": {
+        "empty.description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task."
+    },
+    "title": "Review",
+    "description": "Work your coworkers hand back for a look.",
+    "empty": {
+        "title": "Review is coming soon",
+        "description": "Issues a coworker finished and wants you to check will wait here."
+    }
+}

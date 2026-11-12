@@ -1,0 +1,11 @@
+{
+    "title": "Kanäle",
+    "description": "Unterhaltungen, die dein Team und deine Coworker teilen.",
+    "empty": {
+        "title": "Kanäle kommen bald",
+        "description": "Hier gibt es bald gemeinsame Kanäle für Menschen und Coworker."
+    },
+    "detail": {
+        "back": "Alle Kanäle"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "_context": {
+        "empty.description": "Placeholder shown until the area ships."
+    },
+    "title": "Goals",
+    "description": "What your teams aim for, and how far along they are.",
+    "empty": {
+        "title": "Goals are coming soon",
+        "description": "Set goals, link projects to them and follow their progress here."
+    }
+}
