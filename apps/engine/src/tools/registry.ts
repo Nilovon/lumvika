@@ -28,6 +28,7 @@ import { askUserTool, offersTakeover, requestApprovalTool, requestSecretTool, re
 import { installTools } from './builtin/install.js'
 import { stewardTools } from './builtin/steward.js'
 import { agentFilesTools } from './builtin/agent-files.js'
+import { assistantTools } from './assistant.js'
 import { hasPendingSetup } from '../agents/setup.js'
 import { pooledMcpTools } from './mcp-pool.js'
 import { CLI_PROVIDERS } from '../agents/providers.js'
@@ -35,6 +36,7 @@ import { closeAgentDb } from '../db/agentDb.js'
 import type { RunContext } from '../runtime/context.js'
 
 export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; close: () => Promise<void> }> {
+    if (ctx.agent.config.kind === 'assistant') return { tools: assistantTools(ctx), close: async () => {} }
     const cfg = ctx.agent.config.tools
     const tools: ToolSet = {}
     if (ctx.agent.config.kind === 'steward') Object.assign(tools, stewardTools(ctx), agentFilesTools())

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { createClient } from '@libsql/client'
-import { STEWARD_AGENT_ID, LUMVIKA_CONNECTION_ID, type EngineDoctor, type EngineDoctorCheck } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID, LUMVIKA_CONNECTION_ID, type EngineDoctor, type EngineDoctorCheck } from '@lumvika/contracts'
 import { dbPath, sharedDbPath, systemDbPath } from '../config/paths.js'
 import { listAgentIndex } from '../db/repos/agents.js'
 import { sqliteVersion } from '../db/ladder.js'
@@ -10,6 +10,8 @@ import { listAgentIdsOnDisk, readAgentConfig } from '../agents/loader.js'
 import { connectionExists, listConnectionIds, loadConnectionFromDisk } from '../connections/loader.js'
 import { DATA_DIR_VERSION } from './migrations.js'
 import { readDataVersion } from './version.js'
+
+const BUILT_IN_AGENT_IDS = new Set([STEWARD_AGENT_ID, ASSISTANT_AGENT_ID])
 
 async function check(name: string, run: () => Promise<string | undefined>): Promise<EngineDoctorCheck> {
     try {
@@ -54,7 +56,7 @@ export async function runDataDirChecks(): Promise<EngineDoctor> {
             return `${agentIds.length} agent(s)`
         }),
         await check('agents-on-disk', async () => {
-            const onDisk = (await listAgentIdsOnDisk()).filter(id => id !== STEWARD_AGENT_ID)
+            const onDisk = (await listAgentIdsOnDisk()).filter(id => !BUILT_IN_AGENT_IDS.has(id))
             const missing = agentIds.filter(id => !onDisk.includes(id))
             const unindexed = onDisk.filter(id => !agentIds.includes(id))
             const unreadable: string[] = []

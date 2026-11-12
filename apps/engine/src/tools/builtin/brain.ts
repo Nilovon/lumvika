@@ -31,7 +31,7 @@ const UNCONFIRMED_NOTE = 'imported from the public web, nobody at the company co
 
 const isUnconfirmed = (heading: string, unconfirmed: Set<string>) => heading.split(' / ').some(part => unconfirmed.has(part))
 
-function readTools(): ToolSet {
+export function brainReadTools(): ToolSet {
     return {
         brain_search: tool({
             description:
@@ -77,7 +77,7 @@ function readTools(): ToolSet {
 
 export function brainTools(ctx: RunContext): ToolSet {
     return {
-        ...readTools(),
+        ...brainReadTools(),
         // A person correcting a fact in the chat already decided it: every coworker reads the fix
         // from its next run instead of the old version waiting behind a review.
         brain_write: writeTool(
@@ -184,7 +184,7 @@ const NO_PERSON_HERE = 'No person is in this conversation, so nobody told you th
 // and settles what the agents proposed, each time because the person asked for it in the chat.
 export function stewardBrainTools(): ToolSet {
     return {
-        ...readTools(),
+        ...brainReadTools(),
         brain_write: writeTool(
             STEWARD_BRAIN_AUTHOR,
             `Write a page of the company brain directly: it is saved at once and every coworker reads it from its next run. Only for a change the user asked for or confirmed in this conversation; a fact you found on your own goes to ask_user first. ${WRITE_PAGE_HOW}`

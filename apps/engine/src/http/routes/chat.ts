@@ -27,7 +27,7 @@ chatRoutes.post('/chat', async c => {
     const agent = await getAgent(agentId)
     if (!agent.config.enabled) throw agentDisabled()
     const body = chatRequestSchema.parse(await c.req.json())
-    const runAgentView = agent.config.kind === 'steward' && body.steward ? { ...agent, brief: body.steward } : agent
+    const runAgentView = agent.config.kind === 'steward' && body.steward ? { ...agent, brief: body.steward } : agent.config.kind === 'assistant' && body.assistant ? { ...agent, assistantBrief: body.assistant } : agent
     const source = body.source ?? 'dashboard'
     const claim = body.install && !body.sessionId ? await claimInstallSession(agentId, () => createSession(agentId, undefined, undefined, source)) : null
     if (claim && 'inFlight' in claim) return c.json({ error: 'the installation is already under way in another conversation', code: 'install_in_flight', sessionId: claim.inFlight }, 409)

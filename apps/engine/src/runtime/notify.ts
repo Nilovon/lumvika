@@ -1,4 +1,4 @@
-import type { MessageAuthor } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, type MessageAuthor } from '@lumvika/contracts'
 import { env } from '../config/env.js'
 import { nowIso } from '../lib/ids.js'
 import { logger } from '../lib/logger.js'
@@ -54,6 +54,9 @@ export function authorMetadata(author: MessageAuthor | undefined): { authorId?: 
 const TIMEOUT_MS = 5000
 
 export async function sendNotification(input: NotificationInput): Promise<{ delivered: boolean; reason?: string }> {
+    // The assistant's conversations are each one person's: none of its runs becomes a notification,
+    // whose message would carry the start of an answer to whoever the hub routes it to.
+    if (input.agentId === ASSISTANT_AGENT_ID) return { delivered: false, reason: 'assistant runs stay in their conversation' }
     const { LUMVIKA_HUB_BASE_URL: hub, LUMVIKA_API_KEY: token } = env()
     if (!hub || !token) {
         logger.debug({ agent: input.agentId }, 'notification skipped: webhook not configured')

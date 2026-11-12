@@ -23,6 +23,13 @@ afterEach(() => {
 })
 
 describe('sendNotification', () => {
+    it('never sends a run of the assistant to the hub', async () => {
+        const fetchMock = mockFetch(async () => new Response(null, { status: 204 }))
+        const result = await sendNotification({ kind: 'done', agentId: 'assistant', message: 'the start of a private answer' })
+        expect(result.delivered).toBe(false)
+        expect(fetchMock).not.toHaveBeenCalled()
+    })
+
     it('posts to the engine webhook without doubling the trailing slash, with the bearer token', async () => {
         const fetchMock = mockFetch(async () => new Response(null, { status: 204 }))
 

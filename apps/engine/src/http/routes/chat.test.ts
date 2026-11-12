@@ -73,6 +73,7 @@ beforeAll(async () => {
     await seed(id, { name: 'chat' })
     await seed('sleepy', { name: 'sleepy', enabled: false })
     await seed('boss', { name: 'boss', kind: 'steward' })
+    await seed('helper', { name: 'helper', kind: 'assistant' })
     await seed('installer', { name: 'installer', setup: { required: true } })
     await writeFile(installPath('installer'), 'Connect Gmail.\n', 'utf8')
 })
@@ -141,6 +142,17 @@ describe('POST /agents/:id/chat', () => {
 
         await (await chat(id, { message: 'hi', steward: brief })).text()
         expect(state.calls[1].agent.brief).toBeUndefined()
+    })
+
+    it('hands the project context to the assistant only', async () => {
+        const assistant = { project: { name: 'Launch', instructions: 'Ship small.' } }
+        await (await chat('helper', { message: 'hi', assistant })).text()
+        expect((state.calls[0].agent as { assistantBrief?: unknown }).assistantBrief).toEqual(assistant)
+
+        await (await chat('helper', { message: 'hi' })).text()
+        await (await chat(id, { message: 'hi', assistant })).text()
+        expect((state.calls[1].agent as { assistantBrief?: unknown }).assistantBrief).toBeUndefined()
+        expect((state.calls[2].agent as { assistantBrief?: unknown }).assistantBrief).toBeUndefined()
     })
 
     it('frees the session when the run row cannot be written', async () => {

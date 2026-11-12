@@ -17,6 +17,11 @@ export const BRAIN_NOTE =
 export const STEWARD_BRAIN_NOTE =
     'The company brain holds what is known about this company: what it sells, to whom, at what price, who works there, how it speaks, the tools it uses, its customers and competitors. Every coworker of the workspace reads it, and you keep it with the person you are talking to. A section marked unconfirmed was imported from the public web (the website, a LinkedIn page) and nobody at the company confirmed it: a starting point, not a fact. The rest was written or approved by a person. Before you answer or produce anything that depends on the company itself, call brain_search, then brain_read the page you need. Before you write anything about one of its products (an ad, a post, a description, an answer to a customer), brain_read that product\'s page; if there is none, or it lacks what you need, read the product\'s page on the company website with your web tools, and look at its picture, before writing. Never describe a product you have not read, and when you are told you got one wrong, go back to the source instead of guessing again. When the user tells you a fact about the company, asks you to change a page or confirms a change you suggested, brain_read the page and brain_write the complete new version right away: it is saved, so say what changed in one line. A fact you found on your own (on the web, in a file, from a coworker) is a change you suggest with ask_user first, never one you write unasked. Deleting a page goes through request_approval first, then brain_delete with confirm: true. The coworkers propose changes instead of writing them: brain_proposals lists the ones waiting, and brain_decide accepts or dismisses one once the user decided it. Mention the waiting ones when they bear on what the user is doing. Link other pages with [[slug]]. A link to shared:<path> points to a file of the shared folder: read it with shared_read. Call open_brain_page to show a page or the waiting changes to the user.'
 
+// The assistant reads the brain and never writes it: it answers people one at a time, and a change
+// to what every coworker reads goes through the Brain screen or the steward.
+export const ASSISTANT_BRAIN_NOTE =
+    'The company brain holds what is known about this company: what it sells, to whom, at what price, who works there, how it speaks, the tools it uses, its customers and competitors. Before you answer or produce anything that depends on the company itself, call brain_search, then brain_read the page you need. A section marked unconfirmed was imported from the public web and nobody at the company confirmed it: say so when your answer rests on it. You cannot change the brain: when the user corrects a fact, use the correction in this conversation and tell them they can fix the page from the Brain.'
+
 const EMPTY = 'The company brain is still empty.'
 export const EMPTY_FOR_AGENTS = `${EMPTY} Before you ask the user what the company does or sells, ask the coworkers of the workspace who may already know (call_agent): one that worked on its website or its marketing has usually read it.`
 // A coworker asked by another one passing the question on is how an empty brain turned into a loop
@@ -36,6 +41,10 @@ function cardExcerpt(content: string): string {
 // something, not on every message, so the prompt stays cacheable.
 export async function buildBrainSection(calledByCoworker = false): Promise<string> {
     return [BRAIN_NOTE, ...(await brainIndex(calledByCoworker ? EMPTY_WHEN_CALLED : EMPTY_FOR_AGENTS))].join('\n\n')
+}
+
+export async function buildAssistantBrainSection(): Promise<string> {
+    return [ASSISTANT_BRAIN_NOTE, ...(await brainIndex(EMPTY))].join('\n\n')
 }
 
 export async function buildStewardBrainSection(): Promise<string> {

@@ -7,7 +7,7 @@ import { buildMemoryIndex } from '../memory/index.js'
 import { readAgentDbSchema } from '../db/agentDb.js'
 import { readSharedDbSchema } from '../db/sharedDb.js'
 import { buildMcpIndex } from '../tools/mcp-index.js'
-import { buildBrainSection, buildStewardBrainSection } from '../brain/prompt.js'
+import { buildAssistantBrainSection, buildBrainSection, buildStewardBrainSection } from '../brain/prompt.js'
 import { AUTO_RECALL_MIN_SIMILARITY, recallMemory, type RecalledMemory } from '../memory/store.js'
 import { workspaceDir, sharedDir, sharedDbPath } from '../config/paths.js'
 import { defaultSoul } from './soul.js'
@@ -260,8 +260,38 @@ async function buildStewardPrompt(agent: LoadedAgent, provider: Provider, order:
     return { stable: joinSections(stable), volatile: joinSections(volatile) }
 }
 
+const ASSISTANT_ROLE_NOTE =
+    'You are not a coworker: the coworkers of this workspace are AI agents with their own skills, tools, schedules and memory, set up on the board. You answer one person at a time, in a conversation only they see unless they share it. You do not remember other conversations and keep nothing after this one, so never claim you will remember something. You have no files, no shell and no way to act in the user\'s tools: you think, write, explain and research with the web and the company brain. When the user asks for work that recurs (every week, every morning, each new lead) or that has to act in their tools, do what you can here, then suggest in one line that a coworker can take it over, without insisting.'
+
+const ASSISTANT_OPERATING_NOTES =
+    'Answer the question that was asked, first, in plain words, then the detail it needs; no preamble and no recap of the question. Use web_search to find current or factual information you are not sure of and web_fetch to read a page, and say where a fact comes from when it matters. Never invent a source, a quote, a number or a link. When a request is ambiguous and a wrong guess would waste the user\'s time, ask one short question; otherwise state your assumption in one line and answer.'
+
+const ASSISTANT_LANGUAGE_NOTE =
+    'Answer in the language the user writes to you in, and follow them when they switch. A text written for someone else (an email, a post, a reply to a customer) is in that person\'s language when the user says who it is for. The language of these instructions, of the project and of what you read on the web never decides it.'
+
+// The assistant serves every member of the workspace from one agent: nothing of its own reaches its
+// prompt (no memory, skills, schedules, databases), only the brain and the project the hub named.
+async function buildAssistantPrompt(agent: LoadedAgent, provider: Provider): Promise<SystemPrompt> {
+    const brain = agent.config.tools.brain ? await buildAssistantBrainSection().catch(() => '') : ''
+    const project = agent.assistantBrief?.project
+    const stable = [
+        section('identity', agent.soul.trim()),
+        section('role', ASSISTANT_ROLE_NOTE),
+        CLI_PROVIDERS.has(provider) ? section('bridged_tools', cliBridgeNote(provider, true)) : '',
+        section('operating_notes', ASSISTANT_OPERATING_NOTES),
+        section('what_the_user_sees', WHAT_THE_USER_SEES_NOTE),
+        section('language', ASSISTANT_LANGUAGE_NOTE),
+    ]
+    const volatile: string[] = []
+    if (project) volatile.push(section('project', `This conversation is about the project "${project.name}". Its instructions, written by the team, apply to your answers:\n\n${project.instructions.trim()}`))
+    if (brain) volatile.push(section('company_brain', brain))
+    volatile.push(section('current_time', currentTimeNote()))
+    return { stable: joinSections(stable), volatile: joinSections(volatile) }
+}
+
 export async function buildSystemPrompt(agent: LoadedAgent, trigger: RunTrigger = { source: 'chat' }, provider: Provider = agent.resolved.provider, order: TurnOrder = turnOrder(provider, agent.resolved.model)): Promise<SystemPrompt> {
     if (agent.config.kind === 'steward') return await buildStewardPrompt(agent, provider, order)
+    if (agent.config.kind === 'assistant') return await buildAssistantPrompt(agent, provider)
     const cfg = agent.config.tools
     const [skillIndex, scheduleIndex, triggerIndex, memoryIndex, dbSchema, sharedDbSchema, mcpIndex, brain] = await Promise.all([
         cfg.skills ? buildSkillIndex(agent.id).catch(() => '') : Promise.resolve(''),

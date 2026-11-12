@@ -46,6 +46,9 @@ export const ENGINE_CAPABILITY_OPENCODE = 'connections.opencode'
 // The engine runs custom OpenAI-compatible connections and answers `POST /connections/probe`.
 export const ENGINE_CAPABILITY_CUSTOM = 'connections.custom'
 
+// The engine runs the built-in assistant of the plain Chat (`ASSISTANT_AGENT_ID`).
+export const ENGINE_CAPABILITY_ASSISTANT = 'assistant'
+
 // What the last `lumvika update` on a box did, as `/health` reports it.
 export const engineLastUpdateSchema = z.object({
     status: z.enum(['running', 'error', 'restarting', 'success']),
