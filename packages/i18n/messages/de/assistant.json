@@ -1,11 +1,114 @@
 {
     "title": "Chat",
     "description": "Sprich mit dem Assistenten, ohne einen Coworker zu öffnen.",
-    "empty": {
-        "title": "Chat kommt bald",
-        "description": "Hier führst du bald einfache Unterhaltungen mit dem Assistenten."
+    "list": {
+        "label": "Deine Chats",
+        "new": "Neuer Chat",
+        "search": "Chats durchsuchen",
+        "groups": {
+            "today": "Heute",
+            "yesterday": "Gestern",
+            "previous7": "Letzte 7 Tage",
+            "previous30": "Letzte 30 Tage",
+            "older": "Älter",
+            "shared": "Mit mir geteilt",
+            "archived": "Archiviert"
+        },
+        "showArchived": "Archivierte anzeigen ({count})",
+        "hideArchived": "Archivierte ausblenden",
+        "empty": "Noch keine Chats. Starte einen, dann erscheint er hier.",
+        "noResults": "Kein Chat passt zu „{query}“.",
+        "sharedBy": "Geteilt von {name}",
+        "someone": "einer Person aus dem Team",
+        "sharedBadge": "Geteilt"
     },
-    "detail": {
-        "back": "Alle Chats"
+    "menu": {
+        "open": "Chat-Optionen",
+        "rename": "Umbenennen",
+        "share": "Mit dem Workspace teilen",
+        "unshare": "Nicht mehr teilen",
+        "archive": "Archivieren",
+        "restore": "Wiederherstellen",
+        "delete": "Löschen"
+    },
+    "rename": {
+        "title": "Chat umbenennen",
+        "label": "Name",
+        "save": "Speichern",
+        "cancel": "Abbrechen"
+    },
+    "delete": {
+        "title": "Diesen Chat löschen?",
+        "description": "„{title}“ verschwindet endgültig aus deinen Chats, für dich und alle, mit denen du ihn geteilt hast. Das lässt sich nicht rückgängig machen.",
+        "confirm": "Löschen"
+    },
+    "toasts": {
+        "shared": "Mitglieder des Workspaces können diesen Chat jetzt lesen.",
+        "unshared": "Dieser Chat ist wieder privat.",
+        "archived": "Chat archiviert.",
+        "restored": "Chat wiederhergestellt.",
+        "deleted": "Chat gelöscht."
+    },
+    "project": {
+        "label": "Projekt",
+        "none": "Kein Projekt",
+        "pick": "Projekt hinzufügen",
+        "hint": "Der Assistent liest die Anweisungen des Projekts.",
+        "search": "Projekte durchsuchen",
+        "empty": "Kein Projekt gefunden."
+    },
+    "conversation": {
+        "back": "Alle Chats",
+        "placeholder": "Frag einfach",
+        "readOnly": "Geteilt von {name}. Nur diese Person kann in diesem Chat schreiben.",
+        "readOnlyBadge": "Nur lesen",
+        "transcriptUnavailable": "Die Nachrichten dieses Chats lassen sich gerade nicht lesen. Versuch es gleich noch einmal.",
+        "notFound": {
+            "title": "Chat nicht gefunden",
+            "description": "Er wurde gelöscht oder ist nicht mit dir geteilt.",
+            "cta": "Neuen Chat starten"
+        }
+    },
+    "empty": {
+        "title": "Wobei kann ich helfen?",
+        "description": "Stell eine Frage, entwirf einen Text oder denk etwas durch. Deine Chats bleiben privat, solange du sie nicht teilst.",
+        "suggestions": {
+            "draftEmail": {
+                "label": "E-Mail entwerfen",
+                "prompt": "Hilf mir, eine kurze, freundliche E-Mail an einen Kunden wegen einer verspäteten Lieferung zu schreiben."
+            },
+            "explain": {
+                "label": "Ein Konzept erklären",
+                "prompt": "Erklär mir, wie eine Sales-Pipeline funktioniert, mit einem einfachen Beispiel."
+            },
+            "brainstorm": {
+                "label": "Ideen sammeln",
+                "prompt": "Gib mir zehn Ideen für einen LinkedIn-Post über unser Unternehmen diese Woche."
+            },
+            "summarize": {
+                "label": "Eine Seite zusammenfassen",
+                "prompt": "Fass diese Seite in fünf Stichpunkten zusammen: "
+            }
+        }
+    },
+    "states": {
+        "outdated": {
+            "title": "Aktualisiere deinen Server, um Chat zu nutzen",
+            "description": "Auf dem Server deines Workspaces läuft eine ältere Version von Lumvika. Chat funktioniert, sobald er aktualisiert ist."
+        },
+        "noEngine": {
+            "title": "Chat braucht einen Server",
+            "description": "Dein Workspace hat noch keinen Server. Er bekommt einen, sobald du deinen ersten Coworker hinzufügst."
+        },
+        "unreachable": {
+            "title": "Dein Server antwortet nicht",
+            "description": "Chat läuft auf dem Server deines Workspaces, der gerade nicht erreichbar ist.",
+            "retry": "Erneut versuchen"
+        },
+        "noProvider": {
+            "title": "Verbinde einen KI-Anbieter",
+            "description": "Chat braucht ein Modell, um zu antworten. Verbinde einen Anbieter oder ein Abo, um loszulegen.",
+            "cta": "Anbieter verbinden"
+        }
     }
 }
