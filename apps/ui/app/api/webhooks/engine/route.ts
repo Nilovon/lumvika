@@ -1,3 +1,5 @@
+import { after } from 'next/server'
+
 import { recordGettingStartedEvent } from '@/app/api/_services/getting-started.service'
 import { followAuthorOfCreatedTask } from '@/app/api/_services/notification-audience.service'
 import { recordNotification } from '@/app/api/_services/notification.service'
@@ -30,12 +32,20 @@ export async function POST(req: Request) {
     const parsed = notificationPayloadSchema.safeParse(body)
     if (!parsed.success) return Response.json({ error: 'Invalid payload' }, { status: 400 })
 
-    // A run that ended holds nothing any more, whatever its notification turns into below.
+    // What a run's end sets off besides its notification runs once the engine has its answer: the
+    // engine gives up on this call after five seconds and never sends it again, and these reach the
+    // database and the engine. One task keeps their order: whatever the run still held goes back on
+    // the board, then a coworker answering in a channel has its answer posted. Both are idempotent.
     const { event, runId } = parsed.data
-    if (isRunCompletion(event) && runId) await releaseRunCheckouts({ workspaceId: engine.workspaceId }, runId).catch(err => console.error('[engine-webhook] failed to release the checkouts of a run', err))
-    // A coworker answering in a channel: its answer is posted now that its run is over.
+    const endedRunId = isRunCompletion(event) && runId ? runId : null
     const channelEnding = channelRunEndingOf(parsed.data)
-    if (channelEnding) await finishChannelTurnForRun({ workspaceId: engine.workspaceId }, channelEnding).catch(err => console.error('[engine-webhook] failed to finish a channel turn', err))
+    if (endedRunId || channelEnding) {
+        const scope = { workspaceId: engine.workspaceId }
+        after(async () => {
+            if (endedRunId) await releaseRunCheckouts(scope, endedRunId).catch(err => console.error('[engine-webhook] failed to release the checkouts of a run', err))
+            if (channelEnding) await finishChannelTurnForRun(scope, channelEnding).catch(err => console.error('[engine-webhook] failed to finish a channel turn', err))
+        })
+    }
 
     const result = await recordNotification(token, parsed.data)
     if (!result.ok) return Response.json({ error: result.error }, { status: result.status })
