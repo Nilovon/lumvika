@@ -395,7 +395,7 @@ export async function getIssueByRef(scope: WorkScope, ref: string, visibleProjec
     const parsed = parseIssueRef(ref)
     if (!parsed) return null
     const supabase = clientOf(scope)
-    const { data: project } = await selectMaybeSingle(supabase, 'projects', ['id', 'key'] as const, { workspace_id: scope.workspaceId, key: parsed.projectKey })
+    const { data: project } = await selectMaybeSingle(supabase, 'projects', ['id', 'key', 'visibility'] as const, { workspace_id: scope.workspaceId, key: parsed.projectKey })
     if (!project || (visibleProjects !== 'all' && !visibleProjects.has(project.id))) return null
     const { data: issue } = await selectMaybeSingle(supabase, 'issues', ISSUE_COLUMNS, { project_id: project.id, number: parsed.number })
     if (!issue) return null
@@ -404,5 +404,6 @@ export async function getIssueByRef(scope: WorkScope, ref: string, visibleProjec
         issue,
         project.key,
         (children ?? []).map(child => toIssueSummary(child, project.key)),
+        project.visibility === 'restricted',
     )
 }

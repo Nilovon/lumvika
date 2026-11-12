@@ -26,6 +26,7 @@ type IssuePropertiesProps = {
 
 export function IssueProperties({ issue, disabled, onStatusChange, onPriorityChange, onAssign, onUpdate }: IssuePropertiesProps) {
     const t = useTranslations('issues.detail')
+    const tAssignee = useTranslations('issues.assignee')
     const locale = useLocale()
     const { labelOf } = useWorkMembers()
     const [projectIssues, setProjectIssues] = useState<IssueSummary[] | null>(null)
@@ -57,7 +58,7 @@ export function IssueProperties({ issue, disabled, onStatusChange, onPriorityCha
             <Field label={t('priority')} htmlFor="issue-priority">
                 <IssuePriorityPicker id="issue-priority" priority={issue.priority} onChange={onPriorityChange} disabled={disabled} />
             </Field>
-            <Field label={t('assignee')} htmlFor="issue-assignee" className="col-span-2 md:col-span-1">
+            <Field label={t('assignee')} htmlFor="issue-assignee" className="col-span-2 md:col-span-1" helperText={issue.projectRestricted && issue.assignee?.kind === 'agent' ? tAssignee('restrictedNotice') : undefined}>
                 <AssigneePicker id="issue-assignee" value={issue.assignee} onChange={onAssign} disabled={disabled} />
             </Field>
             <Field label={t('dueDate')} htmlFor="issue-due">

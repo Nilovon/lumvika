@@ -21,6 +21,8 @@ const CREATE_STATUSES = BOARD_STATUSES.filter(status => status !== 'done' && sta
 export type NewIssueDialogProps = {
     projectId: string
     projectName: string
+    // A coworker assigned in a restricted project shows its work to whoever may use it: the form says so.
+    projectRestricted?: boolean
     open: boolean
     onOpenChange: (open: boolean) => void
     // Resolves with the issue once written, or null when the server refused it (it says why itself).
@@ -32,9 +34,10 @@ export function NewIssueDialog({ open, onOpenChange, ...props }: NewIssueDialogP
     return <Dialog open={open} onOpenChange={onOpenChange}>{open && <NewIssueForm {...props} onClose={() => onOpenChange(false)} />}</Dialog>
 }
 
-function NewIssueForm({ projectId, projectName, onCreate, defaultStatus = 'todo', onClose }: Omit<NewIssueDialogProps, 'open' | 'onOpenChange'> & { onClose: () => void }) {
+function NewIssueForm({ projectId, projectName, projectRestricted, onCreate, defaultStatus = 'todo', onClose }: Omit<NewIssueDialogProps, 'open' | 'onOpenChange'> & { onClose: () => void }) {
     const t = useTranslations('issues.create')
     const tCommon = useTranslations('common')
+    const tAssignee = useTranslations('issues.assignee')
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [status, setStatus] = useState<IssueStatus>(defaultStatus)
@@ -87,6 +90,7 @@ function NewIssueForm({ projectId, projectName, onCreate, defaultStatus = 'todo'
                     </Field>
                 </div>
                 {assignee?.kind === 'agent' && <p className="-mt-1 text-xs text-muted-foreground">{t('coworkerHint')}</p>}
+                {assignee?.kind === 'agent' && projectRestricted && <p className="-mt-3 text-xs text-muted-foreground/70">{tAssignee('restrictedNotice')}</p>}
                 <DialogFooter className="flex-wrap gap-2">
                     <Button type="button" variant="outline" onClick={onClose} className="max-sm:flex-1">
                         {tCommon('cancel')}

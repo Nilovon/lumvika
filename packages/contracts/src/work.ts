@@ -221,6 +221,8 @@ export const issueDetailSchema = issueSummarySchema.extend({
     // The conversation in which the assigned agent works on it.
     sessionId: z.string().nullable(),
     subIssues: z.array(issueSummarySchema),
+    // Its project is restricted: whoever may use a coworker it is assigned to can see the work.
+    projectRestricted: z.boolean().optional(),
 })
 export type IssueDetail = z.infer<typeof issueDetailSchema>
 

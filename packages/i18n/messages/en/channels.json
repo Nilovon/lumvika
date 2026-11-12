@@ -127,7 +127,8 @@
             "public": "Public",
             "private": "Private",
             "dm": "Direct message"
-        }
+        },
+        "coworkersReadHere": "{count, plural, one {This coworker reads the recent messages here to answer.} other {These coworkers read the recent messages here to answer.}}"
     },
     "create": {
         "title": "New channel",

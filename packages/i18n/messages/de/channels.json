@@ -121,7 +121,8 @@
             "public": "Öffentlich",
             "private": "Privat",
             "dm": "Direktnachricht"
-        }
+        },
+        "coworkersReadHere": "{count, plural, one {Dieser Coworker liest die letzten Nachrichten hier, um zu antworten.} other {Diese Coworker lesen die letzten Nachrichten hier, um zu antworten.}}"
     },
     "create": {
         "title": "Neuer Kanal",

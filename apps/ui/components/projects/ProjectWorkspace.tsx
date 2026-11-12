@@ -103,7 +103,7 @@ export function ProjectWorkspace({ project, back, onProjectChanged }: ProjectWor
             {url.tab === 'list' && <ProjectIssueList issues={issues.issues} onOpenIssue={openIssue} onStatusChange={changeStatus} onCreate={archived ? undefined : () => setCreating(true)} />}
             {url.tab === 'overview' && <ProjectOverview project={project} onChanged={onProjectChanged} />}
 
-            <NewIssueDialog projectId={project.id} projectName={project.name} open={creating} onOpenChange={setCreating} onCreate={issues.create} />
+            <NewIssueDialog projectId={project.id} projectName={project.name} projectRestricted={project.visibility === 'restricted'} open={creating} onOpenChange={setCreating} onCreate={issues.create} />
             <BlockedReasonDialog issueRef={blocking?.ref ?? ''} open={!!blocking} onOpenChange={open => !open && setBlocking(null)} onConfirm={reason => (blocking ? issues.transition(blocking, 'blocked', reason) : undefined)} />
             <IssueDetailDialog issueRef={url.issueNumber ? formatIssueRef(project.key, url.issueNumber) : null} onOpenChange={open => !open && url.closeIssue()} onIssueChange={issues.apply} onOpenIssue={openIssue} />
         </PageFrame>

@@ -97,7 +97,7 @@ export function toIssueSummary(row: IssueSummaryRow, projectKey: string): IssueS
     }
 }
 
-export function toIssueDetail(row: IssueRow, projectKey: string, subIssues: IssueSummary[]): IssueDetail {
+export function toIssueDetail(row: IssueRow, projectKey: string, subIssues: IssueSummary[], projectRestricted = false): IssueDetail {
     return {
         ...toIssueSummary(row, projectKey),
         description: row.description,
@@ -105,6 +105,7 @@ export function toIssueDetail(row: IssueRow, projectKey: string, subIssues: Issu
         createdBy: authorOf(row.created_by_user_id, row.created_by_agent_id),
         sessionId: row.session_id,
         subIssues,
+        projectRestricted,
     }
 }
 

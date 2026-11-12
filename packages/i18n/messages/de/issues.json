@@ -29,7 +29,8 @@
         "empty": "Niemand gefunden",
         "people": "Personen",
         "coworkers": "Coworker",
-        "you": "{name} (du)"
+        "you": "{name} (du)",
+        "restrictedNotice": "Wer diesen Coworker nutzen kann, sieht, woran er arbeitet."
     },
     "statusPicker": {
         "ariaLabel": "Status: {status}. Status ändern",

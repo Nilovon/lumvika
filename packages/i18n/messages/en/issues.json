@@ -37,7 +37,8 @@
         "empty": "Nobody matches",
         "people": "People",
         "coworkers": "Coworkers",
-        "you": "{name} (you)"
+        "you": "{name} (you)",
+        "restrictedNotice": "People who can use this coworker can see what it works on."
     },
     "statusPicker": {
         "ariaLabel": "Status: {status}. Change status",

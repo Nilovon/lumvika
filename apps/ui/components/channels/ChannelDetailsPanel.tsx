@@ -120,6 +120,7 @@ export function ChannelDetailsPanel({ detail, me, directory, authorName, onClose
                             )
                         })}
                     </ul>
+                    {detail.kind !== 'public' && coworkers.length > 0 && <p className="text-xs text-muted-foreground/70">{t('coworkersReadHere', { count: coworkers.length })}</p>}
                 </section>
 
                 {!isDm && (detail.isMember || manages) && (
