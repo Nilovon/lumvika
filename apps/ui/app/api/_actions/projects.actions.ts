@@ -1,13 +1,14 @@
 'use server'
 
 import { PROJECT_KEY_PATTERN, SYSTEM_AUTHOR, type CreateProjectInput, type ProjectAccess, type ProjectDetail, type ProjectMember, type ProjectSummary, type UpdateProjectInput, type WorkAuthor } from '@lumvika/contracts'
+import { z } from 'zod'
 
 import { requireLightSessionActor, type Actor } from '@/app/api/_auth/access'
 import { assertProjectAccess, PROJECT_NOT_FOUND } from '@/app/api/_auth/project-access'
 import type { WorkspaceRole } from '@/app/api/_auth/ownership'
 import { resolveMemberIdentities } from '@/app/api/_services/members.service'
 import { toProjectMember } from '@/app/api/_services/work/mappers'
-import { assertAssignableBy } from '@/app/api/_services/work/refs'
+import { assertAssignableBy, parseWorkInput } from '@/app/api/_services/work/refs'
 import { archiveProject, createProject, getProjectByKey, grantProjectMember, listProjectMembers, listProjects, restoreProject, revokeProjectMember, updateProject } from '@/app/api/_services/work/projects.service'
 import { failure, failureOf } from '@/lib/i18n/action-error'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
@@ -18,6 +19,9 @@ export type ProjectAccessPerson = { userId: string; email: string | null; role: 
 export type ProjectAccessView = { projectId: string; people: ProjectMember[]; members: ProjectAccessPerson[] }
 
 export type ProjectKeyCheck = 'available' | 'taken' | 'invalid'
+
+// One grant names at most this many people, each once.
+const grantedUserIdsSchema = z.array(z.string().min(1).max(64)).min(1).max(500)
 
 function authorOf(actor: Actor): WorkAuthor {
     return actor.kind === 'user' ? { kind: 'user', userId: actor.userId } : SYSTEM_AUTHOR
@@ -133,7 +137,7 @@ export async function grantProjectAccessAction(projectId: string, userIds: strin
     try {
         const { actor } = await assertProjectAccess(projectId, 'manage')
         const author = authorOf(actor)
-        for (const userId of new Set(userIds)) await grantProjectMember(scopeOf(actor), author, projectId, { userId, access })
+        for (const userId of new Set(parseWorkInput(grantedUserIdsSchema, userIds))) await grantProjectMember(scopeOf(actor), author, projectId, { userId, access })
         return { ok: true }
     } catch (err) {
         return failureOf(err)

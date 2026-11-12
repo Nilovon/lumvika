@@ -175,6 +175,13 @@ describe('grantProjectAccessAction', () => {
         ])
     })
 
+    it('refuses an empty or oversized list before granting anyone', async () => {
+        const crowd = Array.from({ length: 501 }, (_, index) => `user-${index}`)
+
+        await expect(actions.grantProjectAccessAction('p1', crowd, 'use')).resolves.toMatchObject({ ok: false, code: 'invalidInput' })
+        await expect(actions.grantProjectAccessAction('p1', [], 'use')).resolves.toMatchObject({ ok: false, code: 'invalidInput' })
+        expect(mocks.grantProjectMember).not.toHaveBeenCalled()
+    })
 })
 
 describe('getProjectAccessAction', () => {
