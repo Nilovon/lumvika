@@ -29,6 +29,8 @@ export type RunContext = {
     callTargets?: AgentRow[]
     // Who the person behind the run reaches, handed down to every coworker it calls.
     callableAgentIds?: string[]
+    // The run answers in a hub channel or direct message (see RunTrigger): what it hears there stays there.
+    channel?: boolean
     hostBreaker?: HostBreaker
     partialResults?: PartialResult[]
     skillProposals?: SkillProposalNotice[]

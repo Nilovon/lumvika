@@ -37,7 +37,7 @@ vi.mock('../desktop/session.js', async importOriginal => ({
 
 const { beforeEach, describe, expect, it } = await import('vitest')
 const { TOOL_KEYS } = await import('@lumvika/contracts')
-const { buildTools } = await import('./registry.js')
+const { buildTools, CHANNEL_CLOSED_TOOLS } = await import('./registry.js')
 const { toolPayloadChars } = await import('./payload.js')
 const { toolCatalog } = await import('./catalog.js')
 const { agentConfigSchema } = await import('../agents/types.js')
@@ -100,6 +100,17 @@ describe('buildTools', () => {
             const names = await namesOf(ctxWith({ tools: { [key]: false } }, { callTargets: [{ id: 'peer', name: 'Peer' }] }))
             expect(all.filter(name => !names.includes(name)).sort(), key).toEqual([...familyTools[key]].sort())
         }
+    })
+
+    it.each(['lumvika', 'claude', 'codex', 'opencode', 'custom'])('keeps a channel run (%s) from remembering or handing on what it heard, and leaves it its work tools', async provider => {
+        const roster = { callTargets: [{ id: 'peer', name: 'Peer' }], provider }
+        const chat = await namesOf(ctxWith({}, roster))
+        const channel = await namesOf(ctxWith({}, { ...roster, channel: true }))
+
+        expect(chat).toEqual(expect.arrayContaining([...CHANNEL_CLOSED_TOOLS]))
+        for (const name of CHANNEL_CLOSED_TOOLS) expect(channel, name).not.toContain(name)
+        expect(chat.filter(name => !channel.includes(name)).sort()).toEqual([...CHANNEL_CLOSED_TOOLS].sort())
+        expect(channel).toEqual(expect.arrayContaining(['memory_recall', 'skill_read', 'work_checkout']))
     })
 
     it('gives the work tools to a coworker of the board only', async () => {

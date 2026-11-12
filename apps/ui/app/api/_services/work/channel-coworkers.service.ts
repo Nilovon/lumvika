@@ -262,6 +262,7 @@ export function coworkerPrompt(brief: CoworkerBrief, names: Names): string {
         lines.length > 0 ? `The conversation so far:\n${lines.join('\n')}` : null,
         `${speaker(brief.trigger)} wrote:\n${brief.trigger.body}`,
         'Reply to them. Your whole reply is posted as your message, so write only what they should read.',
+        'What is said here stays here: you cannot hand it to another coworker nor keep it in your memory or skills, so if you are asked to, say so.',
     ]
         .filter(Boolean)
         .join('\n\n')

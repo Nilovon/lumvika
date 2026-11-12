@@ -35,6 +35,26 @@ import { CLI_PROVIDERS } from '../agents/providers.js'
 import { closeAgentDb } from '../db/agentDb.js'
 import type { RunContext } from '../runtime/context.js'
 
+// What a run answering in a hub channel goes without: the tools that would remember what it heard
+// for later (its memory, its skills) or hand it to another coworker, whose conversations the people
+// of that coworker's Box read. Its files, shell, web, data and work tools stay, so it still does the
+// work it is asked for. The one gate, whatever the provider: native, CLI bridge and opencode all run
+// this set.
+export const CHANNEL_CLOSED_TOOLS = [
+    'call_agent',
+    'delegate_tasks',
+    'memory_write',
+    'memory_delete',
+    'skill_propose',
+    'skill_create',
+    'skill_import',
+    'skill_edit',
+    'skill_update',
+    'skill_delete',
+    'skill_write_file',
+    'skill_delete_file',
+] as const
+
 export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; close: () => Promise<void> }> {
     if (ctx.agent.config.kind === 'assistant') return { tools: assistantTools(ctx), close: async () => {} }
     const cfg = ctx.agent.config.tools
@@ -79,6 +99,7 @@ export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; clo
 
     // The connections are the pool's, kept across runs: the run's close leaves them open.
     if (!CLI_PROVIDERS.has(ctx.provider) && ctx.agent.config.mcpServers.length > 0) Object.assign(tools, await pooledMcpTools(ctx.agent))
+    if (ctx.channel) for (const name of CHANNEL_CLOSED_TOOLS) delete tools[name]
 
     return {
         tools,
