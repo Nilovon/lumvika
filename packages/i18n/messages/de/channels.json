@@ -1,11 +1,163 @@
 {
     "title": "Kanäle",
     "description": "Unterhaltungen, die dein Team und deine Coworker teilen.",
-    "empty": {
-        "title": "Kanäle kommen bald",
-        "description": "Hier gibt es bald gemeinsame Kanäle für Menschen und Coworker."
+    "list": {
+        "label": "Kanäle und Direktnachrichten",
+        "channels": "Kanäle",
+        "directMessages": "Direktnachrichten",
+        "newChannel": "Neuer Kanal",
+        "browse": "Kanäle durchsuchen",
+        "newMessage": "Neue Nachricht",
+        "unread": "{count, plural, one {# ungelesene Nachricht} other {# ungelesene Nachrichten}}",
+        "noDirectMessages": "Noch keine Unterhaltung. Schreib einer Person aus deinem Team oder einem Coworker.",
+        "loadFailed": "Die Kanäle konnten nicht geladen werden.",
+        "retry": "Erneut versuchen",
+        "privateChannel": "Privater Kanal",
+        "publicChannel": "Öffentlicher Kanal"
     },
-    "detail": {
-        "back": "Alle Kanäle"
+    "channel": {
+        "selectTitle": "Wähle eine Unterhaltung",
+        "selectDescription": "Öffne links einen Kanal oder eine Direktnachricht oder starte etwas Neues.",
+        "emptyTitle": "Das ist der Anfang von #{name}",
+        "emptyDescription": "Sag Hallo. Erwähne einen Coworker mit @, dann antwortet er im Thread.",
+        "dmEmptyTitle": "Deine Unterhaltung mit {name}",
+        "dmEmptyDescription": "Nachrichten hier bleiben zwischen euch beiden.",
+        "dmCoworkerEmptyDescription": "Frag {name}, was du willst: Die Antwort kommt direkt hier.",
+        "notFoundTitle": "Diese Unterhaltung ist nicht verfügbar",
+        "notFoundDescription": "Sie ist vielleicht privat, archiviert oder gelöscht.",
+        "loadFailed": "Diese Unterhaltung konnte nicht geladen werden.",
+        "retry": "Erneut versuchen",
+        "archived": "Dieser Kanal ist archiviert. Seine Nachrichten bleiben lesbar, posten kann niemand mehr.",
+        "preview": "Du liest #{name}, ohne Mitglied zu sein.",
+        "join": "Beitreten",
+        "details": "Kanaldetails",
+        "members": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
+        "back": "Alle Kanäle",
+        "loadOlder": "Ältere Nachrichten laden",
+        "dmTitle": "Direktnachricht"
+    },
+    "message": {
+        "reply": "Im Thread antworten",
+        "edit": "Bearbeiten",
+        "delete": "Löschen",
+        "more": "Weitere Aktionen",
+        "edited": "(bearbeitet)",
+        "deleted": "Diese Nachricht wurde gelöscht.",
+        "replies": "{count, plural, one {# Antwort} other {# Antworten}}",
+        "sending": "Wird gesendet…",
+        "notSent": "Nicht gesendet.",
+        "retry": "Erneut senden",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "editLabel": "Deine Nachricht bearbeiten",
+        "deleteTitle": "Diese Nachricht löschen?",
+        "deleteDescription": "Die Nachricht verschwindet für alle in dieser Unterhaltung. Antworten in ihrem Thread bleiben. Das lässt sich nicht rückgängig machen.",
+        "coworker": "Coworker",
+        "formerMember": "Ehemaliges Mitglied",
+        "unnamed": "Teammitglied",
+        "someone": "Jemand"
+    },
+    "composer": {
+        "placeholder": "Nachricht an #{name}",
+        "dmPlaceholder": "Nachricht an {name}",
+        "threadPlaceholder": "Im Thread antworten",
+        "mentionPeople": "Personen",
+        "mentionCoworkers": "Coworker"
+    },
+    "coworker": {
+        "answering": "{name} antwortet…",
+        "failed": {
+            "engine_unreachable": "{name} konnte nicht antworten: Die Maschine deines Workspaces ist gerade nicht erreichbar. Versuch es gleich noch einmal.",
+            "engine_outdated": "{name} konnte nicht antworten: Die Maschine deines Workspaces braucht ein Update, bevor Coworker in Kanälen antworten können.",
+            "coworker_disabled": "{name} konnte nicht antworten: Dieser Coworker ist ausgeschaltet.",
+            "no_model": "{name} konnte nicht antworten: Es steht kein nutzbares KI-Modell zur Verfügung. Verbinde eines in seinen Einstellungen.",
+            "no_access": "{name} konnte nicht antworten: Du hast keinen Zugriff auf seine Box.",
+            "not_member": "{name} konnte nicht antworten: Dieser Coworker ist kein Mitglied dieses Kanals.",
+            "timeout": "{name} hat zu lange gebraucht und aufgehört.",
+            "failed": "{name} konnte diesmal nicht antworten."
+        },
+        "outsider": "{name} ist noch nicht in diesem Kanal und kann deshalb nicht antworten.",
+        "outsiderManagerOnly": "{name} ist nicht in diesem Kanal. Bitte die Person, die ihn verwaltet, diesen Coworker hinzuzufügen.",
+        "addOutsider": "Hinzufügen und fragen",
+        "dismiss": "Ausblenden",
+        "addFailed": "Der Coworker konnte nicht hinzugefügt werden."
+    },
+    "thread": {
+        "title": "Thread",
+        "close": "Thread schließen",
+        "back": "Zurück zum Kanal",
+        "replies": "{count, plural, =0 {Noch keine Antwort} one {# Antwort} other {# Antworten}}",
+        "gone": "Dieser Thread ist nicht mehr verfügbar."
+    },
+    "details": {
+        "title": "Details",
+        "close": "Details schließen",
+        "back": "Zurück zum Kanal",
+        "about": "Info",
+        "noDescription": "Noch keine Beschreibung.",
+        "members": "Mitglieder",
+        "addMembers": "Mitglieder hinzufügen",
+        "removeLabel": "{name} entfernen",
+        "removeTitle": "{name} aus #{channel} entfernen?",
+        "removeDescription": "{name} sieht diesen Kanal und seine Nachrichten dann nicht mehr. Du kannst {name} später wieder hinzufügen.",
+        "removeConfirm": "Entfernen",
+        "linked": "Verknüpft mit",
+        "project": "Projekt",
+        "team": "Team",
+        "edit": "Bearbeiten",
+        "leave": "Kanal verlassen",
+        "leaveTitle": "#{name} verlassen?",
+        "leaveDescription": "Der Kanal verschwindet aus deiner Liste. Einem öffentlichen Kanal kannst du über „Kanäle durchsuchen“ wieder beitreten, für einen privaten muss dich ein Mitglied wieder hinzufügen.",
+        "leaveConfirm": "Verlassen",
+        "archive": "Kanal archivieren",
+        "archiveTitle": "#{name} archivieren?",
+        "archiveDescription": "Niemand kann dort mehr posten, und der Kanal verschwindet aus allen Listen. Seine Nachrichten bleiben erhalten. Das lässt sich hier nicht rückgängig machen.",
+        "archiveConfirm": "Archivieren",
+        "you": "Du",
+        "coworker": "Coworker",
+        "kind": {
+            "public": "Öffentlich",
+            "private": "Privat",
+            "dm": "Direktnachricht"
+        }
+    },
+    "create": {
+        "title": "Neuer Kanal",
+        "description": "Ein Kanal bringt Personen und Coworker rund um ein Thema zusammen.",
+        "name": "Name",
+        "namePlaceholder": "launch",
+        "about": "Beschreibung",
+        "aboutPlaceholder": "Worum geht es in diesem Kanal?",
+        "private": "Privat",
+        "privateHint": "Nur die Mitglieder, die du hinzufügst, können ihn finden und lesen.",
+        "submit": "Kanal erstellen",
+        "cancel": "Abbrechen",
+        "editTitle": "#{name} bearbeiten",
+        "editDescription": "Benenne den Kanal um oder beschreib, wofür er da ist.",
+        "save": "Speichern"
+    },
+    "browse": {
+        "title": "Kanäle durchsuchen",
+        "description": "Die öffentlichen Kanäle deines Workspaces.",
+        "search": "Kanäle suchen",
+        "empty": "Kein öffentlicher Kanal passt.",
+        "join": "Beitreten",
+        "joined": "Beigetreten"
+    },
+    "picker": {
+        "dmTitle": "Neue Nachricht",
+        "dmDescription": "Schreib einer Person aus deinem Team oder einem Coworker.",
+        "addTitle": "Mitglieder zu #{name} hinzufügen",
+        "addDescription": "Die Personen und Coworker, die du hinzufügst, können hier lesen und posten.",
+        "search": "Personen und Coworker suchen",
+        "people": "Personen",
+        "coworkers": "Coworker",
+        "empty": "Niemand gefunden.",
+        "added": "Hinzugefügt"
+    },
+    "toasts": {
+        "created": "#{name} ist bereit.",
+        "archived": "#{name} ist archiviert.",
+        "left": "Du hast #{name} verlassen."
     }
 }
