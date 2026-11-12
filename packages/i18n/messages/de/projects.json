@@ -2,10 +2,208 @@
     "title": "Projekte",
     "description": "Arbeit, die Menschen und Coworker gemeinsam erledigen.",
     "empty": {
-        "title": "Projekte kommen bald",
-        "description": "Projekte bündeln bald die Tickets, an denen Menschen und Coworker gemeinsam arbeiten."
+        "title": "Starte dein erstes Projekt",
+        "description": "Ein Projekt bündelt die Tickets, an denen Menschen und Coworker gemeinsam arbeiten: ein Launch, ein Kunde, ein Quartalsziel. Jedes Ticket hat eine zuständige Person, einen Status und einen eigenen Verlauf."
     },
     "detail": {
-        "back": "Alle Projekte"
+        "back": "Alle Projekte",
+        "notFound": "Dieses Projekt ist nicht verfügbar",
+        "notFoundHint": "Es existiert nicht oder ist auf die eingetragenen Personen beschränkt.",
+        "tabs": {
+            "board": "Board",
+            "list": "Liste",
+            "overview": "Übersicht"
+        },
+        "restricted": "Eingeschränktes Projekt",
+        "newIssue": "Neues Ticket",
+        "archivedBanner": "Dieses Projekt ist archiviert. Seine Tickets bleiben lesbar; stell es in der Übersicht wieder her, um neue hinzuzufügen."
+    },
+    "status": {
+        "planned": "Geplant",
+        "active": "Aktiv",
+        "paused": "Pausiert",
+        "completed": "Abgeschlossen",
+        "archived": "Archiviert"
+    },
+    "list": {
+        "new": "Neues Projekt",
+        "loadFailed": "Projekte konnten nicht geladen werden",
+        "statusFilter": "Status",
+        "count": "{count, plural, one {# Projekt} other {# Projekte}}",
+        "noMatch": "Kein Projekt passt",
+        "noMatchHint": "Archivierte Projekte erscheinen nur, wenn Archiviert ausgewählt ist.",
+        "clearFilter": "Filter entfernen",
+        "columns": {
+            "name": "Projekt",
+            "status": "Status",
+            "lead": "Leitung",
+            "progress": "Fortschritt",
+            "target": "Ziel"
+        },
+        "restricted": "Eingeschränkt",
+        "noLead": "Keine Leitung",
+        "progress": "{done}/{total} erledigt",
+        "noIssues": "Noch keine Tickets",
+        "noTarget": "Kein Datum"
+    },
+    "create": {
+        "title": "Neues Projekt",
+        "description": "Benenne die Arbeit und gib ihr ein kurzes Kürzel: Ihre Tickets werden damit nummeriert.",
+        "nameLabel": "Name",
+        "namePlaceholder": "Website-Relaunch",
+        "keyLabel": "Kürzel",
+        "keyHint": "Tickets heißen dann {example}. Das Kürzel lässt sich später nicht ändern.",
+        "keyInvalid": "2 bis 6 Buchstaben oder Ziffern, beginnend mit einem Buchstaben.",
+        "keyTaken": "{key} wird schon von einem anderen Projekt verwendet.",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Wofür dieses Projekt da ist, in ein bis zwei Sätzen.",
+        "leadLabel": "Leitung",
+        "noLead": "Keine Leitung",
+        "targetLabel": "Zieldatum",
+        "visibilityLabel": "Wer es sehen kann",
+        "visibility": {
+            "workspace": "Alle im Workspace",
+            "restricted": "Nur die Personen, die ich hinzufüge"
+        },
+        "visibilityWorkspaceHint": "Alle Mitglieder, die alle Boxes sehen, können es öffnen und an seinen Tickets arbeiten.",
+        "visibilityRestrictedHint": "Nur Admins und die Personen, die du später hinzufügst, können es öffnen. Du verwaltest es.",
+        "submit": "Projekt erstellen",
+        "created": "{name} ist bereit"
+    },
+    "board": {
+        "dragHint": "Zieh eine Karte, um sie zu verschieben. Spalten, die der Ablauf nicht erlaubt, sind ausgegraut.",
+        "showCancelled": "Abgebrochene zeigen ({count})",
+        "switcherLabel": "Spalten des Boards",
+        "columnLabel": "{status}, {count, plural, one {# Ticket} other {# Tickets}}",
+        "emptyColumn": "Hier ist nichts",
+        "notFrom": "Nicht aus {from}",
+        "refused": "{ref} kann nicht von {from} nach {to}",
+        "refusedHint": "Von {from} geht es nach {targets}.",
+        "quickAdd": "Ticket hinzufügen",
+        "quickAddIn": "Ticket zu {status} hinzufügen",
+        "quickAddPlaceholder": "Titel des Tickets",
+        "quickAddHint": "Enter zum Hinzufügen, Esc zum Schließen",
+        "quickAddSubmit": "Hinzufügen"
+    },
+    "issueList": {
+        "emptyIssues": "Noch keine Tickets in diesem Projekt",
+        "emptyIssuesHint": "Erstell das erste oder füg sie direkt in einer Spalte des Boards hinzu.",
+        "newIssue": "Neues Ticket",
+        "search": "Tickets suchen",
+        "filters": {
+            "status": "Status",
+            "priority": "Priorität",
+            "assignee": "Zuständig"
+        },
+        "sortLabel": "Sortieren",
+        "sort": {
+            "board": "Board-Reihenfolge",
+            "priority": "Priorität",
+            "updated": "Zuletzt geändert",
+            "created": "Neueste",
+            "due": "Fälligkeit"
+        },
+        "noIssueMatch": "Kein Ticket passt",
+        "noIssueMatchHint": "Versuch eine andere Suche oder weniger Filter.",
+        "clearFilters": "Filter entfernen",
+        "shown": "{shown} von {total, plural, one {# Ticket} other {# Tickets}}"
+    },
+    "overview": {
+        "readOnly": "Du kannst an den Tickets dieses Projekts arbeiten. Nur Admins oder die Verwaltung des Projekts ändern seine Einstellungen.",
+        "aboutTitle": "Über das Projekt",
+        "nameLabel": "Name",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Wofür dieses Projekt da ist, in ein bis zwei Sätzen.",
+        "instructionsTitle": "Anweisungen für Coworker",
+        "instructionsExplainer": "Jeder Coworker liest diese Anweisungen, bevor er an einem Ticket dieses Projekts arbeitet. Schreib hier, was jemand Neues bräuchte: das Ziel, den Ton, die Links, was zu vermeiden ist.",
+        "instructionsLabel": "Anweisungen",
+        "instructionsPlaceholder": "Wir starten die neue Website am 1. März. Schreib freundlich und klar. Entwürfe kommen in den geteilten Ordner Website/Entwürfe. Nichts ohne Prüfung veröffentlichen.",
+        "instructionsHint": "Markdown funktioniert. Menschen lesen es auch, also halt es kurz.",
+        "unsaved": "Ungespeicherte Änderungen",
+        "save": "Speichern",
+        "saved": "Projekt gespeichert",
+        "progressTitle": "Fortschritt",
+        "progressLabel": "{percent} % der Tickets erledigt",
+        "percent": "{percent} %",
+        "noIssuesYet": "Noch keine Tickets.",
+        "progressSummary": "{done, plural, one {# erledigt} other {# erledigt}}, {open, plural, one {# offen} other {# offen}}",
+        "detailsTitle": "Details",
+        "statusLabel": "Status",
+        "archivedStatusHint": "Stell das Projekt wieder her, um seinen Status zu ändern.",
+        "leadLabel": "Leitung",
+        "leadHint": "Die Person oder der Coworker, die für das Projekt verantwortlich ist.",
+        "noLead": "Keine Leitung",
+        "targetLabel": "Zieldatum",
+        "accessTitle": "Zugriff",
+        "accessWorkspace": "Alle im Workspace, die alle Boxes sehen, können dieses Projekt öffnen.",
+        "accessRestricted": "Eingeschränkt: Admins und {count, plural, =0 {sonst noch niemand} one {# Person} other {# Personen}} können dieses Projekt öffnen.",
+        "manageAccess": "Zugriff verwalten",
+        "manageOnly": "Nur Admins oder die Verwaltung dieses Projekts ändern, wer es erreicht.",
+        "archiveTitle": "Archivieren",
+        "archiveExplainer": "Ein archiviertes Projekt verschwindet aus der Liste und nimmt keine neuen Tickets an. Nichts wird gelöscht.",
+        "archive": "Projekt archivieren",
+        "archiveConfirmTitle": "{name} archivieren?",
+        "archiveConfirmDescription": "Das Projekt verschwindet aus der Projektliste und es können keine neuen Tickets hinzugefügt werden. Tickets, Kommentare und Verlauf bleiben lesbar, und du kannst es jederzeit wiederherstellen.",
+        "archived": "{name} ist archiviert",
+        "restoreTitle": "Wiederherstellen",
+        "restoreExplainer": "Hol das Projekt aktiv zurück in die Liste.",
+        "restore": "Projekt wiederherstellen",
+        "restoreConfirmTitle": "{name} wiederherstellen?",
+        "restoreConfirmDescription": "Das Projekt kommt als aktiv zurück in die Liste, und es können wieder Tickets hinzugefügt werden.",
+        "restored": "{name} ist wiederhergestellt"
+    },
+    "access": {
+        "title": "Zugriff auf {project}",
+        "description": "Admins erreichen immer jedes Projekt.",
+        "visibilityField": "Wer dieses Projekt öffnen kann",
+        "visibility": {
+            "workspace": "Alle im Workspace",
+            "restricted": "Nur die hier eingetragenen Personen"
+        },
+        "visibilityHint": {
+            "workspace": "Mitglieder, die alle Boxes sehen, können es öffnen. Hier eingetragene Personen können zusätzlich verwalten.",
+            "restricted": "Nur Admins und die Personen unten können es öffnen, seine Tickets sehen und daran arbeiten."
+        },
+        "people": "Personen",
+        "addPeople": "Personen hinzufügen",
+        "emptyOpen": "Niemand ist für dieses Projekt eingetragen. Trag jemanden ein, um die Verwaltung zu übertragen oder einem Mitglied Zugriff zu geben, das nur die ihm zugewiesenen Boxes sieht.",
+        "emptyRestricted": "Im Moment können nur Admins dieses Projekt öffnen.",
+        "restrict": {
+            "title": "{project} einschränken?",
+            "descriptionWithPeople": "Nur Admins und die hier eingetragenen Personen können es öffnen. Alle anderen verlieren sofort den Zugriff auf seine Tickets.",
+            "descriptionEmpty": "Nur Admins können es öffnen, bis du Personen einträgst. Alle anderen verlieren sofort den Zugriff auf seine Tickets.",
+            "confirm": "Einschränken"
+        },
+        "teammate": "Teammitglied",
+        "admin": "Admin",
+        "adminsAlways": "Admins erreichen immer jedes Projekt",
+        "accessOf": "Zugriff von {person}",
+        "levels": {
+            "use": {
+                "label": "Kann nutzen",
+                "description": "Sieht das Projekt und arbeitet an seinen Tickets"
+            },
+            "manage": {
+                "label": "Kann verwalten",
+                "description": "Ändert auch die Einstellungen und wer es erreicht"
+            }
+        },
+        "remove": {
+            "title": "{person} entfernen?",
+            "restricted": "Die Person kann dieses Projekt und seine Tickets nicht mehr öffnen.",
+            "open": "Die Person behält den Zugriff, den jedes Mitglied hat, ohne die hier vergebene Stufe.",
+            "confirm": "Entfernen",
+            "ariaLabel": "{person} entfernen"
+        },
+        "add": {
+            "title": "Personen hinzufügen",
+            "back": "Zurück zum Zugriff",
+            "peopleField": "Personen",
+            "placeholder": "Mitglieder auswählen",
+            "search": "Mitglieder suchen",
+            "empty": "Kein Mitglied mehr zum Hinzufügen",
+            "accessField": "Zugriff",
+            "submit": "{count, plural, =0 {Hinzufügen} one {# Person hinzufügen} other {# Personen hinzufügen}}"
+        }
     }
 }

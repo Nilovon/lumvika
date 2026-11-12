@@ -22,6 +22,7 @@ import emails from './emails.json'
 import errors from './errors.json'
 import files from './files.json'
 import goals from './goals.json'
+import issues from './issues.json'
 import kit from './kit.json'
 import landingCommon from './landingCommon.json'
 import landingCommunity from './landingCommunity.json'
@@ -63,4 +64,4 @@ import ui from './ui.json'
 import work from './work.json'
 import workspace from './workspace.json'
 
-export default { account, activity, agent, agentSuggestions, apps, assistant, auth, billing, brain, builder, changelog, channels, chat, chatErrors, common, connections, data, desktop, dialogs, emails, errors, files, goals, kit, landingCommon, landingCommunity, landingCompare, landingFeatures, landingHome, landingIndustries, landingPricing, landingResources, landingSections, landingTemplates, layout, mobileAuth, mobileCards, mobileChat, mobileCommon, mobileCoworker, mobileHitl, mobileHome, mobileOnboarding, mobileProviders, mobileSettings, mobileSteps, notifications, overview, projects, publicPages, published, push, review, rewind, services, steward, subRuns, teams, templates, tools, ui, work, workspace }
+export default { account, activity, agent, agentSuggestions, apps, assistant, auth, billing, brain, builder, changelog, channels, chat, chatErrors, common, connections, data, desktop, dialogs, emails, errors, files, goals, issues, kit, landingCommon, landingCommunity, landingCompare, landingFeatures, landingHome, landingIndustries, landingPricing, landingResources, landingSections, landingTemplates, layout, mobileAuth, mobileCards, mobileChat, mobileCommon, mobileCoworker, mobileHitl, mobileHome, mobileOnboarding, mobileProviders, mobileSettings, mobileSteps, notifications, overview, projects, publicPages, published, push, review, rewind, services, steward, subRuns, teams, templates, tools, ui, work, workspace }

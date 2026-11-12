@@ -1,0 +1,132 @@
+{
+    "_context": {
+        "status.todo": "Board column and status of an issue that is ready to be worked on.",
+        "member.coworker": "An AI coworker the viewer cannot see, shown in place of its name.",
+        "detail.done": "Button that closes the field for adding sub-issues, not the Done status.",
+        "row.workingShort": "Short label on a board card while an AI coworker works on the issue.",
+        "activity.checkedOut": "{actor} is usually an AI coworker that picked the issue up.",
+        "create.coworkerHint": "Shown when the new issue is assigned to an AI coworker."
+    },
+    "status": {
+        "backlog": "Backlog",
+        "todo": "Todo",
+        "in_progress": "In progress",
+        "in_review": "In review",
+        "blocked": "Blocked",
+        "done": "Done",
+        "cancelled": "Cancelled"
+    },
+    "priority": {
+        "none": "No priority",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent",
+        "ariaLabel": "Priority: {priority}"
+    },
+    "member": {
+        "unassigned": "Unassigned",
+        "teammate": "Teammate",
+        "coworker": "Coworker",
+        "system": "Lumvika"
+    },
+    "assignee": {
+        "unassigned": "Unassigned",
+        "ariaLabel": "Assignee: {name}",
+        "search": "Search people and coworkers",
+        "empty": "Nobody matches",
+        "people": "People",
+        "coworkers": "Coworkers",
+        "you": "{name} (you)"
+    },
+    "statusPicker": {
+        "ariaLabel": "Status: {status}. Change status",
+        "moveTo": "Move to",
+        "noMove": "No move from {status}"
+    },
+    "row": {
+        "due": "Due {date}",
+        "overdue": "Overdue since {date}",
+        "workingShort": "Working"
+    },
+    "blocked": {
+        "title": "Why is {ref} blocked?",
+        "description": "People and coworkers who pick this issue up next read the reason.",
+        "reasonLabel": "Reason",
+        "placeholder": "Waiting for the legal review",
+        "confirm": "Mark as blocked"
+    },
+    "detail": {
+        "loading": "Loading the issue",
+        "notFound": "This issue is not available",
+        "srDescription": "Details, comments and activity of {ref}",
+        "titleLabel": "Title",
+        "editTitle": "Click to edit the title",
+        "copyLink": "Copy link",
+        "linkCopied": "Link to {ref} copied",
+        "linkCopyFailed": "The link could not be copied",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What needs to happen, and what done looks like. Markdown works.",
+        "addDescription": "Add a description",
+        "noDescription": "No description.",
+        "edit": "Edit",
+        "working": "{name} is working on this issue",
+        "assignedTo": "Assigned to {name}",
+        "workingSince": "Started {time}",
+        "openConversation": "Open conversation",
+        "blockedTitle": "Blocked",
+        "blockedNoReason": "No reason was given.",
+        "subIssues": "Sub-issues",
+        "subIssuesCount": "Sub-issues, {done} of {total} done",
+        "addSubIssue": "Add sub-issue",
+        "addSubIssueSubmit": "Add",
+        "subIssuePlaceholder": "Title of the sub-issue",
+        "noSubIssues": "No sub-issues yet. Split bigger work into steps someone can finish.",
+        "done": "Close",
+        "status": "Status",
+        "priority": "Priority",
+        "assignee": "Assignee",
+        "dueDate": "Due date",
+        "parent": "Parent issue",
+        "noParent": "None",
+        "parentSearch": "Search issues of this project",
+        "created": "Created by {name}, {date}",
+        "commentsTab": "Comments ({count})",
+        "activityTab": "Activity"
+    },
+    "comments": {
+        "empty": "No comments yet. Ask a question, hand over context or report progress here.",
+        "placeholder": "Write a comment. Markdown works.",
+        "hint": "Ctrl or Cmd + Enter to send",
+        "submit": "Comment",
+        "edited": "edited",
+        "edit": "Edit",
+        "editLabel": "Edit your comment"
+    },
+    "activity": {
+        "empty": "Nothing happened yet.",
+        "created": "{actor} created the issue",
+        "statusChanged": "{actor} moved it from {from} to {to}",
+        "assigned": "{actor} assigned it to {assignee}",
+        "unassigned": "{actor} removed the assignee",
+        "commented": "{actor} commented",
+        "commentEdited": "{actor} edited a comment",
+        "checkedOut": "{actor} started working on it",
+        "released": "{actor} stopped working on it",
+        "updated": "{actor} edited the issue"
+    },
+    "create": {
+        "title": "New issue",
+        "description": "An issue in {project}: a piece of work with one owner and a status.",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Draft the launch announcement",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What needs to happen, and what done looks like.",
+        "statusLabel": "Status",
+        "priorityLabel": "Priority",
+        "assigneeLabel": "Assignee",
+        "dueLabel": "Due date",
+        "coworkerHint": "The coworker is notified and picks the issue up on its own.",
+        "submit": "Create issue"
+    }
+}

@@ -1,0 +1,124 @@
+{
+    "status": {
+        "backlog": "Backlog",
+        "todo": "Zu erledigen",
+        "in_progress": "In Arbeit",
+        "in_review": "In Prüfung",
+        "blocked": "Blockiert",
+        "done": "Erledigt",
+        "cancelled": "Abgebrochen"
+    },
+    "priority": {
+        "none": "Keine Priorität",
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "urgent": "Dringend",
+        "ariaLabel": "Priorität: {priority}"
+    },
+    "member": {
+        "unassigned": "Nicht zugewiesen",
+        "teammate": "Teammitglied",
+        "coworker": "Coworker",
+        "system": "Lumvika"
+    },
+    "assignee": {
+        "unassigned": "Nicht zugewiesen",
+        "ariaLabel": "Zuständig: {name}",
+        "search": "Personen und Coworker suchen",
+        "empty": "Niemand gefunden",
+        "people": "Personen",
+        "coworkers": "Coworker",
+        "you": "{name} (du)"
+    },
+    "statusPicker": {
+        "ariaLabel": "Status: {status}. Status ändern",
+        "moveTo": "Verschieben nach",
+        "noMove": "Von {status} geht es nirgendwohin"
+    },
+    "row": {
+        "due": "Fällig am {date}",
+        "overdue": "Überfällig seit {date}",
+        "workingShort": "Arbeitet"
+    },
+    "blocked": {
+        "title": "Warum ist {ref} blockiert?",
+        "description": "Personen und Coworker, die das Ticket als Nächstes übernehmen, lesen den Grund.",
+        "reasonLabel": "Grund",
+        "placeholder": "Wartet auf die rechtliche Prüfung",
+        "confirm": "Als blockiert markieren"
+    },
+    "detail": {
+        "loading": "Ticket wird geladen",
+        "notFound": "Dieses Ticket ist nicht verfügbar",
+        "srDescription": "Details, Kommentare und Verlauf von {ref}",
+        "titleLabel": "Titel",
+        "editTitle": "Klicken, um den Titel zu bearbeiten",
+        "copyLink": "Link kopieren",
+        "linkCopied": "Link zu {ref} kopiert",
+        "linkCopyFailed": "Der Link konnte nicht kopiert werden",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Was passieren soll und wann es erledigt ist. Markdown funktioniert.",
+        "addDescription": "Beschreibung hinzufügen",
+        "noDescription": "Keine Beschreibung.",
+        "edit": "Bearbeiten",
+        "working": "{name} arbeitet an diesem Ticket",
+        "assignedTo": "Zugewiesen an {name}",
+        "workingSince": "Begonnen {time}",
+        "openConversation": "Unterhaltung öffnen",
+        "blockedTitle": "Blockiert",
+        "blockedNoReason": "Es wurde kein Grund angegeben.",
+        "subIssues": "Unter-Tickets",
+        "subIssuesCount": "Unter-Tickets, {done} von {total} erledigt",
+        "addSubIssue": "Unter-Ticket hinzufügen",
+        "addSubIssueSubmit": "Hinzufügen",
+        "subIssuePlaceholder": "Titel des Unter-Tickets",
+        "noSubIssues": "Noch keine Unter-Tickets. Teile größere Arbeit in Schritte, die jemand abschließen kann.",
+        "done": "Schließen",
+        "status": "Status",
+        "priority": "Priorität",
+        "assignee": "Zuständig",
+        "dueDate": "Fällig am",
+        "parent": "Übergeordnetes Ticket",
+        "noParent": "Keins",
+        "parentSearch": "Tickets dieses Projekts suchen",
+        "created": "Erstellt von {name}, {date}",
+        "commentsTab": "Kommentare ({count})",
+        "activityTab": "Verlauf"
+    },
+    "comments": {
+        "empty": "Noch keine Kommentare. Stell hier Fragen, gib Kontext weiter oder melde Fortschritt.",
+        "placeholder": "Schreib einen Kommentar. Markdown funktioniert.",
+        "hint": "Strg oder Cmd + Enter zum Senden",
+        "submit": "Kommentieren",
+        "edited": "bearbeitet",
+        "edit": "Bearbeiten",
+        "editLabel": "Deinen Kommentar bearbeiten"
+    },
+    "activity": {
+        "empty": "Noch ist nichts passiert.",
+        "created": "{actor} hat das Ticket erstellt",
+        "statusChanged": "{actor} hat es von {from} nach {to} verschoben",
+        "assigned": "{actor} hat es {assignee} zugewiesen",
+        "unassigned": "{actor} hat die Zuweisung entfernt",
+        "commented": "{actor} hat kommentiert",
+        "commentEdited": "{actor} hat einen Kommentar bearbeitet",
+        "checkedOut": "{actor} hat mit der Arbeit begonnen",
+        "released": "{actor} hat die Arbeit beendet",
+        "updated": "{actor} hat das Ticket bearbeitet"
+    },
+    "create": {
+        "title": "Neues Ticket",
+        "description": "Ein Ticket in {project}: ein Stück Arbeit mit einer zuständigen Person und einem Status.",
+        "titleLabel": "Titel",
+        "titlePlaceholder": "Ankündigung zum Launch entwerfen",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Was passieren soll und wann es erledigt ist.",
+        "statusLabel": "Status",
+        "priorityLabel": "Priorität",
+        "assigneeLabel": "Zuständig",
+        "dueLabel": "Fällig am",
+        "coworkerHint": "Der Coworker wird benachrichtigt und übernimmt das Ticket selbstständig.",
+        "submit": "Ticket erstellen"
+    }
+}
