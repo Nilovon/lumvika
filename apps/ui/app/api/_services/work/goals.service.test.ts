@@ -97,7 +97,7 @@ describe('deleteGoal', () => {
             ['company', null],
             ['seo', 'company'],
         ])
-        expect(rows.activity_events[0]).toMatchObject({ action: 'goal.updated', metadata: { deleted: true, title: 'grow' } })
+        expect(rows.activity_events[0]).toMatchObject({ action: 'goal.deleted', metadata: { title: 'grow' } })
     })
 })
 

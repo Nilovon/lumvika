@@ -37,6 +37,14 @@ describe('readTeamStatus', () => {
         })
     })
 
+    it('never names a coworker the caller cannot see', async () => {
+        const { agents } = await readTeamStatus(WORKSPACE, {}, new Set(['writer', 'seo']))
+        expect(agents.map(entry => [entry.id, entry.reportsTo, entry.directReports])).toEqual([
+            ['seo', null, []],
+            ['writer', null, []],
+        ])
+    })
+
     it('names a manager that sits in a Box the filter left out', async () => {
         const { agents } = await readTeamStatus(WORKSPACE, { spaceId: 'box-1' })
         expect(agents.map(entry => [entry.id, entry.reportsTo])).toEqual([

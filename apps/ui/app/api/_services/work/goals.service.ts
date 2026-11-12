@@ -93,8 +93,7 @@ export async function updateGoal(scope: WorkScope, author: WorkAuthor, goalId: s
 }
 
 // The goals under it move up to its parent rather than becoming roots; projects and issues linked to
-// it lose the link (the foreign keys set it to null). The contracts have no `goal.deleted`: the
-// removal is logged as the goal's last update.
+// it lose the link (the foreign keys set it to null).
 export async function deleteGoal(scope: WorkScope, author: WorkAuthor, goalId: string): Promise<void> {
     const goal = await readGoal(scope, goalId)
     const supabase = clientOf(scope)
@@ -102,7 +101,7 @@ export async function deleteGoal(scope: WorkScope, author: WorkAuthor, goalId: s
     if (reparentError) throw new Error(`Failed to move the goals under this one: ${reparentError.message}`)
     const { error } = await supabase.from('goals').delete().eq('id', goalId).eq('workspace_id', scope.workspaceId)
     if (error) throw new Error(`Failed to delete the goal: ${error.message}`)
-    await recordActivity(scope, { action: 'goal.updated', entityType: 'goal', entityId: goalId, author, metadata: { deleted: true, title: goal.title } })
+    await recordActivity(scope, { action: 'goal.deleted', entityType: 'goal', entityId: goalId, author, metadata: { title: goal.title } })
 }
 
 function countsToProgress(rows: readonly { status: IssueStatus }[]): GoalProgress {

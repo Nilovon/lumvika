@@ -49,8 +49,9 @@ export function reportingRefusalOf(error: { message?: string } | null | undefine
     return TRIGGER_REFUSALS.find(([prefix]) => message.includes(prefix))?.[1] ?? null
 }
 
-// Every coworker of the workspace with its title, manager and Box: the org chart is read by any member.
-export async function readOrgChart(scope: WorkScope): Promise<OrgChartCoworker[]> {
+// The coworkers the reader can see, with their title, manager and Box. A manager the reader cannot see
+// is left unnamed: its report is drawn as a root, and nothing says someone sits above it.
+export async function readOrgChart(scope: WorkScope, visible: 'all' | ReadonlySet<string>): Promise<OrgChartCoworker[]> {
     const supabase = clientOf(scope)
     const [agents, spaces] = await Promise.all([
         selectAll(supabase, 'agents', ORG_AGENT_COLUMNS, { workspace_id: scope.workspaceId }, { column: 'created_at', ascending: true }),
@@ -58,12 +59,13 @@ export async function readOrgChart(scope: WorkScope): Promise<OrgChartCoworker[]
     ])
     if (agents.error) throw new Error(`Failed to read the coworkers: ${agents.error.message}`)
     const spaceName = new Map((spaces.data ?? []).map(space => [space.id, space.name]))
-    return (agents.data ?? []).map(agent => ({
+    const seen = (agentId: string) => visible === 'all' || visible.has(agentId)
+    return (agents.data ?? []).filter(agent => seen(agent.id)).map(agent => ({
         id: agent.id,
         name: agent.name,
         handle: agent.handle,
         title: agent.title,
-        reportsToAgentId: agent.reports_to_agent_id,
+        reportsToAgentId: agent.reports_to_agent_id && seen(agent.reports_to_agent_id) ? agent.reports_to_agent_id : null,
         spaceId: agent.space_id,
         spaceName: spaceName.get(agent.space_id) ?? null,
         disabled: !!agent.disabled_at,

@@ -337,7 +337,8 @@ export async function dispatchAccountTool(actor: Actor, name: string, args: Reco
         }
 
         case 'get_team_status': {
-            const [status, visible] = await Promise.all([readTeamStatus(workspaceId, { spaceId: asString(args.spaceId), agentId: asString(args.agentId) }), visibleAgentIds(actor)])
+            const visible = await visibleAgentIds(actor)
+            const status = await readTeamStatus(workspaceId, { spaceId: asString(args.spaceId), agentId: asString(args.agentId) }, visible)
             return { ...status, agents: keepVisible(status.agents, visible, agent => agent.id) }
         }
 

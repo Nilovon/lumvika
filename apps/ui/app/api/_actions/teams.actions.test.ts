@@ -24,7 +24,15 @@ function signedInAs(role: 'admin' | 'member', tables: Partial<Tables> = {}) {
         team_members: [],
         projects: [],
         project_members: [],
-        agents: [{ id: 'agent-1', workspace_id: WORKSPACE }],
+        spaces: [
+            { id: 'box-open', workspace_id: WORKSPACE, visibility: 'workspace' },
+            { id: 'box-shut', workspace_id: WORKSPACE, visibility: 'restricted' },
+        ],
+        space_members: [],
+        agents: [
+            { id: 'agent-1', workspace_id: WORKSPACE, space_id: 'box-open' },
+            { id: 'agent-shut', workspace_id: WORKSPACE, space_id: 'box-shut' },
+        ],
         activity_events: [],
         ...tables,
     }
@@ -76,6 +84,27 @@ describe('teams actions', () => {
         await expect(setTeamMemberRoleAction('team-1', coworkerRow.id as string, 'member')).resolves.toMatchObject({ ok: true })
         await expect(removeTeamMemberAction('team-1', coworkerRow.id as string)).resolves.toMatchObject({ ok: true })
         await expect(updateTeamAction('team-1', { name: 'Renamed' })).resolves.toMatchObject({ ok: false, code: 'adminOnly' })
+    })
+
+    it('never shows nor lets a lead touch a coworker of a Box they cannot see, without saying it exists', async () => {
+        const { rows } = signedInAs('member', { team_members: [teamMember({ role: 'lead' }), teamMember({ id: 'tm-shut', user_id: null, agent_id: 'agent-shut' })] })
+
+        const listed = await listTeamsAction()
+        expect(listed).toMatchObject({ ok: true, teams: [{ members: [{ id: 'tm-1' }] }] })
+        expect(JSON.stringify(listed)).not.toContain('agent-shut')
+
+        await expect(addTeamMemberAction('team-1', { member: { kind: 'agent', agentId: 'agent-shut' } })).resolves.toMatchObject({ ok: false, code: 'coworkerNotFound' })
+        await expect(removeTeamMemberAction('team-1', 'tm-shut')).resolves.toMatchObject({ ok: false, code: 'teamMemberNotFound' })
+        await expect(setTeamMemberRoleAction('team-1', 'tm-shut', 'lead')).resolves.toMatchObject({ ok: false, code: 'teamMemberNotFound' })
+        expect(rows.team_members).toHaveLength(2)
+
+        const added = await addTeamMemberAction('team-1', { member: { kind: 'agent', agentId: 'agent-1' } })
+        expect(added.ok && added.team.members.map(entry => entry.id)).not.toContain('tm-shut')
+    })
+
+    it('shows an admin every coworker of the team', async () => {
+        signedInAs('admin', { team_members: [teamMember({ id: 'tm-shut', user_id: null, agent_id: 'agent-shut' })] })
+        await expect(listTeamsAction()).resolves.toMatchObject({ ok: true, teams: [{ members: [{ member: { kind: 'agent', agentId: 'agent-shut' } }] }] })
     })
 
     it('hands back the refusal of a member outside the workspace', async () => {

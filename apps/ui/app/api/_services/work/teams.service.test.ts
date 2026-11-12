@@ -5,13 +5,15 @@ import { workDatabase, type Row, type Tables } from '@/test/work-fake'
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 
 const { createServiceRoleClient } = await import('@/supabase/serviceRole')
-const { addTeamMember, createTeam, deleteTeam, isTeamLead, listTeamOverviews, removeTeamMember, setTeamMemberRole, teamNamesByAgent, updateTeam } = await import('./teams.service')
+const { addTeamMember, createTeam, deleteTeam, isTeamLead, listTeamOverviews, removeTeamMember, setTeamMemberRole, teamNamesByAgent, updateTeam, visibleTeam } = await import('./teams.service')
 
 type Actor = import('@/app/api/_auth/access').Actor
 
 const WORKSPACE = 7
 const ME = { kind: 'user', userId: 'me' } as const
 const member: Actor = { kind: 'user', userId: 'me', workspaceId: WORKSPACE, role: 'member', boxScope: 'all' }
+const assignedMember: Actor = { ...member, boxScope: 'assigned' }
+const admin: Actor = { ...member, role: 'admin' }
 
 function team(overrides: Row = {}): Row {
     return { id: 'team-1', workspace_id: WORKSPACE, name: 'Growth', description: null, color: '#2563eb', created_at: '2026-11-01T00:00:00.000Z', updated_at: '2026-11-01T00:00:00.000Z', ...overrides }
@@ -29,7 +31,9 @@ function setup(tables: Partial<Tables> = {}, refuse?: Record<string, { code?: st
         project_members: [],
         activity_events: [],
         workspace_members: [{ user_id: 'me', workspace_id: WORKSPACE }],
-        agents: [{ id: 'agent-1', workspace_id: WORKSPACE }],
+        agents: [{ id: 'agent-1', workspace_id: WORKSPACE, space_id: 'box-open' }],
+        spaces: [{ id: 'box-open', workspace_id: WORKSPACE, visibility: 'workspace' }],
+        space_members: [],
         ...tables,
     }
     const db = workDatabase(rows, { refuse })
@@ -72,11 +76,11 @@ describe('createTeam and updateTeam', () => {
         await expect(deleteTeam(scope, ME, 'team-1')).rejects.toMatchObject({ code: 'teamNotFound' })
     })
 
-    it('deletes a team and logs it as its last update', async () => {
+    it('deletes a team and logs it', async () => {
         const { rows, scope } = setup({ teams: [team()] })
         await deleteTeam(scope, ME, 'team-1')
         expect(rows.teams).toEqual([])
-        expect(rows.activity_events[0]).toMatchObject({ action: 'team.updated', metadata: { deleted: true, name: 'Growth' } })
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.deleted', metadata: { name: 'Growth' } })
     })
 })
 
@@ -112,7 +116,7 @@ describe('team members', () => {
             ['tm-1', 'member'],
             ['tm-2', 'lead'],
         ])
-        expect(rows.activity_events[0]).toMatchObject({ action: 'team.updated', metadata: { fields: ['members'], member: { kind: 'agent', agentId: 'agent-1' }, role: 'lead' } })
+        expect(rows.activity_events[0]).toMatchObject({ action: 'team.member_role_changed', metadata: { userId: null, agentId: 'agent-1', from: 'member', to: 'lead' } })
     })
 
     it('removes a member and logs who left', async () => {
@@ -147,6 +151,47 @@ describe('listTeamOverviews and teamNamesByAgent', () => {
             ['Growth', ['WEB'], []],
             ['Ops', [], ['lead']],
         ])
+    })
+
+    describe('coworkers the reader cannot see', () => {
+        // agent-1 in an open Box, agent-2 in a restricted one, agent-3 in an open Box nobody granted.
+        const tables = () => ({
+            spaces: [
+                { id: 'box-open', workspace_id: WORKSPACE, visibility: 'workspace' },
+                { id: 'box-shut', workspace_id: WORKSPACE, visibility: 'restricted' },
+            ],
+            agents: [
+                { id: 'agent-1', workspace_id: WORKSPACE, space_id: 'box-open' },
+                { id: 'agent-2', workspace_id: WORKSPACE, space_id: 'box-shut' },
+            ],
+            teams: [team()],
+            team_members: [teamMember(), teamMember({ id: 'tm-2', user_id: null, agent_id: 'agent-1', role: 'lead' }), teamMember({ id: 'tm-3', user_id: null, agent_id: 'agent-2' })],
+        })
+        const shown = (overviews: Awaited<ReturnType<typeof listTeamOverviews>>) => overviews[0].members.map(entry => (entry.member.kind === 'user' ? entry.member.userId : entry.member.agentId))
+
+        it('leaves out the coworker of a restricted Box for a member scoped to all Boxes', async () => {
+            const { scope } = setup(tables())
+            expect(shown(await listTeamOverviews(scope, member))).toEqual(['me', 'agent-1'])
+        })
+
+        it('keeps the team and its people for a member scoped to assigned Boxes who sees no coworker', async () => {
+            const { scope } = setup(tables())
+            const [overview] = await listTeamOverviews(scope, assignedMember)
+            expect(overview.name).toBe('Growth')
+            expect(shown([overview])).toEqual(['me'])
+        })
+
+        it('shows every coworker to an admin, and what a grant opens to a member', async () => {
+            const { scope } = setup(tables())
+            expect(shown(await listTeamOverviews(scope, admin))).toEqual(['me', 'agent-1', 'agent-2'])
+            const granted = setup({ ...tables(), space_members: [{ space_id: 'box-shut', user_id: 'me', workspace_id: WORKSPACE, access: 'use' }] })
+            expect(shown(await listTeamOverviews(granted.scope, assignedMember))).toEqual(['me', 'agent-2'])
+        })
+
+        it('filters a team handed back by a change the same way', () => {
+            const result = visibleTeam({ id: 't', name: 'x', description: null, color: null, createdAt: '', updatedAt: '', members: [{ id: 'a', member: { kind: 'agent', agentId: 'hidden' }, role: 'lead' }] }, new Set<string>())
+            expect(result.members).toEqual([])
+        })
     })
 
     it('names the teams of each coworker', async () => {

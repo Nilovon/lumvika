@@ -28,10 +28,19 @@ beforeEach(() => vi.clearAllMocks())
 describe('readOrgChart', () => {
     it('reads every coworker of the workspace with its title, manager and Box', async () => {
         const { scope } = setup({ agents: [agent('ceo', { title: 'Chief of staff' }), agent('dev', { reports_to_agent_id: 'ceo', disabled_at: 'then' }), agent('other', { workspace_id: 99 })] })
-        await expect(readOrgChart(scope)).resolves.toEqual([
+        await expect(readOrgChart(scope, 'all')).resolves.toEqual([
             { id: 'ceo', name: 'CEO', handle: 'ceo', title: 'Chief of staff', reportsToAgentId: null, spaceId: 'box-1', spaceName: 'Studio', disabled: false },
             { id: 'dev', name: 'DEV', handle: 'dev', title: null, reportsToAgentId: 'ceo', spaceId: 'box-1', spaceName: 'Studio', disabled: true },
         ])
+    })
+})
+
+describe('readOrgChart for a reader who cannot see every coworker', () => {
+    it('draws a coworker whose manager is hidden as a root and leaves a hidden report out', async () => {
+        const { scope } = setup()
+        const chart = await readOrgChart(scope, new Set(['cto']))
+        expect(chart).toEqual([expect.objectContaining({ id: 'cto', reportsToAgentId: null })])
+        expect(JSON.stringify(chart)).not.toContain('ceo')
     })
 })
 

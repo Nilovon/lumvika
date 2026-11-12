@@ -24,7 +24,7 @@ export async function listGoalsAction(): Promise<ActionResult<GoalsOverview>> {
         const ctx = await requireWorkspaceContext()
         const scope = workScopeOf(ctx)
         const actor = actorFromContext(ctx)
-        const [goals, teams, projects] = await Promise.all([listGoalTree(scope, actor), listTeams(scope), listProjects(scope, actor)])
+        const [goals, teams, projects] = await Promise.all([listGoalTree(scope, actor), listTeams(scope, 'all'), listProjects(scope, actor)])
         return {
             ok: true,
             goals,

@@ -12,9 +12,10 @@ import {
     type TeamMemberRole,
     type UpdateTeamInput,
     type WorkAuthor,
+    type WorkMemberRef,
 } from '@lumvika/contracts'
 
-import type { Actor } from '@/app/api/_auth/access'
+import { visibleAgentIds, type Actor } from '@/app/api/_auth/access'
 import { projectAccessMap } from '@/app/api/_auth/project-access'
 import type { Database } from '@/app/api/database.types'
 import { recordActivity } from '@/app/api/_services/work/activity.service'
@@ -44,12 +45,19 @@ async function readMembers(scope: WorkScope, teamId: string): Promise<TeamMember
     return data ?? []
 }
 
+// A reader sees the coworkers of the Boxes they reach and no other: a team keeps its people and the
+// coworkers the reader can see, and counts only those.
+export function visibleTeam<T extends Team>(team: T, visible: 'all' | ReadonlySet<string>): T {
+    if (visible === 'all') return team
+    return { ...team, members: team.members.filter(entry => entry.member.kind === 'user' || visible.has(entry.member.agentId)) }
+}
+
 export async function getTeam(scope: WorkScope, teamId: string): Promise<Team> {
     const [row, members] = await Promise.all([readTeam(scope, teamId), readMembers(scope, teamId)])
     return toTeam(row, members)
 }
 
-export async function listTeams(scope: WorkScope): Promise<Team[]> {
+export async function listTeams(scope: WorkScope, visible: 'all' | ReadonlySet<string>): Promise<Team[]> {
     const supabase = clientOf(scope)
     const [teams, members] = await Promise.all([
         selectAll(supabase, 'teams', TEAM_COLUMNS, { workspace_id: scope.workspaceId }, { column: 'name', ascending: true }),
@@ -59,13 +67,13 @@ export async function listTeams(scope: WorkScope): Promise<Team[]> {
     if (members.error) throw new Error(`Failed to list the team members: ${members.error.message}`)
     const byTeam = new Map<string, TeamMemberRow[]>()
     for (const member of members.data ?? []) byTeam.set(member.team_id, [...(byTeam.get(member.team_id) ?? []), member])
-    return (teams.data ?? []).map(row => toTeam(row, byTeam.get(row.id) ?? []))
+    return (teams.data ?? []).map(row => visibleTeam(toTeam(row, byTeam.get(row.id) ?? []), visible))
 }
 
-// Every team with the projects it carries that the actor can see.
+// Every team with the coworkers and the projects the actor can see.
 export async function listTeamOverviews(scope: WorkScope, actor: Actor): Promise<TeamOverview[]> {
     const [teams, projects, access] = await Promise.all([
-        listTeams(scope),
+        visibleAgentIds(actor).then(visible => listTeams(scope, visible)),
         selectAll(clientOf(scope), 'projects', ['id', 'key', 'name', 'status', 'team_id', 'visibility', 'workspace_id'] as const, { workspace_id: scope.workspaceId, team_id: { notNull: true }, archived_at: { isNull: true } }, { column: 'name', ascending: true }),
         projectAccessMap(actor),
     ])
@@ -115,12 +123,11 @@ export async function updateTeam(scope: WorkScope, author: WorkAuthor, teamId: s
     return getTeam(scope, teamId)
 }
 
-// The contracts have no `team.deleted`: the removal is logged as the team's last update.
 export async function deleteTeam(scope: WorkScope, author: WorkAuthor, teamId: string): Promise<void> {
     const team = await readTeam(scope, teamId)
     const { error } = await clientOf(scope).from('teams').delete().eq('id', teamId).eq('workspace_id', scope.workspaceId)
     if (error) throw new Error(`Failed to delete the team: ${error.message}`)
-    await recordActivity(scope, { action: 'team.updated', entityType: 'team', entityId: teamId, author, metadata: { deleted: true, name: team.name } })
+    await recordActivity(scope, { action: 'team.deleted', entityType: 'team', entityId: teamId, author, metadata: { name: team.name } })
 }
 
 function memberMetadata(row: Pick<TeamMemberRow, 'user_id' | 'agent_id'>): { userId: string | null; agentId: string | null } {
@@ -158,6 +165,13 @@ async function readMember(scope: WorkScope, teamId: string, memberId: string): P
     return data
 }
 
+export async function readTeamMemberRef(scope: WorkScope, teamId: string, memberId: string): Promise<WorkMemberRef> {
+    const member = await readMember(scope, teamId, memberId)
+    const ref = memberRefOf(member.user_id, member.agent_id)
+    if (!ref) throw new AppError('teamMemberNotFound')
+    return ref
+}
+
 export async function removeTeamMember(scope: WorkScope, author: WorkAuthor, teamId: string, memberId: string): Promise<Team> {
     const member = await readMember(scope, teamId, memberId)
     const { error } = await clientOf(scope).from('team_members').delete().eq('id', memberId).eq('team_id', teamId).eq('workspace_id', scope.workspaceId)
@@ -174,7 +188,7 @@ export async function setTeamMemberRole(scope: WorkScope, author: WorkAuthor, te
     const { error } = await clientOf(scope).from('team_members').update<TeamMemberUpdate>({ role: parsedRole }).eq('id', memberId).eq('team_id', teamId).eq('workspace_id', scope.workspaceId)
     if (error) throw new Error(`Failed to change the team member's role: ${error.message}`)
     if (parsedRole === 'lead') await demoteOtherLeads(scope, teamId, memberId)
-    await recordActivity(scope, { action: 'team.updated', entityType: 'team', entityId: teamId, author, metadata: { fields: ['members'], member: memberRefOf(member.user_id, member.agent_id), role: parsedRole } })
+    await recordActivity(scope, { action: 'team.member_role_changed', entityType: 'team', entityId: teamId, author, metadata: { ...memberMetadata(member), from: member.role, to: parsedRole } })
     return getTeam(scope, teamId)
 }
 
