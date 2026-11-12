@@ -187,15 +187,24 @@ export async function archiveChannel(scope: WorkScope, author: WorkAuthor, chann
     return toChannel(data)
 }
 
-// A workspace with no channel at all gets #general the first time someone opens the list, so nobody
-// lands on an empty screen. Two people opening it at once race on the name index: the loser reads
-// the winner's.
+// Nobody lands on an empty list: a workspace with no channel at all gets #general the first time
+// someone opens it, and a person in no channel yet joins #general, the way everyone starts there.
+// Two people creating it at once race on the name index: the loser reads the winner's.
 export async function ensureGeneralChannel(scope: WorkScope, person: ChannelPerson): Promise<void> {
-    const { data: any } = await selectMany(clientOf(scope), 'channels', ['id'] as const, { workspace_id: scope.workspaceId }, undefined, 1)
+    const supabase = clientOf(scope)
+    const me: WorkMemberRef = { kind: 'user', userId: person.userId }
+    const [{ data: mine }, { data: general }] = await Promise.all([
+        selectMany(supabase, 'channel_members', ['id'] as const, { workspace_id: scope.workspaceId, user_id: person.userId }, undefined, 1),
+        selectMaybeSingle(supabase, 'channels', ['id'] as const, { workspace_id: scope.workspaceId, name: GENERAL_CHANNEL_NAME, kind: 'public', archived_at: { isNull: true } }),
+    ])
+    if (mine && mine.length > 0) return
+    if (general) return insertMember(scope, general.id, me, new Date().toISOString())
+
+    const { data: any } = await selectMany(supabase, 'channels', ['id'] as const, { workspace_id: scope.workspaceId }, undefined, 1)
     if (any && any.length > 0) return
     try {
         const row = await insertChannel(scope, { name: GENERAL_CHANNEL_NAME, description: null, kind: 'public', projectId: null, teamId: null, createdBy: null })
-        await insertMember(scope, row.id, { kind: 'user', userId: person.userId }, new Date().toISOString())
+        await insertMember(scope, row.id, me, new Date().toISOString())
         await recordActivity(scope, { action: 'channel.created', entityType: 'channel', entityId: row.id, author: { kind: 'system' }, metadata: { name: row.name, kind: row.kind } })
     } catch (err) {
         if (!(err instanceof AppError && err.code === 'channelNameTaken')) throw err

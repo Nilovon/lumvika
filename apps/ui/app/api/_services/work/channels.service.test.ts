@@ -113,12 +113,19 @@ describe('createChannel and archiveChannel', () => {
 })
 
 describe('listChannelsFor', () => {
-    it('creates #general once for a workspace without channels', async () => {
+    it('creates #general once for a workspace without channels, and seats newcomers in it', async () => {
         const { rows, scope } = setup()
         const first = await listChannelsFor(scope, anna)
-        await listChannelsFor(scope, ben)
+        const forBen = await listChannelsFor(scope, ben)
         expect(rows.channels).toHaveLength(1)
         expect(first).toEqual([expect.objectContaining({ name: 'general', kind: 'public', isMember: true, access: 'use' })])
+        expect(forBen).toEqual([expect.objectContaining({ name: 'general', isMember: true })])
+    })
+
+    it('leaves someone already in a channel where they are', async () => {
+        const { rows, scope } = setup({ channels: [channel('general'), channel('ops')], channel_members: [member('ops', { userId: 'anna' })] })
+        await listChannelsFor(scope, anna)
+        expect(rows.channel_members.map(row => row.channel_id)).toEqual(['ops'])
     })
 
     it('shows public channels to a member scoped to all, private ones and dms only to their members', async () => {

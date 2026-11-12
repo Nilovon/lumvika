@@ -275,11 +275,16 @@ async function waitForRun(conn: EngineConnection, engineAgentId: string, runId: 
     return run
 }
 
+// What an engine without a model it can run says: no key for the Lumvika models
+// ("Set OPENROUTER_API_KEY to run the Lumvika models, or connect another AI provider in the app.")
+// or no provider connected at all.
+const NO_USABLE_MODEL = /api_key|connect another ai provider|no (ai )?(model|provider|connection)|not connected|no usable model/i
+
 export function failureOfRun(run: Pick<EngineRunDetail, 'status' | 'error' | 'output'>): TurnFailure | null {
     if (run.status === 'running') return 'timeout'
     if (run.status === 'done' && run.output?.trim()) return null
     const kind = classifyChatError(run.error ?? '')
-    if (kind === 'unauthorized' || kind === 'usage_limit' || kind === 'budget' || /no (ai )?(model|provider|connection)|not connected|no usable model/i.test(run.error ?? '')) return 'no_model'
+    if (kind === 'unauthorized' || kind === 'usage_limit' || kind === 'budget' || NO_USABLE_MODEL.test(run.error ?? '')) return 'no_model'
     return 'failed'
 }
 
@@ -332,7 +337,7 @@ export async function answerAsCoworker(scope: WorkScope, request: AnswerRequest,
         await recordTurnRun(scope, turn.id, sent.runId)
         if (sent.sessionId) {
             await rememberSession(scope, turn.channelId, turn.agentId, sent.sessionId)
-            if (!known?.engine_session_id) await ensureSessionRow(turn.agentId, sent.sessionId, channel.kind === 'dm' ? 'Direct message' : `#${channel.name}`, { source: 'channel', status: 'working' })
+            if (!known?.engine_session_id) await ensureSessionRow(turn.agentId, sent.sessionId, channel.kind === 'dm' ? 'Direct message' : `#${channel.name}`, { source: 'channel' })
         }
 
         const run = await waitForRun(engine.conn, agent.engine_agent_id, sent.runId, timing)

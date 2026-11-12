@@ -142,7 +142,7 @@ describe('reactToChannelMessage', () => {
         expect(answer).toMatchObject({ body: 'Here is the plan.', parent_message_id: message.id, author_user_id: null })
         expect(rows.channel_agent_turns).toEqual([expect.objectContaining({ agent_id: 'ada', thread_message_id: message.id, status: 'answered', reply_message_id: answer?.id, engine_run_id: 'run-1' })])
         expect(rows.channel_agent_sessions).toEqual([expect.objectContaining({ channel_id: 'pub', agent_id: 'ada', engine_session_id: 'sess-1' })])
-        expect(ensureSessionRow).toHaveBeenCalledWith('ada', 'sess-1', '#pub', { source: 'channel', status: 'working' })
+        expect(ensureSessionRow).toHaveBeenCalledWith('ada', 'sess-1', '#pub', { source: 'channel' })
 
         const followUp = await postChannelMessage(scope, ANNA, 'pub', { body: 'thanks, one more thing', parentMessageId: message.id })
         await reactToChannelMessage(scope, anna, followUp)
@@ -231,6 +231,11 @@ describe('answerAsCoworker failures', () => {
 })
 
 describe('failureOfRun and coworkerPrompt', () => {
+    it('reads an engine without a usable model as such', () => {
+        expect(failureOfRun({ status: 'error', output: null, error: 'AI_APICallError: Set OPENROUTER_API_KEY to run the Lumvika models, or connect another AI provider in the app.' })).toBe('no_model')
+        expect(failureOfRun({ status: 'error', output: null, error: 'AI_APICallError: Internal server error' })).toBe('failed')
+    })
+
     it('reads an empty answer as a failure', () => {
         expect(failureOfRun({ status: 'done', output: '  ', error: null })).toBe('failed')
         expect(failureOfRun({ status: 'done', output: 'ok', error: null })).toBeNull()
