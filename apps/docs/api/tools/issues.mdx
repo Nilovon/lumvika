@@ -1,0 +1,147 @@
+---
+title: "Projects and issues"
+description: "List projects, read, file, move and comment on issues, and hand them to coworkers."
+---
+
+These tools work on the [projects and issues](/work/projects) of the workspace. They go through the same checks as the app, with the access of the member who created the key: a restricted project they are not named on reads as missing, and what the key writes is signed with their name.
+
+An issue is named by its reference, the project key, a dash and its number: `WEB-12`. A coworker is named by its `id`, from [`list_agents`](/api/tools/agents#list-agents).
+
+## list_projects
+
+The projects you can see: `key`, `name`, `description`, `status`, `visibility`, `lead`, `targetDate`, `archivedAt`, the issue counts by status, and your `access` on each (`use` or `manage`).
+
+<ParamField body="includeArchived" type="boolean">
+  Also list archived projects. Default `false`.
+</ParamField>
+
+Call it first when you need a `projectKey`.
+
+## list_issues
+
+Searches the issues of the projects you can see, most recently updated first. Returns summaries: `ref`, `title`, `status`, `priority`, `assignee`, `parentIssueId`, `dueDate`, `updatedAt`.
+
+<ParamField body="projectKey" type="string" />
+
+<ParamField body="status" type="string[]">
+  Any of `backlog`, `todo`, `in_progress`, `in_review`, `done`, `blocked`, `cancelled`.
+</ParamField>
+
+<ParamField body="assignee" type="string">
+  A coworker id, a member's user id, or `unassigned`.
+</ParamField>
+
+<ParamField body="parentRef" type="string">
+  Only the sub-issues of this issue.
+</ParamField>
+
+<ParamField body="text" type="string">
+  Words of the title or the description.
+</ParamField>
+
+<ParamField body="limit" type="number">
+  Default `50`, maximum `200`.
+</ParamField>
+
+## get_issue
+
+One issue in full: `description`, `status`, `priority`, `assignee`, `createdBy`, `blockedReason`, `dueDate`, its `subIssues`, every comment, and `beingWorkedOn`, true while a coworker run holds it.
+
+<ParamField body="ref" type="string" required>
+  For example `WEB-12`.
+</ParamField>
+
+## create_issue
+
+Creates an issue in a project, or a sub-issue under an existing issue. Returns its `ref`, `id` and `status`.
+
+<ParamField body="title" type="string" required />
+
+<ParamField body="projectKey" type="string">
+  Required unless you pass `parentRef`.
+</ParamField>
+
+<ParamField body="parentRef" type="string">
+  Creates a sub-issue, in the project of its parent.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Markdown. Say what done looks like: the assignee works from it alone.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Default `backlog`.
+</ParamField>
+
+<ParamField body="priority" type="string">
+  `none`, `low`, `medium`, `high` or `urgent`.
+</ParamField>
+
+<ParamField body="dueDate" type="string">
+  `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="assignee" type="object">
+  `{"kind": "agent", "agentId": "…"}` for a coworker, `{"kind": "user", "userId": "…"}` for a member.
+</ParamField>
+
+<Warning>
+  An issue starts in `backlog` unless you say otherwise, and a coworker is not woken for an issue in the backlog. To hand work to a coworker, pass `status: "todo"` with the `assignee`.
+</Warning>
+
+```json Hand an issue to a coworker
+{
+  "projectKey": "WEB",
+  "title": "Draft the launch announcement",
+  "description": "A 150-word post for the blog. Done when the draft is in Website/Drafts.",
+  "status": "todo",
+  "priority": "high",
+  "assignee": { "kind": "agent", "agentId": "…" }
+}
+```
+
+## update_issue
+
+Changes an issue: each field only if you pass it. Returns its `ref`, `status`, `assignee`, `priority` and `title`.
+
+<ParamField body="ref" type="string" required />
+
+<ParamField body="title" type="string" />
+
+<ParamField body="description" type="string | null" />
+
+<ParamField body="priority" type="string" />
+
+<ParamField body="dueDate" type="string | null" />
+
+<ParamField body="status" type="string">
+  Follows the [allowed moves](/work/issues#allowed-moves). A move the workflow does not allow is refused with a message saying so.
+</ParamField>
+
+<ParamField body="blockedReason" type="string">
+  Who must do what for the work to go on. Pass it with `status: "blocked"`.
+</ParamField>
+
+<ParamField body="assignee" type="object | null">
+  Same shape as in `create_issue`. `null` unassigns.
+</ParamField>
+
+## comment_issue
+
+Comments on an issue, in the name of the member who created the key.
+
+<ParamField body="ref" type="string" required />
+
+<ParamField body="body" type="string" required>
+  Markdown.
+</ParamField>
+
+A comment on an issue assigned to a coworker wakes it to read and answer, unless one of its runs is already on the issue.
+
+## What wakes a coworker
+
+A key acts as its member: every change it makes wakes a coworker exactly as the same change made in the app. See [When a coworker wakes up](/work/coworkers-on-issues#when-a-coworker-wakes-up).
+
+Moving an issue from `in_review` to `done` with `update_issue` is the same as **Approve** in [Review](/work/review).
+
+There is no tool to create, archive or restrict a project: do that in the app.

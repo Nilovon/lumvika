@@ -189,6 +189,26 @@ docker compose exec engine node dist/cli/bin.js doctor
 
 `/health` also reports `dataVersion` against `dataVersionTarget`. An engine older than its data-dir leaves the data untouched and boots: update the engine image rather than restoring an older archive.
 
+## Chat says to update the server
+
+**Update your server to use Chat** means the workspace's engine predates Chat. Update it: see [Updating](/self-host/servers#updating). **Chat needs a server** means the workspace has none yet: add a coworker, or [add a server](/self-host/servers).
+
+## A coworker does not pick up its issues
+
+Check, in this order:
+
+- **The issue is in Backlog.** A coworker is not woken for a backlog issue. Move it to **Todo**.
+- **Work on issues is off** in the coworker **Capabilities** tab, or the coworker is switched off.
+- **The engine predates issues.** The app logs `this engine cannot start issue runs yet` once per engine. Update it.
+- **The coworker is busy.** It works one issue at a time. The next one waits for the heartbeat, every 5 minutes, once the coworker is idle.
+- **The engine cannot reach the app** at `LUMVIKA_HUB_BASE_URL`: the coworker can neither read the issue nor ask for the next one. Look for `work queue call failed` or `work queue sweep failed` in `docker compose logs engine`.
+
+See [Coworkers on issues](/work/coworkers-on-issues) for every rule that decides when a coworker wakes.
+
+## A coworker does not answer in a channel
+
+The thread says why, under the message. The table in [When a coworker cannot answer](/work/channels#when-a-coworker-cannot-answer) lists every reason. **needs an update** means the engine predates Channels: update it.
+
 ## Still stuck
 
 Open an issue on [GitHub](https://github.com/schnebel-technologie/lumvika/issues) with what you ran, what you expected, and the output of `docker compose logs --since 30m app engine`. Remove keys and tokens first.

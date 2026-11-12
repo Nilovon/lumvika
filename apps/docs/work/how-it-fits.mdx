@@ -1,0 +1,93 @@
+---
+title: "How it fits together"
+description: "Projects, issues, coworkers, review and goals: the work your team and your coworkers share."
+---
+
+The board is where your coworkers live. The rest of the app is where you give them real work, alongside the people of your workspace, and follow it to the end.
+
+Once you are signed in, a sidebar runs down the left side of the app. You can collapse it to a rail of icons, and on a phone it slides in over the screen from the menu button. **Search**, at its top, opens the command palette, which has a **Go to** entry for every area.
+
+| Area | What it is for |
+| --- | --- |
+| [**Overview**](/work/overview) | How the workspace is doing: what needs you, which coworkers are working, active projects and goals |
+| **Office** | The board, with your Boxes and coworkers, exactly as before |
+| [**Chat**](/work/chat) | A plain assistant for a question or a draft, without setting up a coworker |
+| [**My work**](/work/my-work) | The issues assigned to you, the ones you created, and the ones your coworkers hold for you |
+| [**Projects**](/work/projects) | Pieces of work with a key, holding their [issues](/work/issues) on a board |
+| [**Goals**](/work/goals) | What your teams aim for, with progress filled in by the issues of linked projects |
+| [**Review**](/work/review) | What a coworker or a teammate handed back for a person to look at |
+| [**Channels**](/work/channels) | Conversations shared by people and coworkers |
+| [**Teams**](/work/teams) | Teams of people and coworkers, and the org chart of your coworkers |
+| [**Activity**](/work/activity) | The trail of who did what |
+
+## The loop
+
+<Steps>
+  <Step title="Create a project">
+    Give it a name and a short key, such as `WEB`. Write its **Instructions for coworkers**: every coworker reads them before it works on one of its issues. See [Projects](/work/projects).
+  </Step>
+  <Step title="File issues">
+    One issue is one piece of work, with one owner and a status. It is numbered with the project key: `WEB-1`, `WEB-2`. See [Issues](/work/issues).
+  </Step>
+  <Step title="Assign one to a coworker">
+    The coworker wakes up on its own, takes the issue, does the work, and comments on what it did. See [Coworkers on issues](/work/coworkers-on-issues).
+  </Step>
+  <Step title="It hands the issue back">
+    To **In review** when the work is done, or to **Blocked** with the reason and who must do what. The person who asked for it and the project lead get a notice in the app.
+  </Step>
+  <Step title="A person decides">
+    In [Review](/work/review), **Approve** closes it, **Request changes** sends it back with your comment, **Unblock** puts it back in Todo.
+  </Step>
+  <Step title="Progress adds up">
+    Every issue done counts toward the project, and toward the [goal](/work/goals) the project is linked to.
+  </Step>
+</Steps>
+
+## Issues and scheduled tasks
+
+A coworker already had scheduled tasks. Issues are a different thing, and the app keeps the two words apart.
+
+| | Issue | Scheduled task |
+| --- | --- | --- |
+| Lives in | A project | A coworker |
+| Who does it | A person or a coworker | That coworker |
+| Starts when | It is assigned, commented on or reopened | Its cron or its date comes |
+| Ends with | A status: In review, Done, Blocked, Cancelled | The end of the run |
+| Set up in | [Projects](/work/projects) | The coworker **Scheduled runs** tab. See [Automations](/agents/automations) |
+
+## Who can do what
+
+Two roles exist in a workspace, admin and member. See [Teams and workspaces](/teams#roles).
+
+| Action | Who |
+| --- | --- |
+| Create a project | Any member |
+| Change a project's settings, its access, archive or restore it | An admin, or someone who **Can manage** the project |
+| Create, move, assign and comment on issues | Anyone who can open the project |
+| Approve, request changes, unblock | Anyone who can open the project |
+| Create, edit and delete goals | An admin |
+| Link a project to a goal | An admin, or a manager of that project |
+| Create, edit and delete teams | An admin |
+| Change who is on a team and who leads it | An admin, or the person who leads that team |
+| Give a coworker a title and a manager | Someone who manages the coworker's Box |
+| Create a channel | Any member |
+| Edit, archive a channel, remove its members | An admin, or the person who created it |
+| Set the default model of Chat | An admin |
+
+## What is not there yet
+
+So you do not look for them:
+
+- **No notice outside the app for issues.** A coworker moving an issue to review or to blocked notifies in the app only, never by email or push.
+- **No attachments** in Chat or in Channels.
+- **No outside messaging.** Channels are Lumvika's own: they do not connect to Slack, Microsoft Teams, WhatsApp or email.
+- **No spending limit per project.** A coworker working on issues spends like any other run of that coworker.
+- **No deleting** an issue, a comment or a project. Cancel the issue, archive the project.
+
+## Where to start
+
+<CardGroup cols={3}>
+  <Card title="Create a project" icon="folder-kanban" href="/work/projects" horizontal />
+  <Card title="Assign an issue" icon="user-check" href="/work/coworkers-on-issues" horizontal />
+  <Card title="Review the work" icon="list-checks" href="/work/review" horizontal />
+</CardGroup>

@@ -14,6 +14,7 @@ description: "What the API caps, what it refuses, and what it promises."
 | Rate limit on the MCP endpoint | None |
 | `send_message` wait | 120 seconds by default, 600 maximum |
 | `list_runs` | 20 runs by default, 200 maximum |
+| `list_issues` | 50 issues by default, 200 maximum |
 | `db_query` and `space_db_query` | 100 rows by default, 1000 maximum |
 | `list_connectors` | 60 per page by default, 200 maximum |
 | Reference files per skill | 200, 10 MB each, 50 MB per skill including `SKILL.md` |
@@ -42,7 +43,7 @@ There is no read-only key, no per-coworker key and no per-tool permission. If yo
     `submit_template` moves a draft to review. Publishing is the Lumvika team's decision. Payout onboarding needs a browser.
   </Accordion>
   <Accordion title="Manage the account">
-    No billing, no plan change, no subscription, no member or invitation management, no workspace creation, no Box creation. Create a Box in the app first.
+    No billing, no plan change, no subscription, no member or invitation management, no workspace creation, no Box or project creation. Create a Box or a project in the app first.
   </Accordion>
   <Accordion title="Manage API keys">
     You cannot mint or revoke a key over MCP. That would let a leaked key extend itself.

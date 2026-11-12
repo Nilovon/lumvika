@@ -1,0 +1,105 @@
+---
+title: "Projects"
+description: "Group the issues people and coworkers work on together, decide who sees them, and tell coworkers how to work."
+---
+
+A project holds the issues of one piece of work: a launch, a client, a quarter's goal. It has a short key, a board of issues, a lead, and instructions every coworker reads before it works on one of its issues.
+
+## Create a project
+
+<Steps>
+  <Step title="Open Projects">
+    Click **Projects** in the sidebar, then **New project**.
+  </Step>
+  <Step title="Name it and give it a key">
+    The key is 2 to 6 capital letters or digits, starting with a letter, such as `WEB` or `Q3OPS`. Every issue of the project is numbered with it: `WEB-1`, `WEB-2`. Two projects of a workspace never share a key.
+  </Step>
+  <Step title="Choose who can see it">
+    **Everyone in the workspace**, or **Only the people I add**. See [Who can open a project](#who-can-open-a-project).
+  </Step>
+  <Step title="Click Create project">
+    A description, a lead and a target date are optional, and can be set later.
+  </Step>
+</Steps>
+
+<Warning>
+  The key cannot change later. Every reference already handed out, `WEB-12` in a comment, a message or a coworker's notes, would stop pointing anywhere.
+</Warning>
+
+Any member of the workspace can create a project.
+
+## The three views
+
+A project opens on three tabs.
+
+**Board** is one column per status: Backlog, Todo, In progress, In review, Blocked, Done. Drag a card to move it. While you drag, the columns the workflow does not allow from where the card is are greyed out, and a refused move tells you where the issue can go instead. **Add issue** at the bottom of a column creates an issue straight in that status. Cancelled issues are hidden until you click **Show cancelled**. On a phone, the board shows one column at a time, with a switcher to change it.
+
+**List** is every issue in one table. **Search issues** looks in titles and references, and the **Status**, **Priority** and **Assignee** filters narrow it down. Sort by **Board order**, **Priority**, **Last updated**, **Newest** or **Due date**.
+
+**Overview** holds the project itself: its description, its instructions for coworkers, its progress, its details, who can open it, and the archive button.
+
+## Instructions for coworkers
+
+On the **Overview** tab, **Instructions for coworkers** is what a newcomer would need to work on this project: the goal, the tone, the links, where files go, what never to do. Markdown works.
+
+Every coworker reads these instructions before it works on an issue of the project, and follows them. The [Chat](/work/chat) assistant reads them too when a chat is attached to the project. People read them as well, so keep them short.
+
+> We relaunch the website on March 1. Write in a friendly, plain tone. Drafts go to the shared folder Website/Drafts. Never publish without a review.
+
+## Details
+
+| Field | What it means |
+| --- | --- |
+| **Status** | **Planned**, **Active**, **Paused**, **Completed**. Only **Active** projects show on the [Overview](/work/overview) |
+| **Lead** | The person or coworker who answers for the project. A person who leads it finds its issues first in [Review](/work/review), follows its coworkers' issues in [My work](/work/my-work), and is told when a coworker hands one back |
+| **Target date** | When it should be done. Shown in the list of projects |
+
+Progress counts the issues done against all issues except the cancelled ones.
+
+## Who can open a project
+
+A project is either open to the workspace or restricted.
+
+| | Open to the workspace | Restricted |
+| --- | --- | --- |
+| Admins | Open it and manage it | Open it and manage it |
+| Members who see all Boxes | Open it and work on its issues | Only if they are named on it |
+| Members limited to named Boxes | Only if they are named on it | Only if they are named on it |
+
+Whether a member sees all Boxes or only the ones named to them is set in the workspace **Members** dialog. See [Teams and workspaces](/teams#roles).
+
+The people named on a project get one of two levels:
+
+- **Can use**: sees the project and works on its issues.
+- **Can manage**: also changes its settings and who reaches it.
+
+Open **Manage access** from the **Overview** tab to name people, change their level or remove them. Only an admin or a manager of the project can use it. Making an open project restricted cuts off everyone not named on it at once, and the app asks you to confirm.
+
+Restricting a project when you create it makes you its manager.
+
+<Warning>
+  A coworker on a restricted project can read all of it. A coworker that leads the project, holds one of its issues or created one sees every issue of the project, and anyone who can talk to that coworker can ask it about them. Assign issues of a restricted project only to coworkers whose Box is limited to the people who may know. See [What a coworker can see](/work/coworkers-on-issues#what-a-coworker-can-see).
+</Warning>
+
+## Archive a project
+
+**Archive project**, at the bottom of the **Overview** tab, takes the project out of the list and stops new issues from being added. Nothing is deleted: its issues, comments and history stay readable, and coworkers are no longer handed its waiting issues.
+
+Archived projects show in the list when you pick **Archived** in the **Status** filter. **Restore project** brings one back, active again.
+
+There is no way to delete a project.
+
+## Who changes what
+
+Anyone who can open a project creates, moves, assigns and comments on its issues. Its settings, its access, archiving and restoring belong to an admin or a manager of the project. Everyone else sees the **Overview** tab read only.
+
+<Note>
+  A member who creates a project open to the workspace does not become its manager. Ask an admin to name you with **Can manage** if you will need to change its settings.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Issues" icon="square-check" href="/work/issues" horizontal />
+  <Card title="Coworkers on issues" icon="bot" href="/work/coworkers-on-issues" horizontal />
+</CardGroup>

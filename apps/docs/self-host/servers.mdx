@@ -165,6 +165,8 @@ docker run -d --name lumvika-engine --restart unless-stopped --shm-size 2g \
 
 Keep the same `-p` you started it with. On start, the engine migrates its data-dir to the new version. An archive taken weeks ago boots on a newer engine the same way.
 
+Update every server when you update the app. An engine older than the app keeps running its coworkers, but misses what the app has learned since: Chat, issue runs and coworker answers in channels each need an engine from the same release. See [Projects, Chat and Channels](/self-host/coworkers#projects-chat-and-channels).
+
 To check a server's data-dir without changing it:
 
 ```bash

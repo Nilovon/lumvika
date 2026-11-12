@@ -1,0 +1,118 @@
+---
+title: "Issues"
+description: "One piece of work with one owner and a status: create it, move it, assign it, split it and talk about it."
+---
+
+An issue is a piece of work in a [project](/work/projects): a page to write, a bug to fix, a list to build. It has a title, a description, one assignee at most, a status, a priority, a due date if you want one, sub-issues and its own thread of comments.
+
+Its reference is the project key and its number: `WEB-12`. Typed in lower case, `web-12` reads the same.
+
+<Note>
+  In the German interface, an issue is called a **Ticket**. A coworker's scheduled task is something else: see [Issues and scheduled tasks](/work/how-it-fits#issues-and-scheduled-tasks).
+</Note>
+
+## Create an issue
+
+Click **New issue** in a project, fill in the **Title**, and click **Create issue**. The rest is optional:
+
+| Field | Default |
+| --- | --- |
+| **Description** | Empty. Say what needs to happen and what done looks like. Markdown works |
+| **Status** | **Todo**. You can also start it in **Backlog**, **In progress** or **In review** |
+| **Priority** | **No priority** |
+| **Assignee** | **Unassigned** |
+| **Due date** | None |
+
+**Add issue** at the bottom of a board column is the quick way: a title, Enter, and the issue lands in that column.
+
+An archived project takes no new issue. Restore it first.
+
+## Statuses
+
+| Status | Means |
+| --- | --- |
+| **Backlog** | Parked. Nobody works on it yet, and a coworker assigned to it is not woken |
+| **Todo** | Ready to be worked on |
+| **In progress** | Someone is on it |
+| **In review** | Done by whoever holds it, waiting for a person to look |
+| **Blocked** | Cannot go on. It carries a reason saying who must do what |
+| **Done** | Finished |
+| **Cancelled** | Dropped |
+
+## Allowed moves
+
+An issue does not jump from any status to any other. The board greys out the columns it cannot reach, and the status menu of an issue only offers the moves below.
+
+| From | It can move to |
+| --- | --- |
+| **Backlog** | Todo, Cancelled |
+| **Todo** | In progress, Backlog, Blocked, Cancelled |
+| **In progress** | In review, Done, Blocked, Todo, Cancelled |
+| **In review** | Done, In progress, Cancelled |
+| **Blocked** | Todo, In progress, Cancelled |
+| **Done** | Todo |
+| **Cancelled** | Backlog |
+
+What this means in practice:
+
+- From **Backlog**, an issue goes through **Todo** before anyone works on it.
+- **Done** is reached from **In progress** or **In review** only.
+- Reopening a done issue puts it back in **Todo**. A cancelled one goes back to **Backlog**.
+- An issue in review that needs more work goes back to **In progress**. It cannot be marked blocked from review.
+
+Moving an issue to **Blocked** asks you for a **Reason** before **Mark as blocked**. The reason is shown on the issue and in [Review](/work/review), and whoever picks it up next reads it.
+
+Coworkers follow the same moves, with a few rules of their own: see [Coworkers on issues](/work/coworkers-on-issues#the-rules-a-coworker-follows).
+
+## Priority and due date
+
+Priorities are **No priority**, **Low**, **Medium**, **High** and **Urgent**. Coworkers take their issues in priority order, then by due date.
+
+A due date shows on the card. Past it, the card says **Overdue since** and the date.
+
+## Assign an issue
+
+An issue has one assignee at most: a person or a coworker. The **Assignee** picker lists the people of the workspace and the coworkers you can see.
+
+Assigning it to a coworker wakes that coworker, which picks it up on its own. See [Coworkers on issues](/work/coworkers-on-issues).
+
+Giving the issue to someone else ends the hold of a coworker that was working on it.
+
+## The issue page
+
+Click an issue anywhere to open it.
+
+- The title is edited in place. **Copy link** copies a link to the issue.
+- **Description**, with **Edit**.
+- When a coworker works on it: **Scout is working on this issue**, how long ago it started, and **Open conversation**, the coworker's conversation for this issue, where you see every step it takes.
+- When it is blocked: the reason.
+- **Sub-issues**, with **Add sub-issue**.
+- **Comments** and **Activity**, in two tabs. Activity lists every change: who created it, moved it, assigned it, started or stopped working on it.
+- On the side: **Status**, **Priority**, **Assignee**, **Due date**, **Parent issue**, and who created it and when.
+
+## Sub-issues
+
+Split bigger work into steps someone can finish. **Add sub-issue** on the issue page creates one under it, in the same project. You can also move an existing issue under another with **Parent issue**.
+
+A sub-issue always belongs to the project of its parent, and an issue can never sit under itself or under one of its own sub-issues.
+
+Each sub-issue has its own assignee and status. Finishing all of them does not close the parent: someone moves it.
+
+## Comments
+
+Write in the box under **Comments** and click **Comment**, or press Ctrl or Cmd + Enter. Markdown works.
+
+Use comments to ask a question, hand over context or report progress. A comment from a person on an issue assigned to a coworker wakes that coworker to read it, while the issue is in Todo, In progress, Blocked or In review.
+
+You can edit your own comments. Nobody can edit someone else's, and there is no way to delete a comment.
+
+## Not available yet
+
+- No attachments on an issue or a comment. Put files in the shared folder and link to them.
+- No deleting an issue. Move it to **Cancelled**.
+- No labels, estimates or cycles.
+
+## From elsewhere
+
+- The Lumvika guide in the side panel can list, read and create issues when you ask it.
+- From Claude Code, Cursor or a script, the Lumvika API lists, reads, creates, updates and comments on issues. See [Projects and issues](/api/tools/issues).

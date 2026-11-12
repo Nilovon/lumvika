@@ -308,6 +308,10 @@ docker compose up -d --build
 The engine migrates its data-dir on start. When a release adds database migrations, apply them too: `npx supabase db push` for a project on supabase.com, the same command with `--yes --db-url` and the address from [Install](#2-set-up-supabase) for open source Supabase, or `npx supabase migration up` for the local stack.
 
 <Note>
+  The release that brings Projects, Chat and Channels adds seven database migrations, from `20261110120000_session_source_work.sql` to `20261112130000_channel_turn_endings.sql`. Apply them, then update every engine, the [paired servers](/self-host/servers#updating) too. See [Projects, Chat and Channels](/self-host/coworkers#projects-chat-and-channels) for what an engine left behind does.
+</Note>
+
+<Note>
   The values starting with `NEXT_PUBLIC_` are baked into the app when it is built. So is `ADMIN_EMAILS`. After changing one, rebuild with `docker compose up -d --build`. Other values only need `docker compose up -d`.
 </Note>
 

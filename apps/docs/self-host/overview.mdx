@@ -45,7 +45,7 @@ flowchart LR
 ```
 
 - The browser talks to the app, and directly to Supabase for sign-in and live updates. That is why the Supabase address must work from the browser too.
-- The app calls the engine with the engine's key. The engine calls the app back at `LUMVIKA_HUB_BASE_URL` with the same key: to report what happened in a run, to reach the Lumvika models, to compute embeddings.
+- The app calls the engine with the engine's key. The engine calls the app back at `LUMVIKA_HUB_BASE_URL` with the same key: to report what happened in a run, to reach the Lumvika models, to compute embeddings, to answer the coworkers' issue tools, and every 5 minutes to ask which issue each idle coworker should take next.
 - The desktop screen is the one exception: the browser opens it directly on the engine's address, over `ws://` or `wss://`.
 - The app reaches OpenRouter with your key for the Steward's onboarding and the [Lumvika models](/self-host/models).
 

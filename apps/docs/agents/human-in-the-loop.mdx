@@ -42,13 +42,15 @@ Separate from the pauses, a coworker can tell you something and keep working. Th
 
 Kinds are `info`, `progress`, `done`, `error`, plus the `question`, `approval` and `connector` kinds raised by the pauses above.
 
-Everything waiting for you is collected in the coworker **To handle** tab, and in the workspace notifications panel.
+Everything waiting for you is collected in the coworker **To handle** tab, in the workspace notifications panel, and in [Review](/work/review) under **Waiting in conversations**.
 
 ## Delivery
 
 Notifications reach you in the app and by email. Configure it from your profile menu, under **Notifications**: per kind, per channel, and separately for runs you started and runs that fired on their own.
 
 Set the automated ones to email and leave your own conversations in-app, so a 3am approval actually finds you.
+
+The notice that a coworker moved an issue to review or to blocked is the exception: it shows in the app only. See [When it hands an issue back](/work/coworkers-on-issues#when-it-hands-an-issue-back).
 
 Email has guardrails the app does not need. A failing schedule or webhook sends at most a few emails in real time (3 per source and 10 per recipient over 15 minutes), then folds into a single hourly digest until it recovers. When the workspace's Lumvika AI budget runs out, automated runs on Lumvika models pause and you get one notice, in-app plus at most one email per day, instead of one email per failure. Sandbox workspaces never receive notification emails at all; everything still arrives in-app.
 

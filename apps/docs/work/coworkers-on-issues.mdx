@@ -1,0 +1,110 @@
+---
+title: "Coworkers on issues"
+description: "What happens when you assign an issue to a coworker: when it wakes, what it does, and the rules it cannot break."
+---
+
+You assign an issue to a coworker the way you assign it to a person. You do not message it or schedule anything: it wakes up on its own, takes the issue, does the work, comments on it and hands it back.
+
+## When a coworker wakes up
+
+| What happens | When it wakes the coworker |
+| --- | --- |
+| The issue is assigned to it, or created already assigned to it | When the issue is in **Todo**, **In progress** or **Blocked**. Not in **Backlog** |
+| The issue moves from **Backlog** to **Todo** | Always |
+| Someone moves the issue back to **Todo** or **In progress**: reopened from **Done**, sent back from **In review**, unblocked | Always |
+| A person comments on the issue | When it is in **Todo**, **In progress**, **Blocked** or **In review** |
+| The heartbeat, every 5 minutes | When the coworker is idle and an issue is waiting on it. See [The heartbeat](#the-heartbeat) |
+
+A coworker is never woken by what it did itself, nor by another coworker's comment, nor while one of its runs is already working on the issue.
+
+<Tip>
+  An issue assigned in **Backlog** waits there. Move it to **Todo** when it is ready, and the coworker starts.
+</Tip>
+
+## What it does
+
+<Steps>
+  <Step title="It reads the issue">
+    The description, the project's **Instructions for coworkers**, the goal it serves, its parent and sub-issues, who asked for it, and the latest 50 comments.
+  </Step>
+  <Step title="It takes the issue">
+    The issue moves to **In progress** and is held by that run. The issue page says **Scout is working on this issue**. No other run can take it until this one ends.
+  </Step>
+  <Step title="It does the work">
+    With its own tools, skills and apps, as in any other run, following the project's instructions. It comments on what matters as it goes.
+  </Step>
+  <Step title="It hands the issue back">
+    To **In review** with what it did and where to find it, to **Blocked** with who must do what, or to **Done** when nobody needs to check.
+  </Step>
+</Steps>
+
+Each issue gets a conversation of its own in the coworker's history, named after the issue, such as `WEB-5: Research competitor pricing pages`. **Open conversation**, on the issue page, opens it so you can follow every step.
+
+A coworker works one issue at a time. A second issue assigned while it is busy waits in its queue, and the heartbeat hands it over once the coworker is free.
+
+An issue run uses the coworker's default model, like a scheduled task. It can stop to ask you a question or an approval, exactly like a scheduled run: the conversation then waits for you in [Review](/work/review), under **Waiting in conversations**.
+
+## The rules a coworker follows
+
+A coworker works within the same [allowed moves](/work/issues#allowed-moves) as a person, plus these:
+
+- **It moves only the issues assigned to it.** On any other issue it can comment, nothing more.
+- **It cannot close an issue a person asked for.** It cannot move an issue created by a person to **Done** or **Cancelled**: it moves it to **In review**, and a person approves it. To suggest dropping one, it moves it to **Blocked** and says why.
+- **It can close its own work.** An issue created by a coworker, such as a sub-issue it filed, it can move to **Done** or **Cancelled** itself.
+- **Blocked always carries a reason**, naming who must do what: "Anna must share the Stripe API key".
+- **Backlog is a person's call.** A coworker hands an issue back with **Todo** or explains with **Blocked**, never parks it.
+
+When a run ends, whatever it held is released. A hold whose run is gone is released by the heartbeat, and no hold lasts more than a day.
+
+## Splitting work
+
+A coworker can split an issue into sub-issues and assign them, to itself or to other coworkers by their handle. A sub-issue it assigns starts in **Todo**, and the coworker it is assigned to is woken. One it does not assign starts in **Backlog**.
+
+It can then search the issues of its projects to follow the work it handed out.
+
+## The heartbeat
+
+Every 5 minutes, each machine checks, for every idle coworker with **Work on issues** switched on, whether an issue waits on it. It hands over at most one issue per coworker, in this order: **In progress** first, then **Todo**, then **Blocked**, each by priority, then by due date.
+
+An issue is handed over when:
+
+- the coworker never worked on it, or
+- someone else did something on it since the coworker last did: a comment, a move, a new assignee, or
+- the coworker last touched it more than a day ago and it is not blocked.
+
+So a blocked issue waits until someone else acts on it, and an issue the coworker left open is brought back to it once a day. The same issue is not handed to the same coworker twice within an hour.
+
+The heartbeat skips archived projects, switched-off coworkers, and issues a run already holds. Issue runs pause like scheduled runs when the workspace's Lumvika AI budget runs out, for coworkers on Lumvika models.
+
+## When it hands an issue back
+
+When a coworker moves an issue to **In review** or **Blocked**, a notice reaches, in the app:
+
+- the person who created the issue, and
+- the person who leads the project.
+
+Someone who muted that coworker in their notification settings gets nothing. There is no email and no push for these notices yet. The issue also shows up in [Review](/work/review) for everyone who can open the project.
+
+## Switch it on or off
+
+**Work on issues** is a capability of every coworker, switched on by default. Find it in the coworker **Capabilities** tab, which appears with **Expert mode**. See [Capabilities](/agents/configure#capabilities).
+
+Switched off, the coworker is never woken for an issue and has no tool to read or move one, even if you ask it in a chat. The issues assigned to it stay where they are. A switched-off coworker (the **Enabled** setting) is not woken either.
+
+## What a coworker can see
+
+A coworker reaches the projects through its own tools, not through your access.
+
+- **Projects open to the workspace**: it sees them all, with every issue.
+- **Restricted projects**: it sees one only when it leads the project, holds one of its issues or created one. It then sees every issue of that project.
+- Any other restricted project does not exist for it.
+
+<Warning>
+  Anyone who can talk to a coworker can ask it what it read. Before you assign an issue of a restricted project to a coworker, make sure the people who reach that coworker's Box may know about the whole project.
+</Warning>
+
+The conversation of each issue run sits in the coworker's history like any of its conversations, so everyone who can open the coworker can read it.
+
+## Older machines
+
+A machine running a version of Lumvika from before issues does not wake its coworkers: you can assign them issues, and nothing happens. On a self-hosted install, [update the engine](/self-host/servers#updating).

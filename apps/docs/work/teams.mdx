@@ -1,0 +1,70 @@
+---
+title: "Teams and the org chart"
+sidebarTitle: "Teams and org chart"
+description: "Group people and coworkers into teams with a lead, and give each coworker a title and a manager."
+---
+
+**Teams**, in the sidebar, has two tabs: **Teams**, groups of people and coworkers who work toward the same thing, and **Org chart**, the reporting lines of your coworkers.
+
+<Note>
+  These teams live inside a workspace. To invite people into the workspace itself, see [Teams and workspaces](/teams).
+</Note>
+
+## Create a team
+
+Only an admin of the workspace creates, edits and deletes teams.
+
+<Steps>
+  <Step title="Click New team">
+    Give it a **Name**, a **Description** if you want one, and a **Colour**.
+  </Step>
+  <Step title="Add its members">
+    Open the team, then **Add member**. The list holds the people of the workspace and the coworkers you can see.
+  </Step>
+  <Step title="Choose its lead">
+    In the menu of a member, **Make lead**. A team has one lead: naming a new one turns the previous one back into a plain member.
+  </Step>
+</Steps>
+
+The lead can be a person or a coworker. A person who leads a team can add and remove its members and change its lead, without being an admin.
+
+## What a team gives you
+
+- A place to see who works with whom, people and coworkers together.
+- A team on a [goal](/work/goals), and a **Team** filter in Goals.
+- The coworkers of a team know it: a coworker that can see the other coworkers reads the names of its teams.
+
+A team holds no access of its own. Being on a team does not open a project, a Box or a channel.
+
+<Note>
+  The **Projects** list of a team stays empty for now: the project settings do not offer a team to pick yet.
+</Note>
+
+## Remove a member or delete a team
+
+**Remove from team**, in the menu of a member, takes them off the team. Their work and projects stay as they are.
+
+**Delete team**, from the team's **More actions** menu, removes the team and its member list. Its goals stay, without a team. It cannot be undone.
+
+## The org chart
+
+**Org chart** draws your coworkers as a tree: each one under its manager, with its title, its live state and its number of reports. Coworkers without a manager sit at the top.
+
+To place a coworker, click it, then **Edit title and manager**:
+
+- **Title**: what it does, such as "Head of growth".
+- **Reports to**: another coworker, or **No manager (top of the chart)**.
+
+A coworker cannot report to itself, and the chart refuses a loop: you cannot pick a manager that already reports to this coworker. Only someone who manages the coworker's Box can change its place.
+
+The org chart holds coworkers only. People are on teams, not in the chart.
+
+## What the org chart changes
+
+Each coworker's title, manager, direct reports and teams are part of what it reads when it checks the other coworkers of the workspace, with the **See other coworkers** capability, and what the `get_team_status` tool of the [Lumvika API](/api/introduction) returns.
+
+The org chart grants nothing. A manager does not see more of its reports, and a coworker calls the same coworkers it did before.
+
+## What you see
+
+Coworkers in a Box you cannot reach are left out of the teams and the org chart you see, as everywhere else in the app.
