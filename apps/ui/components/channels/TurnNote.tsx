@@ -5,14 +5,15 @@ import { useTranslations } from 'next-intl'
 
 import type { ChannelAgentTurn } from '@/app/api/_services/work/channel-coworkers.service'
 import { Shimmer } from '@/components/ai-elements/shimmer'
-import { isAnswering } from '@/components/channels/channel-rows'
+import { turnAsOf } from '@/components/channels/channel-rows'
 import { AlertCircleIcon } from '@/lib/icons'
 
 // What a coworker asked to answer is doing, read from the turn everyone in the channel sees: still
 // answering, or the reason it could not. An answered turn says nothing, its reply speaks for it.
-export function TurnNote({ turn, coworkerName }: { turn: ChannelAgentTurn; coworkerName: string }) {
+export function TurnNote({ turn: stored, coworkerName }: { turn: ChannelAgentTurn; coworkerName: string }) {
     const t = useTranslations('channels.coworker')
-    if (isAnswering(turn)) {
+    const turn = turnAsOf(stored)
+    if (turn.status === 'answering') {
         return (
             <div className="flex items-center gap-2 py-1 text-xs" role="status">
                 <AgentBuddy agentId={turn.agentId} size={18} animated facing="right" />

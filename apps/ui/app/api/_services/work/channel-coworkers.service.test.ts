@@ -21,7 +21,7 @@ const { resolveMemberIdentities } = await import('@/app/api/_services/members.se
 const { findWorkspaceEngine } = await import('@/app/api/_services/workspace-engine.service')
 const { startChat } = await import('@/lib/chat/start-chat')
 const { EngineUnreachableError, getRun } = await import('@/lib/engine/client')
-const { answerAsCoworker, answerPlacement, claimTurn, coworkerPrompt, coworkersSummoned, failureOfRun, reactToChannelMessage } = await import('./channel-coworkers.service')
+const { answerPlacement, channelRunEndingOf, claimTurn, coworkerPrompt, coworkersSummoned, failureOfRun, finishChannelTurnForRun, listChannelTurns, reactToChannelMessage, startCoworkerTurn, STALE_TURN_MS } = await import('./channel-coworkers.service')
 const { postChannelMessage } = await import('./channels.service')
 
 type ChannelPerson = import('./channels.service').ChannelPerson
@@ -31,7 +31,6 @@ const anna: ChannelPerson = { kind: 'user', userId: 'anna', workspaceId: WORKSPA
 const ANNA = { kind: 'user', userId: 'anna' } as const
 const ADA = { kind: 'agent', agentId: 'ada' } as const
 const CONN = { baseUrl: 'http://engine', apiKey: 'key' }
-const FAST = { waitMs: 0, pollMs: 0, busyDelays: [] }
 
 function chatMessage(overrides: Partial<ChannelMessage> = {}): ChannelMessage {
     return { id: 'm1', channelId: 'pub', author: ANNA, body: 'hi', parentMessageId: null, mentions: [], editedAt: null, deletedAt: null, createdAt: '2026-11-01T00:00:00.000Z', ...overrides }
@@ -188,45 +187,128 @@ describe('claimTurn', () => {
     })
 })
 
-describe('answerAsCoworker failures', () => {
-    async function answer(rowsOverride: Partial<Tables> = {}) {
+describe('starting a coworker turn', () => {
+    async function start(rowsOverride: Partial<Tables> = {}) {
         const { rows, scope } = setup(rowsOverride)
         const trigger = await postChannelMessage(scope, ANNA, 'pub', { body: '@ada go' })
         const turn = await claimTurn(scope, { channelId: 'pub', agentId: 'ada', threadMessageId: trigger.id, triggerMessageId: trigger.id, requestedBy: 'anna' })
-        await answerAsCoworker(scope, { turn: turn!, person: anna, trigger, replyParentId: trigger.id }, FAST)
-        return rows.channel_agent_turns[0]
+        await startCoworkerTurn(scope, { turn: turn!, person: anna, trigger }, [])
+        return { turn: rows.channel_agent_turns[0], rows, scope, trigger }
     }
+
+    it('stores the run and returns while it goes on, the answer comes with the webhook', async () => {
+        runEnds({ status: 'running', output: null })
+        const { turn, rows } = await start()
+        expect(turn).toMatchObject({ status: 'answering', engine_run_id: 'run-1' })
+        expect(rows.channel_messages.filter(row => row.author_agent_id === 'ada')).toEqual([])
+    })
 
     it('names an engine that cannot be reached', async () => {
         vi.mocked(findWorkspaceEngine).mockResolvedValue(null)
-        await expect(answer()).resolves.toMatchObject({ status: 'failed', failure: 'engine_unreachable', finished_at: expect.any(String) })
+        await expect(start().then(result => result.turn)).resolves.toMatchObject({ status: 'failed', failure: 'engine_unreachable', finished_at: expect.any(String) })
         vi.mocked(findWorkspaceEngine).mockResolvedValue({ instanceId: 'i', conn: CONN, managed: true })
         vi.mocked(startChat).mockRejectedValue(new EngineUnreachableError(new Error('ECONNREFUSED')))
-        await expect(answer()).resolves.toMatchObject({ failure: 'engine_unreachable' })
+        await expect(start().then(result => result.turn)).resolves.toMatchObject({ failure: 'engine_unreachable' })
     })
 
     it('names a coworker switched off', async () => {
-        await expect(answer({ agents: [{ id: 'ada', workspace_id: WORKSPACE, name: 'Ada', engine_agent_id: 'eng-ada', disabled_at: 'then' }] })).resolves.toMatchObject({ failure: 'coworker_disabled' })
+        const { turn } = await start({ agents: [{ id: 'ada', workspace_id: WORKSPACE, name: 'Ada', engine_agent_id: 'eng-ada', disabled_at: 'then' }] })
+        expect(turn).toMatchObject({ failure: 'coworker_disabled' })
         expect(startChat).not.toHaveBeenCalled()
     })
 
     it('names an engine too old for channels', async () => {
-        vi.mocked(startChat).mockResolvedValue(new Response('{"error":"invalid source"}', { status: 400 }))
-        await expect(answer()).resolves.toMatchObject({ failure: 'engine_outdated' })
+        vi.mocked(startChat).mockResolvedValue(new Response('{"error":"source: Invalid option"}', { status: 400 }))
+        await expect(start().then(result => result.turn)).resolves.toMatchObject({ failure: 'engine_outdated' })
     })
 
-    it('names a run without a usable model, and a run still going at the deadline', async () => {
+    it('closes a run that ended before its id was stored, without waiting for the webhook', async () => {
         runEnds({ status: 'error', output: null, error: 'AI_APICallError: invalid x-api-key' })
-        await expect(answer()).resolves.toMatchObject({ failure: 'no_model' })
-        runEnds({ status: 'running', output: null })
-        await expect(answer()).resolves.toMatchObject({ failure: 'timeout' })
+        await expect(start().then(result => result.turn)).resolves.toMatchObject({ status: 'failed', failure: 'no_model' })
     })
 
     it('starts a new conversation when the engine lost the one it had', async () => {
         vi.mocked(startChat).mockResolvedValueOnce(new Response('{"error":"session not found for this agent"}', { status: 404 }))
-        const turn = await answer({ channel_agent_sessions: [{ channel_id: 'pub', agent_id: 'ada', workspace_id: WORKSPACE, engine_session_id: 'lost' }] })
+        const { turn } = await start({ channel_agent_sessions: [{ channel_id: 'pub', agent_id: 'ada', workspace_id: WORKSPACE, engine_session_id: 'lost' }] })
         expect(vi.mocked(startChat).mock.calls.map(call => call[2].sessionId)).toEqual(['lost', undefined])
         expect(turn).toMatchObject({ status: 'answered' })
+    })
+
+    it('runs in a conversation of its own while the channel one is busy, and keeps the channel one', async () => {
+        engineAccepts({ 'x-run-id': 'run-1', 'x-session-id': 'side' })
+        vi.mocked(startChat).mockResolvedValueOnce(new Response('{"code":"run_in_flight"}', { status: 409 }))
+        const { rows, turn } = await start({ channel_agent_sessions: [{ channel_id: 'pub', agent_id: 'ada', workspace_id: WORKSPACE, engine_session_id: 'main' }] })
+        expect(vi.mocked(startChat).mock.calls.map(call => call[2].sessionId)).toEqual(['main', undefined])
+        expect(turn).toMatchObject({ status: 'answered' })
+        expect(rows.channel_agent_sessions).toEqual([expect.objectContaining({ engine_session_id: 'main' })])
+        expect(ensureSessionRow).not.toHaveBeenCalled()
+    })
+})
+
+describe('finishing from the run-end webhook', () => {
+    async function inFlight(tables: Partial<Tables> = {}) {
+        runEnds({ status: 'running', output: null })
+        const { rows, scope } = setup(tables)
+        const trigger = await postChannelMessage(scope, ANNA, 'pub', { body: '@ada draft it' })
+        const turn = await claimTurn(scope, { channelId: 'pub', agentId: 'ada', threadMessageId: trigger.id, triggerMessageId: trigger.id, requestedBy: 'anna' })
+        await startCoworkerTurn(scope, { turn: turn!, person: anna, trigger }, [])
+        return { rows, scope, trigger }
+    }
+
+    const done = { event: 'agent.message.completed', kind: 'done', runId: 'run-1', source: null, metadata: { status: 'done' } }
+
+    it('posts the answer once, however many times the webhook comes', async () => {
+        const { rows, scope, trigger } = await inFlight()
+        runEnds({ status: 'done', output: 'Three taglines.' })
+        await expect(finishChannelTurnForRun(scope, channelRunEndingOf(done)!)).resolves.toBe('answered')
+        await expect(finishChannelTurnForRun(scope, channelRunEndingOf(done)!)).resolves.toBe('already')
+        const answers = rows.channel_messages.filter(row => row.author_agent_id === 'ada')
+        expect(answers).toEqual([expect.objectContaining({ body: 'Three taglines.', parent_message_id: trigger.id })])
+        expect(rows.channel_agent_turns[0]).toMatchObject({ status: 'answered', reply_message_id: answers[0].id })
+        expect(getRun).toHaveBeenLastCalledWith(CONN, 'eng-ada', 'run-1')
+    })
+
+    it('closes a failed run with its reason and posts nothing', async () => {
+        const { rows, scope } = await inFlight()
+        runEnds({ status: 'error', output: null, error: 'AI_APICallError: Set OPENROUTER_API_KEY to run the Lumvika models, or connect another AI provider in the app.' })
+        await expect(finishChannelTurnForRun(scope, channelRunEndingOf({ ...done, kind: 'error', metadata: { status: 'error' } })!)).resolves.toBe('failed')
+        expect(rows.channel_agent_turns[0]).toMatchObject({ status: 'failed', failure: 'no_model' })
+        expect(rows.channel_messages.filter(row => row.author_agent_id === 'ada')).toEqual([])
+    })
+
+    it('closes a run stopped on purpose as cancelled', async () => {
+        const { rows, scope } = await inFlight()
+        runEnds({ status: 'cancelled', output: 'half an answer' })
+        await finishChannelTurnForRun(scope, channelRunEndingOf({ ...done, metadata: { status: 'cancelled' } })!)
+        expect(rows.channel_agent_turns[0]).toMatchObject({ status: 'failed', failure: 'cancelled' })
+        expect(rows.channel_messages.filter(row => row.author_agent_id === 'ada')).toEqual([])
+    })
+
+    it('closes a run that stopped on a question for the person, keeping what it said', async () => {
+        const { rows, scope } = await inFlight()
+        runEnds({ status: 'done', output: 'Before I start: which tone?' })
+        const ending = channelRunEndingOf({ event: 'agent.notification', kind: 'question', runId: 'run-1', metadata: { toolName: 'ask_user' } })
+        expect(ending).toEqual({ runId: 'run-1', ending: 'needs_input' })
+        await expect(finishChannelTurnForRun(scope, ending!)).resolves.toBe('failed')
+        expect(rows.channel_agent_turns[0]).toMatchObject({ status: 'failed', failure: 'needs_input', reply_message_id: expect.any(String) })
+        expect(rows.channel_messages.filter(row => row.author_agent_id === 'ada')).toEqual([expect.objectContaining({ body: 'Before I start: which tone?' })])
+    })
+
+    it('times out a turn its run never reported, and still takes a late answer', async () => {
+        const { rows, scope } = await inFlight()
+        rows.channel_agent_turns[0].created_at = new Date(Date.now() - STALE_TURN_MS - 60_000).toISOString()
+        await expect(listChannelTurns(scope, 'pub')).resolves.toEqual([expect.objectContaining({ status: 'failed', failure: 'timeout' })])
+        runEnds({ status: 'done', output: 'Sorry, that took a while.' })
+        await expect(finishChannelTurnForRun(scope, channelRunEndingOf(done)!)).resolves.toBe('answered')
+        expect(rows.channel_agent_turns[0]).toMatchObject({ status: 'answered', failure: null })
+    })
+
+    it('matches by run id alone, whatever source the engine reports, and ignores the rest', async () => {
+        expect(channelRunEndingOf({ ...done, source: 'channel' })).toEqual({ runId: 'run-1', ending: 'done' })
+        expect(channelRunEndingOf({ event: 'agent.message.completed', kind: 'done', metadata: null })).toBeNull()
+        expect(channelRunEndingOf({ event: 'agent.notification', kind: 'info', runId: 'run-1' })).toBeNull()
+        const { scope } = setup()
+        await expect(finishChannelTurnForRun(scope, { runId: 'someone-elses-run', ending: 'done' })).resolves.toBe('none')
     })
 })
 

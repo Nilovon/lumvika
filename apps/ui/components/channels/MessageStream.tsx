@@ -9,7 +9,7 @@ import { Conversation, ConversationContent, ConversationScrollButton } from '@/c
 import { ChannelMessageItem } from '@/components/channels/ChannelMessageItem'
 import { ThreadSummary } from '@/components/channels/ThreadSummary'
 import { TurnNote } from '@/components/channels/TurnNote'
-import { isAnswering, refKey } from '@/components/channels/channel-rows'
+import { hasNote, isAnswering, refKey } from '@/components/channels/channel-rows'
 import type { ChannelDirectory } from '@/components/channels/useChannelDirectory'
 import type { StreamMessage } from '@/components/channels/useChannelMessages'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ export type MessageListProps = {
     canManage: boolean
     directory: ChannelDirectory
     authorName: (author: WorkAuthor) => string
-    tokens: ComposerMention[]
+    tokensOf: (body: string) => ComposerMention[]
     mentionsOf: (body: string) => WorkMemberRef[]
     onChanged: (message: ChannelMessage) => void
     onRetry: (clientId: string) => void
@@ -77,9 +77,9 @@ export function MessageStream({ channelKind, messages, turns, hasOlder, loadingO
 
     const notesFor = (message: StreamMessage) =>
         turns.filter(turn => {
-            if (channelKind === 'dm') return turn.triggerMessageId === message.id && (isAnswering(turn) || turn.status === 'failed')
+            if (channelKind === 'dm') return turn.triggerMessageId === message.id && hasNote(turn)
             if (isAnswering(turn)) return turn.threadMessageId === message.id
-            return turn.status === 'failed' && turn.triggerMessageId === message.id
+            return hasNote(turn) && turn.triggerMessageId === message.id
         })
 
     return (

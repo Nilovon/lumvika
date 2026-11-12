@@ -33,7 +33,7 @@ export function messageFromRow(row: Tables<'channel_messages'>): ChannelMessage 
     }
 }
 
-const TURN_FAILURES = new Set<string>(['engine_unreachable', 'engine_outdated', 'coworker_disabled', 'no_model', 'no_access', 'not_member', 'timeout', 'failed'])
+const TURN_FAILURES = new Set<string>(['engine_unreachable', 'engine_outdated', 'coworker_disabled', 'no_model', 'no_access', 'not_member', 'timeout', 'failed', 'needs_input', 'cancelled'])
 
 export function turnFromRow(row: Tables<'channel_agent_turns'>): ChannelAgentTurn {
     return {
@@ -50,11 +50,23 @@ export function turnFromRow(row: Tables<'channel_agent_turns'>): ChannelAgentTur
     }
 }
 
-// The server closes a turn its request lost after this long; until then the screen stops showing it.
+// A turn its run never reported back on after this long has timed out, the same limit the server
+// closes it with on the next read; the screen does not wait for that.
 const STALE_TURN_MS = 15 * 60_000
 
 export function isAnswering(turn: ChannelAgentTurn, now = Date.now()): boolean {
     return turn.status === 'answering' && now - new Date(turn.createdAt).getTime() < STALE_TURN_MS
+}
+
+// The turn as it reads now: one still marked answering past the limit reads as timed out.
+export function turnAsOf(turn: ChannelAgentTurn, now = Date.now()): ChannelAgentTurn {
+    if (turn.status !== 'answering' || isAnswering(turn, now)) return turn
+    return { ...turn, status: 'failed', failure: 'timeout' }
+}
+
+// What a turn shows under its message: answering, or the note of why it could not answer.
+export function hasNote(turn: ChannelAgentTurn, now = Date.now()): boolean {
+    return turnAsOf(turn, now).status !== 'answered'
 }
 
 export function sameRef(a: WorkAuthor, b: WorkAuthor): boolean {

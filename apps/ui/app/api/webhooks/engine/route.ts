@@ -1,6 +1,7 @@
 import { recordGettingStartedEvent } from '@/app/api/_services/getting-started.service'
 import { followAuthorOfCreatedTask } from '@/app/api/_services/notification-audience.service'
 import { recordNotification } from '@/app/api/_services/notification.service'
+import { channelRunEndingOf, finishChannelTurnForRun } from '@/app/api/_services/work/channel-coworkers.service'
 import { releaseRunCheckouts } from '@/app/api/_services/work/work-queue.service'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { engineCreatedEventSchema, notificationPayloadSchema } from '@/lib/engine/types'
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
     // A run that ended holds nothing any more, whatever its notification turns into below.
     const { event, runId } = parsed.data
     if (isRunCompletion(event) && runId) await releaseRunCheckouts({ workspaceId: engine.workspaceId }, runId).catch(err => console.error('[engine-webhook] failed to release the checkouts of a run', err))
+    // A coworker answering in a channel: its answer is posted now that its run is over.
+    const channelEnding = channelRunEndingOf(parsed.data)
+    if (channelEnding) await finishChannelTurnForRun({ workspaceId: engine.workspaceId }, channelEnding).catch(err => console.error('[engine-webhook] failed to finish a channel turn', err))
 
     const result = await recordNotification(token, parsed.data)
     if (!result.ok) return Response.json({ error: result.error }, { status: result.status })

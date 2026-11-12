@@ -11,7 +11,7 @@ import { ChannelMessageItem } from '@/components/channels/ChannelMessageItem'
 import { continuesFrom, MessageStreamSkeleton, type MessageListProps } from '@/components/channels/MessageStream'
 import { SidePaneHeader } from '@/components/channels/SidePaneHeader'
 import { TurnNote } from '@/components/channels/TurnNote'
-import { isAnswering } from '@/components/channels/channel-rows'
+import { hasNote } from '@/components/channels/channel-rows'
 import type { MentionCandidate } from '@/components/channels/useChannelMentions'
 import { useChannelThread } from '@/components/channels/useChannelThread'
 import { OutsiderPrompt, type OutsiderOffer } from '@/components/channels/OutsiderPrompt'
@@ -36,7 +36,7 @@ export function ThreadPane({ channelId, rootId, turns, canPost, candidates, onCl
     const tComposer = useTranslations('channels.composer')
     const thread = useChannelThread(channelId, rootId, item.me)
     const [offers, setOffers] = useState<OutsiderOffer[]>([])
-    const threadTurns = turns.filter(turn => turn.threadMessageId === rootId && (isAnswering(turn) || turn.status === 'failed'))
+    const threadTurns = turns.filter(turn => turn.threadMessageId === rootId && hasNote(turn))
     const notesAfter = (messageId: string) => threadTurns.filter(turn => turn.triggerMessageId === messageId)
 
     const all = thread.root ? [{ ...thread.root, thread: null }, ...thread.replies] : []

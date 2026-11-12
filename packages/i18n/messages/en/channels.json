@@ -80,7 +80,9 @@
             "no_access": "{name} could not answer: you do not have access to its Box.",
             "not_member": "{name} could not answer: it is not a member of this channel.",
             "timeout": "{name} took too long to answer and stopped.",
-            "failed": "{name} could not answer this time."
+            "failed": "{name} could not answer this time.",
+            "needs_input": "{name} stopped to ask you something it can only take in your own chat with it. Open that chat to answer.",
+            "cancelled": "{name} was stopped before it answered."
         },
         "outsider": "{name} is not in this channel yet, so it cannot answer.",
         "outsiderManagerOnly": "{name} is not in this channel. Ask whoever manages it to add this coworker.",
