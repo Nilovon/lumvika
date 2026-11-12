@@ -5,6 +5,12 @@ export type Tables = Record<string, Row[]>
 
 let nextId = 0
 
+// Numbers by value, everything else (timestamps, text) as text, the way Postgres orders each.
+function compare(a: unknown, b: unknown): number {
+    if (typeof a === 'number' && typeof b === 'number') return a - b
+    return String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0
+}
+
 // The value a column must hold for every builder filter of the chain, the way PostgREST reads them.
 function matches(row: Row, calls: readonly SupabaseCall[]): boolean {
     return calls.every(call => {
@@ -21,13 +27,13 @@ function matches(row: Row, calls: readonly SupabaseCall[]): boolean {
             case 'not':
                 return value === 'is' && extra === null ? row[column] != null : true
             case 'lt':
-                return String(row[column]) < String(value)
+                return row[column] != null && compare(row[column], value) < 0
             case 'gt':
-                return String(row[column]) > String(value)
+                return row[column] != null && compare(row[column], value) > 0
             case 'gte':
-                return row[column] != null && String(row[column]) >= String(value)
+                return row[column] != null && compare(row[column], value) >= 0
             case 'lte':
-                return row[column] != null && String(row[column]) <= String(value)
+                return row[column] != null && compare(row[column], value) <= 0
             default:
                 return true
         }

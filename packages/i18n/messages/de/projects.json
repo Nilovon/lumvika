@@ -83,7 +83,10 @@
         "quickAddIn": "Ticket zu {status} hinzufügen",
         "quickAddPlaceholder": "Titel des Tickets",
         "quickAddHint": "Enter zum Hinzufügen, Esc zum Schließen",
-        "quickAddSubmit": "Hinzufügen"
+        "quickAddSubmit": "Hinzufügen",
+        "columnShown": "{shown} von {total} angezeigt",
+        "showMore": "Mehr zeigen",
+        "showMoreIn": "Mehr Tickets in {status} zeigen"
     },
     "issueList": {
         "emptyIssues": "Noch keine Tickets in diesem Projekt",
@@ -106,7 +109,9 @@
         "noIssueMatch": "Kein Ticket passt",
         "noIssueMatchHint": "Versuch eine andere Suche oder weniger Filter.",
         "clearFilters": "Filter entfernen",
-        "shown": "{shown} von {total, plural, one {# Ticket} other {# Tickets}}"
+        "shown": "{shown} von {total, plural, one {# Ticket} other {# Tickets}}",
+        "loaded": "{loaded} von {total, plural, one {# Ticket} other {# Tickets}} geladen",
+        "loadMore": "Weitere Tickets laden"
     },
     "overview": {
         "readOnly": "Du kannst an den Tickets dieses Projekts arbeiten. Nur Admins oder die Verwaltung des Projekts ändern seine Einstellungen.",

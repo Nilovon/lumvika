@@ -1,14 +1,14 @@
 'use client'
 
 import { ISSUE_STATUS_TONES } from '@/components/issues/issue-status'
-import type { BoardColumns } from '@/components/projects/board/board-logic'
+import type { BoardColumns, ColumnTotals } from '@/components/projects/board/board-logic'
 import { cn } from '@/lib/utils'
 import type { IssueStatus } from '@lumvika/contracts'
 import { Badge } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 
 // The columns of the board as a row of tabs on a phone, one column shown at a time.
-export function MobileStatusSwitcher({ statuses, columns, value, onChange }: { statuses: IssueStatus[]; columns: BoardColumns; value: IssueStatus; onChange: (status: IssueStatus) => void }) {
+export function MobileStatusSwitcher({ statuses, columns, totals, value, onChange }: { statuses: IssueStatus[]; columns: BoardColumns; totals: ColumnTotals | null; value: IssueStatus; onChange: (status: IssueStatus) => void }) {
     const t = useTranslations('projects.board')
     const tStatus = useTranslations('issues.status')
 
@@ -28,7 +28,7 @@ export function MobileStatusSwitcher({ statuses, columns, value, onChange }: { s
                         <Badge size="xs" tone={ISSUE_STATUS_TONES[status]} glow={false} className="font-medium">
                             {tStatus(status)}
                         </Badge>
-                        <span className="tabular-nums">{columns[status].length}</span>
+                        <span className="tabular-nums">{Math.max(columns[status].length, totals?.[status] ?? 0)}</span>
                     </button>
                 )
             })}

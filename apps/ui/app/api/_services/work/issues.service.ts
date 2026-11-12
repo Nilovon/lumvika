@@ -2,6 +2,7 @@ import 'server-only'
 
 import {
     ISSUE_CHECKOUT_STATUSES,
+    ISSUE_STATUSES,
     canTransitionIssue,
     createIssueInputSchema,
     formatIssueRef,
@@ -88,6 +89,18 @@ export function issueStatusPatch(issue: Pick<IssueRow, 'started_at' | 'completed
 async function endOfColumn(scope: WorkScope, projectId: string, status: IssueStatus): Promise<number> {
     const { data } = await selectMany(clientOf(scope), 'issues', ['position'] as const, { project_id: projectId, status }, { column: 'position', ascending: false }, 1)
     return (data?.[0]?.position ?? 0) + ISSUE_POSITION_STEP
+}
+
+// Where a card lands in `status`: just above `beforeIssueId`, or at the end of the column when that is
+// null or no longer in the column. Read from the whole column, so a drop on a board that shows only
+// part of a long column never lands among cards it did not load.
+async function placeBefore(scope: WorkScope, projectId: string, status: IssueStatus, beforeIssueId: string | null, movedId: string): Promise<number> {
+    const supabase = clientOf(scope)
+    const { data: anchor } = beforeIssueId ? await selectMaybeSingle(supabase, 'issues', ['id', 'project_id', 'status', 'position'] as const, { id: beforeIssueId, workspace_id: scope.workspaceId }) : { data: null }
+    if (!anchor || anchor.id === movedId || anchor.project_id !== projectId || anchor.status !== status) return endOfColumn(scope, projectId, status)
+    const { data: previous } = await selectMany(supabase, 'issues', ['position'] as const, { project_id: projectId, status, position: { lt: anchor.position }, id: { neq: movedId } }, { column: 'position', ascending: false }, 1)
+    const before = previous?.[0]?.position
+    return before === undefined ? anchor.position - ISSUE_POSITION_STEP : (before + anchor.position) / 2
 }
 
 async function assertGoal(scope: WorkScope, goalId: string | null | undefined): Promise<void> {
@@ -236,9 +249,10 @@ export async function transitionIssue(scope: WorkScope, author: WorkAuthor, issu
 export async function moveIssue(scope: WorkScope, author: WorkAuthor, issueId: string, input: MoveIssueInput): Promise<IssueRecord> {
     const move = parseWorkInput(moveIssueInputSchema, input)
     const current = await readIssue(scope, issueId)
-    if (move.status !== current.status) return changeStatus(scope, author, current, move.status, { position: move.position })
-    if (move.position === current.position) return current
-    return writeIssue(scope, current, { position: move.position }, { expectStatus: true })
+    const position = move.position ?? (await placeBefore(scope, current.project_id, move.status, move.beforeIssueId ?? null, current.id))
+    if (move.status !== current.status) return changeStatus(scope, author, current, move.status, { position })
+    if (position === current.position) return current
+    return writeIssue(scope, current, { position }, { expectStatus: true })
 }
 
 // One assignee at most. A new assignee ends the checkout of the previous one's run, in the same write
@@ -388,6 +402,34 @@ export async function listIssues(scope: WorkScope, input: IssueListFilters, visi
     const { data, error } = await selectManyWithJoins(clientOf(scope), 'issues', ISSUE_SUMMARY_COLUMNS, PROJECT_KEY_JOIN, query, undefined, SORTS[filters.sort ?? 'position'], filters.limit ?? DEFAULT_LIST_LIMIT, filters.offset)
     if (error) throw new Error(`Failed to list the issues: ${error.message}`)
     return (data ?? []).map(({ project, ...row }) => toIssueSummary(row, project.key))
+}
+
+// How many cards of each column a board loads at first: an open column up to a generous cap, a closed
+// one its most recent cards (the end of the column, where a closed card lands). A column holding more
+// says so and loads more on demand, so nothing past the cap vanishes without a word.
+export const BOARD_COLUMN_LIMITS: Record<IssueStatus, number> = { backlog: 200, todo: 200, in_progress: 200, in_review: 200, blocked: 200, done: 50, cancelled: 50 }
+export const BOARD_COLUMN_MAX = 2000
+const LOADED_FROM_THE_END = new Set<IssueStatus>(['done', 'cancelled'])
+
+export type ProjectBoard = { issues: IssueSummary[]; totals: Record<IssueStatus, number> }
+
+async function boardColumn(scope: WorkScope, projectId: string, status: IssueStatus, limit: number): Promise<IssueSummary[]> {
+    const order = { column: 'position', ascending: !LOADED_FROM_THE_END.has(status) } as const
+    const { data, error } = await selectManyWithJoins(clientOf(scope), 'issues', ISSUE_SUMMARY_COLUMNS, PROJECT_KEY_JOIN, { workspace_id: scope.workspaceId, project_id: projectId, status }, undefined, order, limit)
+    if (error) throw new Error(`Failed to list the issues: ${error.message}`)
+    return (data ?? []).map(({ project, ...row }) => toIssueSummary(row, project.key))
+}
+
+// The cards of a project's board, column by column, and how many each column holds in all. `limits`
+// raises the cards loaded in a column (Show more), never past BOARD_COLUMN_MAX.
+export async function listProjectBoard(scope: WorkScope, projectId: string, limits: Partial<Record<IssueStatus, number>> = {}): Promise<ProjectBoard> {
+    const limitOf = (status: IssueStatus) => Math.min(Math.max(limits[status] ?? 0, BOARD_COLUMN_LIMITS[status]), BOARD_COLUMN_MAX)
+    const [columns, counts] = await Promise.all([Promise.all(ISSUE_STATUSES.map(status => boardColumn(scope, projectId, status, limitOf(status)))), clientOf(scope).rpc('project_issue_counts', { p_workspace_id: scope.workspaceId })])
+    if (counts.error) throw new Error(`Failed to count the issues: ${counts.error.message}`)
+    const totals = Object.fromEntries(ISSUE_STATUSES.map(status => [status, 0])) as Record<IssueStatus, number>
+    for (const row of counts.data ?? []) if (row.project_id === projectId) totals[row.status] = row.issue_count
+    ISSUE_STATUSES.forEach((status, index) => (totals[status] = Math.max(totals[status], columns[index].length)))
+    return { issues: columns.flat(), totals }
 }
 
 // Null when the reference names nothing or a project the actor cannot see: both read the same way.

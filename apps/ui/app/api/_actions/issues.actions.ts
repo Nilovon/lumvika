@@ -18,7 +18,7 @@ import { requireLightSessionActor, type Actor } from '@/app/api/_auth/access'
 import { assertIssueAccess, assertProjectAccess, ISSUE_NOT_FOUND, visibleProjectIds } from '@/app/api/_auth/project-access'
 import { listActivity } from '@/app/api/_services/work/activity.service'
 import { addIssueComment, editIssueComment, listIssueComments } from '@/app/api/_services/work/issue-comments.service'
-import { assignIssue, createIssue, createSubIssue, getIssueByRef, listIssues, moveIssue, transitionIssue, updateIssue, type IssueRecord } from '@/app/api/_services/work/issues.service'
+import { assignIssue, createIssue, createSubIssue, getIssueByRef, listProjectBoard, moveIssue, transitionIssue, updateIssue, type IssueRecord, type ProjectBoard } from '@/app/api/_services/work/issues.service'
 import { toIssueSummary } from '@/app/api/_services/work/mappers'
 import { assertAssignableBy } from '@/app/api/_services/work/refs'
 import { failure, failureOf } from '@/lib/i18n/action-error'
@@ -26,7 +26,6 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
 import type { ActionResult } from './space.actions'
 
-const BOARD_LIMIT = 500
 const ISSUE_ACTIVITY_LIMIT = 100
 
 type IssueResult = ActionResult<{ issue: IssueSummary }>
@@ -43,12 +42,13 @@ function summaryOf(record: IssueRecord): IssueSummary {
     return toIssueSummary(record, record.projectKey)
 }
 
-// Every issue of a project, sub-issues included, in board order.
-export async function listProjectIssuesAction(projectId: string): Promise<ActionResult<{ issues: IssueSummary[] }>> {
+// The issues of a project, sub-issues included, column by column: each column up to its limit (raised
+// by Show more), with how many it holds in all.
+export async function listProjectIssuesAction(projectId: string, limits: Partial<Record<IssueStatus, number>> = {}): Promise<ActionResult<ProjectBoard>> {
     try {
         const { actor } = await assertProjectAccess(projectId, 'use')
-        const issues = await listIssues(scopeOf(actor), { projectId, sort: 'position', limit: BOARD_LIMIT }, new Set([projectId]))
-        return { ok: true, issues }
+        const board = await listProjectBoard(scopeOf(actor), projectId, limits)
+        return { ok: true, ...board }
     } catch (err) {
         return failureOf(err)
     }

@@ -1,7 +1,7 @@
 import type { IssueStatus, IssueSummary } from '@lumvika/contracts'
 import { describe, expect, it } from 'vitest'
 
-import { canDropOn, dropPosition, groupByStatus, moveLocally, positionBetween, POSITION_STEP, upsertIssue } from './board-logic'
+import { canDropOn, columnCount, countMove, dropPosition, groupByStatus, moreOf, MORE_STEP, moveLocally, positionBetween, POSITION_STEP, upsertIssue } from './board-logic'
 
 function issue(id: string, status: IssueStatus, position: number, number = 1): IssueSummary {
     return {
@@ -128,5 +128,28 @@ describe('moveLocally and upsertIssue', () => {
         const issues = [issue('a', 'todo', 1)]
         expect(upsertIssue(issues, { ...issues[0], title: 'renamed' })[0].title).toBe('renamed')
         expect(upsertIssue(issues, issue('b', 'todo', 2)).map(i => i.id)).toEqual(['a', 'b'])
+    })
+})
+
+describe('column totals', () => {
+    const totals = { backlog: 230, todo: 2, in_progress: 0, in_review: 0, blocked: 0, done: 80, cancelled: 0 }
+    const shown = [issue('a', 'backlog', 1), issue('b', 'todo', 1), issue('c', 'todo', 2), issue('d', 'done', 1)]
+
+    it('says how many a column shows out of how many it holds, never fewer than it shows', () => {
+        expect(columnCount(shown, totals, 'backlog')).toEqual({ shown: 1, total: 230 })
+        expect(columnCount(shown, { ...totals, todo: 0 }, 'todo')).toEqual({ shown: 2, total: 2 })
+        expect(columnCount(shown, null, 'todo')).toEqual({ shown: 2, total: 2 })
+    })
+
+    it('moves a card from one count to another, and counts one that appears or goes', () => {
+        expect(countMove(totals, 'backlog', 'todo')).toMatchObject({ backlog: 229, todo: 3 })
+        expect(countMove(totals, null, 'done')).toMatchObject({ done: 81 })
+        expect(countMove(totals, 'in_review', null)).toMatchObject({ in_review: 0 })
+        expect(countMove(null, 'todo', 'done')).toBeNull()
+    })
+
+    it('asks for the next cards of one column, or of every column cut short', () => {
+        expect(moreOf(shown, totals, 'backlog')).toEqual({ backlog: 1 + MORE_STEP })
+        expect(moreOf(shown, totals)).toEqual({ backlog: 1 + MORE_STEP, done: 1 + MORE_STEP })
     })
 })

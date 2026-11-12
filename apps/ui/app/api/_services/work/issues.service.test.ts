@@ -7,7 +7,7 @@ vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn() }))
 
 const { reactToIssueChange } = await import('@/app/api/_services/work/issue-effects.service')
-const { assignIssue, checkoutIssue, createIssue, createSubIssue, getIssueByRef, issueStatusPatch, listIssues, moveIssue, releaseIssue, transitionIssue, updateIssue, ISSUE_POSITION_STEP } = await import('./issues.service')
+const { assignIssue, checkoutIssue, createIssue, createSubIssue, getIssueByRef, issueStatusPatch, listIssues, listProjectBoard, moveIssue, releaseIssue, transitionIssue, updateIssue, BOARD_COLUMN_LIMITS, ISSUE_POSITION_STEP } = await import('./issues.service')
 
 const WORKSPACE = 7
 const ME = { kind: 'user', userId: 'me' } as const
@@ -56,6 +56,16 @@ function setup(tables: Partial<Tables> = {}) {
         ...tables,
     }
     const db = workDatabase(rows, {
+        rpc: {
+            project_issue_counts: () => {
+                const counts = new Map<string, { project_id: unknown; status: unknown; issue_count: number }>()
+                for (const row of rows.issues) {
+                    const key = `${row.project_id}/${row.status}`
+                    counts.set(key, { project_id: row.project_id, status: row.status, issue_count: (counts.get(key)?.issue_count ?? 0) + 1 })
+                }
+                return [...counts.values()]
+            },
+        },
         onInsert: {
             issues: row => {
                 const project = rows.projects.find(candidate => candidate.id === row.project_id)!
@@ -201,6 +211,52 @@ describe('moveIssue', () => {
         await moveIssue(scope, ME, 'issue-1', { status: 'in_progress', position: 7 })
         expect(rows.issues[0]).toMatchObject({ status: 'in_progress', position: 7 })
         expect(actions(rows)).toEqual(['issue.status_changed'])
+    })
+})
+
+describe('moveIssue to a place named by its neighbour', () => {
+    const column = (status: string, count: number, from = 1) => Array.from({ length: count }, (_, n) => issue({ id: `${status}-${n + from}`, number: 100 + n + from, status, position: (n + from) * ISSUE_POSITION_STEP }))
+
+    it('lands at the true end of a column the board did not load in full', async () => {
+        const { rows, scope } = setup({ issues: [issue({ id: 'moved', status: 'todo', position: 1 }), ...column('in_progress', 300)] })
+
+        const moved = await moveIssue(scope, ME, 'moved', { status: 'in_progress', beforeIssueId: null })
+
+        expect(moved.position).toBe(301 * ISSUE_POSITION_STEP)
+        expect(rows.issues.find(row => row.id === 'moved')?.status).toBe('in_progress')
+    })
+
+    it('lands between the card it was dropped above and the one before it, loaded or not', async () => {
+        const { scope } = setup({ issues: [issue({ id: 'moved', position: 99_999 }), ...column('todo', 3)] })
+        expect((await moveIssue(scope, ME, 'moved', { status: 'todo', beforeIssueId: 'todo-3' })).position).toBe(2.5 * ISSUE_POSITION_STEP)
+        expect((await moveIssue(scope, ME, 'moved', { status: 'todo', beforeIssueId: 'todo-1' })).position).toBe(0)
+    })
+
+    it('goes to the end when the card it was dropped above has left the column', async () => {
+        const { scope } = setup({ issues: [issue({ id: 'moved', position: 1 }), ...column('todo', 2, 2), issue({ id: 'gone', number: 50, status: 'done', position: 5 })] })
+        expect((await moveIssue(scope, ME, 'moved', { status: 'todo', beforeIssueId: 'gone' })).position).toBe(4 * ISSUE_POSITION_STEP)
+    })
+})
+
+describe('listProjectBoard', () => {
+    const many = (status: string, count: number) => Array.from({ length: count }, (_, n) => issue({ id: `${status}-${n}`, number: 1000 + n, status, position: n * ISSUE_POSITION_STEP, ...(status === 'done' ? { completed_at: 'then' } : {}) }))
+
+    it('loads each column up to its limit, the most recent of a closed one, and says how many each holds', async () => {
+        const { scope } = setup({ issues: [...many('backlog', 230), ...many('todo', 3), ...many('done', 80)] })
+
+        const board = await listProjectBoard(scope, 'project-1')
+
+        const count = (status: string) => board.issues.filter(row => row.status === status).length
+        expect([count('backlog'), count('todo'), count('done')]).toEqual([BOARD_COLUMN_LIMITS.backlog, 3, BOARD_COLUMN_LIMITS.done])
+        expect(board.totals).toMatchObject({ backlog: 230, todo: 3, done: 80, in_review: 0 })
+        expect(board.issues.filter(row => row.status === 'done').map(row => row.id)).toContain('done-79')
+        expect(board.issues.filter(row => row.status === 'done').map(row => row.id)).not.toContain('done-0')
+    })
+
+    it('loads more of a column on demand', async () => {
+        const { scope } = setup({ issues: many('backlog', 230) })
+        const board = await listProjectBoard(scope, 'project-1', { backlog: 400 })
+        expect(board.issues).toHaveLength(230)
     })
 })
 

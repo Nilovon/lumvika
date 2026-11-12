@@ -378,9 +378,13 @@ export const transitionIssueInputSchema = z.object({
 })
 export type TransitionIssueInput = z.input<typeof transitionIssueInputSchema>
 
+// A drop names its place by the card it lands above (`beforeIssueId`, null for the end of the
+// column) and the server works out the position from the whole column, cards the board has not loaded
+// included. A bare `position` is kept for callers that computed one.
 export const moveIssueInputSchema = z.object({
     status: issueStatusSchema,
-    position: z.number().finite(),
+    position: z.number().finite().optional(),
+    beforeIssueId: z.string().min(1).nullable().optional(),
 })
 export type MoveIssueInput = z.input<typeof moveIssueInputSchema>
 

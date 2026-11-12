@@ -95,12 +95,12 @@ export function ProjectWorkspace({ project, back, onProjectChanged }: ProjectWor
                 <div className="flex h-full min-h-0 flex-col">
                     {notices}
                     <div className="min-h-0 flex-1">
-                        <ProjectBoard projectId={project.id} issues={issues.issues} ops={issues} canAdd={!archived} onOpenIssue={openIssue} onStatusChange={changeStatus} />
+                        <ProjectBoard projectId={project.id} issues={issues.issues} totals={issues.totals} ops={issues} canAdd={!archived} onOpenIssue={openIssue} onStatusChange={changeStatus} />
                     </div>
                 </div>
             )}
             {url.tab === 'list' && notices}
-            {url.tab === 'list' && <ProjectIssueList issues={issues.issues} onOpenIssue={openIssue} onStatusChange={changeStatus} onCreate={archived ? undefined : () => setCreating(true)} />}
+            {url.tab === 'list' && <ProjectIssueList issues={issues.issues} totals={issues.totals} onLoadMore={() => void issues.showMore()} loadingMore={issues.loadingMore} onOpenIssue={openIssue} onStatusChange={changeStatus} onCreate={archived ? undefined : () => setCreating(true)} />}
             {url.tab === 'overview' && <ProjectOverview project={project} onChanged={onProjectChanged} />}
 
             <NewIssueDialog projectId={project.id} projectName={project.name} projectRestricted={project.visibility === 'restricted'} open={creating} onOpenChange={setCreating} onCreate={issues.create} />

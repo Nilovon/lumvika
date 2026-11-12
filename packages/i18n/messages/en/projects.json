@@ -89,7 +89,10 @@
         "quickAddIn": "Add an issue to {status}",
         "quickAddPlaceholder": "Issue title",
         "quickAddHint": "Enter to add, Esc to close",
-        "quickAddSubmit": "Add"
+        "quickAddSubmit": "Add",
+        "columnShown": "Showing {shown} of {total}",
+        "showMore": "Show more",
+        "showMoreIn": "Show more issues in {status}"
     },
     "issueList": {
         "emptyIssues": "No issues in this project yet",
@@ -112,7 +115,9 @@
         "noIssueMatch": "No issue matches",
         "noIssueMatchHint": "Try another search or fewer filters.",
         "clearFilters": "Clear filters",
-        "shown": "{shown} of {total, plural, one {# issue} other {# issues}}"
+        "shown": "{shown} of {total, plural, one {# issue} other {# issues}}",
+        "loaded": "{loaded} of {total, plural, one {# issue} other {# issues}} loaded",
+        "loadMore": "Load more issues"
     },
     "overview": {
         "readOnly": "You can work on the issues of this project. Only an admin or a manager of the project changes its settings.",

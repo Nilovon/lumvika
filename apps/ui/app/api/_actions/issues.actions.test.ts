@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
     assertIssueAccess: vi.fn(),
     visibleProjectIds: vi.fn(),
     listIssues: vi.fn(),
+    listProjectBoard: vi.fn(),
     getIssueByRef: vi.fn(),
     createIssue: vi.fn(),
     createSubIssue: vi.fn(),
@@ -33,6 +34,7 @@ vi.mock('@/app/api/_auth/project-access', () => ({
 }))
 vi.mock('@/app/api/_services/work/issues.service', () => ({
     listIssues: mocks.listIssues,
+    listProjectBoard: mocks.listProjectBoard,
     getIssueByRef: mocks.getIssueByRef,
     createIssue: mocks.createIssue,
     createSubIssue: mocks.createSubIssue,
@@ -95,19 +97,19 @@ beforeEach(() => {
 })
 
 describe('listProjectIssuesAction', () => {
-    it('lists the issues of a project the caller uses, in board order', async () => {
-        mocks.listIssues.mockResolvedValue([{ id: 'i1' }])
+    it('lists the board of a project the caller uses, column by column with what each holds', async () => {
+        mocks.listProjectBoard.mockResolvedValue({ issues: [{ id: 'i1' }], totals: { todo: 1 } })
 
-        await expect(actions.listProjectIssuesAction('p1')).resolves.toEqual({ ok: true, issues: [{ id: 'i1' }] })
+        await expect(actions.listProjectIssuesAction('p1', { done: 100 })).resolves.toEqual({ ok: true, issues: [{ id: 'i1' }], totals: { todo: 1 } })
         expect(mocks.assertProjectAccess).toHaveBeenCalledWith('p1', 'use')
-        expect(mocks.listIssues).toHaveBeenCalledWith(SCOPE, { projectId: 'p1', sort: 'position', limit: 500 }, new Set(['p1']))
+        expect(mocks.listProjectBoard).toHaveBeenCalledWith(SCOPE, 'p1', { done: 100 })
     })
 
     it('lists nothing for a project the caller cannot see', async () => {
         mocks.assertProjectAccess.mockRejectedValue(new AuthorizationError('projectNotFound'))
 
         await expect(actions.listProjectIssuesAction('p1')).resolves.toMatchObject({ ok: false, code: 'projectNotFound' })
-        expect(mocks.listIssues).not.toHaveBeenCalled()
+        expect(mocks.listProjectBoard).not.toHaveBeenCalled()
     })
 })
 

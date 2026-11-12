@@ -5,7 +5,7 @@ import { BOARD_STATUSES } from '@/components/issues/issue-status'
 import { BoardColumn, type DropTarget } from '@/components/projects/board/BoardColumn'
 import { MobileStatusSwitcher } from '@/components/projects/board/MobileStatusSwitcher'
 import { useBoardDrag } from '@/components/projects/board/useBoardDrag'
-import { canDropOn, groupByStatus } from '@/components/projects/board/board-logic'
+import { canDropOn, groupByStatus, type ColumnTotals } from '@/components/projects/board/board-logic'
 import type { ProjectIssues } from '@/components/projects/useProjectIssues'
 import { Switch } from '@/components/ui/switch'
 import { Field } from '@/components/ui/field'
@@ -21,7 +21,9 @@ const PHONE_BOARD_QUERY = '(max-width: 767.98px)'
 type ProjectBoardProps = {
     projectId: string
     issues: IssueSummary[]
-    ops: Pick<ProjectIssues, 'move' | 'create'>
+    // How many cards each column holds in all: a column cut short says so and loads more.
+    totals: ColumnTotals | null
+    ops: Pick<ProjectIssues, 'move' | 'create' | 'showMore' | 'loadingMore'>
     canAdd: boolean
     onOpenIssue: (issue: IssueSummary) => void
     // Goes through the host, which asks for the reason of Blocked.
@@ -31,7 +33,7 @@ type ProjectBoardProps = {
 // The kanban of a project. On a wide screen every column sits side by side and a card is dragged
 // across them; on a phone one column shows at a time behind a status switcher, and a card changes
 // status from its own picker. Cancelled issues stay out of the way until asked for.
-export function ProjectBoard({ projectId, issues, ops, canAdd, onOpenIssue, onStatusChange }: ProjectBoardProps) {
+export function ProjectBoard({ projectId, issues, totals, ops, canAdd, onOpenIssue, onStatusChange }: ProjectBoardProps) {
     const t = useTranslations('projects.board')
     const phone = useIsMobile(PHONE_BOARD_QUERY)
     const [showCancelled, setShowCancelled] = useState(false)
@@ -46,6 +48,9 @@ export function ProjectBoard({ projectId, issues, ops, canAdd, onOpenIssue, onSt
     const columnProps = (status: IssueStatus) => ({
         status,
         issues: columns[status],
+        total: Math.max(columns[status].length, totals?.[status] ?? 0),
+        onShowMore: () => void ops.showMore(status),
+        loadingMore: ops.loadingMore,
         dragging: drag.dragged ? { from: drag.dragged.status, allowed: canDropOn(drag.dragged.status, status) } : null,
         target: drag.target as DropTarget | null,
         canAdd: canAdd && status !== 'cancelled' && status !== 'done',
@@ -55,13 +60,13 @@ export function ProjectBoard({ projectId, issues, ops, canAdd, onOpenIssue, onSt
         alwaysShowStatus: phone,
     })
 
-    const cancelledCount = columns.cancelled.length
+    const cancelledCount = Math.max(columns.cancelled.length, totals?.cancelled ?? 0)
     const shownPhoneStatus = statuses.includes(phoneStatus) ? phoneStatus : 'todo'
 
     return (
         <div className="flex h-full min-h-0 flex-col">
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pt-3 md:px-6">
-                {phone ? <MobileStatusSwitcher statuses={statuses} columns={columns} value={shownPhoneStatus} onChange={setPhoneStatus} /> : <p className="text-xs text-muted-foreground">{t('dragHint')}</p>}
+                {phone ? <MobileStatusSwitcher statuses={statuses} columns={columns} totals={totals} value={shownPhoneStatus} onChange={setPhoneStatus} /> : <p className="text-xs text-muted-foreground">{t('dragHint')}</p>}
                 <Field orientation="row" label={t('showCancelled', { count: cancelledCount })} className="ml-auto gap-2">
                     <Switch checked={showCancelled} onCheckedChange={setShowCancelled} aria-label={t('showCancelled', { count: cancelledCount })} />
                 </Field>

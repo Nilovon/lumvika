@@ -6,6 +6,7 @@ import { IssueStatusPicker } from '@/components/issues/IssueStatusPicker'
 import { PRIORITIES_BY_WEIGHT, BOARD_STATUSES } from '@/components/issues/issue-status'
 import { useWorkMembers } from '@/components/issues/useWorkMembers'
 import { WorkMemberAvatar } from '@/components/issues/WorkMemberAvatar'
+import { columnCount, type ColumnTotals } from '@/components/projects/board/board-logic'
 import { assigneeKey, filterIssues, hasFilters, ISSUE_SORTS, NO_FILTERS, UNASSIGNED_FILTER, type IssueFilters, type IssueSort } from '@/components/projects/list/issue-filters'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -13,12 +14,16 @@ import { FilterSelect, type FilterOption } from '@/components/ui/filter-select'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FilterIcon, ListIcon, SearchIcon } from '@/lib/icons'
-import type { IssuePriority, IssueStatus, IssueSummary, WorkMemberRef } from '@lumvika/contracts'
+import { ISSUE_STATUSES, type IssuePriority, type IssueStatus, type IssueSummary, type WorkMemberRef } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 
 type ProjectIssueListProps = {
     issues: IssueSummary[]
+    // How many issues each column holds in all: the list says when it holds only part of them.
+    totals: ColumnTotals | null
+    onLoadMore: () => void
+    loadingMore: boolean
     onOpenIssue: (issue: IssueSummary) => void
     onStatusChange: (issue: IssueSummary, status: IssueStatus) => void
     onCreate?: () => void
@@ -30,7 +35,7 @@ function refOf(key: string): WorkMemberRef | null {
     return null
 }
 
-export function ProjectIssueList({ issues, onOpenIssue, onStatusChange, onCreate }: ProjectIssueListProps) {
+export function ProjectIssueList({ issues, totals, onLoadMore, loadingMore, onOpenIssue, onStatusChange, onCreate }: ProjectIssueListProps) {
     const t = useTranslations('projects.issueList')
     const tStatus = useTranslations('issues.status')
     const tPriority = useTranslations('issues.priority')
@@ -41,6 +46,7 @@ export function ProjectIssueList({ issues, onOpenIssue, onStatusChange, onCreate
     const set = <K extends keyof IssueFilters>(key: K, value: IssueFilters[K]) => setFilters(current => ({ ...current, [key]: value }))
 
     const shown = useMemo(() => filterIssues(issues, filters, sort), [issues, filters, sort])
+    const total = useMemo(() => ISSUE_STATUSES.reduce((sum, status) => sum + columnCount(issues, totals, status).total, 0), [issues, totals])
 
     const statusOptions = useMemo<FilterOption<IssueStatus>[]>(() => BOARD_STATUSES.map(status => ({ value: status, label: tStatus(status) })), [tStatus])
     const priorityOptions = useMemo<FilterOption<IssuePriority>[]>(() => PRIORITIES_BY_WEIGHT.map(priority => ({ value: priority, label: tPriority(priority), icon: <IssuePriorityIndicator priority={priority} /> })), [tPriority])
@@ -117,7 +123,17 @@ export function ProjectIssueList({ issues, onOpenIssue, onStatusChange, onCreate
                     ))}
                 </div>
             )}
-            <p className="text-xs text-muted-foreground">{t('shown', { shown: shown.length, total: issues.length })}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <p className="text-xs text-muted-foreground">{t('shown', { shown: shown.length, total: issues.length })}</p>
+                {total > issues.length && (
+                    <>
+                        <p className="text-xs text-muted-foreground">{t('loaded', { loaded: issues.length, total })}</p>
+                        <Button size="sm" variant="outline" onClick={onLoadMore} disabled={loadingMore} className="max-sm:w-full">
+                            {t('loadMore')}
+                        </Button>
+                    </>
+                )}
+            </div>
         </div>
     )
 }

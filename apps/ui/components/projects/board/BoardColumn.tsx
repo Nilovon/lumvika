@@ -1,6 +1,7 @@
 'use client'
 
 import { IssueStatusBadge } from '@/components/issues/IssueStatusBadge'
+import { Button } from '@/components/ui/button'
 import { BoardCard } from '@/components/projects/board/BoardCard'
 import { QuickAddIssue } from '@/components/projects/board/QuickAddIssue'
 import { BanIcon } from '@/lib/icons'
@@ -18,6 +19,10 @@ export type DropTarget = { status: IssueStatus; beforeIssueId: string | null }
 type BoardColumnProps = {
     status: IssueStatus
     issues: IssueSummary[]
+    // How many cards the column holds in all; more than `issues` when the board loaded only part of it.
+    total: number
+    onShowMore: () => void
+    loadingMore: boolean
     // While a card is dragged: whether this column takes it, and where it would land.
     dragging: { from: IssueStatus; allowed: boolean } | null
     target: DropTarget | null
@@ -31,12 +36,13 @@ type BoardColumnProps = {
     className?: string
 }
 
-export function BoardColumn({ status, issues, dragging, target, canAdd, onCreate, onOpen, onStatusChange, alwaysShowStatus, showHeader = true, className }: BoardColumnProps) {
+export function BoardColumn({ status, issues, total, onShowMore, loadingMore, dragging, target, canAdd, onCreate, onOpen, onStatusChange, alwaysShowStatus, showHeader = true, className }: BoardColumnProps) {
     const t = useTranslations('projects.board')
     const tStatus = useTranslations('issues.status')
     const { setNodeRef } = useDroppable({ id: columnDropId(status), data: { kind: 'column', status } satisfies ColumnDropData })
     const refused = dragging && !dragging.allowed
     const targeted = target?.status === status
+    const cut = total > issues.length
     const insertionOf = (issue: IssueSummary, index: number): 'before' | 'after' | null => {
         if (!targeted || refused) return null
         if (target.beforeIssueId === issue.id) return 'before'
@@ -47,7 +53,7 @@ export function BoardColumn({ status, issues, dragging, target, canAdd, onCreate
     return (
         <section
             ref={setNodeRef}
-            aria-label={t('columnLabel', { status: tStatus(status), count: issues.length })}
+            aria-label={t('columnLabel', { status: tStatus(status), count: total })}
             className={cn(
                 'relative flex max-h-full min-h-0 flex-col rounded-lg bg-muted/50 transition-colors',
                 targeted && !refused && 'bg-accent/70 ring-1 ring-primary/40',
@@ -58,7 +64,7 @@ export function BoardColumn({ status, issues, dragging, target, canAdd, onCreate
             {showHeader ? (
                 <header className="flex items-center gap-2 px-2.5 pt-2.5 pb-2">
                     <IssueStatusBadge status={status} />
-                    <span className="text-xs text-muted-foreground tabular-nums">{issues.length}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{total}</span>
                 </header>
             ) : (
                 <span aria-hidden className="h-2 shrink-0" />
@@ -79,6 +85,14 @@ export function BoardColumn({ status, issues, dragging, target, canAdd, onCreate
                 ))}
                 {issues.length === 0 && !canAdd && <p className="px-1 py-3 text-center text-xs text-muted-foreground">{t('emptyColumn')}</p>}
                 {targeted && !refused && issues.length === 0 && <span aria-hidden className="mx-1 h-0.5 rounded-full bg-primary" />}
+                {cut && (
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 pt-1">
+                        <span className="text-xs text-muted-foreground tabular-nums">{t('columnShown', { shown: issues.length, total })}</span>
+                        <Button type="button" size="sm" variant="ghost" onClick={onShowMore} disabled={loadingMore} aria-label={t('showMoreIn', { status: tStatus(status) })} className="h-8 px-2 text-xs">
+                            {t('showMore')}
+                        </Button>
+                    </div>
+                )}
                 {canAdd && <QuickAddIssue status={status} onCreate={onCreate} />}
             </div>
         </section>

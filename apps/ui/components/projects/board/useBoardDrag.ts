@@ -20,6 +20,7 @@ import {
     type Over,
 } from '@dnd-kit/core'
 import type { IssueStatus, IssueSummary } from '@lumvika/contracts'
+import { formatList } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -55,8 +56,10 @@ function sameTarget(a: DropTarget | null, b: DropTarget | null): boolean {
 }
 
 // Where a dragged card would land, and what its drop does: a new place, a refusal the workflow
-// names, or the reason Blocked asks for.
-export function useBoardDrag({ columns, onMove, onBlocked }: { columns: BoardColumns; onMove: (issue: IssueSummary, status: IssueStatus, position: number) => Promise<boolean>; onBlocked: (issue: IssueSummary) => void }) {
+// names, or the reason Blocked asks for. The place goes to the server as the card it lands above (null
+// for the end), so a column the board shows only part of is placed in full there; the position worked
+// out here only shows the card before the server answers.
+export function useBoardDrag({ columns, onMove, onBlocked }: { columns: BoardColumns; onMove: (issue: IssueSummary, status: IssueStatus, position: number, beforeIssueId: string | null) => Promise<boolean>; onBlocked: (issue: IssueSummary) => void }) {
     const t = useTranslations('projects.board')
     const tStatus = useTranslations('issues.status')
     const locale = useLocale()
@@ -76,7 +79,7 @@ export function useBoardDrag({ columns, onMove, onBlocked }: { columns: BoardCol
     }
 
     const refuse = (issue: IssueSummary, to: IssueStatus) => {
-        const targets = new Intl.ListFormat(locale, { type: 'disjunction' }).format(nextStatuses(issue.status).map(status => tStatus(status)))
+        const targets = formatList(nextStatuses(issue.status).map(status => tStatus(status)), locale, 'disjunction')
         toast.error(t('refused', { ref: issue.ref, from: tStatus(issue.status), to: tStatus(to) }), { description: t('refusedHint', { from: tStatus(issue.status), targets }) })
     }
 
@@ -100,7 +103,7 @@ export function useBoardDrag({ columns, onMove, onBlocked }: { columns: BoardCol
             const nextId = column[column.findIndex(other => other.id === issue.id) + 1]?.id ?? null
             if (landing.beforeIssueId === nextId || landing.beforeIssueId === issue.id) return
         }
-        void onMove(issue, landing.status, dropPosition(column, issue.id, landing.beforeIssueId))
+        void onMove(issue, landing.status, dropPosition(column, issue.id, landing.beforeIssueId), landing.beforeIssueId)
     }
 
     return { sensors, collisionDetection, dragged, target, onDragStart, onDragMove, onDragEnd, onDragCancel: reset }

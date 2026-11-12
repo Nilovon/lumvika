@@ -4,8 +4,13 @@ import { BOARD_STATUSES } from '@/components/issues/issue-status'
 
 // The room the server leaves between two cards (ISSUE_POSITION_STEP of issues.service).
 export const POSITION_STEP = 1024
+// How many more cards Show more loads in a column.
+export const MORE_STEP = 200
 
 export type BoardColumns = Record<IssueStatus, IssueSummary[]>
+
+// How many cards each column holds in all, loaded or not.
+export type ColumnTotals = Record<IssueStatus, number>
 
 // Reordering inside a column is always allowed; leaving it follows the workflow.
 export function canDropOn(from: IssueStatus, to: IssueStatus): boolean {
@@ -57,4 +62,30 @@ export function upsertIssue(issues: readonly IssueSummary[], next: IssueSummary)
     const index = issues.findIndex(issue => issue.id === next.id)
     if (index === -1) return [...issues, next]
     return issues.map(issue => (issue.id === next.id ? next : issue))
+}
+
+// The totals once a card left `from` and arrived in `to` (null: it appeared, or went away).
+export function countMove(totals: ColumnTotals | null, from: IssueStatus | null, to: IssueStatus | null): ColumnTotals | null {
+    if (!totals || from === to) return totals
+    const next = { ...totals }
+    if (from) next[from] = Math.max(0, next[from] - 1)
+    if (to) next[to] = next[to] + 1
+    return next
+}
+
+// How many cards a column shows out of how many it holds; `total` is never below what is shown.
+export function columnCount(issues: readonly IssueSummary[], totals: ColumnTotals | null, status: IssueStatus): { shown: number; total: number } {
+    const shown = issues.filter(issue => issue.status === status).length
+    return { shown, total: Math.max(shown, totals?.[status] ?? 0) }
+}
+
+// The limits that load the next cards of `status`, or of every column cut short when none is named.
+export function moreOf(issues: readonly IssueSummary[], totals: ColumnTotals | null, status?: IssueStatus): Partial<Record<IssueStatus, number>> {
+    const statuses = status ? [status] : (Object.keys(totals ?? {}) as IssueStatus[])
+    const limits: Partial<Record<IssueStatus, number>> = {}
+    for (const candidate of statuses) {
+        const { shown, total } = columnCount(issues, totals, candidate)
+        if (status || shown < total) limits[candidate] = shown + MORE_STEP
+    }
+    return limits
 }
