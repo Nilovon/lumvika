@@ -1,8 +1,121 @@
 {
     "title": "Teams",
-    "description": "Wer mit wem arbeitet, Menschen wie Coworker.",
+    "description": "Wer mit wem arbeitet, Menschen und Coworker gleichermaßen.",
+    "tabs": {
+        "label": "Teamansichten",
+        "teams": "Teams",
+        "org": "Organigramm"
+    },
+    "adminOnly": "Nur ein Admin des Workspaces kann das tun",
+    "newTeam": "Neues Team",
+    "loadFailed": "Die Teams konnten nicht geladen werden.",
+    "retry": "Erneut versuchen",
     "empty": {
-        "title": "Teams kommen bald",
-        "description": "Hier findest du bald dein Organigramm mit Menschen und Coworkern in ihren Teams."
+        "title": "Noch keine Teams",
+        "description": "Ein Team bündelt die Menschen und Coworker, die am selben Ziel arbeiten. Gib ihm eine Leitung und verknüpfe seine Projekte, dann sieht jeder, wer wofür zuständig ist.",
+        "action": "Team erstellen",
+        "askAdmin": "Bitte einen Admin des Workspaces, das erste Team zu erstellen."
+    },
+    "card": {
+        "members": "{count, plural, =0 {Noch keine Mitglieder} one {# Mitglied} other {# Mitglieder}}",
+        "projects": "{count, plural, one {# Projekt} other {# Projekte}}",
+        "lead": "Leitung",
+        "more": "+{count, number}",
+        "open": "{name} öffnen"
+    },
+    "member": {
+        "you": "{name} (du)",
+        "unknownPerson": "Ehemaliges Mitglied",
+        "unknownCoworker": "Coworker",
+        "person": "Person",
+        "coworker": "Coworker"
+    },
+    "dialog": {
+        "createTitle": "Neues Team",
+        "editTitle": "Team bearbeiten",
+        "createDescription": "Benenne das Team und füge dann seine Menschen und Coworker hinzu.",
+        "editDescription": "Ändere, wie das Team heißt und angezeigt wird.",
+        "name": "Name",
+        "namePlaceholder": "Wachstum",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Woran dieses Team arbeitet",
+        "color": "Farbe",
+        "colorOption": "Farbe {index, number}",
+        "noColor": "Keine Farbe",
+        "create": "Team erstellen",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "created": "Team erstellt",
+        "saved": "Team gespeichert"
+    },
+    "detail": {
+        "members": "Mitglieder",
+        "projects": "Projekte",
+        "noMembers": "Noch niemand ist in diesem Team. Füge Menschen und Coworker hinzu und wähle dann die Leitung.",
+        "noProjects": "Mit diesem Team ist noch kein Projekt verknüpft. Ein Projekt tritt einem Team in seinen eigenen Einstellungen bei.",
+        "readOnly": "Nur ein Admin oder die Leitung dieses Teams kann ändern, wer dazugehört.",
+        "edit": "Team bearbeiten",
+        "delete": "Team löschen",
+        "more": "Weitere Aktionen",
+        "deleteTitle": "{name} löschen?",
+        "deleteDescription": "Das Team und seine Mitgliederliste werden entfernt. Seine Projekte und Ziele bleiben, ohne Team. Das lässt sich nicht rückgängig machen.",
+        "deleteConfirm": "Löschen",
+        "deleted": "Team gelöscht",
+        "makeLead": "Zur Leitung machen",
+        "removeLead": "Als Leitung entfernen",
+        "remove": "Aus dem Team entfernen",
+        "memberActions": "Aktionen für {name}",
+        "removeTitle": "{name} aus {team} entfernen?",
+        "removeDescription": "{name} verlässt das Team. Sonst ändert sich nichts: Arbeit und Projekte bleiben, wie sie sind.",
+        "removeConfirm": "Entfernen",
+        "removed": "{name} aus {team} entfernt",
+        "leadSet": "{name} leitet jetzt {team}",
+        "leadCleared": "{name} leitet {team} nicht mehr",
+        "added": "{name} zu {team} hinzugefügt"
+    },
+    "picker": {
+        "add": "Mitglied hinzufügen",
+        "search": "Menschen und Coworker suchen",
+        "people": "Menschen",
+        "coworkers": "Coworker",
+        "empty": "Niemand mehr zum Hinzufügen.",
+        "noMatch": "Keine Treffer."
+    },
+    "org": {
+        "loadFailed": "Das Organigramm konnte nicht geladen werden.",
+        "empty": {
+            "title": "Noch keine Coworker",
+            "description": "Erstelle Coworker auf dem Board und gib dann jedem hier einen Titel und eine Führungskraft, um dein Organigramm zu zeichnen."
+        },
+        "hint": "Coworker ohne Führungskraft stehen ganz oben. Klick auf einen Coworker, um ihm einen Titel und eine Führungskraft zu geben.",
+        "reports": "{count, plural, =0 {Keine Berichte} one {# Bericht} other {# Berichte}}",
+        "noTitle": "Kein Titel",
+        "unnamedBox": "Unbenannte Box",
+        "status": {
+            "idle": "Bereit",
+            "working": "Arbeitet",
+            "waiting_human": "Braucht dich",
+            "error": "Fehler",
+            "offline": "Offline",
+            "disabled": "Ausgeschaltet"
+        },
+        "open": "Coworker öffnen",
+        "edit": "Titel und Führungskraft bearbeiten",
+        "actionsFor": "Aktionen für {name}",
+        "expand": "Berichte von {name} anzeigen",
+        "collapse": "Berichte von {name} ausblenden",
+        "dialog": {
+            "title": "Titel und Führungskraft",
+            "description": "Wo {name} im Organigramm steht.",
+            "titleLabel": "Titel",
+            "titlePlaceholder": "Leitung Wachstum",
+            "reportsTo": "Berichtet an",
+            "noManager": "Keine Führungskraft (ganz oben)",
+            "loopHint": "berichtet an {name}",
+            "save": "Speichern",
+            "cancel": "Abbrechen",
+            "saved": "Organigramm aktualisiert",
+            "manageOnly": "Nur wer die Box dieses Coworkers verwaltet, kann das ändern"
+        }
     }
 }
