@@ -56,10 +56,23 @@ export async function resolveActivityRefs(scope: WorkScope, events: readonly Act
     return refs
 }
 
-// A page of the workspace feed with the names it links to. A channel event the caller cannot see
-// (a private channel, a direct message between others) is left out, as the channel is.
-export async function listActivityFeed(scope: WorkScope, query: ActivityQuery, visibleProjects: 'all' | Set<string>, visibleChannels: 'all' | Set<string>): Promise<ActivityFeedPage> {
+function seen(visible: 'all' | Set<string>, id: string): boolean {
+    return visible === 'all' || visible.has(id)
+}
+
+// Whether the caller sees what an event is about, beyond its project: the channel of a channel event
+// (a private channel, a direct message between others), the coworker of a coworker event or of a team
+// membership (one in a Box closed to them). The `activity_events` policy holds the same rule.
+export function eventVisible(event: Pick<ActivityEvent, 'entityType' | 'entityId' | 'metadata'>, visibleChannels: 'all' | Set<string>, visibleAgents: 'all' | Set<string>): boolean {
+    if (event.entityType === 'channel') return seen(visibleChannels, event.entityId)
+    if (event.entityType === 'agent') return seen(visibleAgents, event.entityId)
+    const agentId = event.entityType === 'team' ? event.metadata.agentId : null
+    return typeof agentId !== 'string' || agentId === '' || seen(visibleAgents, agentId)
+}
+
+// A page of the workspace feed with the names it links to, without the events eventVisible keeps out.
+export async function listActivityFeed(scope: WorkScope, query: ActivityQuery, visibleProjects: 'all' | Set<string>, visibleChannels: 'all' | Set<string>, visibleAgents: 'all' | Set<string>): Promise<ActivityFeedPage> {
     const page = await listActivity(scope, query, visibleProjects)
-    const events = visibleChannels === 'all' ? page.events : page.events.filter(event => event.entityType !== 'channel' || visibleChannels.has(event.entityId))
+    const events = page.events.filter(event => eventVisible(event, visibleChannels, visibleAgents))
     return { events, nextCursor: page.nextCursor, refs: await resolveActivityRefs(scope, events) }
 }

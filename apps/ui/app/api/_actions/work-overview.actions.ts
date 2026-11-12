@@ -1,6 +1,6 @@
 'use server'
 
-import { requireLightSessionActor } from '@/app/api/_auth/access'
+import { requireLightSessionActor, visibleAgentIds } from '@/app/api/_auth/access'
 import { visibleChannelIds, visibleProjectIds } from '@/app/api/_auth/project-access'
 import { listMyWork, type MyWork } from '@/app/api/_services/work/my-work.service'
 import { getWorkOverview, type WorkOverview } from '@/app/api/_services/work/overview.service'
@@ -11,8 +11,8 @@ import type { ActionResult } from './space.actions'
 export async function getWorkOverviewAction(): Promise<ActionResult<{ overview: WorkOverview }>> {
     try {
         const actor = await requireLightSessionActor()
-        const [projects, channels] = await Promise.all([visibleProjectIds(actor), visibleChannelIds(actor)])
-        const overview = await getWorkOverview({ workspaceId: actor.workspaceId }, actor, { projects, channels })
+        const [projects, channels, agents] = await Promise.all([visibleProjectIds(actor), visibleChannelIds(actor), visibleAgentIds(actor)])
+        const overview = await getWorkOverview({ workspaceId: actor.workspaceId }, actor, { projects, channels, agents })
         return { ok: true, overview }
     } catch (err) {
         return failureOf(err)

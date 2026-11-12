@@ -5,7 +5,7 @@ import { issueRow, projectRow, WORKSPACE } from '@/test/work-rows'
 
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 
-const { listActivityFeed } = await import('./activity-feed.service')
+const { eventVisible, listActivityFeed } = await import('./activity-feed.service')
 
 function event(id: string, overrides: Row): Row {
     return { id, workspace_id: WORKSPACE, project_id: null, issue_id: null, actor_user_id: 'me', actor_agent_id: null, metadata: {}, created_at: `2026-11-1${id.length}T00:00:00.000Z`, ...overrides }
@@ -34,7 +34,7 @@ function setup() {
 
 describe('listActivityFeed', () => {
     it('names what each event links to, in one read per kind', async () => {
-        const page = await listActivityFeed(setup(), {}, 'all', new Set(['open']))
+        const page = await listActivityFeed(setup(), {}, 'all', new Set(['open']), 'all')
 
         expect(page.events.map(item => item.id)).toEqual(['dddd', 'ccc', 'bb', 'a'])
         expect(page.refs).toEqual({
@@ -47,7 +47,29 @@ describe('listActivityFeed', () => {
     })
 
     it('reads nothing more for an empty page', async () => {
-        const page = await listActivityFeed(setup(), { projectId: 'nowhere' }, new Set(['project-1']), 'all')
+        const page = await listActivityFeed(setup(), { projectId: 'nowhere' }, new Set(['project-1']), 'all', 'all')
         expect(page).toEqual({ events: [], nextCursor: null, refs: { issues: {}, projects: {}, goals: {}, teams: {}, channels: {} } })
+    })
+})
+
+describe('eventVisible', () => {
+    const shown = (entityType: string, entityId: string, metadata: Record<string, unknown> = {}) => eventVisible({ entityType, entityId, metadata } as never, new Set(['open']), new Set(['ada']))
+
+    it('keeps out a channel the caller cannot read', () => {
+        expect(shown('channel', 'open')).toBe(true)
+        expect(shown('channel', 'dm')).toBe(false)
+    })
+
+    it('keeps out a coworker, or a team membership of one, in a Box closed to the caller', () => {
+        expect(shown('agent', 'ada')).toBe(true)
+        expect(shown('agent', 'hidden')).toBe(false)
+        expect(shown('team', 'team-1', { agentId: 'ada', userId: null })).toBe(true)
+        expect(shown('team', 'team-1', { agentId: 'hidden', userId: null })).toBe(false)
+        expect(shown('team', 'team-1', { agentId: null, userId: 'anna' })).toBe(true)
+        expect(shown('team', 'team-1', { name: 'Growth' })).toBe(true)
+    })
+
+    it('sees everything with nothing to filter', () => {
+        expect(eventVisible({ entityType: 'agent', entityId: 'hidden', metadata: {} } as never, 'all', 'all')).toBe(true)
     })
 })

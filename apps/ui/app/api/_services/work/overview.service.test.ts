@@ -43,7 +43,7 @@ function setup() {
 
 describe('getWorkOverview', () => {
     it('counts what needs me and sums the projects I see', async () => {
-        const overview = await getWorkOverview(setup(), ACTOR, { projects: new Set(['project-1', 'paused']), channels: 'all' }, NOW)
+        const overview = await getWorkOverview(setup(), ACTOR, { projects: new Set(['project-1', 'paused']), channels: 'all', agents: 'all' }, NOW)
 
         expect(overview.counts).toEqual({ toReview: 1, blocked: 1, assignedToMe: 2 })
         expect(overview.projectCount).toBe(2)
@@ -52,7 +52,7 @@ describe('getWorkOverview', () => {
     })
 
     it('rolls the active goals up and keeps the window of the throughput', async () => {
-        const overview = await getWorkOverview(setup(), ACTOR, { projects: new Set(['project-1']), channels: 'all' }, NOW)
+        const overview = await getWorkOverview(setup(), ACTOR, { projects: new Set(['project-1']), channels: 'all', agents: 'all' }, NOW)
 
         expect(overview.goals.map(goal => [goal.title, goal.rollup])).toEqual([
             ['Launch', { open: 5, done: 1 }],

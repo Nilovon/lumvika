@@ -51,7 +51,7 @@ function activeGoalsOf(roots: readonly GoalTreeNode[]): OverviewGoal[] {
 
 // What the overview shows, gathered in two rounds of reads rather than one per tile.
 // `visibleProjects` comes from `visibleProjectIds(actor)`.
-export async function getWorkOverview(scope: WorkScope, actor: Actor, visible: { projects: 'all' | Set<string>; channels: 'all' | Set<string> }, now: Date = new Date()): Promise<WorkOverview> {
+export async function getWorkOverview(scope: WorkScope, actor: Actor, visible: { projects: 'all' | Set<string>; channels: 'all' | Set<string>; agents: 'all' | Set<string> }, now: Date = new Date()): Promise<WorkOverview> {
     const visibleProjects = visible.projects
     const visibleChannels = visible.channels
     const supabase = clientOf(scope)
@@ -69,7 +69,7 @@ export async function getWorkOverview(scope: WorkScope, actor: Actor, visible: {
         selectAll(supabase, 'issues', ['id', 'number', 'title', 'project_id', 'assignee_agent_id', 'checked_out_at'] as const, { ...workspace, checkout_run_id: { notNull: true }, assignee_agent_id: { notNull: true } }),
         selectAll(supabase, 'issues', ['project_id', 'created_at'] as const, { ...workspace, created_at: { gte: since } }),
         selectAll(supabase, 'issues', ['project_id', 'completed_at'] as const, { ...workspace, status: 'done', completed_at: { gte: since } }),
-        listActivityFeed(scope, { limit: RECENT_EVENTS }, visibleProjects, visibleChannels),
+        listActivityFeed(scope, { limit: RECENT_EVENTS }, visibleProjects, visibleChannels, visible.agents),
     ])
     for (const read of [goals, goalIssues, assigned, checkouts, created, completed]) if (read.error) throw new Error(`Failed to read the overview: ${read.error.message}`)
 
