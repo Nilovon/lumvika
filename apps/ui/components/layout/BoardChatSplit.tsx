@@ -26,7 +26,16 @@ import { selectStewardVisible, useStewardStore } from '@/stores/steward.store'
  * Un workspace sorti de l'onboarding sans machine n'a pas de Steward : la colonne reste montée, c'est
  * elle qui relit la phase, mais elle ne prend ni piste ni place à l'écran.
  */
-export function BoardChatSplit({ initialOpen, initialPlacement, children }: { initialOpen: boolean | null; initialPlacement: StewardPlacement | null; children: ReactNode }) {
+type BoardChatSplitProps = {
+    initialOpen: boolean | null
+    initialPlacement: StewardPlacement | null
+    // The platform's navigation, on the frame left of the card from `md` up. Absent, the frame is
+    // what it always was.
+    sidebar?: { node: ReactNode; collapsed: boolean }
+    children: ReactNode
+}
+
+export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, children }: BoardChatSplitProps) {
     const visible = useStewardStore(selectStewardVisible)
     const requested = useStewardStore(state => state.open)
     const resolved = requested ?? initialOpen
@@ -61,6 +70,35 @@ export function BoardChatSplit({ initialOpen, initialPlacement, children }: { in
         })
     }, [visible])
 
+    const grid = (
+        <div
+            data-steward-grid
+            className={cn(
+                'grid flex-1 min-h-0 min-w-0 w-full grid-cols-1 grid-rows-[minmax(0,1fr)] duration-300 ease-in-out',
+                // Lu depuis le hook plutôt qu'écrit `motion-reduce:md:transition-none`, dont les deux
+                // variants ne se départagent que par l'ordre source.
+                visible && (reduceMotion ? 'md:transition-none' : 'md:transition-[grid-template-columns]'),
+                // Des pistes, jamais une custom property : sans `@property` une variable CSS n'est
+                // pas interpolée et la colonne sauterait au lieu de s'ouvrir. Toujours trois, une de
+                // chaque côté du board, pour que passer d'un dock à l'autre reste une interpolation.
+                // Steward éteint, il n'y en a qu'une : le `grid-cols-1` de base tient le board seul.
+                visible &&
+                    (docked === 'left'
+                        ? 'md:grid-cols-[var(--steward-dock-track)_minmax(0,1fr)_0px]'
+                        : docked === 'right'
+                          ? 'md:grid-cols-[0px_minmax(0,1fr)_var(--steward-dock-track)]'
+                          : 'md:grid-cols-[0px_minmax(0,1fr)_0px]')
+            )}
+        >
+            <div className={cn('min-w-0 bg-background md:rounded-3xl md:border md:border-border md:shadow overflow-hidden md:overflow-auto h-full', visible && 'md:col-start-2 md:row-start-1')}>{children}</div>
+            {/* Se connecter à un autre compte sans recharger repart d'une colonne neuve, qui relit
+                la phase et la conversation de ce compte-là. */}
+            <div className={visible ? 'contents' : 'hidden'}>
+                <StewardColumn key={accountSwitches} open={open} placement={placement} />
+            </div>
+        </div>
+    )
+
     return (
         // --board-inset : ce dont la carte est rentrée du bord de l'écran, son padding plus son bord.
         // Les couches `fixed` posées par-dessus (l'orbe) le rajoutent pour tomber au même écart du
@@ -71,38 +109,27 @@ export function BoardChatSplit({ initialOpen, initialPlacement, children }: { in
         // défilement au document.
         // --steward-dock-track : la largeur tirée de la piste docké, bornée pour laisser sa part au
         // board quand l'écran rétrécit. La poignée du dock réécrit --steward-dock-w ici pendant le geste.
+        // --board-inset-start : le bord gauche de la carte quand la sidebar la pousse, pour les couches
+        // `fixed` ancrées à gauche (l'orbe, la fenêtre flottante). Sans sidebar elles retombent sur --board-inset.
         <div
             data-steward-split
             style={{ '--steward-dock-w': `${placement.dockWidth}px` } as CSSProperties}
-            className="relative h-dvh w-full overflow-hidden p-0 md:p-2 bg-frame flex flex-col [--board-inset:0px] md:[--board-inset:9px] [--steward-dock-track:min(var(--steward-dock-w),60vw)]"
+            className={cn(
+                'relative h-dvh w-full overflow-hidden p-0 md:p-2 bg-frame flex flex-col [--board-inset:0px] md:[--board-inset:9px] [--steward-dock-track:min(var(--steward-dock-w),60vw)]',
+                // The sidebar's width plus its gap to the card, as AppSidebar draws it: a rail below `lg`.
+                sidebar && 'md:[--shell-sidebar-w:52px] md:[--board-inset-start:calc(9px+var(--shell-sidebar-w))]',
+                sidebar && !sidebar.collapsed && 'lg:[--shell-sidebar-w:240px]'
+            )}
         >
             {onboarded && <ProviderStatusBanner />}
-            <div
-                data-steward-grid
-                className={cn(
-                    'grid flex-1 min-h-0 w-full grid-cols-1 grid-rows-[minmax(0,1fr)] duration-300 ease-in-out',
-                    // Lu depuis le hook plutôt qu'écrit `motion-reduce:md:transition-none`, dont les deux
-                    // variants ne se départagent que par l'ordre source.
-                    visible && (reduceMotion ? 'md:transition-none' : 'md:transition-[grid-template-columns]'),
-                    // Des pistes, jamais une custom property : sans `@property` une variable CSS n'est
-                    // pas interpolée et la colonne sauterait au lieu de s'ouvrir. Toujours trois, une de
-                    // chaque côté du board, pour que passer d'un dock à l'autre reste une interpolation.
-                    // Steward éteint, il n'y en a qu'une : le `grid-cols-1` de base tient le board seul.
-                    visible &&
-                        (docked === 'left'
-                            ? 'md:grid-cols-[var(--steward-dock-track)_minmax(0,1fr)_0px]'
-                            : docked === 'right'
-                              ? 'md:grid-cols-[0px_minmax(0,1fr)_var(--steward-dock-track)]'
-                              : 'md:grid-cols-[0px_minmax(0,1fr)_0px]')
-                )}
-            >
-                <div className={cn('min-w-0 bg-background md:rounded-3xl md:border md:border-border md:shadow overflow-hidden md:overflow-auto h-full', visible && 'md:col-start-2 md:row-start-1')}>{children}</div>
-                {/* Se connecter à un autre compte sans recharger repart d'une colonne neuve, qui relit
-                    la phase et la conversation de ce compte-là. */}
-                <div className={visible ? 'contents' : 'hidden'}>
-                    <StewardColumn key={accountSwitches} open={open} placement={placement} />
+            {sidebar ? (
+                <div className="flex min-h-0 flex-1 gap-2">
+                    {sidebar.node}
+                    {grid}
                 </div>
-            </div>
+            ) : (
+                grid
+            )}
             {visible && <StewardDropPreview />}
         </div>
     )
