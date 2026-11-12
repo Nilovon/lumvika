@@ -1,6 +1,6 @@
 import { realEmail } from '@/lib/auth/placeholder-email'
 import { after } from 'next/server'
-import { STEWARD_AGENT_ID } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID } from '@lumvika/contracts'
 
 import { boxAccessOf, toAccessLevel } from '@/app/api/_auth/access'
 import { toBoxScope } from '@/app/api/_auth/box-scope'
@@ -47,6 +47,9 @@ export async function recordNotification(token: string, payload: NotificationPay
     // The steward answers in the column the user is looking at: none of its runs is inbox news, an
     // email, or the first agent run that counts as activation.
     if (payload.agentId === STEWARD_AGENT_ID) return { ok: true }
+    // The assistant's conversations are each one person's: its engine sends none, and one that
+    // arrives anyway is never stored where another member could read it.
+    if (payload.agentId === ASSISTANT_AGENT_ID) return { ok: true }
 
     const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['id', 'name', 'space_id'] as const, { workspace_id: engine.workspaceId, engine_agent_id: payload.agentId })
 

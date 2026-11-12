@@ -481,5 +481,7 @@
     "directMessageWithSelf": "Pick someone else to write to.",
     "channelMessageNotFound": "Message not found",
     "channelMessageAuthorOnly": "Only the author can change this message.",
-    "mentionNotInWorkspace": "You can only mention people and coworkers of this workspace."
+    "mentionNotInWorkspace": "You can only mention people and coworkers of this workspace.",
+    "assistantChatNotFound": "Chat not found",
+    "assistantChatReadOnly": "This chat was shared with you to read. Only the person who started it can change it."
 }
