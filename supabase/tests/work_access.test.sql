@@ -6,7 +6,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path to public, extensions;
 
-select plan(38);
+select plan(41);
 
 insert into auth.users (id, email) values
     ('00000000-0000-0000-0000-00000000a101', 'work-admin@lumvika.test'),
@@ -72,6 +72,13 @@ insert into public.channel_members (channel_id, workspace_id, agent_id) values
 insert into public.channel_messages (channel_id, workspace_id, author_user_id, body) values
     ('00000000-0000-0000-0000-000000110001', 990101, '00000000-0000-0000-0000-00000000a101', 'hello all'),
     ('00000000-0000-0000-0000-000000110002', 990101, '00000000-0000-0000-0000-00000000a102', 'just us');
+
+-- A team with a person and a coworker of the Box `Here`, which the `assigned` member has no access to.
+insert into public.teams (id, workspace_id, name) values ('00000000-0000-0000-0000-000000120001', 990101, 'Growth');
+insert into public.team_members (team_id, workspace_id, user_id) values
+    ('00000000-0000-0000-0000-000000120001', 990101, '00000000-0000-0000-0000-00000000a101');
+insert into public.team_members (team_id, workspace_id, agent_id) values
+    ('00000000-0000-0000-0000-000000120001', 990101, '00000000-0000-0000-0000-0000000e0001');
 
 insert into public.assistant_chats (workspace_id, user_id, title, shared, project_id) values
     (990101, '00000000-0000-0000-0000-00000000a102', 'private chat', false, null),
@@ -145,6 +152,7 @@ select set_eq($$ select name from public.channels where workspace_id = 990101 $$
 select set_eq($$ select body from public.channel_messages where workspace_id = 990101 $$, array['hello all', 'just us'], 'channel messages follow their channel');
 select is((select count(*)::int from public.channel_members where channel_id = '00000000-0000-0000-0000-000000110002'), 2, 'a member reads who else is in their private channel, agents included');
 select set_eq($$ select title from public.assistant_chats where workspace_id = 990101 $$, array['private chat', 'shared chat'], 'member reads their chats, not one shared about a project they cannot see');
+select is((select count(*)::int from public.team_members where team_id = '00000000-0000-0000-0000-000000120001'), 2, 'member (all) reads the people and the coworkers of a team');
 select throws_ok($$ update public.issues set title = 'renamed' where title = 'open-1' $$, '42501', null, 'member cannot write an issue from the browser');
 
 -- Member scoped to assigned: only what is named to them.
@@ -154,6 +162,8 @@ select set_eq($$ select p.key from public.manageable_project_ids() m join public
 select set_eq($$ select title from public.issues where workspace_id = 990101 $$, array['assigned-1'], 'member (assigned) sees only its issues');
 select set_eq($$ select kind::text from public.channels where workspace_id = 990101 $$, array['dm'], 'member (assigned) sees no public channel until they join it, and their direct message');
 select set_eq($$ select title from public.assistant_chats where workspace_id = 990101 $$, array['shared chat'], 'a shared chat is read by the workspace, a private one by its owner only');
+select is((select count(*)::int from public.team_members where team_id = '00000000-0000-0000-0000-000000120001' and user_id is not null), 1, 'member (assigned) reads the people of a team');
+select is((select count(*)::int from public.team_members where team_id = '00000000-0000-0000-0000-000000120001' and agent_id is not null), 0, 'member (assigned) does not learn which coworkers of a Box it cannot see are in a team');
 
 -- Someone of another workspace: nothing of this one.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000a104');
