@@ -158,15 +158,52 @@ export async function deleteAssistantChat(scope: WorkScope, actor: Actor, chatId
 }
 
 // After a message reached the engine: the conversation it continues, when it last moved, and the
-// model it ran on when one was picked.
-export async function recordAssistantTurn(scope: WorkScope, row: AssistantChatRow, turn: { engineSessionId: string | null; model?: string }): Promise<void> {
+// model it ran on when one was picked. A chat is bound to one engine conversation for good: the first
+// turn to name one wins in a conditional write, and the conversation the chat holds is handed back so
+// a second first send that lost the race continues there instead of splitting the chat.
+export async function recordAssistantTurn(scope: WorkScope, row: AssistantChatRow, turn: { engineSessionId: string | null; model?: string }): Promise<{ engineSessionId: string | null }> {
+    const supabase = clientOf(scope)
     const patch: ChatUpdate = {
         last_message_at: new Date().toISOString(),
-        ...(turn.engineSessionId && turn.engineSessionId !== row.engine_session_id ? { engine_session_id: turn.engineSessionId } : {}),
         ...(turn.model && turn.model !== row.model ? { model: turn.model.slice(0, 200) } : {}),
     }
-    const { error } = await clientOf(scope).from('assistant_chats').update<ChatUpdate>(patch).eq('id', row.id).eq('workspace_id', scope.workspaceId)
+    if (turn.engineSessionId && !row.engine_session_id) {
+        const { data, error } = await supabase
+            .from('assistant_chats')
+            .update<ChatUpdate>({ ...patch, engine_session_id: turn.engineSessionId })
+            .eq('id', row.id)
+            .eq('workspace_id', scope.workspaceId)
+            .is('engine_session_id', null)
+            .select('engine_session_id')
+            .maybeSingle<{ engine_session_id: string | null }>()
+        if (error) throw new Error(`Failed to record the message: ${error.message}`)
+        if (data) return { engineSessionId: data.engine_session_id }
+        const { data: stored } = await selectMaybeSingle(supabase, 'assistant_chats', ['engine_session_id'] as const, { id: row.id, workspace_id: scope.workspaceId })
+        return { engineSessionId: stored?.engine_session_id ?? null }
+    }
+    const { error } = await supabase.from('assistant_chats').update<ChatUpdate>(patch).eq('id', row.id).eq('workspace_id', scope.workspaceId)
     if (error) throw new Error(`Failed to record the message: ${error.message}`)
+    return { engineSessionId: row.engine_session_id ?? turn.engineSessionId }
+}
+
+// Stop asked for on a chat: kept on the row, so the turn that names the conversation after this still
+// stops its run. Hands back the conversation the chat holds by now, if any, to stop it at once.
+export async function requestAssistantStop(scope: WorkScope, row: AssistantChatRow): Promise<string | null> {
+    const { data, error } = await clientOf(scope)
+        .from('assistant_chats')
+        .update<ChatUpdate>({ stop_requested_at: new Date().toISOString() })
+        .eq('id', row.id)
+        .eq('workspace_id', scope.workspaceId)
+        .select('engine_session_id')
+        .maybeSingle<{ engine_session_id: string | null }>()
+    if (error) throw new Error(`Failed to record the stop: ${error.message}`)
+    return data?.engine_session_id ?? row.engine_session_id
+}
+
+// Whether Stop was pressed on the chat since `since` (when the turn began).
+export async function stopRequestedSince(scope: WorkScope, chatId: string, since: string): Promise<boolean> {
+    const { data } = await selectMaybeSingle(clientOf(scope), 'assistant_chats', ['stop_requested_at'] as const, { id: chatId, workspace_id: scope.workspaceId })
+    return !!data?.stop_requested_at && Date.parse(data.stop_requested_at) >= Date.parse(since)
 }
 
 // What a chat with no model at hand is named: the start of its first message, cut on a word.

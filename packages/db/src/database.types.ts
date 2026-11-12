@@ -516,6 +516,7 @@ export type Database = {
           model: string | null
           project_id: string | null
           shared: boolean
+          stop_requested_at: string | null
           title: string
           updated_at: string
           user_id: string
@@ -530,6 +531,7 @@ export type Database = {
           model?: string | null
           project_id?: string | null
           shared?: boolean
+          stop_requested_at?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -544,6 +546,7 @@ export type Database = {
           model?: string | null
           project_id?: string | null
           shared?: boolean
+          stop_requested_at?: string | null
           title?: string
           updated_at?: string
           user_id?: string

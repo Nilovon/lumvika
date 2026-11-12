@@ -3,9 +3,9 @@ import { after } from 'next/server'
 
 import { actorFromContext, type Actor } from '@/app/api/_auth/access'
 import { requireWorkspaceContext, type WorkspaceContext } from '@/app/api/_auth/ownership'
-import { assistantEngineOf, cancelAssistantRuns, sendAssistantTurn } from '@/app/api/_services/assistant-engine.service'
+import { assistantEngineOf, cancelAssistantRuns, eraseAssistantTranscript, sendAssistantTurn } from '@/app/api/_services/assistant-engine.service'
 import { messageAuthorOf } from '@/app/api/_services/me.service'
-import { getOwnAssistantChat, projectContextOf, recordAssistantTurn, titleAssistantChat } from '@/app/api/_services/work/assistant-chats.service'
+import { getOwnAssistantChat, projectContextOf, recordAssistantTurn, requestAssistantStop, stopRequestedSince, titleAssistantChat } from '@/app/api/_services/work/assistant-chats.service'
 import type { AssistantChatRow } from '@/app/api/_services/work/columns'
 import { reconnectRun } from '@/lib/engine/client'
 import { AppError } from '@/lib/i18n/action-error'
@@ -66,18 +66,22 @@ export async function POST(req: Request): Promise<Response> {
 
     const model = optionalString(body.model)
     const queued = body.queued === true
+    const turnStartedAt = new Date().toISOString()
     let engineRes: Response
+    let send: (engineSessionId: string | null, queuedTurn: boolean) => Promise<Response>
     try {
         const project = await projectContextOf(caller.scope, caller.actor, row)
-        engineRes = await sendAssistantTurn(conn, {
-            engineSessionId: row.engine_session_id,
-            text,
-            connectionId: optionalString(body.connectionId),
-            model,
-            author: messageAuthorOf(caller.ctx),
-            brief: project ? { project } : {},
-            queued,
-        })
+        send = (engineSessionId, queuedTurn) =>
+            sendAssistantTurn(conn, {
+                engineSessionId,
+                text,
+                connectionId: optionalString(body.connectionId),
+                model,
+                author: messageAuthorOf(caller.ctx),
+                brief: project ? { project } : {},
+                queued: queuedTurn,
+            })
+        engineRes = await send(row.engine_session_id, queued)
     } catch {
         return json('engine_unreachable', 502)
     }
@@ -101,18 +105,43 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const engineSessionId = engineRes.headers.get('x-session-id')
+    let boundSessionId: string | null
     try {
-        await recordAssistantTurn(caller.scope, row, { engineSessionId, model })
+        boundSessionId = (await recordAssistantTurn(caller.scope, row, { engineSessionId, model })).engineSessionId
     } catch {
         void engineRes.body.cancel().catch(() => {})
         return json('Failed to persist the chat', 500)
     }
+
+    // Two first sends raced and the other one named the chat's conversation: this turn's engine
+    // conversation is dropped and erased, and the message goes to the chat's own conversation, after
+    // the answer running there.
+    if (engineSessionId && boundSessionId && boundSessionId !== engineSessionId) {
+        void engineRes.body.cancel().catch(() => {})
+        const orphan = engineSessionId
+        after(async () => {
+            await cancelAssistantRuns(conn, orphan).catch(() => {})
+            await eraseAssistantTranscript(conn, orphan)
+        })
+        try {
+            engineRes = await send(boundSessionId, true)
+        } catch {
+            return json('engine_unreachable', 502)
+        }
+        if (engineRes.status === 409) return json('run_in_flight', 409, { runId: null, startedAt: null })
+        if (!engineRes.ok || !engineRes.body) return json(`Engine error: ${engineRes.status}`, 502)
+    }
+
+    // Stop pressed before this turn could name its conversation stops its run now.
+    if (boundSessionId && (await stopRequestedSince(caller.scope, row.id, turnStartedAt))) await cancelAssistantRuns(conn, boundSessionId).catch(() => {})
     if (!row.engine_session_id) after(() => titleAssistantChat(caller.scope, row, text).catch(() => null))
 
     return assistantStreamResponse(engineRes, engineRes.headers.get('x-run-id'))
 }
 
-// Stop. Closing the stream alone would leave the run going on the engine, still spending credit.
+// Stop. Closing the stream alone would leave the run going on the engine, still spending credit. On a
+// chat whose first turn has not named its conversation yet, the stop is kept on the row and that turn
+// applies it as soon as it does.
 export async function DELETE(req: Request): Promise<Response> {
     const caller = await authorize()
     if (caller instanceof Response) return caller
@@ -121,12 +150,13 @@ export async function DELETE(req: Request): Promise<Response> {
 
     const row = await ownChat(caller, chatId)
     if (row instanceof Response) return row
-    if (!row.engine_session_id) return Response.json({ ok: true })
+    const engineSessionId = row.engine_session_id ?? (await requestAssistantStop(caller.scope, row))
+    if (!engineSessionId) return Response.json({ ok: true })
 
     const conn = await assistantEngineOf(caller.scope.workspaceId)
     if (!conn) return json('no_engine', 409)
     try {
-        await cancelAssistantRuns(conn, row.engine_session_id)
+        await cancelAssistantRuns(conn, engineSessionId)
     } catch {
         return json('engine_unreachable', 502)
     }

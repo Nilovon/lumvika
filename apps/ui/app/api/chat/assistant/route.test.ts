@@ -96,6 +96,48 @@ describe('POST /api/chat/assistant', () => {
         expect(rows.assistant_chats[0].title).toBe('Mine')
     })
 
+    it('lets the first of two first sends name the conversation, and continues the second there', async () => {
+        const { rows } = setup()
+        vi.mocked(listRuns).mockResolvedValue([{ id: 'run-loser', sessionId: 'loser-session', status: 'running' }] as never)
+        vi.mocked(startChat)
+            .mockImplementationOnce(async () => {
+                rows.assistant_chats[0].engine_session_id = 'winner-session'
+                return stream('data: {"type":"start"}\n\n', { 'x-session-id': 'loser-session', 'x-run-id': 'run-loser' })
+            })
+            .mockResolvedValueOnce(stream('data: {"type":"text-delta","delta":"Hi"}\n\n', { 'x-session-id': 'winner-session', 'x-run-id': 'run-2' }))
+
+        const res = await POST(post({ chatId: 'chat-1', text: 'Second tab' }))
+
+        expect(res.status).toBe(200)
+        expect(res.headers.get('X-Run-Id')).toBe('run-2')
+        expect(vi.mocked(startChat).mock.calls[1][2]).toMatchObject({ sessionId: 'winner-session', message: 'Second tab' })
+        expect(rows.assistant_chats[0].engine_session_id).toBe('winner-session')
+        await vi.waitFor(() => expect(cancelRun).toHaveBeenCalledWith(conn, 'assistant', 'run-loser'))
+    })
+
+    it('stops the run of a first turn when Stop was pressed before the engine named its conversation', async () => {
+        const { rows } = setup()
+        vi.mocked(listRuns).mockResolvedValue([{ id: 'run-1', sessionId: 'engine-session', status: 'running' }] as never)
+        vi.mocked(cancelRun).mockResolvedValue(undefined as never)
+        vi.mocked(startChat).mockImplementationOnce(async () => {
+            expect((await DELETE(new Request('https://lumvika.test/api/chat/assistant?chatId=chat-1', { method: 'DELETE' }))).status).toBe(200)
+            expect(cancelRun).not.toHaveBeenCalled()
+            return stream()
+        })
+
+        await POST(post({ chatId: 'chat-1', text: 'Ideas for pricing?' }))
+
+        expect(rows.assistant_chats[0].stop_requested_at).toEqual(expect.any(String))
+        expect(cancelRun).toHaveBeenCalledExactlyOnceWith(conn, 'assistant', 'run-1')
+    })
+
+    it('leaves a turn alone when the last Stop came before it', async () => {
+        setup({ assistant_chats: [chat({ stop_requested_at: '2026-11-01T00:00:00.000Z' })] })
+        vi.mocked(startChat).mockResolvedValueOnce(stream())
+        await POST(post({ chatId: 'chat-1', text: 'Next one' }))
+        expect(cancelRun).not.toHaveBeenCalled()
+    })
+
     it('says so when the workspace has no server, or the server does not answer', async () => {
         setup()
         vi.mocked(findWorkspaceEngine).mockResolvedValueOnce(null)
