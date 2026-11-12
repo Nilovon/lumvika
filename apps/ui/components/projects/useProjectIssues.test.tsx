@@ -56,6 +56,14 @@ afterEach(() => {
 })
 
 describe('useProjectIssues', () => {
+    it('reads the issue back when the move never reached the server', async () => {
+        mocks.move.mockRejectedValue(new Error('network'))
+        mocks.get.mockResolvedValue({ ok: true, issue: { ...summary('i1', 'todo', 1024), description: null, blockedReason: null, createdBy: { kind: 'system' }, sessionId: null, subIssues: [] } })
+        await act(async () => void (await probe.current!.move(probe.current!.issues![0], 'in_progress', 2048, null)))
+        expect(probe.current!.issues!.find(issue => issue.id === 'i1')).toMatchObject({ status: 'todo', position: 1024 })
+        expect(probe.current!.totals).toMatchObject({ todo: 2, in_progress: 450 })
+    })
+
     it('knows how many cards a column holds beyond the ones it loaded, and loads more of one column', async () => {
         expect(probe.current!.totals?.in_progress).toBe(450)
         await act(async () => probe.current!.showMore('in_progress'))

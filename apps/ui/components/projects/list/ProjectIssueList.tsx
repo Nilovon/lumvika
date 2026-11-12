@@ -124,7 +124,7 @@ export function ProjectIssueList({ issues, totals, onLoadMore, loadingMore, onOp
                 </div>
             )}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <p className="text-xs text-muted-foreground">{t('shown', { shown: shown.length, total: issues.length })}</p>
+                {(total === issues.length || shown.length !== issues.length) && <p className="text-xs text-muted-foreground">{t('shown', { shown: shown.length, total: issues.length })}</p>}
                 {total > issues.length && (
                     <>
                         <p className="text-xs text-muted-foreground">{t('loaded', { loaded: issues.length, total })}</p>

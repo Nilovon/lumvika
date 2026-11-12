@@ -11,6 +11,9 @@ import { toast } from 'sonner'
 
 export type ProjectIssues = ReturnType<typeof useProjectIssues>
 
+// An action the server never answered (the network dropped it) reads as a refusal without a reason.
+const unreached = () => ({ ok: false as const, error: '' })
+
 // The issues of one project, live: the realtime feed applies what other people and coworkers change,
 // and a change made here shows at once and rolls back if the server refuses it. While a change of
 // this tab is in flight, the feed leaves that issue alone so an older row cannot undo it on screen;
@@ -125,7 +128,7 @@ export function useProjectIssues(projectId: string | null, projectKey: string) {
     // server places the card above `beforeIssueId` (the end when null) in the whole column.
     const move = async (issue: IssueSummary, status: IssueStatus, position: number, beforeIssueId: string | null): Promise<boolean> => {
         showLocally(issue, status, position)
-        const result = await track(issue.id, () => moveIssueAction(issue.id, { status, beforeIssueId }))
+        const result = await track(issue.id, () => moveIssueAction(issue.id, { status, beforeIssueId }).catch(unreached))
         if (!result.ok) {
             toast.error(errorText(result))
             await track(issue.id, () => reread(issue, status).then(() => ({ ok: true })))
@@ -138,7 +141,7 @@ export function useProjectIssues(projectId: string | null, projectKey: string) {
     // A change of status without a place: the card goes to the end of its new column.
     const transition = async (issue: IssueSummary, status: IssueStatus, blockedReason?: string | null): Promise<boolean> => {
         showLocally(issue, status, endOfColumn(current.current ?? [], status))
-        const result = await track(issue.id, () => transitionIssueAction(issue.id, status, blockedReason))
+        const result = await track(issue.id, () => transitionIssueAction(issue.id, status, blockedReason).catch(unreached))
         if (!result.ok) {
             toast.error(errorText(result))
             await track(issue.id, () => reread(issue, status).then(() => ({ ok: true })))
