@@ -2,7 +2,7 @@
     "_context": {
         "list.groups.previous7": "Chats whose last message is from the past week, before yesterday.",
         "conversation.readOnly": "Shown instead of the message box when someone opens a chat another member shared. {name} is that member.",
-        "states.outdated.description": "The workspace server runs an engine version from before the Chat area existed.",
+        "states.outdated.description": "The workspace machine runs an engine version from before the Chat area existed.",
         "empty.suggestions.draftEmail.prompt": "Sent as the first message when the suggestion is clicked.",
         "empty.suggestions.explain.prompt": "Sent as the first message when the suggestion is clicked.",
         "empty.suggestions.brainstorm.prompt": "Sent as the first message when the suggestion is clicked.",
@@ -57,8 +57,8 @@
         "archived": "Chat archived.",
         "restored": "Chat restored.",
         "deleted": "Chat deleted.",
-        "deletedOutdated": "The chat is removed here. Its messages stay on your server, which runs an older version of Lumvika that cannot erase them.",
-        "deletedUnreachable": "The chat is removed here. Its messages could not be erased from your server, which did not answer."
+        "deletedOutdated": "The chat is removed here. Its messages stay on your workspace's machine, which runs an older version of Lumvika that cannot erase them.",
+        "deletedUnreachable": "The chat is removed here. Its messages could not be erased from your workspace's machine, which did not answer."
     },
     "project": {
         "label": "Project",
@@ -104,16 +104,16 @@
     },
     "states": {
         "outdated": {
-            "title": "Update your server to use Chat",
-            "description": "Your workspace server runs an older version of Lumvika. Chat works once it is updated."
+            "title": "Update your machine to use Chat",
+            "description": "Your workspace's machine runs an older version of Lumvika. Chat works once it is updated."
         },
         "noEngine": {
-            "title": "Chat needs a server",
-            "description": "Your workspace has no server yet. It gets one when you add your first coworker."
+            "title": "Chat needs a machine",
+            "description": "Your workspace has no machine yet. It gets one when you add your first coworker."
         },
         "unreachable": {
-            "title": "Your server is not answering",
-            "description": "Chat runs on your workspace server, which cannot be reached right now.",
+            "title": "Your machine is not answering",
+            "description": "Chat runs on your workspace's machine, which cannot be reached right now.",
             "retry": "Try again"
         },
         "noProvider": {

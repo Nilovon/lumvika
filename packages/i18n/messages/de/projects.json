@@ -38,7 +38,7 @@
             "status": "Status",
             "lead": "Leitung",
             "progress": "Fortschritt",
-            "target": "Ziel"
+            "target": "Zieldatum"
         },
         "restricted": "Eingeschränkt",
         "noLead": "Keine Leitung",

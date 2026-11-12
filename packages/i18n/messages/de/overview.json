@@ -68,7 +68,7 @@
         },
         "project": {
             "title": "Leg ein Projekt an",
-            "description": "Ein Projekt bündelt die Tickets einer Arbeit, mit einem kurzen Schlüssel wie WEB.",
+            "description": "Ein Projekt bündelt die Tickets einer Arbeit, mit einem kurzen Kürzel wie WEB.",
             "action": "Projekt anlegen"
         },
         "assign": {

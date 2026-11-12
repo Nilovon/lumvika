@@ -75,8 +75,8 @@
     },
     "picker": {
         "add": "Mitglied hinzufügen",
-        "search": "Menschen und Coworker suchen",
-        "people": "Menschen",
+        "search": "Personen und Coworker suchen",
+        "people": "Personen",
         "coworkers": "Coworker",
         "empty": "Niemand mehr zum Hinzufügen.",
         "noMatch": "Keine Treffer."
@@ -88,7 +88,7 @@
             "description": "Erstelle Coworker auf dem Board und gib dann jedem hier einen Titel und eine Führungskraft, um dein Organigramm zu zeichnen."
         },
         "hint": "Coworker ohne Führungskraft stehen ganz oben. Klick auf einen Coworker, um ihm einen Titel und eine Führungskraft zu geben.",
-        "reports": "{count, plural, =0 {Keine Berichte} one {# Bericht} other {# Berichte}}",
+        "reports": "{count, plural, =0 {Niemand unterstellt} one {# unterstellt} other {# unterstellt}}",
         "noTitle": "Kein Titel",
         "unnamedBox": "Unbenannte Box",
         "status": {
@@ -102,8 +102,8 @@
         "open": "Coworker öffnen",
         "edit": "Titel und Führungskraft bearbeiten",
         "actionsFor": "Aktionen für {name}",
-        "expand": "Berichte von {name} anzeigen",
-        "collapse": "Berichte von {name} ausblenden",
+        "expand": "Unterstellte von {name} anzeigen",
+        "collapse": "Unterstellte von {name} ausblenden",
         "dialog": {
             "title": "Titel und Führungskraft",
             "description": "Wo {name} im Organigramm steht.",

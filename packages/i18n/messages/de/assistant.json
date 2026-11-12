@@ -48,8 +48,8 @@
         "archived": "Chat archiviert.",
         "restored": "Chat wiederhergestellt.",
         "deleted": "Chat gelöscht.",
-        "deletedOutdated": "Der Chat ist hier entfernt. Seine Nachrichten bleiben auf deinem Server, auf dem eine ältere Version von Lumvika läuft, die sie nicht löschen kann.",
-        "deletedUnreachable": "Der Chat ist hier entfernt. Seine Nachrichten konnten nicht von deinem Server gelöscht werden, weil er nicht geantwortet hat."
+        "deletedOutdated": "Der Chat ist hier entfernt. Seine Nachrichten bleiben auf der Maschine deines Workspaces, auf der eine ältere Version von Lumvika läuft, die sie nicht löschen kann.",
+        "deletedUnreachable": "Der Chat ist hier entfernt. Seine Nachrichten konnten nicht von der Maschine deines Workspaces gelöscht werden, weil sie nicht geantwortet hat."
     },
     "project": {
         "label": "Projekt",
@@ -95,16 +95,16 @@
     },
     "states": {
         "outdated": {
-            "title": "Aktualisiere deinen Server, um Chat zu nutzen",
-            "description": "Auf dem Server deines Workspaces läuft eine ältere Version von Lumvika. Chat funktioniert, sobald er aktualisiert ist."
+            "title": "Aktualisiere deine Maschine, um Chat zu nutzen",
+            "description": "Auf der Maschine deines Workspaces läuft eine ältere Version von Lumvika. Chat funktioniert, sobald sie aktualisiert ist."
         },
         "noEngine": {
-            "title": "Chat braucht einen Server",
-            "description": "Dein Workspace hat noch keinen Server. Er bekommt einen, sobald du deinen ersten Coworker hinzufügst."
+            "title": "Chat braucht eine Maschine",
+            "description": "Dein Workspace hat noch keine Maschine. Er bekommt eine, sobald du deinen ersten Coworker hinzufügst."
         },
         "unreachable": {
-            "title": "Dein Server antwortet nicht",
-            "description": "Chat läuft auf dem Server deines Workspaces, der gerade nicht erreichbar ist.",
+            "title": "Deine Maschine antwortet nicht",
+            "description": "Chat läuft auf der Maschine deines Workspaces, die gerade nicht erreichbar ist.",
             "retry": "Erneut versuchen"
         },
         "noProvider": {
