@@ -84,7 +84,8 @@ export async function emitRunTerminal(terminal: RunTerminal): Promise<void> {
     // and without it every failing cron was read as an interactive run: the "Scheduled tasks"
     // preference silenced nothing and the errors arrived under the wrong switch. `chat` is not a
     // `session_source` on the hub side, and sending it would fail validation of the whole payload,
-    // so an interactive run stays null.
-    const source = trigger.source === 'chat' ? null : trigger.source
+    // so an interactive run stays null. A chat in a hub channel says so: the hub keeps it out of
+    // every inbox, its answer being posted in the channel.
+    const source = trigger.source === 'chat' ? (trigger.channel ? 'channel' : null) : trigger.source
     await sendNotification({ event, kind: terminal.kind, agentId: terminal.agentId, sessionId: terminal.sessionId, runId: terminal.runId, message, source, metadata }).catch(() => {})
 }

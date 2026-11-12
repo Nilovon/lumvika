@@ -63,6 +63,11 @@ describe('triggerFromRun', () => {
 })
 
 describe('emitRunTerminal', () => {
+    it('names a chat in a hub channel, and leaves any other chat without a source', async () => {
+        expect((await emit({ trigger: { source: 'chat', channel: true }, text: 'Here is the plan.' })).source).toBe('channel')
+        expect((await emit({ trigger: { source: 'chat' } })).source).toBeNull()
+    })
+
     it('announces a finished schedule under its own event', async () => {
         const n = await emit({ trigger: schedule })
 

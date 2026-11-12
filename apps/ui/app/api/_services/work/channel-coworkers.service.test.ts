@@ -7,7 +7,6 @@ const afterTasks = vi.hoisted(() => ({ queued: [] as Array<() => Promise<unknown
 
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), readAgentAccess: vi.fn(), callableEngineAgentIds: vi.fn() }))
-vi.mock('@/app/api/_services/chat.service', () => ({ ensureSessionRow: vi.fn() }))
 vi.mock('@/app/api/_services/members.service', () => ({ resolveMemberIdentities: vi.fn() }))
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ findWorkspaceEngine: vi.fn() }))
 vi.mock('@/lib/chat/start-chat', () => ({ QUEUED_RETRY_DELAYS_MS: [], startChat: vi.fn() }))
@@ -16,7 +15,6 @@ vi.mock('next/server', () => ({ after: (task: () => Promise<unknown>) => void af
 
 const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const { callableEngineAgentIds, readAgentAccess } = await import('@/app/api/_auth/access')
-const { ensureSessionRow } = await import('@/app/api/_services/chat.service')
 const { resolveMemberIdentities } = await import('@/app/api/_services/members.service')
 const { findWorkspaceEngine } = await import('@/app/api/_services/workspace-engine.service')
 const { startChat } = await import('@/lib/chat/start-chat')
@@ -141,7 +139,7 @@ describe('reactToChannelMessage', () => {
         expect(answer).toMatchObject({ body: 'Here is the plan.', parent_message_id: message.id, author_user_id: null })
         expect(rows.channel_agent_turns).toEqual([expect.objectContaining({ agent_id: 'ada', thread_message_id: message.id, status: 'answered', reply_message_id: answer?.id, engine_run_id: 'run-1' })])
         expect(rows.channel_agent_sessions).toEqual([expect.objectContaining({ channel_id: 'pub', agent_id: 'ada', engine_session_id: 'sess-1' })])
-        expect(ensureSessionRow).toHaveBeenCalledWith('ada', 'sess-1', '#pub', { source: 'channel' })
+        expect(rows.sessions).toBeUndefined()
 
         const followUp = await postChannelMessage(scope, ANNA, 'pub', { body: 'thanks, one more thing', parentMessageId: message.id })
         await reactToChannelMessage(scope, anna, followUp)
@@ -241,7 +239,7 @@ describe('starting a coworker turn', () => {
         expect(vi.mocked(startChat).mock.calls.map(call => call[2].sessionId)).toEqual(['main', undefined])
         expect(turn).toMatchObject({ status: 'answered' })
         expect(rows.channel_agent_sessions).toEqual([expect.objectContaining({ engine_session_id: 'main' })])
-        expect(ensureSessionRow).not.toHaveBeenCalled()
+        expect(rows.sessions).toBeUndefined()
     })
 })
 

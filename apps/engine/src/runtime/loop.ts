@@ -379,7 +379,8 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             if (outcome.kind === 'done' && proposed) await emitSkillProposalEvent(agent, sessionId, run.id, proposed, author)
         }
 
-        if (outcome.kind === 'done' && !pending && agent.config.selfImprovement.enabled && userText) {
+        const heardInChannel = trigger.source === 'chat' && trigger.channel === true
+        if (outcome.kind === 'done' && !pending && agent.config.selfImprovement.enabled && userText && !heardInChannel) {
             void runCurator(agent, sessionId, userText, text ?? '', override).catch(e => logger.warn({ err: String(e) }, 'curator failed'))
         }
 

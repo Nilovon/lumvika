@@ -51,6 +51,8 @@ export async function recordNotification(token: string, payload: NotificationPay
     // arrives anyway is never stored where another member could read it.
     if (payload.agentId === ASSISTANT_AGENT_ID) return { ok: true }
 
+    if (await isChannelRun(supabase, engine.workspaceId, payload)) return { ok: true }
+
     const { data: agent } = await selectMaybeSingle(supabase, 'agents', ['id', 'name', 'space_id'] as const, { workspace_id: engine.workspaceId, engine_agent_id: payload.agentId })
 
     if (payload.event === 'agent.session.created') {
@@ -108,6 +110,20 @@ export async function recordNotification(token: string, payload: NotificationPay
     }
 
     return { ok: true }
+}
+
+// A coworker answering in a channel or a direct message: its answer is posted there, and its
+// conversation belongs to the channel, with no `sessions` row anyone else could open. None of its
+// events becomes a notification, whose message would carry the start of the answer to members of
+// the coworker's Box who are not in the channel. An engine names the source; an older one is known by
+// the run (or the conversation) the hub stored for the channel.
+export async function isChannelRun(supabase: ServiceRoleClient, workspaceId: number, payload: Pick<NotificationPayload, 'source' | 'runId' | 'sessionId'>): Promise<boolean> {
+    if (payload.source === 'channel') return true
+    const [{ data: turn }, { data: conversation }] = await Promise.all([
+        payload.runId ? selectMaybeSingle(supabase, 'channel_agent_turns', ['id'] as const, { workspace_id: workspaceId, engine_run_id: payload.runId }) : Promise.resolve({ data: null }),
+        payload.sessionId ? selectMaybeSingle(supabase, 'channel_agent_sessions', ['channel_id'] as const, { workspace_id: workspaceId, engine_session_id: payload.sessionId }) : Promise.resolve({ data: null }),
+    ])
+    return !!turn || !!conversation
 }
 
 // Chat runs only: schedules and triggers run on their own and say nothing about whether someone is

@@ -7,14 +7,14 @@ process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-chat-'))
 process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({
-    calls: [] as { agent: { id: string; brief?: unknown }; sessionId: string; message: string; override: unknown; runId: string; trigger?: { userLanguage?: string; callableAgentIds?: string[] } }[],
+    calls: [] as { agent: { id: string; brief?: unknown }; sessionId: string; message: string; override: unknown; runId: string; trigger?: { userLanguage?: string; callableAgentIds?: string[]; channel?: boolean } }[],
     runAgentError: null as Error | null,
     startRunError: null as Error | null,
 }))
 
 vi.mock('../../runtime/loop.js', async importOriginal => ({
     ...(await importOriginal<typeof import('../../runtime/loop.js')>()),
-    runAgent: async (agent: { id: string; brief?: unknown }, sessionId: string, message: string, override: unknown, _writer: unknown, runId: string, trigger?: { userLanguage?: string; callableAgentIds?: string[] }) => {
+    runAgent: async (agent: { id: string; brief?: unknown }, sessionId: string, message: string, override: unknown, _writer: unknown, runId: string, trigger?: { userLanguage?: string; callableAgentIds?: string[]; channel?: boolean }) => {
         state.calls.push({ agent, sessionId, message, override, runId, trigger })
         if (state.runAgentError) throw state.runAgentError
         const { releaseSession } = await import('../../runtime/run-control.js')
@@ -207,5 +207,15 @@ describe('POST /agents/:id/chat', () => {
         await (await chat(id, { message: 'again' })).text()
 
         expect(state.calls.map(call => call.trigger?.callableAgentIds)).toEqual([['agent-x'], undefined])
+    })
+
+    it('marks a run in a channel conversation as such, even when a later message names no source', async () => {
+        const opened = await chat(id, { message: '@chat what is the plan?', source: 'channel' })
+        await opened.text()
+        const sessionId = opened.headers.get('x-session-id')!
+        await (await chat(id, { sessionId, message: 'and the budget?' })).text()
+        await (await chat(id, { message: 'hi' })).text()
+
+        expect(state.calls.map(call => call.trigger?.channel)).toEqual([true, true, false])
     })
 })

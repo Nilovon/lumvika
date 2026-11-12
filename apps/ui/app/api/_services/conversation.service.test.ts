@@ -238,6 +238,14 @@ describe('adoptEngineSession', () => {
         expect(createSessionRow).not.toHaveBeenCalled()
     })
 
+    it('never mirrors the conversation a coworker keeps for a channel', async () => {
+        vi.mocked(selectMaybeSingle).mockResolvedValueOnce({ data: null, error: null } as never)
+        vi.mocked(getSession).mockResolvedValue({ id: 'channel-session', source: 'channel', originAgentId: null } as never)
+
+        await expect(adoptEngineSession('agent-1', 'channel-session', 'Title')).rejects.toThrow('Conversation not found')
+        expect(createSessionRow).not.toHaveBeenCalled()
+    })
+
     it('refuses an agent from another workspace before any read', async () => {
         vi.mocked(assertAgentAccess).mockRejectedValueOnce(new Error('Agent not found'))
 

@@ -5,7 +5,6 @@ import { after } from 'next/server'
 
 import { callableEngineAgentIds, readAgentAccess } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
-import { ensureSessionRow } from '@/app/api/_services/chat.service'
 import { resolveMemberIdentities } from '@/app/api/_services/members.service'
 import { getChannel, getChannelMessage, listThread, postChannelMessage, type ChannelPerson } from '@/app/api/_services/work/channels.service'
 import { CHANNEL_MESSAGE_COLUMNS } from '@/app/api/_services/work/columns'
@@ -332,10 +331,9 @@ export async function startCoworkerTurn(scope: WorkScope, request: AnswerRequest
         if (!sent.ok) return failTurn(scope, turn.id, sent.failure)
 
         await recordTurnRun(scope, turn.id, sent.runId)
-        if (sent.sessionId && !ownConversation) {
-            await rememberSession(scope, turn.channelId, turn.agentId, sent.sessionId)
-            if (!known?.engine_session_id) await ensureSessionRow(turn.agentId, sent.sessionId, channel.kind === 'dm' ? 'Direct message' : `#${channel.name}`, { source: 'channel' })
-        }
+        // The conversation stays the channel's: no `sessions` row mirrors it, since everyone who uses
+        // the coworker's Box reads those, members of the channel or not.
+        if (sent.sessionId && !ownConversation) await rememberSession(scope, turn.channelId, turn.agentId, sent.sessionId)
 
         // A run that already ended may have reported it before its id was stored on the turn.
         const run = await getRun(engine.conn, agent.engine_agent_id, sent.runId).catch(() => null)

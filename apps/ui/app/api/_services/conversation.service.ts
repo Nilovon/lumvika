@@ -47,7 +47,7 @@ export async function listAgentSessions(agentId: string, actor?: Actor): Promise
     const engineSessions = target ? await listSessions(target.conn, target.engineAgentId).catch(() => []) : []
 
     const mirrored = new Set(supabaseRows.map(r => r.engine_session_id))
-    const unmirrored = engineSessions.filter(s => s.originAgentId && !mirrored.has(s.id))
+    const unmirrored = engineSessions.filter(s => s.originAgentId && s.source !== 'channel' && !mirrored.has(s.id))
 
     const engineOriginIds = [...new Set(unmirrored.map(s => s.originAgentId).filter((v): v is string => !!v))]
     const supabaseOriginIds = [...new Set(supabaseRows.map(r => r.origin_agent_id).filter((v): v is string => !!v))]
@@ -325,8 +325,9 @@ export async function adoptEngineSession(agentId: string, engineSessionId: strin
     const target = await resolveAgentTarget(agentId, caller)
     const session = (await getSession(target.conn, target.engineAgentId, engineSessionId)) ?? (await listSessions(target.conn, target.engineAgentId)).find(s => s.id === engineSessionId)
     // A row is only ever a mirror of a session this agent holds: the column is unique across
-    // workspaces, so a made-up id would otherwise squat another workspace's session.
-    if (!session) throw new AuthorizationError('conversationNotFound')
+    // workspaces, so a made-up id would otherwise squat another workspace's session. A channel's
+    // conversation is never mirrored: it belongs to the people of the channel, not of the Box.
+    if (!session || session.source === 'channel') throw new AuthorizationError('conversationNotFound')
 
     let originAgentId: string | null = null
     if (session?.originAgentId) {
