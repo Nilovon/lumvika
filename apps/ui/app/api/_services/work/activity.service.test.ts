@@ -63,4 +63,28 @@ describe('listActivity', () => {
         await expect(listActivity({ workspaceId: WORKSPACE, supabase: db.client }, { projectId: 'hidden' }, new Set(['open']))).resolves.toEqual({ events: [], nextCursor: null })
         expect(db.calls).toHaveLength(0)
     })
+
+    it('keeps only the events of one kind of actor or one kind of entity', async () => {
+        const byAgent = { ...event(6, 'open'), id: 'event-agent', actor_user_id: null, actor_agent_id: 'agent-1', entity_type: 'issue' }
+        const db = workDatabase({ activity_events: [...rows.activity_events, byAgent] })
+        const scope = { workspaceId: WORKSPACE, supabase: db.client }
+
+        const people = await listActivity(scope, { actorKind: 'user' }, 'all')
+        expect(people.events.map(item => item.id)).toEqual(['event-5', 'event-3', 'event-1'])
+
+        const coworkers = await listActivity(scope, { actorKind: 'agent' }, 'all')
+        expect(coworkers.events.map(item => item.id)).toEqual(['event-agent'])
+
+        const issues = await listActivity(scope, { entityTypes: ['issue'] }, 'all')
+        expect(issues.events.map(item => item.id)).toEqual(['event-agent'])
+    })
+
+    it('keeps the events of any of the projects asked for, among those the actor sees', async () => {
+        const db = workDatabase(rows)
+        const scope = { workspaceId: WORKSPACE, supabase: db.client }
+
+        const open = await listActivity(scope, { projectIds: ['open', 'hidden'] }, new Set(['open']))
+        expect(open.events.map(item => item.id)).toEqual(['event-5', 'event-1'])
+        await expect(listActivity(scope, { projectIds: ['hidden'] }, new Set(['open']))).resolves.toEqual({ events: [], nextCursor: null })
+    })
 })

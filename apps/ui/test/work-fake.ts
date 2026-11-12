@@ -24,6 +24,10 @@ function matches(row: Row, calls: readonly SupabaseCall[]): boolean {
                 return String(row[column]) < String(value)
             case 'gt':
                 return String(row[column]) > String(value)
+            case 'gte':
+                return row[column] != null && String(row[column]) >= String(value)
+            case 'lte':
+                return row[column] != null && String(row[column]) <= String(value)
             default:
                 return true
         }

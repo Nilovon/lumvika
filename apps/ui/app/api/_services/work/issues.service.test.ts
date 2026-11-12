@@ -276,6 +276,22 @@ describe('listIssues and getIssueByRef', () => {
         expect(listed).toEqual([expect.objectContaining({ ref: 'ENG-1', assignee: null })])
     })
 
+    it('filters on who created an issue and on the kind of its holder', async () => {
+        const { scope } = setup({
+            issues: [
+                issue({ id: 'mine-to-agent', assignee_agent_id: AGENT }),
+                issue({ id: 'mine-to-person', number: 2, assignee_user_id: 'ada' }),
+                issue({ id: 'theirs-to-agent', number: 3, assignee_agent_id: AGENT, created_by_user_id: 'ada' }),
+                issue({ id: 'by-agent', number: 4, created_by_user_id: null, created_by_agent_id: AGENT }),
+            ],
+        })
+        const ids = async (filters: Parameters<typeof listIssues>[1]) => (await listIssues(scope, filters, 'all')).map(found => found.id).sort()
+
+        await expect(ids({ createdBy: ME, assigneeKind: 'agent' })).resolves.toEqual(['mine-to-agent'])
+        await expect(ids({ assigneeKind: 'user' })).resolves.toEqual(['mine-to-person'])
+        await expect(ids({ createdBy: { kind: 'agent', agentId: AGENT } })).resolves.toEqual(['by-agent'])
+    })
+
     it('resolves a reference with its sub-issues', async () => {
         const { scope } = setup({ issues: [issue(), issue({ id: 'child', number: 2, parent_issue_id: 'issue-1' })] })
 

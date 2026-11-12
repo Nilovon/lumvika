@@ -341,12 +341,15 @@ export async function listIssues(scope: WorkScope, input: IssueListFilters, visi
     if (Array.isArray(projectScope) && projectScope.length === 0) return []
 
     const assignee = filters.assignee
+    const createdBy = filters.createdBy
     const query: Filters<'issues'> = {
         workspace_id: scope.workspaceId,
         project_id: projectScope,
         status: filters.status?.length ? filters.status : undefined,
-        assignee_user_id: assignee === 'unassigned' ? { isNull: true } : assignee?.kind === 'user' ? assignee.userId : undefined,
-        assignee_agent_id: assignee === 'unassigned' ? { isNull: true } : assignee?.kind === 'agent' ? assignee.agentId : undefined,
+        assignee_user_id: assignee === 'unassigned' ? { isNull: true } : assignee?.kind === 'user' ? assignee.userId : filters.assigneeKind === 'user' ? { notNull: true } : undefined,
+        assignee_agent_id: assignee === 'unassigned' ? { isNull: true } : assignee?.kind === 'agent' ? assignee.agentId : filters.assigneeKind === 'agent' ? { notNull: true } : undefined,
+        created_by_user_id: createdBy?.kind === 'user' ? createdBy.userId : undefined,
+        created_by_agent_id: createdBy?.kind === 'agent' ? createdBy.agentId : undefined,
         parent_issue_id: filters.parentIssueId === null ? { isNull: true } : filters.parentIssueId,
         or: filters.text ? { title: { ilike: likePattern(filters.text) }, description: { ilike: likePattern(filters.text) } } : undefined,
     }

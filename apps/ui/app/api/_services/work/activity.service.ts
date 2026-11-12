@@ -41,8 +41,14 @@ export async function recordActivity(scope: WorkScope, input: ActivityInput): Pr
 export type ActivityQuery = {
     projectId?: string
     issueId?: string
+    // Any of these projects.
+    projectIds?: string[]
     entity?: { type: ActivityEntityType; id: string }
+    // Any of these kinds of entity.
+    entityTypes?: ActivityEntityType[]
     actorAgentId?: string
+    // Only what people did, or only what coworkers did.
+    actorKind?: 'user' | 'agent'
     // The createdAt of the last event of the previous page.
     before?: string
     limit?: number
@@ -60,6 +66,8 @@ const MAX_SCANNED_PAGES = 10
 export async function listActivity(scope: WorkScope, query: ActivityQuery, visibleProjects: 'all' | Set<string>): Promise<ActivityPage> {
     const limit = Math.min(Math.max(query.limit ?? DEFAULT_PAGE, 1), MAX_PAGE)
     if (query.projectId && visibleProjects !== 'all' && !visibleProjects.has(query.projectId)) return { events: [], nextCursor: null }
+    const projectIds = query.projectIds?.filter(id => visibleProjects === 'all' || visibleProjects.has(id))
+    if (query.projectIds?.length && !projectIds?.length) return { events: [], nextCursor: null }
 
     const supabase = clientOf(scope)
     const events: ActivityEvent[] = []
@@ -67,11 +75,12 @@ export async function listActivity(scope: WorkScope, query: ActivityQuery, visib
     for (let page = 0; page < MAX_SCANNED_PAGES; page++) {
         const filters: Filters<'activity_events'> = {
             workspace_id: scope.workspaceId,
-            project_id: query.projectId,
+            project_id: query.projectId ?? (projectIds?.length ? projectIds : undefined),
             issue_id: query.issueId,
-            entity_type: query.entity?.type,
+            entity_type: query.entity?.type ?? (query.entityTypes?.length ? query.entityTypes : undefined),
             entity_id: query.entity?.id,
-            actor_agent_id: query.actorAgentId,
+            actor_user_id: query.actorKind === 'user' ? { notNull: true } : undefined,
+            actor_agent_id: query.actorAgentId ?? (query.actorKind === 'agent' ? { notNull: true } : undefined),
             created_at: before ? { lt: before } : undefined,
         }
         const { data, error } = await selectMany(supabase, 'activity_events', ACTIVITY_EVENT_COLUMNS, filters, { column: 'created_at', ascending: false }, limit + 1)

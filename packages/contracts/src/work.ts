@@ -389,6 +389,9 @@ export const issueListFiltersSchema = z.object({
     projectId: z.string().optional(),
     status: z.array(issueStatusSchema).optional(),
     assignee: z.union([workMemberRefSchema, z.literal('unassigned')]).optional(),
+    // Only the issues held by a person, or by a coworker, whoever it is.
+    assigneeKind: z.enum(['user', 'agent']).optional(),
+    createdBy: workMemberRefSchema.optional(),
     // null lists the top-level issues only.
     parentIssueId: z.string().nullable().optional(),
     text: z.string().trim().max(200).optional(),
