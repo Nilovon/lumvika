@@ -30,6 +30,7 @@ export type RunTerminal = {
 export function triggerFromRun(run: { triggerSource: string | null; triggerSlug: string | null }): RunTrigger {
     if (run.triggerSource === 'schedule') return { source: 'schedule', slug: run.triggerSlug ?? '', name: run.triggerSlug ?? 'schedule' }
     if (run.triggerSource === 'trigger') return { source: 'trigger', slug: run.triggerSlug ?? '', name: run.triggerSlug ?? 'trigger' }
+    if (run.triggerSource === 'issue') return { source: 'issue', slug: run.triggerSlug ?? '', name: run.triggerSlug ?? 'issue' }
     return { source: 'chat' }
 }
 
@@ -70,6 +71,7 @@ export async function emitRunTerminal(terminal: RunTerminal): Promise<void> {
     }
     if (trigger.source === 'schedule') metadata.scheduleSlug = trigger.slug
     if (trigger.source === 'trigger') metadata.triggerSlug = trigger.slug
+    if (trigger.source === 'issue') metadata.issueRef = trigger.slug
     // The hub titles an automated session after what its run did, from this answer: the routine's
     // name alone makes every run of it look the same in the list.
     const finalText = terminal.text?.trim()

@@ -51,6 +51,11 @@ describe('triggerFromRun', () => {
         expect(triggerFromRun({ triggerSource: 'trigger', triggerSlug: null })).toEqual({ source: 'trigger', slug: '', name: 'trigger' })
     })
 
+    it('rebuilds an issue run from the issue reference', () => {
+        expect(triggerFromRun({ triggerSource: 'issue', triggerSlug: 'ENG-12' })).toEqual({ source: 'issue', slug: 'ENG-12', name: 'ENG-12' })
+        expect(triggerFromRun({ triggerSource: 'issue', triggerSlug: null })).toEqual({ source: 'issue', slug: '', name: 'issue' })
+    })
+
     it('treats anything else as a chat run', () => {
         expect(triggerFromRun({ triggerSource: 'chat', triggerSlug: null })).toEqual({ source: 'chat' })
         expect(triggerFromRun({ triggerSource: null, triggerSlug: 'x' })).toEqual({ source: 'chat' })
@@ -90,6 +95,15 @@ describe('emitRunTerminal', () => {
         expect(n.source).toBe('trigger')
         expect(n.metadata.triggerSlug).toBe('hook')
         expect(n.metadata.scheduleSlug).toBeUndefined()
+    })
+
+    it('names the issue an issue run worked on, under the message event', async () => {
+        const n = await emit({ trigger: { source: 'issue', slug: 'ENG-12', name: 'Launch post' }, text: 'Moved to review' })
+
+        expect(n.event).toBe('agent.message.completed')
+        expect(n.source).toBe('issue')
+        expect(n.metadata.issueRef).toBe('ENG-12')
+        expect(n.metadata.finalText).toBe('Moved to review')
     })
 
     it('describes a failed or stopped trigger', async () => {

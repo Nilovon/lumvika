@@ -69,7 +69,7 @@ beforeEach(() => {
 // The schemas ride along on every step of every run: the budget is what the whole set may cost a
 // prompt (a ratchet, set just above what the set weighs today and lowered as families move on
 // demand), and the per-tool cap is what the OpenAI chat API accepts for a description.
-const TOOL_PAYLOAD_CHARS_BUDGET = 72_064
+const TOOL_PAYLOAD_CHARS_BUDGET = 75_520
 const TOOL_DESCRIPTION_CHARS_CAP = 1_024
 
 describe('tool payload', () => {
@@ -100,6 +100,11 @@ describe('buildTools', () => {
             const names = await namesOf(ctxWith({ tools: { [key]: false } }, { callTargets: [{ id: 'peer', name: 'Peer' }] }))
             expect(all.filter(name => !names.includes(name)).sort(), key).toEqual([...familyTools[key]].sort())
         }
+    })
+
+    it('gives the work tools to a coworker of the board only', async () => {
+        expect(await namesOf(ctxWith())).toContain('work_checkout')
+        expect(await namesOf(ctxWith({ kind: 'steward', tools: { work: true } }))).not.toContain('work_checkout')
     })
 
     it('offers request_takeover only where a person can be shown the screen', async () => {

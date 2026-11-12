@@ -15,6 +15,7 @@ import { createSkillFilesRouter, skillRoutes } from './routes/skills.js'
 import { skillProposalRoutes } from './routes/skill-proposals.js'
 import { scheduleRoutes } from './routes/schedules.js'
 import { triggerRoutes } from './routes/triggers.js'
+import { issueRunRoutes } from './routes/issue-runs.js'
 import { runRoutes, usageRoutes } from './routes/runs.js'
 import { statsRoutes } from './routes/stats.js'
 import { rewindRoutes } from './routes/rewind.js'
@@ -69,6 +70,7 @@ export function createServer(): Hono {
     api.route('/agents/:id/skill-proposals', skillProposalRoutes)
     api.route('/agents/:id/schedules', scheduleRoutes)
     api.route('/agents/:id/triggers', triggerRoutes)
+    api.route('/agents/:id/issue-runs', issueRunRoutes)
     api.route('/agents/:id/runs', runRoutes)
     api.route('/agents/:id/usage', usageRoutes)
     api.route('/agents/:id/stats', statsRoutes)
