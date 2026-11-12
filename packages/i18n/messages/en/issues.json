@@ -95,7 +95,9 @@
         "commentsTab": "Comments ({count})",
         "activityTab": "Activity",
         "waitingOnPerson": "{name} is waiting for an answer in its conversation",
-        "waitingOnPersonHint": "Answer there and it goes on with this issue."
+        "waitingOnPersonHint": "Answer there and it goes on with this issue.",
+        "coworkerBacklogHint": "The coworker starts once this issue moves to Todo.",
+        "moveToTodo": "Move to Todo"
     },
     "comments": {
         "empty": "No comments yet. Ask a question, hand over context or report progress here.",
@@ -130,6 +132,12 @@
         "assigneeLabel": "Assignee",
         "dueLabel": "Due date",
         "coworkerHint": "The coworker is notified and picks the issue up on its own.",
-        "submit": "Create issue"
+        "submit": "Create issue",
+        "coworkerBacklogHint": "Backlog wakes nobody: the coworker starts once the issue moves to Todo."
+    },
+    "engine": {
+        "outdated": "This workspace's server is too old to run coworkers on issues. Update it and the coworker can start; the assignment is kept.",
+        "unreachable": "This workspace's server does not answer right now, so the coworker cannot start on the issue yet. The assignment is kept.",
+        "noEngine": "No server runs this workspace yet, so coworkers cannot work on issues. The assignment is kept."
     }
 }

@@ -3,8 +3,10 @@
 import { listProjectIssuesAction } from '@/app/api/_actions/issues.actions'
 import { AssigneePicker } from '@/components/issues/AssigneePicker'
 import { IssuePriorityPicker } from '@/components/issues/IssuePriorityPicker'
+import { IssueRunsNotice } from '@/components/issues/IssueRunsNotice'
 import { IssueStatusPicker } from '@/components/issues/IssueStatusPicker'
 import { useWorkMembers } from '@/components/issues/useWorkMembers'
+import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Field } from '@/components/ui/field'
 import { DateField } from '@/components/ui/date-field'
@@ -49,6 +51,9 @@ export function IssueProperties({ issue, disabled, onStatusChange, onPriorityCha
         return [{ value: NO_PARENT, label: t('noParent') }, ...candidates.map(other => ({ value: other.id, label: `${other.ref} ${other.title}`, keywords: [other.ref, other.title] }))]
     }, [projectIssues, issue.id, issue.subIssues, t])
     const parentLabel = projectIssues?.find(other => other.id === issue.parentIssueId)
+    const coworkerAssigned = issue.assignee?.kind === 'agent'
+    // Backlog is planning: assigning a coworker there wakes nobody until the issue moves to Todo.
+    const waitsInBacklog = coworkerAssigned && issue.status === 'backlog'
 
     return (
         <div className="grid grid-cols-2 gap-x-3 gap-y-3 md:grid-cols-1">
@@ -61,6 +66,17 @@ export function IssueProperties({ issue, disabled, onStatusChange, onPriorityCha
             <Field label={t('assignee')} htmlFor="issue-assignee" className="col-span-2 md:col-span-1" helperText={issue.projectRestricted && issue.assignee?.kind === 'agent' ? tAssignee('restrictedNotice') : undefined}>
                 <AssigneePicker id="issue-assignee" value={issue.assignee} onChange={onAssign} disabled={disabled} />
             </Field>
+            {waitsInBacklog && (
+                <div className="col-span-2 -mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 md:col-span-1">
+                    <p className="text-xs text-muted-foreground">{t('coworkerBacklogHint')}</p>
+                    {!disabled && (
+                        <Button type="button" size="sm" variant="outline" onClick={() => onStatusChange('todo')} className="h-7 px-2 text-xs">
+                            {t('moveToTodo')}
+                        </Button>
+                    )}
+                </div>
+            )}
+            <IssueRunsNotice coworkerAssigned={coworkerAssigned} className="col-span-2 md:col-span-1" />
             <Field label={t('dueDate')} htmlFor="issue-due">
                 <DateField id="issue-due" value={issue.dueDate} onChange={dueDate => onUpdate({ dueDate })} disabled={disabled} />
             </Field>

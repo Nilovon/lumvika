@@ -2,6 +2,7 @@
 
 import { AssigneePicker } from '@/components/issues/AssigneePicker'
 import { IssuePriorityPicker } from '@/components/issues/IssuePriorityPicker'
+import { IssueRunsNotice } from '@/components/issues/IssueRunsNotice'
 import { IssueStatusBadge } from '@/components/issues/IssueStatusBadge'
 import { BOARD_STATUSES } from '@/components/issues/issue-status'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,8 @@ import { useState, type FormEvent } from 'react'
 
 // A new issue starts in the workflow or before it, never already closed.
 const CREATE_STATUSES = BOARD_STATUSES.filter(status => status !== 'done' && status !== 'cancelled' && status !== 'blocked')
+// The statuses in which an assigned coworker is woken as soon as the issue is created.
+const STARTS_AT_ONCE = new Set<IssueStatus>(['todo', 'in_progress'])
 
 export type NewIssueDialogProps = {
     projectId: string
@@ -89,7 +92,8 @@ function NewIssueForm({ projectId, projectName, projectRestricted, onCreate, def
                         <DateField id="new-issue-due" value={dueDate || null} onChange={day => setDueDate(day ?? '')} />
                     </Field>
                 </div>
-                {assignee?.kind === 'agent' && <p className="-mt-1 text-xs text-muted-foreground">{t('coworkerHint')}</p>}
+                {assignee?.kind === 'agent' && (status === 'backlog' || STARTS_AT_ONCE.has(status)) && <p className="-mt-1 text-xs text-muted-foreground">{status === 'backlog' ? t('coworkerBacklogHint') : t('coworkerHint')}</p>}
+                <IssueRunsNotice coworkerAssigned={assignee?.kind === 'agent'} />
                 {assignee?.kind === 'agent' && projectRestricted && <p className="-mt-3 text-xs text-muted-foreground/70">{tAssignee('restrictedNotice')}</p>}
                 <DialogFooter className="flex-wrap gap-2">
                     <Button type="button" variant="outline" onClick={onClose} className="max-sm:flex-1">
