@@ -112,6 +112,8 @@ export async function recordNotification(token: string, payload: NotificationPay
 // first run is started by the server, and ends whether or not a tab is still watching it.
 async function reportChatRun(workspaceId: number, agentId: string, notification: StoredNotification): Promise<void> {
     if (notification.event !== 'agent.message.completed' || (notification.kind !== 'done' && notification.kind !== 'error')) return
+    // An issue run ends under the message event, but nobody typed it.
+    if (notification.source === 'issue') return
     try {
         const metadata = notification.metadata ?? {}
         // Credited to the member who sent the message. An engine that predates `authorId`, or a run

@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { workDatabase, type Tables } from '@/test/work-fake'
 
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn() }))
+
+const { reactToIssueChange } = await import('@/app/api/_services/work/issue-effects.service')
 
 const { addIssueComment, editIssueComment, listIssueComments } = await import('./issue-comments.service')
 
@@ -22,6 +25,7 @@ describe('issue comments', () => {
 
         expect(comment).toMatchObject({ issueId: 'issue-1', author: { kind: 'agent', agentId: 'agent-1' }, body: 'Done, see the PR.' })
         expect(rows.activity_events[0]).toMatchObject({ action: 'issue.commented', entity_type: 'issue_comment', entity_id: comment.id, issue_id: 'issue-1', project_id: 'project-1', actor_agent_id: 'agent-1' })
+        expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'commented', issueId: 'issue-1', body: 'Done, see the PR.', author: { kind: 'agent', agentId: 'agent-1' } })
     })
 
     it('refuses an empty comment and an issue of another workspace', async () => {

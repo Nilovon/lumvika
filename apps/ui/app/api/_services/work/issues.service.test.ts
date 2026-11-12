@@ -1,10 +1,12 @@
 import { ISSUE_STATUSES, canTransitionIssue, formatIssueRef, parseIssueRef } from '@lumvika/contracts'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { workDatabase, type Row, type Tables } from '@/test/work-fake'
 
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
+vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn() }))
 
+const { reactToIssueChange } = await import('@/app/api/_services/work/issue-effects.service')
 const { assignIssue, checkoutIssue, createIssue, createSubIssue, getIssueByRef, issueStatusPatch, listIssues, moveIssue, releaseIssue, transitionIssue, updateIssue, ISSUE_POSITION_STEP } = await import('./issues.service')
 
 const WORKSPACE = 7
@@ -67,6 +69,10 @@ function setup(tables: Partial<Tables> = {}) {
 
 const actions = (rows: Tables) => rows.activity_events.map(event => event.action)
 
+beforeEach(() => {
+    vi.mocked(reactToIssueChange).mockClear()
+})
+
 describe('the issue contracts', () => {
     it('allows exactly the edges of the matrix', () => {
         expect(canTransitionIssue('backlog', 'todo')).toBe(true)
@@ -114,6 +120,7 @@ describe('createIssue', () => {
         const [insert] = db.writes('issues')
         expect(insert.payload).toMatchObject({ title: 'Ship it', status: 'backlog', position: 3000 + ISSUE_POSITION_STEP, assignee_agent_id: AGENT, assignee_user_id: null, created_by_user_id: 'me' })
         expect(rows.activity_events[0]).toMatchObject({ action: 'issue.created', entity_type: 'issue', entity_id: created.id, project_id: 'project-1', actor_user_id: 'me', metadata: { ref: 'ENG-2' } })
+        expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'created', issueId: created.id, author: ME })
     })
 
     it('refuses an archived project, an outside assignee and a parent of another project', async () => {
@@ -124,6 +131,7 @@ describe('createIssue', () => {
         await expect(createIssue(scope, ME, { projectId: 'project-1', title: 'x', parentIssueId: 'other-parent' })).rejects.toMatchObject({ code: 'issueParentInvalid' })
         await expect(createIssue(scope, ME, { projectId: 'project-1', title: '   ' })).rejects.toMatchObject({ code: 'titleRequired' })
         expect(db.writes('issues')).toHaveLength(0)
+        expect(reactToIssueChange).not.toHaveBeenCalled()
     })
 
     it('creates a sub-issue in its parent project', async () => {
@@ -164,12 +172,14 @@ describe('transitionIssue', () => {
         const [write] = db.writes('issues')
         expect(write.filters).toContainEqual({ table: 'issues', method: 'eq', args: ['status', 'todo'] })
         expect(rows.activity_events[0]).toMatchObject({ action: 'issue.status_changed', metadata: { from: 'todo', to: 'in_progress' } })
+        expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'status', issueId: 'issue-1', from: 'todo', author: ME })
     })
 
     it('treats the same status as nothing to do', async () => {
         const { db, scope } = setup({ issues: [issue()] })
         await transitionIssue(scope, ME, 'issue-1', 'todo')
         expect(db.writes('issues')).toHaveLength(0)
+        expect(reactToIssueChange).not.toHaveBeenCalled()
     })
 })
 
@@ -198,6 +208,13 @@ describe('assignIssue', () => {
 
         expect(db.writes('issues')[0].payload).toEqual({ assignee_user_id: 'me', assignee_agent_id: null, checkout_run_id: null, checked_out_at: null })
         expect(rows.activity_events[0]).toMatchObject({ action: 'issue.assigned', metadata: { assignee: { kind: 'user', userId: 'me' }, previous: { kind: 'agent', agentId: AGENT } } })
+        expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'assigned', issueId: 'issue-1', author: ME })
+    })
+
+    it('sets nothing off when the issue is unassigned', async () => {
+        const { scope } = setup({ issues: [issue({ assignee_agent_id: AGENT })] })
+        await assignIssue(scope, ME, 'issue-1', null)
+        expect(reactToIssueChange).not.toHaveBeenCalled()
     })
 
     it('does nothing when the assignee does not change', async () => {

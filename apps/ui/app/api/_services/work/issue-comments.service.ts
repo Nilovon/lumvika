@@ -5,6 +5,7 @@ import { createIssueCommentInputSchema, editIssueCommentInputSchema, type Create
 import { ISSUE_NOT_FOUND } from '@/app/api/_auth/project-access'
 import type { Database } from '@/app/api/database.types'
 import { recordActivity } from '@/app/api/_services/work/activity.service'
+import { reactToIssueChange } from '@/app/api/_services/work/issue-effects.service'
 import { ISSUE_COMMENT_COLUMNS, type IssueCommentRow } from '@/app/api/_services/work/columns'
 import { toIssueComment } from '@/app/api/_services/work/mappers'
 import { authorColumns, clientOf, parseWorkInput, type WorkScope } from '@/app/api/_services/work/refs'
@@ -28,6 +29,7 @@ export async function addIssueComment(scope: WorkScope, author: WorkAuthor, issu
     if (error || !data) throw new Error(`Failed to add the comment: ${error?.message}`)
 
     await recordActivity(scope, { action: 'issue.commented', entityType: 'issue_comment', entityId: data.id, projectId: issue.project_id, issueId: issue.id, author, metadata: { excerpt: body.slice(0, 200) } })
+    reactToIssueChange(scope, { kind: 'commented', issueId: issue.id, body, author })
     return toIssueComment(data)
 }
 

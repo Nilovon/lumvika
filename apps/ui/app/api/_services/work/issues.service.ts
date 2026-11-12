@@ -25,6 +25,7 @@ import {
 import { ISSUE_NOT_FOUND, PROJECT_NOT_FOUND } from '@/app/api/_auth/project-access'
 import type { Database } from '@/app/api/database.types'
 import { recordActivity } from '@/app/api/_services/work/activity.service'
+import { reactToIssueChange } from '@/app/api/_services/work/issue-effects.service'
 import { ISSUE_COLUMNS, ISSUE_SUMMARY_COLUMNS, type IssueRow } from '@/app/api/_services/work/columns'
 import { toIssueDetail, toIssueSummary } from '@/app/api/_services/work/mappers'
 import { assertMemberInWorkspace, authorColumns, clientOf, memberRefOf, parseWorkInput, sameMember, type WorkScope } from '@/app/api/_services/work/refs'
@@ -100,7 +101,7 @@ async function assertParent(scope: WorkScope, projectId: string, parentIssueId: 
     const supabase = clientOf(scope)
     let cursor: string | null = parentIssueId
     for (let depth = 0; cursor && depth < MAX_PARENT_DEPTH; depth++) {
-        const { data: ancestor } = await selectMaybeSingle(supabase, 'issues', ['id', 'project_id', 'parent_issue_id'] as const, { id: cursor, workspace_id: scope.workspaceId })
+        const { data: ancestor }: { data: Pick<IssueRow, 'id' | 'project_id' | 'parent_issue_id'> | null } = await selectMaybeSingle(supabase, 'issues', ['id', 'project_id', 'parent_issue_id'] as const, { id: cursor, workspace_id: scope.workspaceId })
         if (!ancestor || ancestor.project_id !== projectId) throw new AppError('issueParentInvalid')
         if (issueId && ancestor.parent_issue_id === issueId) throw new AppError('issueParentInvalid')
         if (!issueId) return
@@ -171,6 +172,7 @@ export async function createIssue(scope: WorkScope, author: WorkAuthor, input: C
         author,
         metadata: { ref: issue.ref, title: issue.title, status, parentIssueId: issue.parent_issue_id },
     })
+    reactToIssueChange(scope, { kind: 'created', issueId: issue.id, author })
     return issue
 }
 
@@ -216,6 +218,7 @@ async function changeStatus(scope: WorkScope, author: WorkAuthor, current: Issue
         author,
         metadata: { ref: issue.ref, from: current.status, to },
     })
+    reactToIssueChange(scope, { kind: 'status', issueId: issue.id, from: current.status, author })
     return issue
 }
 
@@ -255,6 +258,7 @@ export async function assignIssue(scope: WorkScope, author: WorkAuthor, issueId:
         author,
         metadata: { ref: issue.ref, assignee: target, previous },
     })
+    if (target) reactToIssueChange(scope, { kind: 'assigned', issueId: issue.id, author })
     return issue
 }
 
