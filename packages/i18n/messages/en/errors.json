@@ -464,5 +464,14 @@
     "channelNotFound": "Channel not found",
     "channelManagerOnly": "Only an admin or the creator of this channel can do this",
     "teamNotFound": "Team not found",
-    "goalNotFound": "Goal not found"
+    "goalNotFound": "Goal not found",
+    "channelArchived": "This channel is archived.",
+    "channelNameTaken": "Another channel is already called {name}.",
+    "channelKindInvalid": "A new channel is public or private. Start a direct message from the list instead.",
+    "channelDirectMessageFixed": "A direct message always keeps its two members.",
+    "channelNotPublic": "Only a public channel can be joined. Ask a member to add you.",
+    "directMessageWithSelf": "Pick someone else to write to.",
+    "channelMessageNotFound": "Message not found",
+    "channelMessageAuthorOnly": "Only the author can change this message.",
+    "mentionNotInWorkspace": "You can only mention people and coworkers of this workspace."
 }

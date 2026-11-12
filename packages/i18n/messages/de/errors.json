@@ -458,5 +458,14 @@
     "channelNotFound": "Channel nicht gefunden",
     "channelManagerOnly": "Nur ein Admin oder die Person, die diesen Channel erstellt hat, kann das tun",
     "teamNotFound": "Team nicht gefunden",
-    "goalNotFound": "Ziel nicht gefunden"
+    "goalNotFound": "Ziel nicht gefunden",
+    "channelArchived": "Dieser Kanal ist archiviert.",
+    "channelNameTaken": "Ein anderer Kanal heißt bereits {name}.",
+    "channelKindInvalid": "Ein neuer Kanal ist öffentlich oder privat. Starte eine Direktnachricht stattdessen über die Liste.",
+    "channelDirectMessageFixed": "Eine Direktnachricht behält immer ihre zwei Mitglieder.",
+    "channelNotPublic": "Nur einem öffentlichen Kanal kannst du beitreten. Bitte ein Mitglied, dich hinzuzufügen.",
+    "directMessageWithSelf": "Wähle jemand anderen aus, dem du schreiben möchtest.",
+    "channelMessageNotFound": "Nachricht nicht gefunden",
+    "channelMessageAuthorOnly": "Nur die Person, die die Nachricht geschrieben hat, kann sie ändern.",
+    "mentionNotInWorkspace": "Du kannst nur Personen und Coworker dieses Workspaces erwähnen."
 }
