@@ -20,6 +20,7 @@ import {
     deleteConnectionResultSchema as engineDeleteConnectionResultSchema,
     sessionSchema,
     sessionsListSchema,
+    sessionSourceSchema,
     messageSchema,
     messagesListSchema,
     memorySchema,
@@ -281,7 +282,7 @@ export const notificationPayloadSchema = z.object({
     message: z.string().min(1).max(16_000),
     metadata: z.record(z.string(), z.unknown()).nullable().optional(),
     title: z.string().max(200).nullable().optional(),
-    source: z.enum(['dashboard', 'builder', 'schedule', 'agent', 'delegate', 'api', 'trigger']).nullable().optional(),
+    source: sessionSourceSchema.nullable().optional(),
     originAgentId: z.string().nullable().optional(),
     timestamp: z.string(),
 })

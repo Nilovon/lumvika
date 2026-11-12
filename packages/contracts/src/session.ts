@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const sessionSourceSchema = z.enum(['dashboard', 'builder', 'schedule', 'agent', 'delegate', 'api', 'trigger'])
+export const sessionSourceSchema = z.enum(['dashboard', 'builder', 'schedule', 'agent', 'delegate', 'api', 'trigger', 'issue', 'channel'])
 export type SessionSource = z.infer<typeof sessionSourceSchema>
 
 export const sessionSchema = z.object({
