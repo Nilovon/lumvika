@@ -16,6 +16,7 @@ const { getAgent } = await import('@/lib/engine/client')
 const { resolveMemberIdentities } = await import('@/app/api/_services/members.service')
 const { reactToIssueChange } = await import('@/app/api/_services/work/issue-effects.service')
 const { dispatchWorkHubTool, isWorkHubTool } = await import('./work-hub.service')
+const { coworkerVisibleProjectIds } = await import('@/app/api/_auth/project-access')
 
 const WORKSPACE = 7
 const ME = 'agent-writer'
@@ -59,7 +60,7 @@ function setup(tables: Partial<Tables> = {}) {
             { id: 'agent-far', workspace_id: 99, name: 'Far', handle: 'far' },
         ],
         projects: [
-            { id: 'project-1', workspace_id: WORKSPACE, key: 'ENG', name: 'Engineering', description: null, instructions: 'Write in plain English.', status: 'active', visibility: 'restricted', team_id: null, goal_id: 'goal-1', lead_user_id: 'lead', lead_agent_id: null, monthly_budget_micros: null, target_date: null, created_by: 'anna', archived_at: null, issue_counter: 9, created_at: '2026-10-01T00:00:00.000Z', updated_at: '2026-10-01T00:00:00.000Z' },
+            { id: 'project-1', workspace_id: WORKSPACE, key: 'ENG', name: 'Engineering', description: null, instructions: 'Write in plain English.', status: 'active', visibility: 'workspace', team_id: null, goal_id: 'goal-1', lead_user_id: 'lead', lead_agent_id: null, monthly_budget_micros: null, target_date: null, created_by: 'anna', archived_at: null, issue_counter: 9, created_at: '2026-10-01T00:00:00.000Z', updated_at: '2026-10-01T00:00:00.000Z' },
             { id: 'project-far', workspace_id: 99, key: 'FAR', name: 'Far away', archived_at: null, issue_counter: 1 },
         ],
         goals: [{ id: 'goal-1', workspace_id: WORKSPACE, title: 'Launch v2', status: 'active' }],
@@ -327,8 +328,60 @@ describe('work_list_issues', () => {
 })
 
 describe('work_list_projects', () => {
-    it('lists every project of the workspace, restricted ones included', async () => {
+    it('lists the projects the coworker sees', async () => {
         setup()
         expect(await call('work_list_projects')).toEqual({ projects: [{ key: 'ENG', name: 'Engineering', description: null, status: 'active', lead: 'a teammate', targetDate: null, issueCounts: { todo: 1 } }] })
+    })
+})
+
+describe('what a coworker sees of restricted projects', () => {
+    const secret = (extra: Row = {}): Row => ({ id: 'project-r', workspace_id: WORKSPACE, key: 'SEC', name: 'Secret', description: null, instructions: null, status: 'active', visibility: 'restricted', team_id: null, goal_id: null, lead_user_id: null, lead_agent_id: null, monthly_budget_micros: null, target_date: null, created_by: 'anna', archived_at: null, issue_counter: 9, created_at: '2026-10-02T00:00:00.000Z', updated_at: '2026-10-02T00:00:00.000Z', ...extra })
+    const secretIssue = (extra: Row = {}): Row => issue({ id: 'secret-1', project_id: 'project-r', number: 1, title: 'Acquisition memo', assignee_agent_id: 'agent-other', ...extra })
+
+    function withSecret(project: Row = {}, issues: Row[] = [secretIssue()]) {
+        const { rows } = setup({ issues: [issue(), ...issues] })
+        rows.projects.push(secret(project))
+        rows.agents.push({ id: 'agent-other', workspace_id: WORKSPACE, name: 'Other', handle: 'other' })
+        return rows
+    }
+
+    it('answers a restricted project it is not involved in exactly like a missing one, in every tool', async () => {
+        withSecret()
+        const missing = (await call('work_get_issue', { ref: 'SEC-9' }).catch((err: Error) => err.message)) as string
+        expect(await call('work_get_issue', { ref: 'SEC-1' }).catch((err: Error) => err.message)).toBe(missing.replace('SEC-9', 'SEC-1'))
+        await expect(call('work_comment', { ref: 'SEC-1', body: 'Hi' })).rejects.toThrow('No issue SEC-1 in this workspace.')
+        await expect(call('work_checkout', { ref: 'SEC-1', runId: 'run-1' })).rejects.toThrow('No issue SEC-1 in this workspace.')
+        await expect(call('work_update_status', { ref: 'SEC-1', status: 'in_progress' })).rejects.toThrow('No issue SEC-1 in this workspace.')
+        await expect(call('work_create_issue', { title: 'x', parentRef: 'SEC-1' })).rejects.toThrow('No issue SEC-1 in this workspace.')
+        await expect(call('work_create_issue', { title: 'x', projectKey: 'SEC' })).rejects.toThrow('No project with the key SEC.')
+        await expect(call('work_list_issues', { projectKey: 'SEC' })).rejects.toThrow('No project with the key SEC.')
+        await expect(call('work_list_issues', { projectKey: 'ZZZ' })).rejects.toThrow('No project with the key ZZZ.')
+        expect(((await call('work_list_issues', {})) as { issues: Array<{ ref: string }> }).issues.map(row => row.ref)).toEqual(['ENG-1'])
+        expect(((await call('work_list_projects')) as { projects: Array<{ key: string }> }).projects.map(row => row.key)).toEqual(['ENG'])
+    })
+
+    it.each([
+        ['it leads the project', { lead_agent_id: ME }, [secretIssue()]],
+        ['it is assignee of one of its issues', {}, [secretIssue(), secretIssue({ id: 'secret-2', number: 2, assignee_agent_id: ME })]],
+        ['it created one of its issues', {}, [secretIssue(), secretIssue({ id: 'secret-2', number: 2, assignee_agent_id: null, created_by_user_id: null, created_by_agent_id: ME })]],
+    ] as const)('sees the whole restricted project when %s', async (_label, project, issues) => {
+        withSecret(project, [...issues])
+        expect(await coworkerVisibleProjectIds(WORKSPACE, ME)).toEqual(new Set(['project-1', 'project-r']))
+        expect(await call('work_get_issue', { ref: 'SEC-1' })).toMatchObject({ ref: 'SEC-1', title: 'Acquisition memo' })
+        expect(((await call('work_list_projects')) as { projects: Array<{ key: string }> }).projects.map(row => row.key)).toEqual(['ENG', 'SEC'])
+        expect(await call('work_comment', { ref: 'SEC-1', body: 'Numbers attached.' })).toMatchObject({ ref: 'SEC-1' })
+    })
+
+    it('delegates inside a restricted project it is involved in, which involves the coworker it assigns', async () => {
+        const rows = withSecret({ lead_agent_id: ME })
+        expect(await call('work_create_issue', { title: 'Check the figures', parentRef: 'SEC-1', assignee: '@scout' })).toMatchObject({ ref: 'SEC-10', status: 'todo' })
+        expect(rows.issues.at(-1)).toMatchObject({ project_id: 'project-r', assignee_agent_id: PEER })
+        expect(await coworkerVisibleProjectIds(WORKSPACE, PEER)).toEqual(new Set(['project-1', 'project-r']))
+        expect(await coworkerVisibleProjectIds(WORKSPACE, 'agent-nobody')).toEqual(new Set(['project-1']))
+    })
+
+    it('leaves a project open to the workspace visible to every coworker', async () => {
+        setup()
+        expect(await coworkerVisibleProjectIds(WORKSPACE, 'agent-nobody')).toEqual(new Set(['project-1']))
     })
 })

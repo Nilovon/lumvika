@@ -20,6 +20,11 @@ import { selectAll, selectMany, selectMaybeSingle } from '@/supabase/supabase-he
 //   (a direct message is never managed)
 //   otherwise                                      -> none
 //
+// Coworker (its `work` tools, see coworkerVisibleProjectIds):
+//   a project open to the workspace                -> sees it
+//   a restricted project it leads, or where it is assignee or creator of an issue -> sees it, every issue in it
+//   otherwise                                      -> does not exist
+//
 // Issues, comments and activity follow their project.
 
 export type ProjectAccess = BoxAccess
@@ -128,6 +133,21 @@ export async function manageableProjectIds(actor: Actor): Promise<'all' | Set<st
     if (isAdminActor(actor)) return 'all'
     const map = await projectAccessMap(actor)
     return new Set([...map].filter(([, access]) => access === 'manage').map(([id]) => id))
+}
+
+// What a coworker's own work tools reach. A restricted project is a promise to the people named on
+// it, and anyone who may talk to a coworker could read through it, so the coworker only sees one it
+// is involved in. Reaching an issue there is what lets it work with the parent, siblings and
+// sub-issues of its own.
+export async function coworkerVisibleProjectIds(workspaceId: number, agentId: string): Promise<Set<string>> {
+    const supabase = createServiceRoleClient()
+    const [{ data: projects }, { data: assigned }, { data: created }] = await Promise.all([
+        selectAll(supabase, 'projects', ['id', 'visibility', 'lead_agent_id'] as const, { workspace_id: workspaceId }),
+        selectAll(supabase, 'issues', ['project_id'] as const, { workspace_id: workspaceId, assignee_agent_id: agentId }),
+        selectAll(supabase, 'issues', ['project_id'] as const, { workspace_id: workspaceId, created_by_agent_id: agentId }),
+    ])
+    const involved = new Set([...(assigned ?? []), ...(created ?? [])].map(issue => issue.project_id))
+    return new Set((projects ?? []).filter(project => toVisibility(project.visibility) === 'workspace' || project.lead_agent_id === agentId || involved.has(project.id)).map(project => project.id))
 }
 
 async function isChannelMember(actor: Actor, channelId: string): Promise<boolean> {

@@ -20,6 +20,7 @@ import {
 } from '@lumvika/contracts'
 
 import { workspaceActor } from '@/app/api/_auth/access'
+import { coworkerVisibleProjectIds } from '@/app/api/_auth/project-access'
 import { resolveAgentTarget } from '@/app/api/_services/chat.service'
 import { resolveMemberIdentities } from '@/app/api/_services/members.service'
 import { addIssueComment, listIssueComments } from '@/app/api/_services/work/issue-comments.service'
@@ -32,9 +33,10 @@ import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 
 // The `work` tools of a coworker (engine `tools/builtin/work.ts`), answered for the coworker the
-// engine key and the agent header name. A coworker sees every project of its workspace, as the
-// workspace itself does, comments and creates anywhere, and takes, lets go of and moves only the
-// issues assigned to it. Every refusal is a sentence the model can act on.
+// engine key and the agent header name. A coworker sees the projects `coworkerVisibleProjectIds`
+// lets through (a restricted one it is not involved in does not exist for it), comments and creates
+// in those, and takes, lets go of and moves only the issues assigned to it. Every refusal is a
+// sentence the model can act on.
 
 const WORK_TOOLS = new Set<string>(WORK_TOOL_NAMES)
 
@@ -51,7 +53,7 @@ const LIST_MAX = 100
 const COMMENTS_SHOWN = 50
 const SELF_NAMES = new Set(['me', 'self', 'myself'])
 
-type Caller = { agentId: string; scope: WorkScope }
+type Caller = { agentId: string; scope: WorkScope; visible: Set<string> }
 type Coworker = { id: string; name: string; handle: string | null }
 type Directory = { coworkers: Map<string, Coworker>; people: Map<string, string> }
 
@@ -106,14 +108,14 @@ async function resolveAssignee(caller: Caller, value: string): Promise<WorkMembe
 async function requireIssue(caller: Caller, ref: unknown): Promise<IssueDetail> {
     const reference = typeof ref === 'string' ? ref.trim() : ''
     if (!parseIssueRef(reference)) throw new Error(`"${reference}" is not an issue reference: write it as ENG-12.`)
-    const issue = await getIssueByRef(caller.scope, reference, 'all')
+    const issue = await getIssueByRef(caller.scope, reference, caller.visible)
     if (!issue) throw new Error(`No issue ${reference.toUpperCase()} in this workspace.`)
     return issue
 }
 
 async function requireProjectByKey(caller: Caller, key: string): Promise<{ id: string; key: string }> {
     const { data } = await selectMaybeSingle(clientOf(caller.scope), 'projects', ['id', 'key'] as const, { workspace_id: caller.scope.workspaceId, key: key.trim().toUpperCase() })
-    if (!data) throw new Error(`No project with the key ${key.trim().toUpperCase()}. work_list_projects lists them.`)
+    if (!data || !caller.visible.has(data.id)) throw new Error(`No project with the key ${key.trim().toUpperCase()}. work_list_projects lists them.`)
     return data
 }
 
@@ -143,7 +145,7 @@ function byWorkingOrder(a: IssueSummary, b: IssueSummary): number {
 
 async function inbox(caller: Caller, args: Record<string, unknown>) {
     const runId = asString(args.runId)
-    const [issues, projects] = await Promise.all([listIssues(caller.scope, { assignee: { kind: 'agent', agentId: caller.agentId }, status: [...INBOX_STATUSES], sort: 'updated', limit: INBOX_SCAN }, 'all'), projectsById(caller.scope)])
+    const [issues, projects] = await Promise.all([listIssues(caller.scope, { assignee: { kind: 'agent', agentId: caller.agentId }, status: [...INBOX_STATUSES], sort: 'updated', limit: INBOX_SCAN }, caller.visible), projectsById(caller.scope)])
     const keys = new Map([...projects].map(([id, project]) => [id, project.key]))
     const parents = await refsByIssueId(caller.scope, [...new Set(issues.flatMap(issue => (issue.parentIssueId ? [issue.parentIssueId] : [])))], keys)
     const ordered = [...issues].sort(byWorkingOrder)
@@ -301,7 +303,7 @@ async function listForAgent(caller: Caller, args: Record<string, unknown>) {
     const assignee = !assigneeName ? undefined : normalizeHandle(assigneeName) === 'unassigned' ? ('unassigned' as const) : await resolveAssignee(caller, assigneeName)
     const limit = clamp(asNumber(args.limit), LIST_DEFAULT, LIST_MAX)
     const [issues, projects] = await Promise.all([
-        listIssues(caller.scope, { projectId: project?.id, status: readStatuses(args.status), assignee, text: asString(args.text), sort: 'updated', limit }, 'all'),
+        listIssues(caller.scope, { projectId: project?.id, status: readStatuses(args.status), assignee, text: asString(args.text), sort: 'updated', limit }, caller.visible),
         projectsById(caller.scope),
     ])
     const directory = await directoryOf(caller.scope, issues.map(issue => personIdOf(issue.assignee)))
@@ -312,14 +314,14 @@ async function listForAgent(caller: Caller, args: Record<string, unknown>) {
 }
 
 async function listProjectsForAgent(caller: Caller) {
-    const projects = await listProjects(caller.scope, workspaceActor(caller.scope.workspaceId))
+    const projects = (await listProjects(caller.scope, workspaceActor(caller.scope.workspaceId))).filter(project => caller.visible.has(project.id))
     const directory = await directoryOf(caller.scope, projects.map(project => personIdOf(project.lead)))
     return { projects: projects.map(project => ({ key: project.key, name: project.name, description: project.description, status: project.status, lead: labelOf(directory, caller, project.lead), targetDate: project.targetDate, issueCounts: project.issueCounts })) }
 }
 
 export async function dispatchWorkHubTool(callerAgentId: string, workspaceId: number, name: WorkToolName, args: Record<string, unknown>): Promise<unknown> {
     await assertWorkSwitchedOn(callerAgentId, workspaceId)
-    const caller: Caller = { agentId: callerAgentId, scope: { workspaceId, supabase: createServiceRoleClient() } }
+    const caller: Caller = { agentId: callerAgentId, scope: { workspaceId, supabase: createServiceRoleClient() }, visible: await coworkerVisibleProjectIds(workspaceId, callerAgentId) }
     switch (name) {
         case 'work_inbox':
             return inbox(caller, args)

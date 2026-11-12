@@ -42,7 +42,7 @@ export function workTools(ctx: RunContext): ToolSet {
             execute: args => call('work_update_status', { ...args, ...run() }),
         }),
         work_comment: tool({
-            description: 'Comment on any issue: progress, a question to whoever asked, the result and where to find it. Markdown, self-contained.',
+            description: 'Comment on an issue: progress, a question to whoever asked, the result and where to find it. Markdown, self-contained.',
             inputSchema: z.object({ ref, body: z.string().min(1).max(50_000) }),
             execute: args => call('work_comment', args),
         }),
@@ -62,7 +62,7 @@ export function workTools(ctx: RunContext): ToolSet {
             execute: args => call('work_create_issue', args),
         }),
         work_list_issues: tool({
-            description: "Search the workspace's issues by project, status, assignee ('me', 'unassigned' or a handle) and text, e.g. to follow work you delegated.",
+            description: "Search the issues you can see by project, status, assignee ('me', 'unassigned' or a handle) and text, e.g. to follow work you delegated.",
             inputSchema: z.object({
                 projectKey: z.string().optional(),
                 status: z.array(z.enum(ISSUE_STATUSES)).optional(),
@@ -73,7 +73,7 @@ export function workTools(ctx: RunContext): ToolSet {
             execute: args => call('work_list_issues', args),
         }),
         work_list_projects: tool({
-            description: 'The projects of the workspace: key (what refs start with), name, status, lead and issue counts.',
+            description: 'The projects you can see: key (what refs start with), name, status, lead and issue counts.',
             inputSchema: z.object({}),
             execute: () => call('work_list_projects', {}),
         }),
