@@ -44,7 +44,7 @@ export function ReviewScreen() {
             {allClear ? (
                 <EmptyState icon={CircleCheckIcon} title={t('allClear.title')} description={t('allClear.description')} className="py-16" />
             ) : tab === 'conversations' ? (
-                conversations === null ? <ReviewSkeleton /> : <WaitingConversations sessions={conversations} />
+                conversations === null ? <ReviewSkeleton /> : <WaitingConversations sessions={conversations} onOpenIssue={setOpenRef} />
             ) : queue === null ? (
                 <ReviewSkeleton />
             ) : loadError ? (

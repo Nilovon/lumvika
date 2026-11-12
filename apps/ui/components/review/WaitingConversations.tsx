@@ -1,9 +1,10 @@
 'use client'
 
 import { useOpenIssueConversation } from '@/components/issues/IssueWorkingBanner'
+import { useConversationIssues } from '@/components/review/useConversationIssues'
 import { EmptyState } from '@/components/ui/empty-state'
 import type { AttentionSession } from '@/hooks/useAttentionSessions'
-import { MessageSquareIcon } from '@/lib/icons'
+import { KanbanIcon, MessageSquareIcon } from '@/lib/icons'
 import { STATUS_META } from '@/lib/board/attention'
 import { useBoardStore } from '@/stores/board.store'
 import { fullDateTime, shortRelativeTime } from '@lumvika/i18n/format'
@@ -20,13 +21,15 @@ function askOf(status: string): Ask {
 }
 
 // The coworker conversations that stopped on a question for the reader: the same list as the
-// workspace inbox, each row opening its conversation on the board.
-export function WaitingConversations({ sessions }: { sessions: AttentionSession[] }) {
+// workspace inbox, each row opening its conversation on the board, and naming the issue the
+// conversation works on when there is one.
+export function WaitingConversations({ sessions, onOpenIssue }: { sessions: AttentionSession[]; onOpenIssue: (ref: string) => void }) {
     const t = useTranslations('review')
     const locale = useLocale()
     const agents = useBoardStore(state => state.agents)
     const openConversation = useOpenIssueConversation()
     const names = useMemo(() => new Map(agents.map(agent => [agent.id, agent.name])), [agents])
+    const issues = useConversationIssues(sessions)
 
     if (sessions.length === 0) return <EmptyState icon={MessageSquareIcon} title={t('empty.conversations.title')} description={t('empty.conversations.description')} className="rounded-lg border border-dashed border-border py-12" />
 
@@ -34,6 +37,7 @@ export function WaitingConversations({ sessions }: { sessions: AttentionSession[
         <ul className="overflow-hidden rounded-lg border border-border">
             {sessions.map(session => {
                 const ask = askOf(session.status)
+                const issue = issues.get(session.id)
                 return (
                     <li key={session.id} className="border-b border-border last:border-b-0">
                         <button type="button" onClick={() => openConversation(session.agentId, session.id)} className="flex w-full items-start gap-3 px-3 py-3 text-left transition-colors outline-none hover:bg-muted/50 focus-visible:bg-muted/60">
@@ -62,6 +66,19 @@ export function WaitingConversations({ sessions }: { sessions: AttentionSession[
                                 </span>
                             </span>
                         </button>
+                        {issue && (
+                            <div className="-mt-1 px-3 pb-3 pl-14">
+                                <button
+                                    type="button"
+                                    onClick={() => onOpenIssue(issue.ref)}
+                                    aria-label={t('conversation.openIssue', { ref: issue.ref })}
+                                    className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-left text-xs text-muted-foreground transition-colors outline-none hover:bg-muted/50 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                    <KanbanIcon className="size-3.5 shrink-0" />
+                                    <span className="truncate">{t('conversation.issue', { ref: issue.ref, title: issue.title })}</span>
+                                </button>
+                            </div>
+                        )}
                     </li>
                 )
             })}

@@ -5,7 +5,7 @@ import type { IssueSummary } from '@lumvika/contracts'
 import { requireLightSessionActor } from '@/app/api/_auth/access'
 import { assertIssueAccess, visibleProjectIds } from '@/app/api/_auth/project-access'
 import { toIssueSummary } from '@/app/api/_services/work/mappers'
-import { approveIssue, listReviewQueue, requestChanges, unblockIssue } from '@/app/api/_services/work/review.service'
+import { approveIssue, issuesOfConversations, listReviewQueue, requestChanges, unblockIssue, type ConversationIssue } from '@/app/api/_services/work/review.service'
 import type { IssueRecord } from '@/app/api/_services/work/issues.service'
 import { failureOf } from '@/lib/i18n/action-error'
 import type { ReviewQueue } from '@/lib/work/review-queue'
@@ -29,6 +29,16 @@ export async function listReviewQueueAction(): Promise<ActionResult<{ queue: Rev
         const userId = actor.kind === 'user' ? actor.userId : null
         const queue = userId ? await listReviewQueue({ workspaceId: actor.workspaceId }, userId, await visibleProjectIds(actor)) : { toReview: [], blocked: [] }
         return { ok: true, queue }
+    } catch (err) {
+        return failureOf(err)
+    }
+}
+
+// The issues the waiting conversations work on, among the projects the caller sees.
+export async function listConversationIssuesAction(sessionIds: string[]): Promise<ActionResult<{ issues: ConversationIssue[] }>> {
+    try {
+        const actor = await requireLightSessionActor()
+        return { ok: true, issues: await issuesOfConversations({ workspaceId: actor.workspaceId }, sessionIds, await visibleProjectIds(actor)) }
     } catch (err) {
         return failureOf(err)
     }

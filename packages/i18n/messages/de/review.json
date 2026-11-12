@@ -50,7 +50,9 @@
         "waiting_human": "Wartet"
     },
     "conversation": {
-        "open": "Unterhaltung öffnen"
+        "open": "Unterhaltung öffnen",
+        "issue": "Arbeitet an {ref}: {title}",
+        "openIssue": "Ticket {ref} öffnen"
     },
     "loadFailed": "Die Prüfliste konnte nicht geladen werden",
     "retry": "Erneut versuchen",

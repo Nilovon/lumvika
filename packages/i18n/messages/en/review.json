@@ -57,7 +57,9 @@
         "waiting_human": "Waiting"
     },
     "conversation": {
-        "open": "Open conversation"
+        "open": "Open conversation",
+        "issue": "Works on {ref}: {title}",
+        "openIssue": "Open issue {ref}"
     },
     "loadFailed": "The review queue could not be loaded",
     "retry": "Try again",

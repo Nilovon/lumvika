@@ -1,6 +1,6 @@
 import 'server-only'
 
-import type { WorkAuthor } from '@lumvika/contracts'
+import { formatIssueRef, type WorkAuthor } from '@lumvika/contracts'
 
 import { getIssue, listIssues, transitionIssue, type IssueRecord } from '@/app/api/_services/work/issues.service'
 import { addIssueComment } from '@/app/api/_services/work/issue-comments.service'
@@ -8,7 +8,7 @@ import { readVisibleProjects } from '@/app/api/_services/work/my-work.service'
 import { authorOf, clientOf, type WorkScope } from '@/app/api/_services/work/refs'
 import { AppError } from '@/lib/i18n/action-error'
 import { buildReviewQueue, type ReviewQueue } from '@/lib/work/review-queue'
-import { selectAll } from '@/supabase/supabase-helpers'
+import { selectAll, selectMany } from '@/supabase/supabase-helpers'
 
 // Enough for any real queue, and short enough for the ids of its issues to fit one request.
 const QUEUE_LIMIT = 200
@@ -44,6 +44,23 @@ export async function listReviewQueue(scope: WorkScope, userId: string, visibleP
         },
         userId,
     )
+}
+
+// A coworker conversation waiting on a person and the issue it works on, for the conversations the
+// Review screen lists: the person answers in the conversation and sees which issue it is about.
+export type ConversationIssue = { sessionId: string; ref: string; title: string }
+
+export async function issuesOfConversations(scope: WorkScope, sessionIds: readonly string[], visibleProjects: 'all' | Set<string>): Promise<ConversationIssue[]> {
+    const ids = [...new Set(sessionIds)].slice(0, QUEUE_LIMIT)
+    if (ids.length === 0) return []
+    const supabase = clientOf(scope)
+    const { data: issues, error } = await selectMany(supabase, 'issues', ['session_id', 'project_id', 'number', 'title'] as const, { workspace_id: scope.workspaceId, session_id: ids })
+    if (error) throw new Error(`Failed to read the issues of the conversations: ${error.message}`)
+    const seen = (issues ?? []).filter(issue => visibleProjects === 'all' || visibleProjects.has(issue.project_id))
+    if (seen.length === 0) return []
+    const { data: projects } = await selectMany(supabase, 'projects', ['id', 'key'] as const, { workspace_id: scope.workspaceId, id: [...new Set(seen.map(issue => issue.project_id))] })
+    const keyOf = new Map((projects ?? []).map(project => [project.id, project.key]))
+    return seen.flatMap(issue => (issue.session_id && keyOf.has(issue.project_id) ? [{ sessionId: issue.session_id, ref: formatIssueRef(keyOf.get(issue.project_id)!, issue.number), title: issue.title }] : []))
 }
 
 type Verdict = { issueId: string; author: WorkAuthor }

@@ -7,7 +7,7 @@ vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn() }))
 
 const { reactToIssueChange } = await import('@/app/api/_services/work/issue-effects.service')
-const { approveIssue, listReviewQueue, requestChanges, unblockIssue } = await import('./review.service')
+const { approveIssue, issuesOfConversations, listReviewQueue, requestChanges, unblockIssue } = await import('./review.service')
 
 const ME = { kind: 'user', userId: 'me' } as const
 
@@ -93,5 +93,15 @@ describe('the verdicts', () => {
         ])
         expect(rows.issue_comments).toHaveLength(1)
         await expect(unblockIssue(scope, { issueId: 'a', author: ME })).rejects.toMatchObject({ code: 'issueNoLongerBlocked' })
+    })
+})
+
+describe('issuesOfConversations', () => {
+    it('names the issue each waiting conversation works on, among the projects I see', async () => {
+        const { scope } = setup([issueRow({ id: 'asking', number: 7, title: 'Pick the launch date', session_id: 'session-asking' }), issueRow({ id: 'secret', project_id: 'hidden', number: 8, session_id: 'session-hidden' })])
+
+        const found = await issuesOfConversations(scope, ['session-asking', 'session-hidden', 'session-plain'], new Set(['project-1', 'other']))
+
+        expect(found).toEqual([{ sessionId: 'session-asking', ref: expect.stringMatching(/-7$/), title: 'Pick the launch date' }])
     })
 })

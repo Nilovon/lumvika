@@ -12,6 +12,11 @@ export const ATTENTION_STATUSES = ['error', 'waiting_human', 'awaiting_question'
 
 const attentionStatuses: ReadonlySet<string> = new Set(ATTENTION_STATUSES)
 
+// The attention statuses in which the coworker stopped on a person (a question, an approval, a
+// connector, a hand-over) and goes on in the same conversation once they answer. `error` ends the run
+// and `awaiting_ack` is a heads-up the run does not stop for.
+export const PAUSED_ON_PERSON_STATUSES = ['waiting_human', 'awaiting_question', 'awaiting_approval', 'awaiting_connector'] as const satisfies readonly SessionStatus[]
+
 export function needsHuman(status: SessionStatus): boolean {
     return attentionStatuses.has(status)
 }

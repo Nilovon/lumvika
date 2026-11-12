@@ -93,7 +93,9 @@
         "parentSearch": "Search issues of this project",
         "created": "Created by {name}, {date}",
         "commentsTab": "Comments ({count})",
-        "activityTab": "Activity"
+        "activityTab": "Activity",
+        "waitingOnPerson": "{name} is waiting for an answer in its conversation",
+        "waitingOnPersonHint": "Answer there and it goes on with this issue."
     },
     "comments": {
         "empty": "No comments yet. Ask a question, hand over context or report progress here.",
