@@ -695,6 +695,135 @@ export type Database = {
         }
         Relationships: []
       }
+      channel_agent_sessions: {
+        Row: {
+          agent_id: string
+          channel_id: string
+          created_at: string
+          engine_session_id: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          agent_id: string
+          channel_id: string
+          created_at?: string
+          engine_session_id: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          agent_id?: string
+          channel_id?: string
+          created_at?: string
+          engine_session_id?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_agent_sessions_agent_id_workspace_id_fkey"
+            columns: ["agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_sessions_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      channel_agent_turns: {
+        Row: {
+          agent_id: string
+          channel_id: string
+          created_at: string
+          engine_run_id: string | null
+          failure: string | null
+          finished_at: string | null
+          id: string
+          reply_message_id: string | null
+          requested_by: string | null
+          status: string
+          thread_message_id: string
+          trigger_message_id: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          agent_id: string
+          channel_id: string
+          created_at?: string
+          engine_run_id?: string | null
+          failure?: string | null
+          finished_at?: string | null
+          id?: string
+          reply_message_id?: string | null
+          requested_by?: string | null
+          status?: string
+          thread_message_id: string
+          trigger_message_id: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          agent_id?: string
+          channel_id?: string
+          created_at?: string
+          engine_run_id?: string | null
+          failure?: string | null
+          finished_at?: string | null
+          id?: string
+          reply_message_id?: string | null
+          requested_by?: string | null
+          status?: string
+          thread_message_id?: string
+          trigger_message_id?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_agent_turns_agent_id_workspace_id_fkey"
+            columns: ["agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_thread_message_id_channel_id_fkey"
+            columns: ["thread_message_id", "channel_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id", "channel_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_trigger_message_id_channel_id_fkey"
+            columns: ["trigger_message_id", "channel_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id", "channel_id"]
+          },
+        ]
+      }
       channel_members: {
         Row: {
           agent_id: string | null
@@ -4574,6 +4703,14 @@ export type Database = {
         Returns: undefined
       }
       before_user_created: { Args: { event: Json }; Returns: Json }
+      channel_summaries: {
+        Args: { p_user_id: string; p_workspace_id: number }
+        Returns: {
+          channel_id: string
+          last_message_id: string
+          unread_count: number
+        }[]
+      }
       check_email_exists: { Args: { email: string }; Returns: boolean }
       claim_app_quota: {
         Args: {
