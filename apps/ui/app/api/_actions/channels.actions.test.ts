@@ -91,9 +91,69 @@ describe('postChannelMessageAction', () => {
         await expect(actions.postChannelMessageAction('shut', { body: 'hi' })).resolves.toMatchObject({ ok: true, canAddOutsiders: false })
     })
 
+    it('mentions, summons and offers to add only a coworker the person can see', async () => {
+        const { rows } = setup()
+        signedIn('anna', 'member', 'assigned')
+        rows.channel_members.push(member('pub', { userId: 'anna' }))
+        vi.mocked(reactToChannelMessage).mockImplementation(async (_scope, _person, message) => ({ agentIds: [], outsiders: message.mentions.flatMap(ref => (ref.kind === 'agent' ? [ref.agentId] : [])) }))
+
+        const result = await actions.postChannelMessageAction('pub', { body: 'hi @vault', mentions: [{ kind: 'agent', agentId: 'vault' }] })
+
+        expect(result).toMatchObject({ ok: true, message: { body: 'hi @vault', mentions: [] }, outsiders: [] })
+        expect(rows.channel_messages[0]).toMatchObject({ mentions: [] })
+    })
+
     it('refuses an empty message', async () => {
         setup()
         await expect(actions.postChannelMessageAction('pub', { body: '   ' })).resolves.toMatchObject({ ok: false, code: 'messageRequired' })
+    })
+})
+
+describe('names a reader gets', () => {
+    const message = (id: string, overrides: Row) => ({ id, channel_id: 'pub', workspace_id: WORKSPACE, author_user_id: 'ben', author_agent_id: null, body: 'x', parent_message_id: null, mentions: [], edited_at: null, deleted_at: null, created_at: id, updated_at: id, ...overrides })
+
+    it('names a coworker that wrote in the channel to every reader, a coworker only mentioned to those who see it', async () => {
+        setup({
+            channel_messages: [
+                message('m1', { body: 'ask @vault', mentions: [{ kind: 'agent', agentId: 'vault' }] }),
+                message('m2', { author_user_id: null, author_agent_id: 'ada', body: 'done' }),
+            ],
+        })
+        signedIn('anna', 'member', 'assigned')
+        const scoped = await actions.listChannelMessagesAction('pub')
+        expect(scoped).toMatchObject({ ok: false })
+        signedIn('anna')
+        const reader = await actions.listChannelMessagesAction('pub')
+        expect(reader.ok && reader.coworkers.map(coworker => coworker.id)).toEqual(['ada'])
+        signedIn('anna', 'admin')
+        const admin = await actions.listChannelMessagesAction('pub')
+        expect(admin.ok && admin.coworkers.map(coworker => coworker.id).sort()).toEqual(['ada', 'vault'])
+        const thread = await actions.getChannelThreadAction('pub', 'm1')
+        expect(thread.ok && thread.coworkers.map(coworker => coworker.id)).toEqual(['vault'])
+        signedIn('anna')
+        const hiddenThread = await actions.getChannelThreadAction('pub', 'm1')
+        expect(hiddenThread.ok && hiddenThread.coworkers).toEqual([])
+    })
+})
+
+describe('linking a channel to a project', () => {
+    const projects = [
+        { id: 'open-p', workspace_id: WORKSPACE, key: 'OPEN', name: 'Open', visibility: 'workspace' },
+        { id: 'secret-p', workspace_id: WORKSPACE, key: 'SEC', name: 'Secret', visibility: 'restricted' },
+    ]
+
+    it('needs use of the project, and names it only to a reader who sees it', async () => {
+        const { rows } = setup({ projects, project_members: [] })
+        await expect(actions.createChannelAction({ name: 'deal', kind: 'public', projectId: 'secret-p' })).resolves.toMatchObject({ ok: false, code: 'projectNotFound' })
+        await expect(actions.createChannelAction({ name: 'launch', kind: 'public', projectId: 'open-p' })).resolves.toMatchObject({ ok: true })
+        signedIn('ben')
+        await expect(actions.updateChannelAction('shut', { projectId: 'secret-p' })).resolves.toMatchObject({ ok: false, code: 'projectNotFound' })
+
+        rows.channels.find(row => row.id === 'pub')!.project_id = 'secret-p'
+        signedIn('anna')
+        await expect(actions.getChannelAction('pub')).resolves.toMatchObject({ ok: true, channel: { project: null } })
+        signedIn('anna', 'admin')
+        await expect(actions.getChannelAction('pub')).resolves.toMatchObject({ ok: true, channel: { project: { key: 'SEC' } } })
     })
 })
 
@@ -123,6 +183,15 @@ describe('managing a channel', () => {
         signedIn('carl')
         await expect(actions.addChannelMembersAction('shut', [{ kind: 'user', userId: 'anna' }])).resolves.toMatchObject({ ok: false, code: 'channelManagerOnly' })
         expect(rows.channel_members.filter(row => row.channel_id === 'pub')).toEqual([expect.objectContaining({ agent_id: 'ada' })])
+    })
+
+    it('adds each member once, and refuses an empty or oversized list', async () => {
+        const { rows } = setup()
+        await expect(actions.addChannelMembersAction('pub', [{ kind: 'user', userId: 'ben' }, { kind: 'user', userId: 'ben' }, { kind: 'agent', agentId: 'ada' }])).resolves.toEqual({ ok: true })
+        expect(rows.channel_members.filter(row => row.channel_id === 'pub')).toHaveLength(2)
+        const crowd = Array.from({ length: 501 }, (_, index) => ({ kind: 'user' as const, userId: `user-${index}` }))
+        await expect(actions.addChannelMembersAction('pub', crowd)).resolves.toMatchObject({ ok: false, code: 'invalidInput' })
+        await expect(actions.addChannelMembersAction('pub', [])).resolves.toMatchObject({ ok: false, code: 'invalidInput' })
     })
 
     it('adds only a coworker the person reaches, and has it answer the message that asked for it', async () => {

@@ -215,7 +215,13 @@ describe('mentions', () => {
     it('refuses a mention outside the workspace', async () => {
         const { scope } = setup()
         await expect(resolveMentions(scope, 'hi', [{ kind: 'user', userId: 'stranger' }])).rejects.toMatchObject({ code: 'mentionNotInWorkspace' })
-        await expect(resolveMentions(scope, 'hi', [{ kind: 'agent', agentId: 'ghost' }])).rejects.toMatchObject({ code: 'mentionNotInWorkspace' })
+    })
+
+    it('leaves a coworker the author cannot see as plain text, picked or written, like one that does not exist', async () => {
+        const { scope } = setup()
+        await expect(resolveMentions(scope, 'hi', [{ kind: 'agent', agentId: 'ghost' }])).resolves.toEqual([])
+        await expect(resolveMentions(scope, 'hey @ada', [ADA, BEN], new Set())).resolves.toEqual([BEN])
+        await expect(resolveMentions(scope, 'hey @ada', [], new Set(['ada']))).resolves.toEqual([ADA])
     })
 })
 

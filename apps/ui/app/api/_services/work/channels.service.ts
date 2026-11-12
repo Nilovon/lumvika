@@ -13,7 +13,7 @@ import {
     type WorkMemberRef,
 } from '@lumvika/contracts'
 
-import { CHANNEL_NOT_FOUND, channelAccessOf, type ChannelAccess } from '@/app/api/_auth/project-access'
+import { CHANNEL_NOT_FOUND, channelAccessOf, projectAccessFor, type ChannelAccess } from '@/app/api/_auth/project-access'
 import type { Actor } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
 import { recordActivity } from '@/app/api/_services/work/activity.service'
@@ -325,8 +325,10 @@ function dedupeRefs(refs: WorkMemberRef[]): WorkMemberRef[] {
 
 // What a message mentions: the people and coworkers the composer picked, each checked against the
 // workspace, and any `@handle` of a coworker written in the text (a coworker posting through a tool
-// writes handles, not ids). A handle that names nobody stays plain text.
-export async function resolveMentions(scope: WorkScope, body: string, picked: WorkMemberRef[]): Promise<WorkMemberRef[]> {
+// writes handles, not ids). A handle that names nobody stays plain text, and so does a coworker the
+// author may not see (`mentionable`, from `visibleAgentIds` for a person): it is not summoned, and the
+// message tells nobody it exists.
+export async function resolveMentions(scope: WorkScope, body: string, picked: WorkMemberRef[], mentionable: 'all' | Set<string> = 'all'): Promise<WorkMemberRef[]> {
     const supabase = clientOf(scope)
     const people = picked.flatMap(ref => (ref.kind === 'user' ? [ref.userId] : []))
     const agentIds = picked.flatMap(ref => (ref.kind === 'agent' ? [ref.agentId] : []))
@@ -337,11 +339,13 @@ export async function resolveMentions(scope: WorkScope, body: string, picked: Wo
         agentIds.length > 0 || handles.length > 0 ? selectAll(supabase, 'agents', ['id', 'handle'] as const, { workspace_id: scope.workspaceId }) : Promise.resolve({ data: [] }),
     ])
     const knownPeople = new Set((members ?? []).map(member => member.user_id))
-    const knownAgents = new Set((agents ?? []).map(agent => agent.id))
-    if (people.some(id => !knownPeople.has(id)) || agentIds.some(id => !knownAgents.has(id))) throw new AppError('mentionNotInWorkspace')
+    if (people.some(id => !knownPeople.has(id))) throw new AppError('mentionNotInWorkspace')
+    const seen = (agents ?? []).filter(agent => mentionable === 'all' || mentionable.has(agent.id))
+    const seenIds = new Set(seen.map(agent => agent.id))
 
-    const byHandle = (agents ?? []).flatMap(agent => (agent.handle && handles.includes(agent.handle.toLowerCase()) ? [{ kind: 'agent' as const, agentId: agent.id }] : []))
-    return dedupeRefs([...picked, ...byHandle])
+    const keptPicks = picked.filter(ref => ref.kind === 'user' || seenIds.has(ref.agentId))
+    const byHandle = seen.flatMap(agent => (agent.handle && handles.includes(agent.handle.toLowerCase()) ? [{ kind: 'agent' as const, agentId: agent.id }] : []))
+    return dedupeRefs([...keptPicks, ...byHandle])
 }
 
 // A reply always answers a top-level message: answering a reply joins the thread it belongs to.
@@ -367,11 +371,13 @@ export async function markChannelRead(scope: WorkScope, person: ChannelPerson, c
 
 // A person who writes in a public channel they have not joined joins it: they would not see its
 // unread messages otherwise. Their own message is read the moment it is written.
-export async function postChannelMessage(scope: WorkScope, author: WorkAuthor, channelId: string, input: PostChannelMessageInput): Promise<ChannelMessage> {
+// `mentionable`: the coworkers the author may mention, see resolveMentions. A person's message passes
+// the ones they see; a coworker's own answer may name any.
+export async function postChannelMessage(scope: WorkScope, author: WorkAuthor, channelId: string, input: PostChannelMessageInput, mentionable: 'all' | Set<string> = 'all'): Promise<ChannelMessage> {
     const fields = parseWorkInput(postChannelMessageInputSchema, input)
     await readOpenChannel(scope, channelId)
     const parentMessageId = fields.parentMessageId ? await threadRootOf(scope, channelId, fields.parentMessageId) : null
-    const mentions = await resolveMentions(scope, fields.body, fields.mentions ?? [])
+    const mentions = await resolveMentions(scope, fields.body, fields.mentions ?? [], mentionable)
 
     const writer = authorColumns(author)
     const { data, error } = await clientOf(scope)
@@ -403,12 +409,12 @@ function isAuthor(author: WorkAuthor, row: Pick<ChannelMessageRow, 'author_user_
 }
 
 // Only the one who wrote a message rewrites it. An edit sets no coworker off.
-export async function editChannelMessage(scope: WorkScope, author: WorkAuthor, messageId: string, input: Pick<PostChannelMessageInput, 'body' | 'mentions'>): Promise<ChannelMessage> {
+export async function editChannelMessage(scope: WorkScope, author: WorkAuthor, messageId: string, input: Pick<PostChannelMessageInput, 'body' | 'mentions'>, mentionable: 'all' | Set<string> = 'all'): Promise<ChannelMessage> {
     const fields = parseWorkInput(postChannelMessageInputSchema.pick({ body: true, mentions: true }), input)
     const message = await readMessage(scope, messageId)
     if (message.deleted_at) throw new AppError('channelMessageNotFound')
     if (!isAuthor(author, message)) throw new AppError('channelMessageAuthorOnly')
-    const mentions = await resolveMentions(scope, fields.body, fields.mentions ?? [])
+    const mentions = await resolveMentions(scope, fields.body, fields.mentions ?? [], mentionable)
 
     const { data, error } = await clientOf(scope)
         .from('channel_messages')
@@ -496,17 +502,19 @@ export async function channelCoworkers(scope: WorkScope, agentIds: string[]): Pr
     return data ?? []
 }
 
-export function agentIdsOf(messages: ChannelMessage[]): string[] {
-    return messages.flatMap(message => [...(message.author.kind === 'agent' ? [message.author.agentId] : []), ...message.mentions.flatMap(ref => (ref.kind === 'agent' ? [ref.agentId] : []))])
+export function authorAgentsOf(messages: ChannelMessage[]): string[] {
+    return messages.flatMap(message => (message.author.kind === 'agent' ? [message.author.agentId] : []))
 }
 
 export type ChannelLinks = { project: { id: string; key: string; name: string } | null; team: { id: string; name: string } | null }
 
-export async function channelLinks(scope: WorkScope, channel: Pick<Channel, 'projectId' | 'teamId'>): Promise<ChannelLinks> {
+// What the channel links to, as `reader` may see it: a project they cannot see is not named.
+export async function channelLinks(scope: WorkScope, channel: Pick<Channel, 'projectId' | 'teamId'>, reader: Actor): Promise<ChannelLinks> {
     const supabase = clientOf(scope)
     const [{ data: project }, { data: team }] = await Promise.all([
-        channel.projectId ? selectMaybeSingle(supabase, 'projects', ['id', 'key', 'name'] as const, { id: channel.projectId, workspace_id: scope.workspaceId }) : Promise.resolve({ data: null }),
+        channel.projectId ? selectMaybeSingle(supabase, 'projects', ['id', 'key', 'name', 'workspace_id', 'visibility'] as const, { id: channel.projectId, workspace_id: scope.workspaceId }) : Promise.resolve({ data: null }),
         channel.teamId ? selectMaybeSingle(supabase, 'teams', ['id', 'name'] as const, { id: channel.teamId, workspace_id: scope.workspaceId }) : Promise.resolve({ data: null }),
     ])
-    return { project: project ?? null, team: team ?? null }
+    const shown = project && (await projectAccessFor(reader, project)) !== 'none' ? { id: project.id, key: project.key, name: project.name } : null
+    return { project: shown, team: team ?? null }
 }
