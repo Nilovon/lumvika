@@ -11,6 +11,8 @@ import { AssistantStateNotice } from '@/components/assistant/AssistantStateNotic
 import { useAssistantStore } from '@/components/assistant/useAssistantStore'
 import { useChatRoute } from '@/components/assistant/useChatRoute'
 import { PageFrame } from '@/components/layout/PageFrame'
+import { Button } from '@/components/ui/button'
+import { ArrowLeftIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 const NO_PROJECTS: AssistantProjectOption[] = []
@@ -74,7 +76,17 @@ export function AssistantScreen({ chatId }: { chatId?: string }) {
                 />
                 <section className={cn('flex min-h-0 min-w-0 flex-1 flex-col', !inConversation && '@max-2xl:hidden')}>
                     {blocker ? (
-                        <AssistantStateNotice blocker={blocker} onRetry={() => void load()} />
+                        <>
+                            {inConversation && (
+                                <div className="flex shrink-0 items-center border-b border-border px-3 py-2 @2xl:hidden">
+                                    <Button variant="ghost" size="sm" onClick={backToList} className="-ml-1 text-muted-foreground">
+                                        <ArrowLeftIcon className="size-4" />
+                                        {t('conversation.back')}
+                                    </Button>
+                                </div>
+                            )}
+                            <AssistantStateNotice blocker={blocker} onRetry={() => void load()} />
+                        </>
                     ) : (
                         <AssistantConversation key={openChatId ? `chat-${openChatId}` : `draft-${draft}`} chatId={openChatId} projects={home?.projects ?? NO_PROJECTS} isAdmin={home?.isAdmin ?? false} onCreated={onCreated} onBack={backToList} onNew={startNew} onGone={onGone} />
                     )}
