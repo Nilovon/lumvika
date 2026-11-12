@@ -107,10 +107,11 @@ describe('buildTools', () => {
         const chat = await namesOf(ctxWith({}, roster))
         const channel = await namesOf(ctxWith({}, { ...roster, channel: true }))
 
-        expect(chat).toEqual(expect.arrayContaining([...CHANNEL_CLOSED_TOOLS]))
+        const closed = CHANNEL_CLOSED_TOOLS.filter(name => chat.includes(name))
+        expect(closed).toEqual(expect.arrayContaining(['call_agent', 'delegate_tasks', 'memory_write', 'memory_delete', 'skill_propose', 'skill_create', 'brain_write', 'brain_propose']))
         for (const name of CHANNEL_CLOSED_TOOLS) expect(channel, name).not.toContain(name)
-        expect(chat.filter(name => !channel.includes(name)).sort()).toEqual([...CHANNEL_CLOSED_TOOLS].sort())
-        expect(channel).toEqual(expect.arrayContaining(['memory_recall', 'skill_read', 'work_checkout']))
+        expect(chat.filter(name => !channel.includes(name)).sort()).toEqual([...closed].sort())
+        expect(channel).toEqual(expect.arrayContaining(['memory_recall', 'skill_read', 'brain_search', 'brain_read', 'work_checkout']))
     })
 
     it('gives the work tools to a coworker of the board only', async () => {

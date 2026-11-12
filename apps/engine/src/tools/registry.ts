@@ -36,8 +36,8 @@ import { closeAgentDb } from '../db/agentDb.js'
 import type { RunContext } from '../runtime/context.js'
 
 // What a run answering in a hub channel goes without: the tools that would remember what it heard
-// for later (its memory, its skills) or hand it to another coworker, whose conversations the people
-// of that coworker's Box read. Its files, shell, web, data and work tools stay, so it still does the
+// for later (its memory, its skills, the company brain, whose proposals every reviewer reads) or
+// hand it to another coworker, whose conversations the people of that coworker's Box read. Its files, shell, web, data and work tools stay, so it still does the
 // work it is asked for. The one gate, whatever the provider: native, CLI bridge and opencode all run
 // this set.
 export const CHANNEL_CLOSED_TOOLS = [
@@ -53,6 +53,10 @@ export const CHANNEL_CLOSED_TOOLS = [
     'skill_delete',
     'skill_write_file',
     'skill_delete_file',
+    'brain_write',
+    'brain_propose',
+    'brain_delete',
+    'brain_decide',
 ] as const
 
 export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; close: () => Promise<void> }> {

@@ -134,7 +134,7 @@ describe('reactToChannelMessage', () => {
         const prompt = vi.mocked(startChat).mock.calls[0][2].message
         expect(prompt).toContain('#pub')
         expect(prompt).toContain('Anna wrote:\nCan you draft the plan @ada?')
-        expect(prompt).toContain('you cannot hand it to another coworker nor keep it in your memory or skills')
+        expect(prompt).toContain('you cannot hand it to another coworker nor keep it in your memory, skills or the company brain')
 
         const answer = rows.channel_messages.find(row => row.author_agent_id === 'ada')
         expect(answer).toMatchObject({ body: 'Here is the plan.', parent_message_id: message.id, author_user_id: null })
