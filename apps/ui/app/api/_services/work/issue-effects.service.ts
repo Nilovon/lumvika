@@ -3,6 +3,7 @@ import 'server-only'
 import { ISSUE_CHECKOUT_STATUSES, formatIssueRef, type IssueStatus, type IssueWakeReason, type WorkAuthor } from '@lumvika/contracts'
 import { after } from 'next/server'
 
+import { hasAccess, memberActor, readAgentAccess } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
 import { resolveAgentTargetForTrigger } from '@/app/api/_services/chat.service'
 import { ISSUE_COLUMNS, type IssueRow } from '@/app/api/_services/work/columns'
@@ -128,10 +129,19 @@ async function readIssue(scope: WorkScope, issueId: string): Promise<(IssueRow &
     return { ...issue, ref: formatIssueRef(project?.key ?? '?', issue.number) }
 }
 
+// A person wakes a coworker only if they may use it: a comment or a move by someone its Box is
+// closed to is kept, and sets nothing off. A coworker's or the system's change keeps its own rules.
+async function authorMayWake(scope: WorkScope, author: WorkAuthor, agentId: string): Promise<boolean> {
+    if (author.kind !== 'user') return true
+    const actor = await memberActor(scope.workspaceId, author.userId)
+    return !!actor && hasAccess(await readAgentAccess(actor, agentId), 'use')
+}
+
 export async function applyIssueChange(scope: WorkScope, change: IssueChange): Promise<void> {
     const issue = await readIssue(scope, change.issueId)
     if (!issue) return
-    const wakeup = wakeFor(change, issue)
+    const candidate = wakeFor(change, issue)
+    const wakeup = candidate && (await authorMayWake(scope, change.author, candidate.agentId)) ? candidate : null
     const notice = noticeFor(change, issue)
     await Promise.all([
         wakeup ? wake(issue, wakeup).catch(err => console.error('[work] failed to wake the coworker', { issue: issue.ref, err: String(err) })) : null,

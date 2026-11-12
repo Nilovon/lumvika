@@ -1,6 +1,7 @@
 import type { IssueStatus, WorkAuthor } from '@lumvika/contracts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { memberActor, readAgentAccess } from '@/app/api/_auth/access'
 import { resolveAgentTargetForTrigger } from '@/app/api/_services/chat.service'
 import { EngineRequestError, startIssueRun } from '@/lib/engine/client'
 import { workDatabase, type Row, type Tables } from '@/test/work-fake'
@@ -9,6 +10,7 @@ const afterTasks = vi.hoisted(() => ({ inRequest: true, queued: [] as Array<() =
 
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/app/api/_services/chat.service', () => ({ resolveAgentTargetForTrigger: vi.fn() }))
+vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), memberActor: vi.fn(), readAgentAccess: vi.fn() }))
 vi.mock('@/lib/engine/client', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/engine/client')>()), startIssueRun: vi.fn() }))
 vi.mock('next/server', () => ({
     after: (task: () => Promise<unknown>) => {
@@ -88,6 +90,8 @@ beforeEach(() => {
     afterTasks.queued = []
     vi.mocked(resolveAgentTargetForTrigger).mockResolvedValue({ conn, engineAgentId: 'engine-writer', contentLocked: false })
     vi.mocked(startIssueRun).mockResolvedValue({ started: true, runId: 'run-1', sessionId: 'sess-1' })
+    vi.mocked(memberActor).mockImplementation(async (workspaceId, userId) => ({ kind: 'user', userId, workspaceId, role: 'member', boxScope: 'all' }))
+    vi.mocked(readAgentAccess).mockResolvedValue('use')
 })
 
 afterEach(() => {
@@ -147,6 +151,28 @@ describe('applyIssueChange', () => {
         await applyIssueChange(scope, { kind: 'commented', issueId: 'issue-1', body: 'Shorter please', author: ANNA })
         expect(resolveAgentTargetForTrigger).toHaveBeenCalledWith(WRITER)
         expect(startIssueRun).toHaveBeenCalledWith(conn, 'engine-writer', { ref: 'ENG-12', title: 'Write the launch post', reason: 'comment', note: 'Shorter please' })
+    })
+
+    it('keeps quiet when the person commenting or moving the issue may not use its coworker', async () => {
+        const { scope } = setup()
+        vi.mocked(readAgentAccess).mockResolvedValue('none')
+        await applyIssueChange(scope, { kind: 'commented', issueId: 'issue-1', body: 'Do this for me', author: ANNA })
+        await applyIssueChange(scope, { kind: 'status', issueId: 'issue-1', from: 'blocked', author: ANNA })
+        expect(readAgentAccess).toHaveBeenCalledWith(expect.objectContaining({ userId: 'anna' }), WRITER)
+        expect(startIssueRun).not.toHaveBeenCalled()
+    })
+
+    it('keeps quiet for someone who left the workspace, and still wakes for another coworker', async () => {
+        const { scope } = setup()
+        vi.mocked(memberActor).mockResolvedValueOnce(null)
+        await applyIssueChange(scope, { kind: 'commented', issueId: 'issue-1', body: 'Ping', author: ANNA })
+        expect(startIssueRun).not.toHaveBeenCalled()
+
+        const ready = setup({ issues: [issue({ status: 'todo' })] })
+        vi.mocked(readAgentAccess).mockResolvedValue('none')
+        await applyIssueChange(ready.scope, { kind: 'status', issueId: 'issue-1', from: 'backlog', author: AS_BOSS })
+        expect(readAgentAccess).not.toHaveBeenCalled()
+        expect(startIssueRun).toHaveBeenCalledWith(conn, 'engine-writer', expect.objectContaining({ reason: 'ready' }))
     })
 
     it('does nothing for an issue that is gone, or a coworker switched off', async () => {

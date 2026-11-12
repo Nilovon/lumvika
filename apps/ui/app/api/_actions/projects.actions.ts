@@ -7,6 +7,7 @@ import { assertProjectAccess, PROJECT_NOT_FOUND } from '@/app/api/_auth/project-
 import type { WorkspaceRole } from '@/app/api/_auth/ownership'
 import { resolveMemberIdentities } from '@/app/api/_services/members.service'
 import { toProjectMember } from '@/app/api/_services/work/mappers'
+import { assertAssignableBy } from '@/app/api/_services/work/refs'
 import { archiveProject, createProject, getProjectByKey, grantProjectMember, listProjectMembers, listProjects, restoreProject, revokeProjectMember, updateProject } from '@/app/api/_services/work/projects.service'
 import { failure, failureOf } from '@/lib/i18n/action-error'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
@@ -64,6 +65,7 @@ export async function checkProjectKeyAction(key: string): Promise<ActionResult<{
 export async function createProjectAction(input: CreateProjectInput): Promise<ActionResult<{ projectId: string; key: string }>> {
     try {
         const actor = await requireLightSessionActor()
+        await assertAssignableBy(actor, input.lead)
         const row = await createProject(scopeOf(actor), authorOf(actor), input)
         return { ok: true, projectId: row.id, key: row.key }
     } catch (err) {
@@ -74,6 +76,7 @@ export async function createProjectAction(input: CreateProjectInput): Promise<Ac
 export async function updateProjectAction(projectId: string, input: UpdateProjectInput): Promise<ActionResult> {
     try {
         const { actor } = await assertProjectAccess(projectId, 'manage')
+        await assertAssignableBy(actor, input.lead)
         await updateProject(scopeOf(actor), authorOf(actor), projectId, input)
         return { ok: true }
     } catch (err) {

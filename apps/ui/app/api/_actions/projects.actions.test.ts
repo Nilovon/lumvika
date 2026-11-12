@@ -5,6 +5,7 @@ import { AppError } from '@/lib/i18n/action-error'
 
 const mocks = vi.hoisted(() => ({
     requireLightSessionActor: vi.fn(),
+    assertAgentAccess: vi.fn(),
     assertProjectAccess: vi.fn(),
     createProject: vi.fn(),
     updateProject: vi.fn(),
@@ -20,7 +21,7 @@ const mocks = vi.hoisted(() => ({
     selectAll: vi.fn(),
 }))
 
-vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), requireLightSessionActor: mocks.requireLightSessionActor }))
+vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), requireLightSessionActor: mocks.requireLightSessionActor, assertAgentAccess: mocks.assertAgentAccess }))
 vi.mock('@/app/api/_auth/project-access', () => ({ assertProjectAccess: mocks.assertProjectAccess, PROJECT_NOT_FOUND: 'projectNotFound' }))
 vi.mock('@/app/api/_services/work/projects.service', () => ({
     createProject: mocks.createProject,
@@ -111,6 +112,35 @@ describe('createProjectAction', () => {
     })
 })
 
+describe('naming a coworker as lead', () => {
+    const LEAD = { kind: 'agent', agentId: 'agent-hidden' } as const
+
+    it('needs use of the coworker, on create and on update', async () => {
+        mocks.createProject.mockResolvedValue({ id: 'p9', key: 'OPS' })
+
+        await expect(actions.createProjectAction({ name: 'Operations', key: 'OPS', lead: LEAD })).resolves.toMatchObject({ ok: true })
+        await expect(actions.updateProjectAction('p1', { lead: LEAD })).resolves.toEqual({ ok: true })
+        expect(mocks.assertAgentAccess.mock.calls).toEqual([
+            ['agent-hidden', 'use', ACTOR],
+            ['agent-hidden', 'use', ACTOR],
+        ])
+    })
+
+    it('answers a coworker the caller cannot use like an unknown one, and writes nothing', async () => {
+        mocks.assertAgentAccess.mockRejectedValue(new AuthorizationError('coworkerNotFound'))
+
+        await expect(actions.createProjectAction({ name: 'Operations', key: 'OPS', lead: LEAD })).resolves.toMatchObject({ ok: false, code: 'coworkerNotFound' })
+        await expect(actions.updateProjectAction('p1', { lead: LEAD })).resolves.toMatchObject({ ok: false, code: 'coworkerNotFound' })
+        expect(mocks.createProject).not.toHaveBeenCalled()
+        expect(mocks.updateProject).not.toHaveBeenCalled()
+    })
+
+    it('asks nothing of a Box for a person lead', async () => {
+        await actions.updateProjectAction('p1', { lead: { kind: 'user', userId: 'user-2' } })
+        expect(mocks.assertAgentAccess).not.toHaveBeenCalled()
+    })
+})
+
 describe('the manage-only actions', () => {
     it('assert manage before they touch the project', async () => {
         await actions.updateProjectAction('p1', { name: 'Renamed' })
@@ -144,6 +174,7 @@ describe('grantProjectAccessAction', () => {
             [SCOPE, AUTHOR, 'p1', { userId: 'user-3', access: 'manage' }],
         ])
     })
+
 })
 
 describe('getProjectAccessAction', () => {

@@ -5,6 +5,7 @@ import { AppError } from '@/lib/i18n/action-error'
 
 const mocks = vi.hoisted(() => ({
     requireLightSessionActor: vi.fn(),
+    assertAgentAccess: vi.fn(),
     assertProjectAccess: vi.fn(),
     assertIssueAccess: vi.fn(),
     visibleProjectIds: vi.fn(),
@@ -23,7 +24,7 @@ const mocks = vi.hoisted(() => ({
     selectMaybeSingle: vi.fn(),
 }))
 
-vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), requireLightSessionActor: mocks.requireLightSessionActor }))
+vi.mock('@/app/api/_auth/access', async importOriginal => ({ ...(await importOriginal<typeof import('@/app/api/_auth/access')>()), requireLightSessionActor: mocks.requireLightSessionActor, assertAgentAccess: mocks.assertAgentAccess }))
 vi.mock('@/app/api/_auth/project-access', () => ({
     assertProjectAccess: mocks.assertProjectAccess,
     assertIssueAccess: mocks.assertIssueAccess,
@@ -144,6 +145,45 @@ describe('createIssueAction', () => {
         mocks.createIssue.mockRejectedValue(new AppError('projectArchived'))
 
         await expect(actions.createIssueAction({ projectId: 'p1', title: 'Late' })).resolves.toMatchObject({ ok: false, code: 'projectArchived' })
+    })
+})
+
+describe('handing work to a coworker', () => {
+    const HIDDEN = { kind: 'agent', agentId: 'agent-hidden' } as const
+
+    it('needs use of the coworker to create, sub-create or assign an issue for it', async () => {
+        mocks.createIssue.mockResolvedValue(record())
+        mocks.createSubIssue.mockResolvedValue(record())
+        mocks.assignIssue.mockResolvedValue(record())
+        const coworker = { kind: 'agent', agentId: 'agent-1' } as const
+
+        await expect(actions.createIssueAction({ projectId: 'p1', title: 'Ship', assignee: coworker })).resolves.toMatchObject({ ok: true })
+        await expect(actions.createSubIssueAction('i1', { title: 'Child', assignee: coworker })).resolves.toMatchObject({ ok: true })
+        await expect(actions.assignIssueAction('i1', coworker)).resolves.toMatchObject({ ok: true })
+        expect(mocks.assertAgentAccess.mock.calls).toEqual([
+            ['agent-1', 'use', ACTOR],
+            ['agent-1', 'use', ACTOR],
+            ['agent-1', 'use', ACTOR],
+        ])
+    })
+
+    it('answers a coworker in a Box the caller cannot use like one that does not exist, and writes nothing', async () => {
+        mocks.assertAgentAccess.mockRejectedValue(new AuthorizationError('coworkerNotFound'))
+
+        await expect(actions.createIssueAction({ projectId: 'p1', title: 'Ship', assignee: HIDDEN })).resolves.toMatchObject({ ok: false, code: 'coworkerNotFound' })
+        await expect(actions.createSubIssueAction('i1', { title: 'Child', assignee: HIDDEN })).resolves.toMatchObject({ ok: false, code: 'coworkerNotFound' })
+        await expect(actions.assignIssueAction('i1', HIDDEN)).resolves.toMatchObject({ ok: false, code: 'coworkerNotFound' })
+        expect(mocks.createIssue).not.toHaveBeenCalled()
+        expect(mocks.createSubIssue).not.toHaveBeenCalled()
+        expect(mocks.assignIssue).not.toHaveBeenCalled()
+    })
+
+    it('asks nothing of a Box to assign a person or nobody', async () => {
+        mocks.assignIssue.mockResolvedValue(record({ assignee_agent_id: null }))
+
+        await expect(actions.assignIssueAction('i1', { kind: 'user', userId: 'user-2' })).resolves.toMatchObject({ ok: true })
+        await expect(actions.assignIssueAction('i1', null)).resolves.toMatchObject({ ok: true })
+        expect(mocks.assertAgentAccess).not.toHaveBeenCalled()
     })
 })
 

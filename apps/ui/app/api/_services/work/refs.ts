@@ -2,6 +2,7 @@ import type { WorkAuthor, WorkMemberRef } from '@lumvika/contracts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { z } from 'zod'
 
+import { assertAgentAccess, type Actor } from '@/app/api/_auth/access'
 import type { Database } from '@/app/api/database.types'
 import { AppError, isErrorCode } from '@/lib/i18n/action-error'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
@@ -47,6 +48,12 @@ export async function assertMemberInWorkspace(scope: WorkScope, ref: WorkMemberR
             ? (await selectMaybeSingle(supabase, 'workspace_members', ['user_id'] as const, { user_id: ref.userId, workspace_id: scope.workspaceId })).data
             : (await selectMaybeSingle(supabase, 'agents', ['id'] as const, { id: ref.agentId, workspace_id: scope.workspaceId })).data
     if (!found) throw new AppError('assigneeNotInWorkspace')
+}
+
+// A person hands work only to a coworker they may use: one in a Box closed to them answers like a
+// coworker that does not exist, so nothing about it is revealed. The workspace itself reaches every Box.
+export async function assertAssignableBy(actor: Actor, ref: WorkMemberRef | null | undefined): Promise<void> {
+    if (ref?.kind === 'agent') await assertAgentAccess(ref.agentId, 'use', actor)
 }
 
 // Input reaches a service from a server action, a hub tool or a route: it is checked here once, and

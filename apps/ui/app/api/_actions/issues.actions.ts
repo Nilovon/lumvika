@@ -20,6 +20,7 @@ import { listActivity } from '@/app/api/_services/work/activity.service'
 import { addIssueComment, editIssueComment, listIssueComments } from '@/app/api/_services/work/issue-comments.service'
 import { assignIssue, createIssue, createSubIssue, getIssueByRef, listIssues, moveIssue, transitionIssue, updateIssue, type IssueRecord } from '@/app/api/_services/work/issues.service'
 import { toIssueSummary } from '@/app/api/_services/work/mappers'
+import { assertAssignableBy } from '@/app/api/_services/work/refs'
 import { failure, failureOf } from '@/lib/i18n/action-error'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMaybeSingle } from '@/supabase/supabase-helpers'
@@ -67,6 +68,7 @@ export async function getIssueAction(ref: string): Promise<ActionResult<{ issue:
 export async function createIssueAction(input: CreateIssueInput): Promise<IssueResult> {
     try {
         const { actor } = await assertProjectAccess(input.projectId, 'use')
+        await assertAssignableBy(actor, input.assignee)
         const issue = await createIssue(scopeOf(actor), authorOf(actor), input)
         return { ok: true, issue: summaryOf(issue) }
     } catch (err) {
@@ -77,6 +79,7 @@ export async function createIssueAction(input: CreateIssueInput): Promise<IssueR
 export async function createSubIssueAction(parentIssueId: string, input: Omit<CreateIssueInput, 'projectId' | 'parentIssueId'>): Promise<IssueResult> {
     try {
         const { actor } = await assertIssueAccess(parentIssueId, 'use')
+        await assertAssignableBy(actor, input.assignee)
         const issue = await createSubIssue(scopeOf(actor), authorOf(actor), parentIssueId, input)
         return { ok: true, issue: summaryOf(issue) }
     } catch (err) {
@@ -117,6 +120,7 @@ export async function moveIssueAction(issueId: string, input: MoveIssueInput): P
 export async function assignIssueAction(issueId: string, assignee: WorkMemberRef | null): Promise<IssueResult> {
     try {
         const { actor } = await assertIssueAccess(issueId, 'use')
+        await assertAssignableBy(actor, assignee)
         const issue = await assignIssue(scopeOf(actor), authorOf(actor), issueId, assignee)
         return { ok: true, issue: summaryOf(issue) }
     } catch (err) {
