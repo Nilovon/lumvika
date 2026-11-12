@@ -451,6 +451,8 @@
     "issueNotFound": "Issue nicht gefunden",
     "issueTransitionNotAllowed": "Dieses Issue kann von seinem aktuellen Status nicht in diesen Status wechseln.",
     "issueChangedMeanwhile": "Dieses Issue wurde inzwischen geändert. Lade neu und versuch es erneut.",
+    "issueNoLongerInReview": "Dieses Ticket wartet nicht mehr auf eine Prüfung.",
+    "issueNoLongerBlocked": "Dieses Ticket ist nicht mehr blockiert.",
     "issueParentInvalid": "Ein Unter-Issue gehört zum selben Projekt wie sein übergeordnetes Issue und nie unter sich selbst.",
     "assigneeNotInWorkspace": "Diese Person oder dieser Coworker gehört nicht zum Workspace.",
     "commentNotFound": "Kommentar nicht gefunden",

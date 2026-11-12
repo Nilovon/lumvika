@@ -457,6 +457,8 @@
     "issueNotFound": "Issue not found",
     "issueTransitionNotAllowed": "This issue cannot move to that status from where it is.",
     "issueChangedMeanwhile": "This issue changed in the meantime. Refresh and try again.",
+    "issueNoLongerInReview": "This issue is no longer waiting for review.",
+    "issueNoLongerBlocked": "This issue is no longer blocked.",
     "issueParentInvalid": "A sub-issue belongs to the same project as its parent, and never under itself.",
     "assigneeNotInWorkspace": "This person or coworker is not part of the workspace.",
     "commentNotFound": "Comment not found",
