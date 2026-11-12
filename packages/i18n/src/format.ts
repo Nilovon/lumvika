@@ -168,3 +168,8 @@ export function weekdayNames(locale: string = DEFAULT_LOCALE): string[] {
 export function formatDate(date: Date | string | number, locale: string = DEFAULT_LOCALE, options?: Intl.DateTimeFormatOptions): string {
     return new Date(date).toLocaleString(tag(locale, 'en-US'), options)
 }
+
+/** "Todo, Blocked or Cancelled": a list of words, joined the way the language joins them. */
+export function formatList(items: readonly string[], locale: string = DEFAULT_LOCALE, type: Intl.ListFormatType = 'conjunction'): string {
+    return new Intl.ListFormat(tag(locale, 'en-US'), { type }).format(items)
+}
