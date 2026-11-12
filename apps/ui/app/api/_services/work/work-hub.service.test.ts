@@ -225,6 +225,56 @@ describe('work_checkout', () => {
         expect(await call('work_checkout', { ref: 'ENG-2', runId: 'run-1' })).toMatchObject({ checkedOut: false, message: expect.stringContaining('cannot be taken') })
         await expect(call('work_checkout', { ref: 'ENG-1' })).rejects.toThrow('This run has no id')
     })
+
+    it('refuses an issue of an archived project', async () => {
+        const { rows } = setup({ issues: [issue()] })
+        rows.projects[0].archived_at = '2026-11-01T00:00:00.000Z'
+        expect(await call('work_checkout', { ref: 'ENG-1', runId: 'run-1' })).toMatchObject({ checkedOut: false, message: expect.stringContaining('archived project') })
+        expect(rows.issues[0].checkout_run_id).toBeNull()
+    })
+})
+
+describe('an issue in review', () => {
+    it('tells a woken run to answer the person, and how to take the work back when they ask for changes', async () => {
+        setup({ issues: [issue({ status: 'in_review' })] })
+        expect(await call('work_get_issue', { ref: 'ENG-1' })).toMatchObject({ status: 'in_review', reviewNote: expect.stringContaining('work_comment') })
+        const refused = (await call('work_checkout', { ref: 'ENG-1', runId: 'run-1' })) as { checkedOut: boolean; message: string }
+        expect(refused.checkedOut).toBe(false)
+        expect(refused.message).toContain('is in review')
+        expect(refused.message).toContain('work_update_status in_progress')
+    })
+
+    it('can be moved back in progress by its coworker and then taken', async () => {
+        const { rows } = setup({ issues: [issue({ status: 'in_review' })] })
+        await call('work_update_status', { ref: 'ENG-1', status: 'in_progress' })
+        expect(await call('work_checkout', { ref: 'ENG-1', runId: 'run-1' })).toMatchObject({ checkedOut: true })
+        expect(rows.issues[0]).toMatchObject({ status: 'in_progress', checkout_run_id: 'run-1' })
+    })
+})
+
+describe('a run that lost its issue', () => {
+    const checkedOut = (runId: string): Row => ({ id: `checkout-${runId}`, workspace_id: WORKSPACE, issue_id: 'issue-1', action: 'issue.checked_out', actor_agent_id: ME, actor_user_id: null, metadata: { runId }, created_at: '2026-11-12T10:00:00.000Z' })
+    const moved = (actor: { agent?: string; user?: string }): Row => ({ id: 'moved', workspace_id: WORKSPACE, issue_id: 'issue-1', action: 'issue.status_changed', actor_agent_id: actor.agent ?? null, actor_user_id: actor.user ?? null, metadata: {}, created_at: '2026-11-12T10:05:00.000Z' })
+
+    it('hears on its next call that the issue was reassigned, and changes nothing', async () => {
+        const { rows } = setup({ issues: [issue({ status: 'in_progress', assignee_agent_id: PEER })], activity_events: [checkedOut('run-1')] })
+        for (const [tool, args] of [['work_get_issue', {}], ['work_comment', { body: 'Done with the intro.' }], ['work_update_status', { status: 'in_review' }], ['work_checkout', {}]] as const) {
+            await expect(call(tool, { ref: 'ENG-1', runId: 'run-1', ...args })).rejects.toThrow('was reassigned while you were working on it')
+        }
+        expect(rows.issue_comments).toHaveLength(0)
+    })
+
+    it('hears that a person closed it', async () => {
+        setup({ issues: [issue({ status: 'done' })], activity_events: [checkedOut('run-1'), moved({ user: 'anna' })] })
+        await expect(call('work_comment', { ref: 'ENG-1', body: 'More', runId: 'run-1' })).rejects.toThrow('was moved to done by someone else')
+    })
+
+    it('keeps going after it handed the issue to review itself, and leaves other runs and older engines alone', async () => {
+        setup({ issues: [issue({ status: 'in_review' })], activity_events: [checkedOut('run-1'), moved({ agent: ME })] })
+        await expect(call('work_comment', { ref: 'ENG-1', body: 'The draft is in shared/.', runId: 'run-1' })).resolves.toMatchObject({ ref: 'ENG-1' })
+        await expect(call('work_comment', { ref: 'ENG-1', body: 'Hello', runId: 'run-2' })).resolves.toMatchObject({ ref: 'ENG-1' })
+        await expect(call('work_comment', { ref: 'ENG-1', body: 'Hello' })).resolves.toMatchObject({ ref: 'ENG-1' })
+    })
 })
 
 describe('work_update_status', () => {

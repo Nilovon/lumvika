@@ -37,8 +37,6 @@ describe('workTools', () => {
     })
 
     it.each([
-        ['work_get_issue', { ref: 'ENG-12' }],
-        ['work_comment', { ref: 'ENG-12', body: 'Draft is in shared/launch.md' }],
         ['work_create_issue', { title: 'Write the FAQ', parentRef: 'ENG-12', assignee: '@scout', priority: 'high' }],
         ['work_list_issues', { projectKey: 'ENG', status: ['todo'], assignee: 'me', limit: 5 }],
         ['work_list_projects', {}],
@@ -47,12 +45,17 @@ describe('workTools', () => {
         expect(calls).toEqual([{ agentId: 'writer', tool: name, args }])
     })
 
-    it('hands the run and its conversation with every call that holds or lets go of an issue', async () => {
+    it('hands the run and its conversation with every call about an issue, so the hub can tell it the issue was taken away', async () => {
         await run(tools, 'work_inbox', {})
+        await run(tools, 'work_get_issue', { ref: 'ENG-12' })
+        await run(tools, 'work_comment', { ref: 'ENG-12', body: 'Draft is in shared/launch.md' })
         await run(tools, 'work_checkout', { ref: 'ENG-12' })
         await run(tools, 'work_update_status', { ref: 'ENG-12', status: 'blocked', blockedReason: 'Anna must share the key' })
+        expect(calls.map(call => call.tool)).toEqual(['work_inbox', 'work_get_issue', 'work_comment', 'work_checkout', 'work_update_status'])
         expect(calls.map(call => call.args)).toEqual([
             { runId: 'run-1', sessionId: 'sess-1' },
+            { ref: 'ENG-12', runId: 'run-1', sessionId: 'sess-1' },
+            { ref: 'ENG-12', body: 'Draft is in shared/launch.md', runId: 'run-1', sessionId: 'sess-1' },
             { ref: 'ENG-12', runId: 'run-1', sessionId: 'sess-1' },
             { ref: 'ENG-12', status: 'blocked', blockedReason: 'Anna must share the key', runId: 'run-1', sessionId: 'sess-1' },
         ])

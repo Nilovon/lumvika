@@ -68,15 +68,17 @@ export async function getIssue(scope: WorkScope, issueId: string): Promise<Issue
 }
 
 // What moving an issue to `to` writes besides the status: the first start, the completion, the
-// reason it is blocked, and the end of a checkout that only lives on a status an agent works in.
-export function issueStatusPatch(issue: Pick<IssueRow, 'started_at' | 'completed_at' | 'blocked_reason' | 'checkout_run_id'>, to: IssueStatus, blockedReason: string | null | undefined, now: string): IssueUpdate {
+// reason it is blocked, and the end of a checkout that only lives on a status an agent works in. The
+// checkout is cleared whatever the read said: a run that took the issue between that read and this
+// write must not keep holding an issue in review or done.
+export function issueStatusPatch(issue: Pick<IssueRow, 'started_at' | 'completed_at' | 'blocked_reason'>, to: IssueStatus, blockedReason: string | null | undefined, now: string): IssueUpdate {
     const patch: IssueUpdate = { status: to }
     if (to === 'in_progress' && !issue.started_at) patch.started_at = now
     if (isIssueClosed(to)) patch.completed_at = now
     else if (issue.completed_at) patch.completed_at = null
     if (to === 'blocked') patch.blocked_reason = blockedReason ?? issue.blocked_reason ?? null
     else if (issue.blocked_reason) patch.blocked_reason = null
-    if (issue.checkout_run_id && !(ISSUE_CHECKOUT_STATUSES as readonly IssueStatus[]).includes(to)) {
+    if (!(ISSUE_CHECKOUT_STATUSES as readonly IssueStatus[]).includes(to)) {
         patch.checkout_run_id = null
         patch.checked_out_at = null
     }
@@ -239,7 +241,8 @@ export async function moveIssue(scope: WorkScope, author: WorkAuthor, issueId: s
     return writeIssue(scope, current, { position: move.position }, { expectStatus: true })
 }
 
-// One assignee at most. A new assignee ends the checkout of the previous one's run.
+// One assignee at most. A new assignee ends the checkout of the previous one's run, in the same write
+// and whatever the read said, so the run cannot keep it and hold back the new assignee's wake.
 export async function assignIssue(scope: WorkScope, author: WorkAuthor, issueId: string, assignee: WorkMemberRef | null): Promise<IssueRecord> {
     const target = assignee ? parseWorkInput(workMemberRefSchema, assignee) : null
     const current = await readIssue(scope, issueId)
@@ -247,7 +250,7 @@ export async function assignIssue(scope: WorkScope, author: WorkAuthor, issueId:
     if (sameMember(previous, target)) return current
     if (target) await assertMemberInWorkspace(scope, target)
 
-    const patch: IssueUpdate = { ...assigneeColumns(target), ...(current.checkout_run_id ? { checkout_run_id: null, checked_out_at: null } : {}) }
+    const patch: IssueUpdate = { ...assigneeColumns(target), checkout_run_id: null, checked_out_at: null }
     const issue = await writeIssue(scope, current, patch)
     await recordActivity(scope, {
         action: target ? 'issue.assigned' : 'issue.unassigned',
@@ -262,14 +265,36 @@ export async function assignIssue(scope: WorkScope, author: WorkAuthor, issueId:
     return issue
 }
 
-export type CheckoutConflict = 'not_found' | 'not_assigned' | 'not_ready' | 'checked_out'
+export type CheckoutConflict = 'not_found' | 'not_assigned' | 'not_ready' | 'checked_out' | 'project_archived'
 export type CheckoutResult = { ok: true; issue: IssueRecord } | { ok: false; reason: CheckoutConflict; heldByRunId: string | null }
+
+// A run that continues the conversation an earlier run of the issue paused in (a question, an
+// approval) takes over that run's checkout: it is the same work, picked up where the person answered.
+async function takeOverInSession(scope: WorkScope, current: IssueRecord, agentId: string, runId: string, now: string): Promise<IssueRecord | null> {
+    const { data } = await clientOf(scope)
+        .from('issues')
+        .update<IssueUpdate>({ status: 'in_progress', checkout_run_id: runId, checked_out_at: now, blocked_reason: null, completed_at: null })
+        .eq('id', current.id)
+        .eq('workspace_id', scope.workspaceId)
+        .eq('assignee_agent_id', agentId)
+        .eq('checkout_run_id', current.checkout_run_id as string)
+        .in('status', [...ISSUE_CHECKOUT_STATUSES])
+        .select(ISSUE_RETURNING)
+        .maybeSingle<IssueRow>()
+    return data ? recordOf(data, current.projectKey) : null
+}
 
 // An agent run takes the issue it is about to work on. One conditional update decides it, so two runs
 // racing for the same issue cannot both win: it must be assigned to this agent, on a status an agent
-// works in, and held by no run. The same run asking again gets it back.
+// works in, in a project still open, and held by no run. The same run asking again gets it back, and
+// a run of the conversation the issue is linked to takes it over from the run that paused there.
 export async function checkoutIssue(scope: WorkScope, issueId: string, agentId: string, runId: string, options: { sessionId?: string | null } = {}): Promise<CheckoutResult> {
     const supabase = clientOf(scope)
+    const before = await findIssue(scope, issueId)
+    if (!before) return { ok: false, reason: 'not_found', heldByRunId: null }
+    const { data: project } = await selectMaybeSingle(supabase, 'projects', ['archived_at'] as const, { id: before.project_id, workspace_id: scope.workspaceId })
+    if (!project || project.archived_at) return { ok: false, reason: 'project_archived', heldByRunId: before.checkout_run_id }
+
     const now = new Date().toISOString()
     const { data, error } = await supabase
         .from('issues')
@@ -283,23 +308,30 @@ export async function checkoutIssue(scope: WorkScope, issueId: string, agentId: 
         .maybeSingle<IssueRow>()
     if (error) throw new Error(`Failed to check out the issue: ${error.message}`)
 
-    if (!data) {
+    let issue: IssueRecord
+    if (data) {
+        issue = recordOf(data, before.projectKey)
+    } else {
         const current = await findIssue(scope, issueId)
         if (!current) return { ok: false, reason: 'not_found', heldByRunId: null }
         if (current.assignee_agent_id !== agentId) return { ok: false, reason: 'not_assigned', heldByRunId: current.checkout_run_id }
         if (current.checkout_run_id === runId) return { ok: true, issue: current }
-        if (current.checkout_run_id) return { ok: false, reason: 'checked_out', heldByRunId: current.checkout_run_id }
-        return { ok: false, reason: 'not_ready', heldByRunId: null }
+        if (!current.checkout_run_id) return { ok: false, reason: 'not_ready', heldByRunId: null }
+        const sameConversation = !!options.sessionId && current.session_id === options.sessionId
+        const taken = sameConversation ? await takeOverInSession(scope, current, agentId, runId, now) : null
+        if (!taken) return { ok: false, reason: 'checked_out', heldByRunId: current.checkout_run_id }
+        issue = taken
     }
 
-    let row = data
-    if (!row.started_at) {
+    if (!issue.started_at) {
         const { data: stamped } = await supabase.from('issues').update<IssueUpdate>({ started_at: now }).eq('id', issueId).is('started_at', null).select(ISSUE_RETURNING).maybeSingle<IssueRow>()
-        if (stamped) row = stamped
+        if (stamped) issue = recordOf(stamped, before.projectKey)
     }
-    const { data: project } = await selectMaybeSingle(supabase, 'projects', ['key'] as const, { id: row.project_id })
-    const issue = recordOf(row, project?.key ?? '')
-    await recordActivity(scope, { action: 'issue.checked_out', entityType: 'issue', entityId: issue.id, projectId: issue.project_id, issueId: issue.id, author: { kind: 'agent', agentId }, metadata: { ref: issue.ref, runId } })
+    const coworker: WorkAuthor = { kind: 'agent', agentId }
+    if (before.status !== 'in_progress') {
+        await recordActivity(scope, { action: 'issue.status_changed', entityType: 'issue', entityId: issue.id, projectId: issue.project_id, issueId: issue.id, author: coworker, metadata: { ref: issue.ref, from: before.status, to: 'in_progress' } })
+    }
+    await recordActivity(scope, { action: 'issue.checked_out', entityType: 'issue', entityId: issue.id, projectId: issue.project_id, issueId: issue.id, author: coworker, metadata: { ref: issue.ref, runId } })
     return { ok: true, issue }
 }
 

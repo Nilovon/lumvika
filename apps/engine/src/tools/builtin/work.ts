@@ -6,8 +6,9 @@ import { callHub } from '../../runtime/hub.js'
 
 const ref = z.string().describe('Issue reference, e.g. ENG-12.')
 
-// The run and its conversation travel with every call that can take or let go of an issue: the hub
-// holds the checkout in the run's name and links the issue to the conversation it is worked in.
+// The run and its conversation travel with every call about one issue: the hub holds the checkout in
+// the run's name, links the issue to the conversation it is worked in, and tells a run whose issue was
+// reassigned or closed under it to stop.
 export function workTools(ctx: RunContext): ToolSet {
     const call = (name: string, args: Record<string, unknown>) => callHub(ctx.agent, name, args)
     const run = () => ({ runId: ctx.runId ?? null, sessionId: ctx.sessionId ?? null })
@@ -22,7 +23,7 @@ export function workTools(ctx: RunContext): ToolSet {
             description:
                 'One issue in full: description, project instructions (follow them), goal, parent and sub-issues, comments, who created and assigned it. Read it before you start.',
             inputSchema: z.object({ ref }),
-            execute: args => call('work_get_issue', args),
+            execute: args => call('work_get_issue', { ...args, ...run() }),
         }),
         work_checkout: tool({
             description:
@@ -44,7 +45,7 @@ export function workTools(ctx: RunContext): ToolSet {
         work_comment: tool({
             description: 'Comment on an issue: progress, a question to whoever asked, the result and where to find it. Markdown, self-contained.',
             inputSchema: z.object({ ref, body: z.string().min(1).max(50_000) }),
-            execute: args => call('work_comment', args),
+            execute: args => call('work_comment', { ...args, ...run() }),
         }),
         work_create_issue: tool({
             description:

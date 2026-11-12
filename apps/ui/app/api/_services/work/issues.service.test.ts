@@ -98,7 +98,7 @@ describe('issueStatusPatch', () => {
     it('stamps the first start and the completion', () => {
         expect(issueStatusPatch(fresh, 'in_progress', undefined, now)).toEqual({ status: 'in_progress', started_at: now })
         expect(issueStatusPatch({ ...fresh, started_at: 'earlier' }, 'in_progress', undefined, now)).toEqual({ status: 'in_progress' })
-        expect(issueStatusPatch(fresh, 'done', undefined, now)).toEqual({ status: 'done', completed_at: now })
+        expect(issueStatusPatch(fresh, 'done', undefined, now)).toEqual({ status: 'done', completed_at: now, checkout_run_id: null, checked_out_at: null })
         expect(issueStatusPatch({ ...fresh, completed_at: now }, 'todo', undefined, now)).toEqual({ status: 'todo', completed_at: null })
     })
 
@@ -107,6 +107,10 @@ describe('issueStatusPatch', () => {
         expect(issueStatusPatch({ ...fresh, blocked_reason: 'x' }, 'todo', undefined, now)).toEqual({ status: 'todo', blocked_reason: null })
         expect(issueStatusPatch({ ...fresh, checkout_run_id: 'run-1' }, 'in_review', undefined, now)).toMatchObject({ checkout_run_id: null, checked_out_at: null })
         expect(issueStatusPatch({ ...fresh, checkout_run_id: 'run-1' }, 'blocked', undefined, now)).not.toHaveProperty('checkout_run_id')
+    })
+
+    it('ends a checkout outside the working statuses even when the read saw none', () => {
+        for (const to of ['backlog', 'in_review', 'done', 'cancelled'] as const) expect(issueStatusPatch(fresh, to, undefined, now)).toMatchObject({ checkout_run_id: null, checked_out_at: null })
     })
 })
 
@@ -211,6 +215,14 @@ describe('assignIssue', () => {
         expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'assigned', issueId: 'issue-1', author: ME })
     })
 
+    it('ends any checkout in the same write, even one the read did not see', async () => {
+        const { db, scope } = setup({ issues: [issue({ assignee_agent_id: AGENT })] })
+
+        await assignIssue(scope, ME, 'issue-1', { kind: 'user', userId: 'me' })
+
+        expect(db.writes('issues')[0].payload).toMatchObject({ checkout_run_id: null, checked_out_at: null })
+    })
+
     it('sets nothing off when the issue is unassigned', async () => {
         const { scope } = setup({ issues: [issue({ assignee_agent_id: AGENT })] })
         await assignIssue(scope, ME, 'issue-1', null)
@@ -234,7 +246,28 @@ describe('checkoutIssue', () => {
         const [checkout] = db.writes('issues')
         expect(checkout.filters.map(call => [call.method, call.args[0]])).toEqual(expect.arrayContaining([['eq', 'assignee_agent_id'], ['in', 'status'], ['is', 'checkout_run_id']]))
         expect(rows.issues[0].started_at).toEqual(expect.any(String))
+        expect(actions(rows)).toEqual(['issue.status_changed', 'issue.checked_out'])
+        expect(rows.activity_events[0]).toMatchObject({ actor_agent_id: AGENT, metadata: { from: 'blocked', to: 'in_progress' } })
+    })
+
+    it('logs no status change for an issue already in progress', async () => {
+        const { rows, scope } = setup({ issues: [issue({ assignee_agent_id: AGENT, status: 'in_progress' })] })
+        await checkoutIssue(scope, 'issue-1', AGENT, 'run-1')
         expect(actions(rows)).toEqual(['issue.checked_out'])
+    })
+
+    it('refuses an issue of an archived project', async () => {
+        const { db, scope } = setup({ issues: [issue({ project_id: 'project-2', assignee_agent_id: AGENT })] })
+        await expect(checkoutIssue(scope, 'issue-1', AGENT, 'run-1')).resolves.toMatchObject({ ok: false, reason: 'project_archived' })
+        expect(db.writes('issues')).toHaveLength(0)
+    })
+
+    it('hands the checkout to a run that continues the conversation the issue is linked to', async () => {
+        const { rows, scope } = setup({ issues: [issue({ assignee_agent_id: AGENT, status: 'in_progress', checkout_run_id: 'run-paused', checked_out_at: 'then', session_id: 'session-1' })] })
+
+        await expect(checkoutIssue(scope, 'issue-1', AGENT, 'run-other', { sessionId: 'session-2' })).resolves.toMatchObject({ ok: false, reason: 'checked_out' })
+        await expect(checkoutIssue(scope, 'issue-1', AGENT, 'run-answered', { sessionId: 'session-1' })).resolves.toMatchObject({ ok: true, issue: { checkout_run_id: 'run-answered' } })
+        expect(rows.issues[0]).toMatchObject({ checkout_run_id: 'run-answered', session_id: 'session-1' })
     })
 
     it('names the conflict when it cannot', async () => {

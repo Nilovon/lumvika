@@ -2,6 +2,7 @@ import 'server-only'
 
 import {
     AGENT_ISSUE_STATUSES,
+    ISSUE_CHECKOUT_STATUSES,
     ISSUE_PRIORITIES,
     ISSUE_STATUSES,
     ISSUE_TRANSITIONS,
@@ -182,8 +183,25 @@ async function inbox(caller: Caller, args: Record<string, unknown>) {
     }
 }
 
+// A run that held an issue and lost it to someone else (reassigned, or moved out of the working
+// statuses by a person) hears it on its next call about that issue, in words that stop it. A run that
+// let go itself, or moved the issue itself, has lost nothing.
+async function assertStillWorkable(caller: Caller, issue: IssueDetail, runId: string | undefined): Promise<void> {
+    if (!runId || issue.checkoutRunId === runId) return
+    const supabase = clientOf(caller.scope)
+    const { data: checkouts } = await selectMany(supabase, 'activity_events', ['metadata'] as const, { workspace_id: caller.scope.workspaceId, issue_id: issue.id, action: 'issue.checked_out', actor_agent_id: caller.agentId }, { column: 'created_at', ascending: false }, 1)
+    const metadata = checkouts?.[0]?.metadata
+    const heldByThisRun = !!metadata && typeof metadata === 'object' && !Array.isArray(metadata) && metadata.runId === runId
+    if (!heldByThisRun) return
+    if (!isMine(caller, issue)) throw new Error(`${issue.ref} was reassigned while you were working on it: it is no longer yours. Stop working on it now, and do not comment on it or change it in this run.`)
+    if ((ISSUE_CHECKOUT_STATUSES as readonly IssueStatus[]).includes(issue.status)) return
+    const { data: moves } = await selectMany(supabase, 'activity_events', ['actor_agent_id'] as const, { workspace_id: caller.scope.workspaceId, issue_id: issue.id, action: 'issue.status_changed' }, { column: 'created_at', ascending: false }, 1)
+    if (moves?.[0] && moves[0].actor_agent_id !== caller.agentId) throw new Error(`${issue.ref} was moved to ${issue.status} by someone else while you were working on it. Stop working on it now, and do not comment on it or change it in this run.`)
+}
+
 async function getIssueForAgent(caller: Caller, args: Record<string, unknown>) {
     const issue = await requireIssue(caller, args.ref)
+    await assertStillWorkable(caller, issue, asString(args.runId))
     const supabase = clientOf(caller.scope)
     const [{ data: project }, { data: parent }, comments, { data: assignments }] = await Promise.all([
         selectMaybeSingle(supabase, 'projects', ['key', 'name', 'instructions', 'goal_id', 'lead_user_id', 'lead_agent_id'] as const, { id: issue.projectId }),
@@ -214,6 +232,7 @@ async function getIssueForAgent(caller: Caller, args: Record<string, unknown>) {
         // system or an API key filed goes to review.
         needsReview: issue.createdBy.kind !== 'agent',
         checkedOut: !!issue.checkoutRunId,
+        ...(issue.status === 'in_review' ? { reviewNote: IN_REVIEW_NOTE } : {}),
         project: project ? { key: project.key, name: project.name, instructions: project.instructions, lead: label(project.lead_user_id ? { kind: 'user', userId: project.lead_user_id } : project.lead_agent_id ? { kind: 'agent', agentId: project.lead_agent_id } : null) } : null,
         goal: goal ? { title: goal.title, status: goal.status } : null,
         parent: parent && project ? { ref: formatIssueRef(project.key, parent.number), title: parent.title, status: parent.status } : null,
@@ -223,20 +242,27 @@ async function getIssueForAgent(caller: Caller, args: Record<string, unknown>) {
     }
 }
 
+// An issue in review is a person checking finished work: a comment there is answered, and only work
+// they ask for brings it back in progress.
+const IN_REVIEW_NOTE = 'A person is reviewing this work. Answer their latest comments with work_comment. Only if they ask for changes, move it back with work_update_status in_progress, then take it with work_checkout and do them.'
+
 const CHECKOUT_REFUSALS: Record<Exclude<CheckoutConflict, 'checked_out'>, (ref: string) => string> = {
     not_found: ref => `No issue ${ref} in this workspace.`,
     not_assigned: ref => `${ref} is not assigned to you, so you cannot take it. Comment on it, or create a sub-issue for your part.`,
     not_ready: ref => `${ref} is not in todo, in_progress or blocked, so it cannot be taken. Read it with work_get_issue to see where it stands.`,
+    project_archived: ref => `${ref} belongs to an archived project, so nobody works on it any more. Do not work on it: move on to the next issue of your inbox, or stop.`,
 }
 
 async function checkout(caller: Caller, args: Record<string, unknown>) {
     const runId = asString(args.runId)
     if (!runId) throw new Error('This run has no id, so it cannot hold an issue.')
     const issue = await requireIssue(caller, args.ref)
+    await assertStillWorkable(caller, issue, runId)
     const engineSessionId = asString(args.sessionId)
     const { data: session } = engineSessionId ? await selectMaybeSingle(clientOf(caller.scope), 'sessions', ['id'] as const, { agent_id: caller.agentId, engine_session_id: engineSessionId }) : { data: null }
     const result = await checkoutIssue(caller.scope, issue.id, caller.agentId, runId, session ? { sessionId: session.id } : {})
     if (result.ok) return { ref: result.issue.ref, status: result.issue.status, checkedOut: true, message: `You hold ${result.issue.ref} until this run ends. Work on it, comment what matters, then move it with work_update_status.` }
+    if (result.reason === 'not_ready' && issue.status === 'in_review') return { ref: issue.ref, checkedOut: false, message: `${issue.ref} is in review, so it cannot be taken. ${IN_REVIEW_NOTE}` }
     if (result.reason === 'checked_out') return { ref: issue.ref, checkedOut: false, heldByRunId: result.heldByRunId, message: `${issue.ref} is already held by another run that is working on it. Do not retry and do not work on it: move on to the next issue of your inbox, or stop.` }
     return { ref: issue.ref, checkedOut: false, message: CHECKOUT_REFUSALS[result.reason](issue.ref) }
 }
@@ -250,6 +276,7 @@ function readAgentStatus(value: unknown): AgentIssueStatus {
 async function updateStatus(caller: Caller, args: Record<string, unknown>) {
     const to = readAgentStatus(args.status)
     const issue = await requireIssue(caller, args.ref)
+    await assertStillWorkable(caller, issue, asString(args.runId))
     if (!isMine(caller, issue)) throw new Error(`${issue.ref} is not assigned to you: only its assignee moves it. Comment on it instead.`)
     const blockedReason = asString(args.blockedReason)?.trim()
     if (to === 'blocked' && !blockedReason) throw new Error('Say who must do what in blockedReason, e.g. "Anna must share the Stripe API key".')
@@ -270,6 +297,7 @@ async function updateStatus(caller: Caller, args: Record<string, unknown>) {
 
 async function comment(caller: Caller, args: Record<string, unknown>) {
     const issue = await requireIssue(caller, args.ref)
+    await assertStillWorkable(caller, issue, asString(args.runId))
     const added = await addIssueComment(caller.scope, authorOf(caller), issue.id, { body: asString(args.body) ?? '' })
     return { ref: issue.ref, commentId: added.id }
 }
