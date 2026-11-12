@@ -12,9 +12,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 export type WorkMemberLabel = { name: string; photo: string | null; kind: 'user' | 'agent' | 'system'; known: boolean }
 
 const peopleCache = new Map<number, MemberProfile[]>()
-const peopleReads = new Map<number, Promise<MemberProfile[]>>()
+const peopleReads = new Map<number, Promise<MemberProfile[] | null>>()
+const RETRY_DELAYS_MS = [2_000, 6_000, 15_000]
 
-function readPeople(workspaceId: number): Promise<MemberProfile[]> {
+// Null when the read failed: the caller tries again rather than drawing everyone as a stranger.
+function readPeople(workspaceId: number): Promise<MemberProfile[] | null> {
     const pending = peopleReads.get(workspaceId)
     if (pending) return pending
     const read = listMemberProfilesAction()
@@ -22,7 +24,7 @@ function readPeople(workspaceId: number): Promise<MemberProfile[]> {
             peopleCache.set(workspaceId, people)
             return people
         })
-        .catch(() => peopleCache.get(workspaceId) ?? [])
+        .catch(() => peopleCache.get(workspaceId) ?? null)
         .finally(() => peopleReads.delete(workspaceId))
     peopleReads.set(workspaceId, read)
     return read
@@ -40,11 +42,18 @@ export function useWorkMembers() {
     useEffect(() => {
         if (workspaceId === undefined) return
         let active = true
-        void readPeople(workspaceId).then(next => {
-            if (active) setPeople(next)
-        })
+        let retry: ReturnType<typeof setTimeout> | null = null
+        const load = (attempt: number) => {
+            void readPeople(workspaceId).then(next => {
+                if (!active) return
+                if (next) setPeople(next)
+                else if (attempt < RETRY_DELAYS_MS.length) retry = setTimeout(() => load(attempt + 1), RETRY_DELAYS_MS[attempt])
+            })
+        }
+        load(0)
         return () => {
             active = false
+            if (retry) clearTimeout(retry)
         }
     }, [workspaceId])
 
