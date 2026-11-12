@@ -7,6 +7,7 @@ import type { WorkMemberIdentity } from '@/components/teams/useWorkMembers'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
+import { DateField } from '@/components/ui/date-field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -102,7 +103,9 @@ function GoalForm({ target, goals, teams, people, onClose, onSaved }: Omit<GoalD
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Input id="goal-target-date" type="date" label={t('dialog.targetDate')} optional value={targetDate} onChange={event => setTargetDate(event.target.value)} />
+                    <Field label={t('dialog.targetDate')} optional htmlFor="goal-target-date">
+                        <DateField id="goal-target-date" value={targetDate || null} onChange={day => setTargetDate(day ?? '')} />
+                    </Field>
                 </div>
                 <Field label={t('dialog.parent')} htmlFor="goal-parent">
                     <Select value={parentId} onValueChange={setParentId}>

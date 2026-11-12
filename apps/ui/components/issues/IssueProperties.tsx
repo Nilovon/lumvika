@@ -7,7 +7,7 @@ import { IssueStatusPicker } from '@/components/issues/IssueStatusPicker'
 import { useWorkMembers } from '@/components/issues/useWorkMembers'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import type { IssueDetail, IssuePriority, IssueStatus, IssueSummary, UpdateIssueInput, WorkMemberRef } from '@lumvika/contracts'
 import { fullDateTime } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
@@ -60,7 +60,9 @@ export function IssueProperties({ issue, disabled, onStatusChange, onPriorityCha
             <Field label={t('assignee')} htmlFor="issue-assignee" className="col-span-2 md:col-span-1">
                 <AssigneePicker id="issue-assignee" value={issue.assignee} onChange={onAssign} disabled={disabled} />
             </Field>
-            <Input id="issue-due" type="date" label={t('dueDate')} value={issue.dueDate ?? ''} onChange={event => onUpdate({ dueDate: event.target.value || null })} disabled={disabled} className="h-8" />
+            <Field label={t('dueDate')} htmlFor="issue-due">
+                <DateField id="issue-due" value={issue.dueDate} onChange={dueDate => onUpdate({ dueDate })} disabled={disabled} />
+            </Field>
             <Field label={t('parent')}>
                 <Combobox
                     groups={[{ id: 'issues', options: parentOptions }]}

@@ -4,7 +4,7 @@ import { updateProjectAction } from '@/app/api/_actions/projects.actions'
 import { AssigneePicker } from '@/components/issues/AssigneePicker'
 import { OverviewSection } from '@/components/projects/overview/OverviewSection'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useErrorText } from '@/hooks/useErrorText'
 import type { ProjectDetail, ProjectStatus, UpdateProjectInput } from '@lumvika/contracts'
@@ -49,7 +49,9 @@ export function ProjectDetailsSection({ project, disabled, onSaved }: { project:
             <Field label={t('leadLabel')} htmlFor="project-lead" helperText={t('leadHint')}>
                 <AssigneePicker id="project-lead" value={project.lead} onChange={lead => void save({ lead })} emptyLabel={t('noLead')} disabled={disabled || saving} />
             </Field>
-            <Input id="project-target-edit" type="date" label={t('targetLabel')} optional value={project.targetDate ?? ''} onChange={event => void save({ targetDate: event.target.value || null })} disabled={disabled || saving} className="h-8" />
+            <Field label={t('targetLabel')} optional htmlFor="project-target-edit">
+                <DateField id="project-target-edit" value={project.targetDate} onChange={targetDate => void save({ targetDate })} disabled={disabled || saving} />
+            </Field>
         </OverviewSection>
     )
 }

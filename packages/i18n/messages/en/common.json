@@ -1,6 +1,7 @@
 {
     "_context": {
-        "crash.body": "Full-page error screen after the app crashed."
+        "crash.body": "Full-page error screen after the app crashed.",
+        "dateField.placeholder": "A date field with no date picked yet."
     },
     "save": "Save",
     "saving": "Saving",
@@ -24,5 +25,9 @@
         "copyright": "© The authors of the original project. Changes © 2026 Schnebel Technologie GmbH.",
         "source": "Source code",
         "licenseText": "License text"
+    },
+    "dateField": {
+        "placeholder": "Pick a date",
+        "clear": "Clear the date"
     }
 }

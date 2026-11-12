@@ -7,6 +7,7 @@ import { BOARD_STATUSES } from '@/components/issues/issue-status'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
+import { DateField } from '@/components/ui/date-field'
 import { Input } from '@/components/ui/input'
 import { MarkdownTextarea } from '@/components/ui/markdown-textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -81,7 +82,9 @@ function NewIssueForm({ projectId, projectName, onCreate, defaultStatus = 'todo'
                     <Field label={t('assigneeLabel')} optional htmlFor="new-issue-assignee">
                         <AssigneePicker id="new-issue-assignee" value={assignee} onChange={setAssignee} />
                     </Field>
-                    <Input id="new-issue-due" type="date" label={t('dueLabel')} optional value={dueDate} onChange={event => setDueDate(event.target.value)} className="h-8" />
+                    <Field label={t('dueLabel')} optional htmlFor="new-issue-due">
+                        <DateField id="new-issue-due" value={dueDate || null} onChange={day => setDueDate(day ?? '')} />
+                    </Field>
                 </div>
                 {assignee?.kind === 'agent' && <p className="-mt-1 text-xs text-muted-foreground">{t('coworkerHint')}</p>}
                 <DialogFooter className="flex-wrap gap-2">

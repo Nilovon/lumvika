@@ -6,6 +6,7 @@ import { isValidProjectKey, normalizeProjectKey, suggestProjectKey } from '@/com
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
+import { DateField } from '@/components/ui/date-field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -114,7 +115,9 @@ function NewProjectForm({ takenKeys, onDone }: { takenKeys: string[]; onDone: ()
                     <Field label={t('leadLabel')} optional>
                         <AssigneePicker value={lead} onChange={setLead} emptyLabel={t('noLead')} />
                     </Field>
-                    <Input id="project-target" type="date" label={t('targetLabel')} optional value={targetDate} onChange={event => setTargetDate(event.target.value)} className="h-8" />
+                    <Field label={t('targetLabel')} optional htmlFor="project-target">
+                        <DateField id="project-target" value={targetDate || null} onChange={day => setTargetDate(day ?? '')} />
+                    </Field>
                 </div>
 
                 <Field label={t('visibilityLabel')} htmlFor="project-visibility" helperText={visibility === 'restricted' ? t('visibilityRestrictedHint') : t('visibilityWorkspaceHint')}>
