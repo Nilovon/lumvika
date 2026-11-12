@@ -399,6 +399,16 @@ describe('work_list_issues', () => {
         expect(await call('work_list_issues', { limit: 1 })).toMatchObject({ issues: [{ ref: 'ENG-2', assignee: 'Scout (@scout)' }], note: expect.stringContaining('Showing the 1 most recently updated') })
         await expect(call('work_list_issues', { status: ['soon'] })).rejects.toThrow('status is a list of')
     })
+
+    it('filters only by a coworker it could delegate to, and answers any other handle with nothing', async () => {
+        const { rows } = setup({ issues: [issue({ id: 'a', number: 1, assignee_agent_id: 'agent-legal' })] })
+        rows.agents.push({ id: 'agent-legal', workspace_id: WORKSPACE, name: 'Legal', handle: 'legal', space_id: 'box-legal', reports_to_agent_id: null })
+
+        expect(await call('work_list_issues', { assignee: '@legal' })).toEqual({ issues: [] })
+        expect(await call('work_list_issues', { assignee: '@nobody' })).toEqual({ issues: [] })
+        rows.agents[0].reports_to_agent_id = 'agent-legal'
+        expect(((await call('work_list_issues', { assignee: '@legal' })) as { issues: Array<{ ref: string }> }).issues.map(row => row.ref)).toEqual(['ENG-1'])
+    })
 })
 
 describe('work_list_projects', () => {

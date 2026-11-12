@@ -101,27 +101,28 @@ function unknownCoworker(value: string): string {
     return `No coworker goes by "${value}". Pass a handle as team_status or the issue lists show it, or 'me'.`
 }
 
-async function resolveAssignee(caller: Caller, value: string): Promise<WorkMemberRef> {
+// Whom a coworker may hand an issue to, or filter the issues by: itself, a coworker of its own Box,
+// or someone on its reporting line (its manager, its direct reports). Anyone else is null, like a
+// handle nobody has, so a coworker never learns of, nor sets to work, one in a Box its people may
+// not reach.
+async function findDelegate(caller: Caller, value: string): Promise<WorkMemberRef | null> {
     const wanted = normalizeHandle(value)
     if (SELF_NAMES.has(wanted)) return { kind: 'agent', agentId: caller.agentId }
     const coworkers = [...(await coworkersOf(caller.scope)).values()]
     const match = coworkers.find(c => c.handle?.toLowerCase() === wanted) ?? coworkers.find(c => c.name.toLowerCase() === wanted)
-    if (!match) throw new Error(unknownCoworker(value))
-    return { kind: 'agent', agentId: match.id }
+    if (!match) return null
+    if (match.id === caller.agentId) return { kind: 'agent', agentId: match.id }
+    const { data: pair } = await selectMany(clientOf(caller.scope), 'agents', ['id', 'space_id', 'reports_to_agent_id'] as const, { workspace_id: caller.scope.workspaceId, id: [caller.agentId, match.id] })
+    const self = pair?.find(agent => agent.id === caller.agentId)
+    const other = pair?.find(agent => agent.id === match.id)
+    const related = !!self && !!other && (self.space_id === other.space_id || self.reports_to_agent_id === other.id || other.reports_to_agent_id === self.id)
+    return related ? { kind: 'agent', agentId: match.id } : null
 }
 
-// Whom a coworker may hand an issue to: itself, a coworker of its own Box, or someone on its
-// reporting line (its manager, its direct reports). Anyone else answers like a handle nobody has, so
-// a coworker never learns of, nor sets to work, one in a Box its people may not reach.
 async function resolveDelegate(caller: Caller, value: string): Promise<WorkMemberRef> {
-    const assignee = await resolveAssignee(caller, value)
-    if (assignee.kind !== 'agent' || assignee.agentId === caller.agentId) return assignee
-    const { data: pair } = await selectMany(clientOf(caller.scope), 'agents', ['id', 'space_id', 'reports_to_agent_id'] as const, { workspace_id: caller.scope.workspaceId, id: [caller.agentId, assignee.agentId] })
-    const self = pair?.find(agent => agent.id === caller.agentId)
-    const other = pair?.find(agent => agent.id === assignee.agentId)
-    const related = !!self && !!other && (self.space_id === other.space_id || self.reports_to_agent_id === other.id || other.reports_to_agent_id === self.id)
-    if (!related) throw new Error(unknownCoworker(value))
-    return assignee
+    const delegate = await findDelegate(caller, value)
+    if (!delegate) throw new Error(unknownCoworker(value))
+    return delegate
 }
 
 async function requireIssue(caller: Caller, ref: unknown): Promise<IssueDetail> {
@@ -347,7 +348,9 @@ async function listForAgent(caller: Caller, args: Record<string, unknown>) {
     const projectKey = asString(args.projectKey)
     const project = projectKey ? await requireProjectByKey(caller, projectKey) : null
     const assigneeName = asString(args.assignee)
-    const assignee = !assigneeName ? undefined : normalizeHandle(assigneeName) === 'unassigned' ? ('unassigned' as const) : await resolveAssignee(caller, assigneeName)
+    const assignee = !assigneeName ? undefined : normalizeHandle(assigneeName) === 'unassigned' ? ('unassigned' as const) : await findDelegate(caller, assigneeName)
+    // A handle it may not filter by reads like one with no issues, and names nobody back.
+    if (assignee === null) return { issues: [] }
     const limit = clamp(asNumber(args.limit), LIST_DEFAULT, LIST_MAX)
     const [issues, projects] = await Promise.all([
         listIssues(caller.scope, { projectId: project?.id, status: readStatuses(args.status), assignee, text: asString(args.text), sort: 'updated', limit }, caller.visible),
