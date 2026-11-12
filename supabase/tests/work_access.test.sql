@@ -1,4 +1,5 @@
--- RLS and triggers of the work layer (migrations 20261110120100 to 20261110120400): projects,
+-- RLS and triggers of the work layer (migrations 20261110120100 to 20261110120400, narrowed by
+-- 20261112180100 to 20261112180300): projects,
 -- issues, channels and assistant chats seen from an admin, a member scoped to `all`, a member scoped
 -- to `assigned` and someone from another workspace; the issue numbers; the reporting line of agents.
 -- Runs with `pnpm exec supabase test db` on the local stack; everything is rolled back.
@@ -6,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path to public, extensions;
 
-select plan(41);
+select plan(51);
 
 insert into auth.users (id, email) values
     ('00000000-0000-0000-0000-00000000a101', 'work-admin@lumvika.test'),
@@ -80,6 +81,17 @@ insert into public.team_members (team_id, workspace_id, user_id) values
 insert into public.team_members (team_id, workspace_id, agent_id) values
     ('00000000-0000-0000-0000-000000120001', 990101, '00000000-0000-0000-0000-0000000e0001');
 
+-- Events outside any project that follow what they are about: a channel, a coworker of the Box
+-- `Here`, a team membership of that coworker, and one of a person.
+insert into public.activity_events (workspace_id, project_id, entity_type, entity_id, action, metadata) values
+    (990101, null, 'channel', '00000000-0000-0000-0000-000000110001', 'channel.created', '{"name": "general"}'),
+    (990101, null, 'channel', '00000000-0000-0000-0000-000000110002', 'channel.created', '{"name": "leadership"}'),
+    (990101, null, 'agent', '00000000-0000-0000-0000-0000000e0001', 'agent.reporting_changed', '{}'),
+    (990101, null, 'team', '00000000-0000-0000-0000-000000120001', 'team.member_added', '{"agentId": "00000000-0000-0000-0000-0000000e0001", "userId": null, "role": "member"}'),
+    (990101, null, 'team', '00000000-0000-0000-0000-000000120001', 'team.member_added', '{"agentId": null, "userId": "00000000-0000-0000-0000-00000000a101", "role": "lead"}');
+
+insert into public.assistant_chats (workspace_id, user_id, title, shared, project_id, archived_at) values
+    (990101, '00000000-0000-0000-0000-00000000a101', 'archived shared', true, null, now());
 insert into public.assistant_chats (workspace_id, user_id, title, shared, project_id) values
     (990101, '00000000-0000-0000-0000-00000000a102', 'private chat', false, null),
     (990101, '00000000-0000-0000-0000-00000000a102', 'shared chat', true, null),
@@ -125,6 +137,8 @@ select throws_ok(
 delete from public.agents where id = '00000000-0000-0000-0000-0000000e0002';
 select is((select reports_to_agent_id from public.agents where id = '00000000-0000-0000-0000-0000000e0003'), null, 'deleting a manager leaves their reports without one');
 
+select is((select prosecdef from pg_proc where oid = 'public.agents_check_reporting_line'::regproc), true, 'the reporting line check walks the whole line, whatever the caller may read');
+
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
     select set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
 $$;
@@ -140,13 +154,20 @@ select set_eq($$ select name from public.channels where workspace_id = 990101 $$
 select throws_ok(
     $$ insert into public.issues (workspace_id, project_id, title) values (990101, '00000000-0000-0000-0000-0000000f0001', 'from the browser') $$,
     '42501', null, 'even an admin writes no issue from the browser');
+select set_eq($$ select entity_id::text from public.activity_events where workspace_id = 990101 and entity_type = 'channel' $$, array['00000000-0000-0000-0000-000000110001'], 'admin reads the activity of the channels they read, not of a private one');
+select ok(exists (select 1 from public.assistant_chats where title = 'archived shared'), 'the owner still reads the shared chat they archived');
+select throws_ok($$ update public.agents set reports_to_agent_id = null where id = '00000000-0000-0000-0000-0000000e0003' $$, '42501', null, 'the reporting line is written by the server only');
+select throws_ok($$ update public.agents set title = 'Chief' where id = '00000000-0000-0000-0000-0000000e0001' $$, '42501', null, 'a coworker title is written by the server only');
+select throws_ok($$ update public.agents set monthly_budget_micros = 1 where id = '00000000-0000-0000-0000-0000000e0001' $$, '42501', null, 'a coworker budget is written by the server only');
+select lives_ok($$ update public.agents set col = 2 where id = '00000000-0000-0000-0000-0000000e0001' $$, 'the board still moves a coworker from the browser');
 
 -- Member scoped to all: open projects and the one shared with them.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000a102');
 select set_eq($$ select key from public.projects where workspace_id = 990101 $$, array['OPEN', 'SHRD'], 'member (all) sees open projects and the one named to them');
 select set_eq($$ select title from public.issues where workspace_id = 990101 $$, array['open-1', 'open-2', 'open-4'], 'member (all) sees the issues of those projects');
 select set_eq($$ select body from public.issue_comments where workspace_id = 990101 $$, array['on open'], 'member (all) reads the comments of visible issues only');
-select set_eq($$ select action from public.activity_events where workspace_id = 990101 $$, array['project.created', 'team.created'], 'member (all) reads activity of visible projects and outside any project');
+select set_eq($$ select action from public.activity_events where workspace_id = 990101 $$, array['project.created', 'team.created', 'channel.created', 'agent.reporting_changed', 'team.member_added'], 'member (all) reads activity of visible projects and outside any project');
+select set_eq($$ select entity_id::text from public.activity_events where workspace_id = 990101 and entity_type = 'channel' $$, array['00000000-0000-0000-0000-000000110001', '00000000-0000-0000-0000-000000110002'], 'member (all) reads the activity of the public channel and of the private one they joined');
 select is((select count(*)::int from public.manageable_project_ids()), 0, 'member with use manages no project');
 select set_eq($$ select name from public.channels where workspace_id = 990101 $$, array['general', 'leadership'], 'member (all) sees public channels and the private one they joined');
 select set_eq($$ select body from public.channel_messages where workspace_id = 990101 $$, array['hello all', 'just us'], 'channel messages follow their channel');
@@ -164,6 +185,8 @@ select set_eq($$ select kind::text from public.channels where workspace_id = 990
 select set_eq($$ select title from public.assistant_chats where workspace_id = 990101 $$, array['shared chat'], 'a shared chat is read by the workspace, a private one by its owner only');
 select is((select count(*)::int from public.team_members where team_id = '00000000-0000-0000-0000-000000120001' and user_id is not null), 1, 'member (assigned) reads the people of a team');
 select is((select count(*)::int from public.team_members where team_id = '00000000-0000-0000-0000-000000120001' and agent_id is not null), 0, 'member (assigned) does not learn which coworkers of a Box it cannot see are in a team');
+select is((select count(*)::int from public.activity_events where workspace_id = 990101 and entity_type in ('channel', 'agent')), 0, 'member (assigned) reads no event of a channel nor of a coworker it cannot see');
+select is((select count(*)::int from public.activity_events where workspace_id = 990101 and action = 'team.member_added'), 1, 'member (assigned) reads a team membership of a person, not of a coworker it cannot see');
 
 -- Someone of another workspace: nothing of this one.
 select pg_temp.act_as('00000000-0000-0000-0000-00000000a104');
