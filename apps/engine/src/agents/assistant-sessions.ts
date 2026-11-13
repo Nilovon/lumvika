@@ -7,6 +7,7 @@ import { workspaceDir } from '../config/paths.js'
 import { resolveInWorkspace, resolveWithinReal } from '../tools/sandbox.js'
 import { PAGES_DIR } from '../tools/builtin/page-file.js'
 import { forgetCodexThread } from './codex-threads.js'
+import { forgetClaudeSession } from './claude-sessions.js'
 
 export type AssistantSessionDeletion = 'deleted' | 'not_found' | 'run_in_flight'
 
@@ -66,6 +67,7 @@ export async function deleteAssistantSession(sessionId: string): Promise<Assista
         'write'
     )
     forgetCodexThread(ASSISTANT_AGENT_ID, sessionId)
+    forgetClaudeSession(ASSISTANT_AGENT_ID, sessionId)
     for (const page of pages) await removeSavedPage(page)
     return 'deleted'
 }

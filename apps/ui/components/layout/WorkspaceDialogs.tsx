@@ -1,5 +1,6 @@
 'use client'
 
+import { ComposioDialog } from '@/components/composio/ComposioDialog'
 import { AccountDialog } from '@/components/dialogs/AccountDialog'
 import { AiProvidersDialog } from '@/components/dialogs/AiProvidersDialog'
 import { ApiKeysDialog } from '@/components/dialogs/ApiKeysDialog'
@@ -15,6 +16,8 @@ import { useWorkspaceIcon } from '@/components/layout/useWorkspaceIcon'
 import { useBrainProposalCount } from '@/hooks/useBrainProposalCount'
 import { PaidAppDialogs, usePaidAppsStore } from '@lumvika/cloud/apps.client'
 import { SERVERS_ENABLED } from '@lumvika/cloud/servers'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { useWorkspaceMenuStore } from '@/stores/workspace-menu.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
 import { useSession } from '@/lib/auth/session/SessionProvider'
@@ -33,7 +36,8 @@ export function WorkspaceDialogs() {
     const refreshAppAccounts = usePaidAppsStore(s => s.refreshAccountCount)
     const panel = useWorkspaceSettingsStore(s => s.panel)
     const setPanel = useWorkspaceSettingsStore(s => s.setPanel)
-    const { createOpen, serversOpen, profileOpen, powerAction, setCreateOpen, setServersOpen, setProfileOpen, setPowerAction } = useWorkspaceMenuStore()
+    const { createOpen, serversOpen, composioOpen, profileOpen, powerAction, setCreateOpen, setServersOpen, setComposioOpen, setProfileOpen, setPowerAction } = useWorkspaceMenuStore()
+    const isAdmin = useIsAdmin()
     const activeIcon = useWorkspaceIcon()
     // The team invite email links straight to this dialog. Read rather than mirrored into state, and
     // closing drops the param so a refresh does not reopen it.
@@ -68,6 +72,7 @@ export function WorkspaceDialogs() {
             />
             <ApiKeysDialog open={panel === 'api_keys'} onOpenChange={open => setPanel(open ? 'api_keys' : null)} />
             {SERVERS_ENABLED && <ServersDialog open={serversOpen} onOpenChange={setServersOpen} />}
+            {!LUMVIKA_CLOUD && isAdmin && <ComposioDialog open={composioOpen} onOpenChange={setComposioOpen} />}
             <AiProvidersDialog open={panel === 'ai_providers'} onOpenChange={open => setPanel(open ? 'ai_providers' : null)} />
             <KnowledgeBaseDialog open={panel === 'knowledge_base'} onOpenChange={open => setPanel(open ? 'knowledge_base' : null)} />
             <PaidAppDialogs apps={paidApps} />

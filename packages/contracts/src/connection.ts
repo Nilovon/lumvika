@@ -38,16 +38,83 @@ export const planLimitWindowSchema = z.object({
     label: z.string().nullable(),
     usedPercent: z.number(),
     resetsAt: z.string().nullable(),
+    // Stable across readings (`five_hour`, `seven_day_fable`, `primary`), so a partial reading can be
+    // merged into the last one. Optional: an engine older than it sends none.
+    id: z.string().optional(),
+    // How long the window runs, which is what places a reading on its pace. Null when the provider
+    // does not say and nothing safe can be assumed.
+    windowDurationMins: z.number().nullable().optional(),
 })
 export type PlanLimitWindow = z.infer<typeof planLimitWindowSchema>
 
+// Why a subscription has no windows to show. `unsupported`: the provider answered that no plan
+// limits apply (an API key, a token without the profile scope). `probeFailed`: it did not answer.
+export const planLimitsUnavailableSchema = z.object({
+    reason: z.enum(['unsupported', 'probeFailed']),
+    message: z.string().optional(),
+})
+export type PlanLimitsUnavailable = z.infer<typeof planLimitsUnavailableSchema>
+
+// Claude's pay-as-you-go overflow once the plan's windows are spent. Kept out of `windows` on
+// purpose: reaching its monthly cap stops the overflow, not the plan, so nothing may read it as a
+// spent window.
+export const planExtraUsageSchema = z.object({
+    enabled: z.boolean(),
+    usedPercent: z.number().nullable(),
+    // A cap of zero turns the overflow on with nothing to spend.
+    zeroCap: z.boolean().default(false),
+})
+export type PlanExtraUsage = z.infer<typeof planExtraUsageSchema>
+
 // Where a subscription stands against its plan, as last reported by its own CLI. Named "limits"
-// because "usage" on a connection already means what points at it.
+// because "usage" on a connection already means what points at it. Every field past `capturedAt`
+// is optional: an engine older than it answers without them.
 export const planLimitsSchema = z.object({
     windows: z.array(planLimitWindowSchema),
     capturedAt: z.string(),
+    // The plan the provider names (`max`, `pro`, `plus`), when it says.
+    plan: z.string().nullable().optional(),
+    extraUsage: planExtraUsageSchema.nullable().optional(),
+    unavailable: planLimitsUnavailableSchema.nullable().optional(),
+    // The last read failed after `capturedAt`: the windows are the last good reading, kept rather
+    // than cleared, and this says how old the failure is.
+    refreshFailedAt: z.string().nullable().optional(),
 })
 export type PlanLimits = z.infer<typeof planLimitsSchema>
+
+// `GET /connections/:id/plan-limits`: the reading of one subscription, read again first when asked.
+export const planLimitsReadSchema = z.object({ connectionId: z.string(), planLimits: planLimitsSchema.nullable() })
+export type PlanLimitsRead = z.infer<typeof planLimitsReadSchema>
+
+export const TOKEN_USAGE_RANGES = ['7d', '30d'] as const
+export const tokenUsageRangeSchema = z.enum(TOKEN_USAGE_RANGES)
+export type TokenUsageRange = z.infer<typeof tokenUsageRangeSchema>
+
+// What the runs of one provider went through over a range. `inputTokens` counts every input token,
+// cached or not; `cacheReadTokens` and `cacheWriteTokens` are the parts of it served from and
+// written to the provider's prompt cache. `costMicros` is what the provider billed per call, which
+// only an API-billed provider reports: a subscription's runs are paid by the plan and carry none.
+export const tokenUsageTotalsSchema = z.object({
+    runCount: z.number(),
+    inputTokens: z.number(),
+    outputTokens: z.number(),
+    cacheReadTokens: z.number(),
+    cacheWriteTokens: z.number(),
+    reasoningTokens: z.number(),
+    costMicros: z.number(),
+})
+export type TokenUsageTotals = z.infer<typeof tokenUsageTotalsSchema>
+
+export const tokenUsageAgentSchema = tokenUsageTotalsSchema.extend({ agentId: z.string(), agentName: z.string() })
+export type TokenUsageAgent = z.infer<typeof tokenUsageAgentSchema>
+
+// Runs record the provider they ran on, not the connection: two subscriptions of one provider share
+// a single breakdown.
+export const tokenUsageProviderSchema = z.object({ provider: z.string(), totals: tokenUsageTotalsSchema, agents: z.array(tokenUsageAgentSchema) })
+export type TokenUsageProvider = z.infer<typeof tokenUsageProviderSchema>
+
+export const tokenUsageSchema = z.object({ range: tokenUsageRangeSchema, since: z.string(), providers: z.array(tokenUsageProviderSchema) })
+export type TokenUsage = z.infer<typeof tokenUsageSchema>
 
 // The models a subscription's own CLI says it serves, asked of the binary the box runs (Codex's
 // `model/list`, Claude Code's `supportedModels`). Codex answers for the account: an old binary has

@@ -272,6 +272,7 @@
     "loadTemplateFailed": "Die Vorlage konnte nicht geladen werden.",
     "loadCoworkersFailed": "Deine Coworker konnten nicht geladen werden",
     "loadCreditUsageFailed": "Dein Guthabenverbrauch konnte nicht geladen werden",
+    "loadUsageFailed": "Die Nutzung dieses Abos konnte nicht geladen werden",
     "loadInvoicesFailed": "Deine Rechnungen konnten nicht geladen werden",
     "loadPayoutsAccountFailed": "Dein Auszahlungskonto konnte nicht geladen werden.",
     "loadRevenueFailed": "Deine Einnahmen konnten nicht geladen werden.",
@@ -465,5 +466,15 @@
     "channelMessageAuthorOnly": "Nur die Person, die die Nachricht geschrieben hat, kann sie ändern.",
     "mentionNotInWorkspace": "Du kannst nur Personen und Coworker dieses Workspaces erwähnen.",
     "assistantChatNotFound": "Chat nicht gefunden",
-    "assistantChatReadOnly": "Dieser Chat wurde zum Lesen mit dir geteilt. Nur die Person, die ihn begonnen hat, kann ihn ändern."
+    "assistantChatReadOnly": "Dieser Chat wurde zum Lesen mit dir geteilt. Nur die Person, die ihn begonnen hat, kann ihn ändern.",
+    "adminOnlyComposio": "Nur ein Admin dieser Installation kann Composio verwalten.",
+    "composioManagedByCloud": "Composio wird von Lumvika Cloud verwaltet.",
+    "composioKeyEmpty": "Füg deinen Composio-API-Schlüssel ein.",
+    "composioKeyRejected": "Composio hat diesen API-Schlüssel abgelehnt. Prüf, ob du den ganzen Schlüssel des richtigen Projekts kopiert hast.",
+    "composioUnreachable": "Composio ist nicht erreichbar. Versuch es gleich noch einmal.",
+    "composioKeyInEnvironment": "Der Composio-API-Schlüssel ist in der Serverumgebung gesetzt. Änder ihn in .env und starte die App neu.",
+    "composioNotConfigured": "Speichere zuerst einen Composio-API-Schlüssel.",
+    "composioUnknownToolkit": "Kein Dienst des Katalogs verbindet sich über dieses Composio-Toolkit.",
+    "composioInvalidAuthConfig": "Eine Auth-Config-ID sieht aus wie ac_ gefolgt von Buchstaben und Ziffern.",
+    "composioRejected": "Composio hat abgelehnt: {message}"
 }

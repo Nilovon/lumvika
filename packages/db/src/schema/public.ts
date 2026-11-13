@@ -2716,3 +2716,38 @@ export const assistant_chats = pgTable(
         check('assistant_chats_model_check', sql`(model IS NULL) OR (char_length(model) <= 200)`),
     ]
 )
+
+// Settings of the install itself, one row per key, read and written only by the server
+// (serviceScope) after its own admin check: `anon` and `authenticated` have no grant on it.
+export const instance_settings = pgTable(
+    'instance_settings',
+    {
+        key: text().primaryKey().notNull(),
+        value: text().notNull(),
+        updated_by: uuid(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        foreignKey({ columns: [table.updated_by], foreignColumns: [authUsers.id], name: 'instance_settings_updated_by_fkey' }).onDelete('set null'),
+        check('instance_settings_key_check', sql`char_length(key) <= 100`),
+    ]
+)
+
+// The Composio auth config an install uses for a toolkit. Kept out of `services.manifest`, which a
+// reseed of the catalog overwrites; when a row is here, it wins over the id the manifest carries.
+export const composio_auth_configs = pgTable(
+    'composio_auth_configs',
+    {
+        toolkit: text().primaryKey().notNull(),
+        auth_config_id: text().notNull(),
+        updated_by: uuid(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        foreignKey({ columns: [table.updated_by], foreignColumns: [authUsers.id], name: 'composio_auth_configs_updated_by_fkey' }).onDelete('set null'),
+        check('composio_auth_configs_toolkit_check', sql`char_length(toolkit) <= 100`),
+        check('composio_auth_configs_auth_config_id_check', sql`char_length(auth_config_id) BETWEEN 1 AND 200`),
+    ]
+)

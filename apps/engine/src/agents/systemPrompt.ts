@@ -140,6 +140,13 @@ export function currentTimeNote(now: Date = new Date()): string {
     return `Today is ${utcDay.format(now)} (UTC). Your training data is not a clock, so never state or assume a date from it. Every user message ends with a <now> block carrying the exact UTC timestamp of that turn: read it whenever a date, a duration, or a deadline matters, and if it disagrees with this line the block wins, because a long run can cross midnight. Every other timestamp you read, in a tool result or in these instructions, is UTC too. The user may live in another timezone, so name the timezone you mean when you state a date or a time, or ask which one they are on when the difference changes the answer.`
 }
 
+// The volatile block on a provider that keeps one system prompt for the life of a session (the
+// Claude CLI): it reaches the model in a user turn instead, again whenever it changes, so the
+// conversation can hold several copies and only the latest is true.
+export function workspaceStateBlock(volatile: string): string {
+    return volatile.trim() ? section('workspace_state', `The current state of your workspace, as part of your instructions. It replaces any earlier workspace_state block in this conversation.\n\n${volatile.trim()}`) : ''
+}
+
 export function userLanguageBlock(language: string | undefined): string {
     return language ? section('user_language', `${language}: the language the user reads the app in. They have not written to you yet, so write in it, the questions and options of your cards included, until they do.`) : ''
 }

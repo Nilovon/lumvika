@@ -51,6 +51,11 @@ import {
     type BrainSeedPage,
     type BrainSeedResult,
     type IssueRunRequest,
+    planLimitsReadSchema,
+    tokenUsageSchema,
+    type PlanLimitsRead,
+    type TokenUsage,
+    type TokenUsageRange,
 } from '@lumvika/contracts'
 import { isNetworkFailure } from '@/lib/net/network-error'
 import {
@@ -235,6 +240,30 @@ const PROBE_TIMEOUT_MS = 75_000
 
 export async function probeCustomEndpoint(conn: EngineConnection, input: CustomProbeInput): Promise<CustomProbeResult> {
     return request(conn, '/connections/probe', { method: 'POST', body: JSON.stringify(input), signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) }, d => customProbeResultSchema.parse(d))
+}
+
+// The engine caps a forced read at 25 s, so the CLI it spawns can start cold.
+const PLAN_LIMITS_REFRESH_TIMEOUT_MS = 35_000
+
+// Null on an engine older than the usage view, which answers 404: the caller falls back on the
+// reading the list carries.
+async function unlessMissing<T>(read: Promise<T>): Promise<T | null> {
+    try {
+        return await read
+    } catch (err) {
+        if (err instanceof EngineRequestError && err.status === 404) return null
+        throw err
+    }
+}
+
+export async function getPlanLimits(conn: EngineConnection, id: string, refresh: boolean): Promise<PlanLimitsRead | null> {
+    const path = `/connections/${encodeURIComponent(id)}/plan-limits${refresh ? '?refresh=1' : ''}`
+    const signal = AbortSignal.timeout(refresh ? PLAN_LIMITS_REFRESH_TIMEOUT_MS : DEFAULT_TIMEOUT_MS)
+    return unlessMissing(request(conn, path, { method: 'GET', signal }, d => planLimitsReadSchema.parse(d)))
+}
+
+export async function getTokenUsage(conn: EngineConnection, range: TokenUsageRange): Promise<TokenUsage | null> {
+    return unlessMissing(request(conn, `/connections/token-usage?range=${range}`, { method: 'GET' }, d => tokenUsageSchema.parse(d)))
 }
 
 export async function updateConnectionKeys(conn: EngineConnection, id: string, body: { set?: Record<string, string>; remove?: string[] }): Promise<string[]> {

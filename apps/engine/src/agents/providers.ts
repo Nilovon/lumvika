@@ -25,6 +25,7 @@ import { newId } from '../lib/ids.js'
 import { resolveTransport } from '../tools/mcp.js'
 import { relayMcpServer, type RunMcpServer } from '../tools/mcp-relay.js'
 import { claudeContextCapture, type ClaudeContextCapture } from './claude-context.js'
+import { claudeConfigDir, type TranscriptPlace } from './claude-sessions.js'
 import { claudeScreenshotMiddleware } from './claude-stream.js'
 import { codexMcpCompatibilityMiddleware } from './codex-stream.js'
 import { createCodexImageMiddleware } from './codex-images.js'
@@ -62,8 +63,9 @@ const BRIDGE_TOOL_TIMEOUT_SEC = 3600
 // the CLI the Agent SDK ships (2.1.322); the provider forwards any `CLAUDE_*` through its allowlist
 // and merges these over it, so the unprefixed one passes too.
 export const CLAUDE_HARNESS_ENV = {
-    // Lumvika compacts the session before the run. A second compaction inside the CLI would rewrite
-    // a history Lumvika keeps sending in full, and the two would never agree on what was said.
+    // Lumvika compacts the conversation before the run, and drops the CLI session it would have
+    // resumed when it does. A compaction inside the CLI would rewrite a session Lumvika resumes, and
+    // the two would never agree on what was said.
     DISABLE_AUTO_COMPACT: '1',
     // Update checks, telemetry, surveys.
     CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
@@ -242,11 +244,14 @@ export function codexMcpConfig(tools?: ToolSet, mcpServers: McpServer[] = []): R
 //
 // `sessionId` is what an OpenCode request names its conversation by: a one-shot call inside a run
 // (compaction, vision) passes the run's own, the others one of their own making.
-export type CliModelOptions = { system?: string; claudeTools?: readonly string[]; screenshots?: ScreenshotLookup; sessionId?: string; effort?: ReasoningEffort }
+export type CliModelOptions = { system?: string; claudeTools?: readonly string[]; screenshots?: ScreenshotLookup; sessionId?: string; claudeSession?: ClaudeRunSession; effort?: ReasoningEffort }
+
+// The Claude CLI session a run writes its turn to: a new one under `id`, or `id` resumed.
+export type ClaudeRunSession = { id: string; resume: boolean }
 
 // What a run hands its model beyond the tools: the prompt and the screenshots for the CLIs, the
-// conversation for OpenCode.
-export type ResolveModelOptions = { system?: string; screenshots?: ScreenshotLookup; sessionId?: string; effort?: ReasoningEffort }
+// conversation for OpenCode, the session for Claude.
+export type ResolveModelOptions = { system?: string; screenshots?: ScreenshotLookup; sessionId?: string; claudeSession?: ClaudeRunSession; effort?: ReasoningEffort }
 
 function oneShotSessionId(agent: LoadedAgent, options?: { sessionId?: string }): string {
     return options?.sessionId ?? `${agent.id}:one-shot`
@@ -278,12 +283,38 @@ export function withCardTagNudge(hooks: ClaudeHooks | undefined): ClaudeHooks {
     return { ...hooks, Stop: [...stop, { hooks: [cardTagStopHook] }] }
 }
 
+function claudeProcess(agent: LoadedAgent) {
+    const { cwd, env: agentEnv } = agentProcessEnv(agent)
+    return {
+        cwd,
+        env: {
+            ...agentEnv,
+            ...CLAUDE_HARNESS_ENV,
+            ...claudeAuthEnv(connectionEnv(agent)),
+            ANTHROPIC_API_KEY: undefined,
+            MCP_TOOL_TIMEOUT: String(BRIDGE_TOOL_TIMEOUT_SEC * 1000),
+        },
+    }
+}
+
+export function claudeTranscriptPlace(agent: LoadedAgent): TranscriptPlace {
+    const { cwd, env } = claudeProcess(agent)
+    return { configDir: claudeConfigDir(env), cwd }
+}
+
+// A run starts a session under an id of its own making, or resumes one. Only a run writes a
+// transcript: a one-shot call (compaction, curator, vision) has nothing to come back to.
+function claudeSessionSettings(session: ClaudeRunSession | undefined) {
+    if (!session) return { persistSession: false }
+    return session.resume ? { persistSession: true, resume: session.id } : { persistSession: true, sessionId: session.id }
+}
+
 function claudeProvider(agent: LoadedAgent, tools?: ToolSet, mcpServers: RunMcpServer[] = [], capture?: ClaudeContextCapture, options: CliModelOptions = {}) {
     const { mcpServers: servers, allowedTools } = claudeMcpConfig(tools, mcpServers, options.screenshots)
-    const { cwd, env: agentEnv } = agentProcessEnv(agent)
+    const { cwd, env } = claudeProcess(agent)
     return createClaudeCode({
         defaultSettings: {
-            persistSession: false,
+            ...claudeSessionSettings(options.claudeSession),
             permissionMode: 'bypassPermissions',
             allowDangerouslySkipPermissions: true,
             tools: [...(options.claudeTools ?? [])],
@@ -294,13 +325,7 @@ function claudeProvider(agent: LoadedAgent, tools?: ToolSet, mcpServers: RunMcpS
             // agent is working through. `adaptive` leaves the model to decide when it is worth it.
             thinking: { type: 'adaptive', display: 'summarized' },
             ...(options.effort ? { effort: options.effort } : {}),
-            env: {
-                ...agentEnv,
-                ...CLAUDE_HARNESS_ENV,
-                ...claudeAuthEnv(connectionEnv(agent)),
-                ANTHROPIC_API_KEY: undefined,
-                MCP_TOOL_TIMEOUT: String(BRIDGE_TOOL_TIMEOUT_SEC * 1000),
-            },
+            env,
             ...(options.system !== undefined ? { systemPrompt: options.system } : {}),
             ...(allowedTools.length ? { mcpServers: servers, allowedTools } : {}),
             ...(capture ? { ...capture.settings, hooks: withCardTagNudge(capture.settings.hooks) } : {}),
@@ -460,7 +485,7 @@ export type ResolvedModel = { model: LanguageModel; close: () => Promise<void>; 
 
 const noClose = async (): Promise<void> => {}
 
-export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools?: ToolSet, mcpServers?: RunMcpServer[], { system, screenshots, sessionId, effort }: ResolveModelOptions = {}): ResolvedModel {
+export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools?: ToolSet, mcpServers?: RunMcpServer[], { system, screenshots, sessionId, claudeSession, effort }: ResolveModelOptions = {}): ResolvedModel {
     const { provider, model } = pairFor(agent, override)
     // `wrapLanguageModel` runs the list from the end: the guard sits nearest the model, so no other
     // middleware ever reads a fake tool call, the card tags go next, and the quick replies read the
@@ -474,7 +499,7 @@ export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools
     }
     if (provider === 'claude') {
         const capture = claudeContextCapture(agent.resolved.connection?.id)
-        const claude = claudeProvider(agent, tools, mcpServers, capture, { system, screenshots, effort, claudeTools: agent.config.tools.web ? CLAUDE_RUN_TOOLS : [] }).languageModel(model)
+        const claude = claudeProvider(agent, tools, mcpServers, capture, { system, screenshots, claudeSession, effort, claudeTools: agent.config.tools.web ? CLAUDE_RUN_TOOLS : [] }).languageModel(model)
         return { model: wrapLanguageModel({ model: claude, middleware: [claudeScreenshotMiddleware, replies.middleware, cardTags, guard] }), close: noClose, contextUsage: capture.read, quickReplies: replies.read }
     }
     // OpenCode runs in Lumvika's own loop, on the SDK of whichever format the model is served on.

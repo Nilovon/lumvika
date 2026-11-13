@@ -82,6 +82,13 @@ describe('callTargetsOf', () => {
     it('offers nobody to someone who reaches no other coworker', async () => {
         expect(callTargetsOf(await agents(), 'agent-a', [])).toEqual([])
     })
+
+    // The roster is part of the tool's description, and a reordered tool breaks every cached prompt.
+    it('lists the coworkers in the same order whatever order the index comes back in', async () => {
+        const index = await agents()
+        expect(callTargetsOf([...index].reverse(), 'agent-a').map(a => a.id)).toEqual(callTargetsOf(index, 'agent-a').map(a => a.id))
+        expect(callTargetsOf([...index].reverse(), 'agent-a').map(a => a.id)).toEqual(['agent-b', 'agent-c'])
+    })
 })
 
 describe('call_agent for someone kept out of a Box', () => {

@@ -8,7 +8,7 @@ import { repairBoxDefault } from '../agents/availability.js'
 import { codexCommand, codexOffPin, parseCodexVersion } from '../runtime/codex-cli.js'
 import { recordCliModels } from './cli-models.js'
 import { ensureCodexAuth, syncCodexAuth } from './codex-auth.js'
-import { planLimitWindowsFromCodex, recordPlanLimits, type CodexRateLimits } from './plan-limits.js'
+import { PROBE_FAILED, planLimitsFromCodex, recordPlanLimitsReading, type CodexRateLimits } from './plan-limits.js'
 import type { LoadedConnection } from './types.js'
 
 const READ_TIMEOUT_MS = 8000
@@ -106,11 +106,14 @@ export function refreshCodexPlanLimits(connection: LoadedConnection | null): Pro
         const session = await readCodexSession(connection.id)
         // The CLI may have rotated the token while it was up, exactly as it does during a run.
         await syncCodexAuth(connection)
-        recordPlanLimits(connection.id, planLimitWindowsFromCodex(session?.rateLimits ?? null))
+        recordPlanLimitsReading(connection.id, planLimitsFromCodex(session?.rateLimits) ?? PROBE_FAILED)
         if (session) recordCliModels(connection.id, session.models, session.version, codexOffPin(session.version))
         await repairBoxDefault(connection)
     })()
-        .catch(err => logger.warn({ connection: connection.id, err: (err as Error).message }, 'codex plan limits read failed'))
+        .catch(err => {
+            recordPlanLimitsReading(connection.id, PROBE_FAILED)
+            logger.warn({ connection: connection.id, err: (err as Error).message }, 'codex plan limits read failed')
+        })
         .finally(() => inFlight.delete(connection.id))
 
     inFlight.set(connection.id, task)

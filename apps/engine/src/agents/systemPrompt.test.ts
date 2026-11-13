@@ -6,7 +6,7 @@ process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-system-pro
 
 const { afterEach, describe, expect, it, vi } = await import('vitest')
 const { agentConfigSchema } = await import('@lumvika/contracts')
-const { buildSystemPrompt: buildSystemPromptBlocks, systemPromptText, currentTimeNote, nowBlock, userBlock, userLanguageBlock } = await import('./systemPrompt.js')
+const { buildSystemPrompt: buildSystemPromptBlocks, systemPromptText, currentTimeNote, nowBlock, userBlock, userLanguageBlock, workspaceStateBlock } = await import('./systemPrompt.js')
 
 // The tests read the prompt as the model does, both blocks joined.
 const buildSystemPrompt = async (...args: Parameters<typeof buildSystemPromptBlocks>) => systemPromptText(await buildSystemPromptBlocks(...args))
@@ -230,6 +230,14 @@ describe('current time', () => {
         expect(userBlock('Yassine')).toMatch(/^<user>\nYassine: the person you are talking to/)
         expect(userBlock('Yassine')).toContain('sign with it what goes out under their name')
         expect(userBlock(undefined)).toBe('')
+    })
+
+    it('hands the volatile block over in a turn as the latest state, and adds nothing without one', () => {
+        const block = workspaceStateBlock('<memory_index>\n- likes tea\n</memory_index>')
+        expect(block).toMatch(/^<workspace_state>\n/)
+        expect(block).toContain('replaces any earlier workspace_state block')
+        expect(block).toContain('<memory_index>\n- likes tea\n</memory_index>\n</workspace_state>')
+        expect(workspaceStateBlock('  ')).toBe('')
     })
 })
 

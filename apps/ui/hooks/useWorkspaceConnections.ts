@@ -70,6 +70,12 @@ export function refreshWorkspaceConnections(): Promise<void> {
     return refreshing
 }
 
+// A reading the usage view fetched on its own lands in every model pill too.
+export function mergePlanLimits(connectionId: string, planLimits: BoxConnection['planLimits']) {
+    if (!snapshot.connections.some(c => c.id === connectionId)) return
+    setState({ connections: snapshot.connections.map(c => (c.id === connectionId ? { ...c, planLimits } : c)) })
+}
+
 // `revalidate` is for the screen that manages the connections: it serves what the store holds and
 // asks again on every mount, so the dialog reopened later shows its providers at once and then
 // catches up. A model picker mounts with every tab and every composer swap, so it only asks when

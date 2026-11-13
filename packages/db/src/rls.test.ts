@@ -78,6 +78,17 @@ describe('row level security', () => {
             where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relrowsecurity`)
         expect(rows.map(row => row.table)).toEqual([])
     })
+
+    it('keeps the settings of the install away from every browser session', async () => {
+        await insertRows(serviceScope(), 'composio_auth_configs', { toolkit: `rls-probe-${randomUUID()}`, auth_config_id: 'ac_probe' })
+        for (const table of ['instance_settings', 'composio_auth_configs'] as const) {
+            for (const scope of [anonScope(), userScope(alice.id)]) {
+                const { data, error } = await selectMany(scope, table, ['updated_at'], {})
+                expect(data).toBeNull()
+                expect(error?.code).toBe('42501')
+            }
+        }
+    })
 })
 
 describe('raw SQL', () => {

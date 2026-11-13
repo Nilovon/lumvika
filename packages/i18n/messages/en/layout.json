@@ -139,6 +139,7 @@
         "brainProposals": "{count, plural, one {# proposal to review} other {# proposals to review}}",
         "aiProviders": "AI providers",
         "servers": "Servers",
+        "composio": "Composio",
         "billing": "Billing",
         "newWorkspace": "New workspace",
         "templates": "Templates",

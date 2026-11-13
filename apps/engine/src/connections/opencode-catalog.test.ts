@@ -130,14 +130,14 @@ describe('planLimitWindowsFromOpencode', () => {
             },
         }
         expect(planLimitWindowsFromOpencode(body)).toEqual([
-            { kind: 'session', label: null, usedPercent: 12, resetsAt: '2026-11-04T20:00:00Z' },
-            { kind: 'weekly', label: null, usedPercent: 40, resetsAt: '2026-11-09T00:00:00Z' },
-            { kind: 'monthly', label: null, usedPercent: 5, resetsAt: null },
+            { id: 'rolling', kind: 'session', label: null, usedPercent: 12, resetsAt: '2026-11-04T20:00:00Z', windowDurationMins: 300 },
+            { id: 'weekly', kind: 'weekly', label: null, usedPercent: 40, resetsAt: '2026-11-09T00:00:00Z', windowDurationMins: 10080 },
+            { id: 'monthly', kind: 'monthly', label: null, usedPercent: 5, resetsAt: null, windowDurationMins: null },
         ])
     })
 
     it('reads a window OpenCode says is spent as full', () => {
-        expect(planLimitWindowsFromOpencode({ usage: { weekly: { status: 'limited', percent: 97 } } })).toEqual([{ kind: 'weekly', label: null, usedPercent: 100, resetsAt: null }])
+        expect(planLimitWindowsFromOpencode({ usage: { weekly: { status: 'limited', percent: 97 } } })).toEqual([{ id: 'weekly', kind: 'weekly', label: null, usedPercent: 100, resetsAt: null, windowDurationMins: 10080 }])
     })
 
     it('never throws on a shape it does not know', () => {
@@ -165,7 +165,7 @@ describe('refreshOpencodePlanLimits', () => {
         await refreshOpencodePlanLimits(connection())
         expect(fetchMock.mock.calls[0][0]).toBe('https://opencode.ai/zen/go/v1/usage')
         expect(new Headers((fetchMock.mock.calls[0][1] as RequestInit).headers).get('authorization')).toBe('Bearer oc_sk_k')
-        expect(readPlanLimits('oc-1')?.windows).toEqual([{ kind: 'session', label: null, usedPercent: 30, resetsAt: null }])
+        expect(readPlanLimits('oc-1')?.windows).toEqual([{ id: 'rolling', kind: 'session', label: null, usedPercent: 30, resetsAt: null, windowDurationMins: 300 }])
     })
 
     it('asks once for two callers, and not at all without a key or for another provider', async () => {

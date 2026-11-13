@@ -10,6 +10,7 @@ const openPendingGrant = vi.fn()
 vi.mock('@/lib/oauth/pending-grant', () => ({ openPendingGrant: (...args: unknown[]) => openPendingGrant(...args) }))
 vi.mock('@/app/api/_services/custom-mcp.service', () => ({ getCustomMcpServer: (...args: unknown[]) => getCustomMcpServer(...args) }))
 vi.mock('@/app/api/_services/services.service', () => ({ getServiceDetails: vi.fn(), loadManifest: vi.fn() }))
+vi.mock('@/lib/composio/settings', () => ({ resolveAuthConfigId: async (composio: { authConfigId: string }) => composio.authConfigId }))
 vi.mock('@/lib/composio/client', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/composio/client')>()), composioConfigured: () => true, initiateConnectedAccount: vi.fn() }))
 vi.mock('@/lib/mcp-oauth', async importOriginal => ({
     ...(await importOriginal<typeof import('@/lib/mcp-oauth')>()),
