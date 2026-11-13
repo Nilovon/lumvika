@@ -40,7 +40,8 @@
     "row": {
         "due": "Fällig am {date}",
         "overdue": "Überfällig seit {date}",
-        "workingShort": "Arbeitet"
+        "workingShort": "Arbeitet",
+        "failedShort": "Fehlgeschlagen"
     },
     "blocked": {
         "title": "Warum ist {ref} blockiert?",
@@ -67,6 +68,11 @@
         "assignedTo": "Zugewiesen an {name}",
         "workingSince": "Begonnen {time}",
         "openConversation": "Unterhaltung öffnen",
+        "runFailedTitle": "{name} konnte nicht an diesem Ticket arbeiten",
+        "runFailedReason": "{reason, select, no_model {Es steht kein nutzbares KI-Modell zur Verfügung. Verbinde eines in seinen Einstellungen und versuche es dann erneut.} coworker_disabled {Er ist ausgeschaltet. Schalte ihn wieder ein und versuche es dann erneut.} cancelled {Sein Lauf wurde gestoppt, bevor er fertig war.} other {Sein Lauf ist mit einem Fehler abgebrochen. Die Unterhaltung zeigt, was passiert ist.}}",
+        "retry": "Erneut versuchen",
+        "retryStarted": "{name} legt noch einmal los",
+        "retryRefused": "{refusal, select, not_failed {Dieses Ticket hat sich inzwischen geändert, deshalb wurde nichts gestartet.} not_allowed {Du kannst {name} nicht nutzen und ihn deshalb nicht wecken. Frag jemanden, der es kann.} paused {{name} wartet in seiner Unterhaltung auf eine Antwort. Antworte stattdessen dort.} outdated {Die Maschine dieses Workspaces ist zu alt, um Coworker an Tickets arbeiten zu lassen. Aktualisiere sie und versuche es dann erneut.} unreachable {Die Maschine dieses Workspaces antwortet gerade nicht. Versuche es gleich noch einmal.} no_engine {Noch läuft keine Maschine für diesen Workspace, deshalb können Coworker nicht an Tickets arbeiten.} busy {{name} arbeitet gerade an einem anderen Ticket. Versuche es erneut, sobald er fertig ist.} disabled {{name} ist ausgeschaltet. Schalte ihn wieder ein und versuche es dann erneut.} other {{name} konnte nicht starten. Versuche es gleich noch einmal.}}",
         "blockedTitle": "Blockiert",
         "blockedNoReason": "Es wurde kein Grund angegeben.",
         "subIssues": "Unter-Tickets",
@@ -110,6 +116,7 @@
         "commentEdited": "{actor} hat einen Kommentar bearbeitet",
         "checkedOut": "{actor} hat mit der Arbeit begonnen",
         "released": "{actor} hat die Arbeit beendet",
+        "runFailed": "{actor} konnte nicht daran arbeiten",
         "updated": "{actor} hat das Ticket bearbeitet"
     },
     "create": {

@@ -68,6 +68,7 @@
         "issueCommentEdited": "<who>{actor}</who> edited a comment on <link>{target}</link>",
         "issueCheckedOut": "<who>{actor}</who> started working on <link>{target}</link>",
         "issueReleased": "<who>{actor}</who> stopped working on <link>{target}</link>",
+        "issueRunFailed": "<who>{actor}</who> could not work on <link>{target}</link>",
         "goalCreated": "<who>{actor}</who> created the goal <link>{target}</link>",
         "goalUpdated": "<who>{actor}</who> updated the goal <link>{target}</link>",
         "goalStatusChanged": "<who>{actor}</who> moved the goal <link>{target}</link> from {from} to {to}",

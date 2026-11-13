@@ -62,6 +62,7 @@
         "issueCommentEdited": "<who>{actor}</who> hat einen Kommentar zu <link>{target}</link> bearbeitet",
         "issueCheckedOut": "<who>{actor}</who> hat mit der Arbeit an <link>{target}</link> begonnen",
         "issueReleased": "<who>{actor}</who> hat die Arbeit an <link>{target}</link> beendet",
+        "issueRunFailed": "<who>{actor}</who> konnte nicht an <link>{target}</link> arbeiten",
         "goalCreated": "<who>{actor}</who> hat das Ziel <link>{target}</link> erstellt",
         "goalUpdated": "<who>{actor}</who> hat das Ziel <link>{target}</link> aktualisiert",
         "goalStatusChanged": "<who>{actor}</who> hat das Ziel <link>{target}</link> von {from} auf {to} gesetzt",

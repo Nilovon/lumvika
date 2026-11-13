@@ -5,7 +5,10 @@ import { IssuePriorityIndicator } from '@/components/issues/IssuePriorityIndicat
 import { IssueStatusBadge } from '@/components/issues/IssueStatusBadge'
 import { WorkMemberAvatar } from '@/components/issues/WorkMemberAvatar'
 import { cn } from '@/lib/utils'
+import { shownRunFailure } from '@/lib/work/run-failure'
 import type { IssueSummary } from '@lumvika/contracts'
+import { Badge } from '@lumvika/ui/primitives'
+import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
 export type IssueRowProps = {
@@ -22,7 +25,9 @@ export type IssueRowProps = {
 // due date and who holds it. On a row narrower than `lg` (a phone, a narrow card) the details wrap
 // under the title.
 export function IssueRow({ issue, onOpen, status, leading, className }: IssueRowProps) {
+    const t = useTranslations('issues.row')
     const working = !!issue.checkoutRunId && issue.assignee?.kind === 'agent'
+    const failed = !!shownRunFailure(issue)
     const content = (
         <>
             <IssuePriorityIndicator priority={issue.priority} className="@max-lg:hidden" />
@@ -43,6 +48,11 @@ export function IssueRow({ issue, onOpen, status, leading, className }: IssueRow
                 {issue.dueDate && <IssueDueDate dueDate={issue.dueDate} status={issue.status} />}
                 {status ?? <IssueStatusBadge status={issue.status} />}
             </span>
+            {failed && (
+                <Badge size="xs" tone="red" glow={false} className="shrink-0 font-medium">
+                    {t('failedShort')}
+                </Badge>
+            )}
             <WorkMemberAvatar member={issue.assignee} size="sm" working={working} className="shrink-0" />
         </>
     )

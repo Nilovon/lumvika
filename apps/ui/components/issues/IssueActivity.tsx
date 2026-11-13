@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { issueStatusSchema, workMemberRefSchema, type ActivityEvent } from '@lumvika/contracts'
 import { fullDateTime, shortRelativeTime } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 // What happened to the issue, oldest first, each line signed by who did it.
 export function IssueActivity({ events }: { events: ActivityEvent[] | null }) {
@@ -27,6 +28,12 @@ export function IssueActivity({ events }: { events: ActivityEvent[] | null }) {
         )
     }
     if (events.length === 0) return <p className="text-xs text-muted-foreground">{t('empty')}</p>
+
+    const loadingName = (event: ActivityEvent): boolean => {
+        if (labelOf(event.actor)?.loading) return true
+        const assignee = event.action === 'issue.assigned' ? workMemberRefSchema.safeParse(event.metadata.assignee) : null
+        return !!assignee?.success && !!labelOf(assignee.data)?.loading
+    }
 
     const sentence = (event: ActivityEvent): string => {
         const actor = labelOf(event.actor)?.name ?? ''
@@ -53,6 +60,8 @@ export function IssueActivity({ events }: { events: ActivityEvent[] | null }) {
                 return t('checkedOut', { actor })
             case 'issue.released':
                 return t('released', { actor })
+            case 'issue.run_failed':
+                return t('runFailed', { actor })
             default:
                 return t('updated', { actor })
         }
@@ -66,7 +75,7 @@ export function IssueActivity({ events }: { events: ActivityEvent[] | null }) {
                         <WorkMemberAvatar member={event.actor.kind === 'system' ? null : event.actor} size="xs" />
                     </span>
                     <span className="min-w-0 flex-1 text-muted-foreground">
-                        <span className="text-foreground">{sentence(event)}</span>
+                        {loadingName(event) ? <NameSkeleton className="w-40 max-w-full" /> : <span className="text-foreground">{sentence(event)}</span>}
                         <time dateTime={event.createdAt} title={fullDateTime(event.createdAt, locale)} className="ml-1.5 whitespace-nowrap">
                             {shortRelativeTime(event.createdAt, locale)}
                         </time>

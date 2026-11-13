@@ -6,6 +6,7 @@ import { IssueComments } from '@/components/issues/IssueComments'
 import { IssueDescriptionEditor } from '@/components/issues/IssueDescriptionEditor'
 import { IssueDetailSkeleton } from '@/components/issues/IssueDetailSkeleton'
 import { IssueProperties } from '@/components/issues/IssueProperties'
+import { IssueRunFailedBanner } from '@/components/issues/IssueRunFailedBanner'
 import { IssueStatusBadge } from '@/components/issues/IssueStatusBadge'
 import { IssueSubIssues } from '@/components/issues/IssueSubIssues'
 import { IssueTitleEditor } from '@/components/issues/IssueTitleEditor'
@@ -19,6 +20,7 @@ import { Dialog, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertTriangleIcon, LinkIcon, TicketIcon } from '@/lib/icons'
+import { shownRunFailure } from '@/lib/work/run-failure'
 import { parseIssueRef, type IssueStatus, type IssueSummary } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -54,6 +56,7 @@ function IssueDetailBody({ issueRef, onIssueChange, onOpenIssue }: { issueRef: s
     const detail = useIssueDetail(issueRef, onIssueChange)
     const [tab, setTab] = useState<'comments' | 'activity'>('comments')
     const [askingReason, setAskingReason] = useState(false)
+    const [retriedRunId, setRetriedRunId] = useState<string | null>(null)
 
     // Described in every state, the skeleton included: the dialog announces its content before it arrives.
     const description = <DialogDescription className="sr-only">{t('srDescription', { ref: issueRef })}</DialogDescription>
@@ -76,6 +79,7 @@ function IssueDetailBody({ issueRef, onIssueChange, onOpenIssue }: { issueRef: s
     }
 
     const issue = detail.state.issue
+    const runFailure = shownRunFailure(issue)
     const changeStatus = (status: IssueStatus) => {
         if (status === 'blocked') setAskingReason(true)
         else void detail.setStatus(status)
@@ -112,7 +116,7 @@ function IssueDetailBody({ issueRef, onIssueChange, onOpenIssue }: { issueRef: s
                 </aside>
 
                 <div className="flex flex-col gap-6 px-4 py-4 md:order-first md:overflow-y-auto">
-                    <IssueWorkingBanner issue={issue} />
+                    {runFailure && runFailure.runId !== retriedRunId ? <IssueRunFailedBanner issue={issue} failure={runFailure} onRetried={() => setRetriedRunId(runFailure.runId)} /> : <IssueWorkingBanner issue={issue} />}
                     {issue.status === 'blocked' && (
                         <Alert variant="danger">
                             <AlertTriangleIcon />

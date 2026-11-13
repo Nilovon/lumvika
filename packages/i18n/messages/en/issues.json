@@ -5,7 +5,10 @@
         "detail.done": "Button that closes the field for adding sub-issues, not the Done status.",
         "row.workingShort": "Short label on a board card while an AI coworker works on the issue.",
         "activity.checkedOut": "{actor} is usually an AI coworker that picked the issue up.",
-        "create.coworkerHint": "Shown when the new issue is assigned to an AI coworker."
+        "create.coworkerHint": "Shown when the new issue is assigned to an AI coworker.",
+        "row.failedShort": "Short label on a board card when the AI coworker's last run on the issue failed.",
+        "detail.runFailedReason": "Second line of the banner shown when an AI coworker's run on the issue failed. {reason} is why: no_model (no AI model connected), coworker_disabled, cancelled (someone stopped the run), other (an error).",
+        "detail.retryRefused": "Toast when Try again could not wake the AI coworker. {name} is the coworker, {refusal} why. \"Machine\" is the server that runs the workspace's coworkers."
     },
     "status": {
         "backlog": "Backlog",
@@ -48,7 +51,8 @@
     "row": {
         "due": "Due {date}",
         "overdue": "Overdue since {date}",
-        "workingShort": "Working"
+        "workingShort": "Working",
+        "failedShort": "Failed"
     },
     "blocked": {
         "title": "Why is {ref} blocked?",
@@ -75,6 +79,11 @@
         "assignedTo": "Assigned to {name}",
         "workingSince": "Started {time}",
         "openConversation": "Open conversation",
+        "runFailedTitle": "{name} could not work on this issue",
+        "runFailedReason": "{reason, select, no_model {It has no AI model it can use. Connect one in its settings, then try again.} coworker_disabled {It is switched off. Switch it back on, then try again.} cancelled {Its run was stopped before it finished.} other {Its run stopped with an error. The conversation shows what happened.}}",
+        "retry": "Try again",
+        "retryStarted": "{name} is starting on it again",
+        "retryRefused": "{refusal, select, not_failed {This issue changed in the meantime, so nothing was started.} not_allowed {You cannot use {name}, so you cannot wake it. Ask someone who can.} paused {{name} is waiting for an answer in its conversation. Answer there instead.} outdated {This workspace's machine is too old to run coworkers on issues. Update it, then try again.} unreachable {This workspace's machine does not answer right now. Try again in a moment.} no_engine {No machine runs this workspace yet, so coworkers cannot work on issues.} busy {{name} is working on another issue right now. Try again once it is done.} disabled {{name} is switched off. Switch it back on, then try again.} other {{name} could not start. Try again in a moment.}}",
         "blockedTitle": "Blocked",
         "blockedNoReason": "No reason was given.",
         "subIssues": "Sub-issues",
@@ -118,6 +127,7 @@
         "commentEdited": "{actor} edited a comment",
         "checkedOut": "{actor} started working on it",
         "released": "{actor} stopped working on it",
+        "runFailed": "{actor} could not work on it",
         "updated": "{actor} edited the issue"
     },
     "create": {

@@ -4,7 +4,9 @@ import { IssueDueDate } from '@/components/issues/IssueDueDate'
 import { IssuePriorityIndicator } from '@/components/issues/IssuePriorityIndicator'
 import { WorkMemberAvatar } from '@/components/issues/WorkMemberAvatar'
 import { cn } from '@/lib/utils'
+import { shownRunFailure } from '@/lib/work/run-failure'
 import type { IssueSummary } from '@lumvika/contracts'
+import { Badge } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
@@ -19,6 +21,7 @@ export type IssueCardProps = {
 export function IssueCard({ issue, action, className }: IssueCardProps) {
     const t = useTranslations('issues.row')
     const working = !!issue.checkoutRunId && issue.assignee?.kind === 'agent'
+    const failed = !!shownRunFailure(issue)
 
     return (
         <div className={cn('flex flex-col gap-2 rounded-md border border-border bg-card px-2.5 py-2 shadow-xs', className)}>
@@ -35,6 +38,11 @@ export function IssueCard({ issue, action, className }: IssueCardProps) {
                         <span aria-hidden className="size-1.5 shrink-0 animate-pulse rounded-full bg-cyan-500" />
                         <span className="truncate">{t('workingShort')}</span>
                     </span>
+                )}
+                {failed && (
+                    <Badge size="xs" tone="red" glow={false} className="min-w-0 font-medium">
+                        <span className="truncate">{t('failedShort')}</span>
+                    </Badge>
                 )}
                 <WorkMemberAvatar member={issue.assignee} size="sm" working={working} className="ml-auto shrink-0" />
             </div>

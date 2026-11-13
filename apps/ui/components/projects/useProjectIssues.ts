@@ -93,6 +93,17 @@ export function useProjectIssues(projectId: string | null, projectKey: string) {
         onResync: () => void reload(),
     })
 
+    // A coworker's run that failed before it took an issue changes nothing on the issue's row: the
+    // card learns it from the log.
+    useRealtimeSubscription('activity_events', {
+        channelId: `project-run-failures-${projectId}`,
+        enabled: !!projectId,
+        filter: projectId ? { column: 'project_id', value: projectId } : undefined,
+        onInsert: row => {
+            if (row.action === 'issue.run_failed') void reload()
+        },
+    })
+
     const track = async <T extends { ok: boolean }>(issueId: string, run: () => Promise<T>): Promise<T> => {
         pending.current.set(issueId, (pending.current.get(issueId) ?? 0) + 1)
         try {

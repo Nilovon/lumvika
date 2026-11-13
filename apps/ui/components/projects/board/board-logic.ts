@@ -1,6 +1,7 @@
 import { canTransitionIssue, type IssueStatus, type IssueSummary } from '@lumvika/contracts'
 
 import { BOARD_STATUSES } from '@/components/issues/issue-status'
+import { keepRunFailure } from '@/lib/work/run-failure'
 
 // The room the server leaves between two cards (ISSUE_POSITION_STEP of issues.service).
 export const POSITION_STEP = 1024
@@ -61,7 +62,7 @@ export function moveLocally(issues: readonly IssueSummary[], issueId: string, st
 export function upsertIssue(issues: readonly IssueSummary[], next: IssueSummary): IssueSummary[] {
     const index = issues.findIndex(issue => issue.id === next.id)
     if (index === -1) return [...issues, next]
-    return issues.map(issue => (issue.id === next.id ? next : issue))
+    return issues.map(issue => (issue.id === next.id ? keepRunFailure(next, issue) : issue))
 }
 
 // The totals once a card left `from` and arrived in `to` (null: it appeared, or went away).

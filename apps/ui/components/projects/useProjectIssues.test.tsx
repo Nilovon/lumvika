@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/app/api/_actions/issues.actions', () => ({ listProjectIssuesAction: mocks.list, moveIssueAction: mocks.move, getIssueAction: mocks.get, transitionIssueAction: vi.fn(), createIssueAction: vi.fn() }))
-vi.mock('@/supabase/useRealtimeSubscription', () => ({ useRealtimeSubscription: (_table: string, options: { onUpdate: (row: Record<string, unknown>) => void }) => void (mocks.feed.onUpdate = options.onUpdate) }))
+vi.mock('@/supabase/useRealtimeSubscription', () => ({ useRealtimeSubscription: (table: string, options: { onUpdate: (row: Record<string, unknown>) => void }) => void (table === 'issues' && (mocks.feed.onUpdate = options.onUpdate)) }))
 const errorText = () => 'Refused'
 vi.mock('@/hooks/useErrorText', () => ({ useErrorText: () => errorText }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))

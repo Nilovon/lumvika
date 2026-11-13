@@ -152,6 +152,7 @@
         "signedOut": "{provider} hat {account, select, none {eines deiner Konten} other {{account}}} abgemeldet. Verbinde es unter Einstellungen → Apps neu, damit deine Coworker es wieder nutzen können.",
         "budgetExhausted": "Dein Lumvika Guthaben für diesen Monat ist aufgebraucht. Geplante und ausgelöste Ausführungen mit Lumvika Modellen sind pausiert, und Coworker können keine Leads, SEO- oder Social-Daten kaufen, bis es zurückgesetzt wird oder du Guthaben auflädst.",
         "issueInReview": "{agentName} hat {ref} „{title}“ zur Prüfung verschoben.",
-        "issueBlocked": "{agentName} kommt bei {ref} „{title}“ nicht weiter: {reason}"
+        "issueBlocked": "{agentName} kommt bei {ref} „{title}“ nicht weiter: {reason}",
+        "issueRunFailed": "{agentName} konnte nicht an {ref} „{title}“ arbeiten: {reason, select, no_model {Es steht kein nutzbares KI-Modell zur Verfügung} coworker_disabled {Der Coworker ist ausgeschaltet} cancelled {Der Lauf wurde gestoppt} other {Der Lauf ist fehlgeschlagen}}."
     }
 }

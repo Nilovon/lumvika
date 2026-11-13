@@ -13,6 +13,7 @@ import {
 } from '@/app/api/_actions/issues.actions'
 import { issueCommentOfRow } from '@/components/issues/issue-mappers'
 import { useErrorText } from '@/hooks/useErrorText'
+import { keepRunFailure } from '@/lib/work/run-failure'
 import { useRealtimeSubscription } from '@/supabase/useRealtimeSubscription'
 import type { ActivityEvent, IssueComment, IssueDetail, IssueStatus, IssueSummary, UpdateIssueInput, WorkMemberRef } from '@lumvika/contracts'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -95,6 +96,15 @@ export function useIssueDetail(issueRef: string | null, onIssueChange?: (issue: 
         onUpdate: scheduleRefresh,
     })
 
+    // A coworker's run that failed before it took the issue changes nothing on the issue's row: its
+    // failure arrives as an event of the log.
+    useRealtimeSubscription('activity_events', {
+        channelId: `issue-activity-${issueId}`,
+        enabled: !!issueId,
+        filter: issueId ? { column: 'issue_id', value: issueId } : undefined,
+        onInsert: scheduleRefresh,
+    })
+
     useRealtimeSubscription('issue_comments', {
         channelId: `issue-comments-${issueId}`,
         enabled: !!issueId,
@@ -111,7 +121,7 @@ export function useIssueDetail(issueRef: string | null, onIssueChange?: (issue: 
     })
 
     const applySummary = (summary: IssueSummary) => {
-        setState(current => (current.status === 'ready' && current.issue.id === summary.id ? { status: 'ready', issue: { ...current.issue, ...summary } } : current))
+        setState(current => (current.status === 'ready' && current.issue.id === summary.id ? { status: 'ready', issue: { ...current.issue, ...keepRunFailure(summary, current.issue) } } : current))
         onChangeRef.current?.(summary)
     }
 

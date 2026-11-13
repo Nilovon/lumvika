@@ -28,6 +28,7 @@ export const SENTENCE_KEYS = {
     'issue.comment_edited': 'issueCommentEdited',
     'issue.checked_out': 'issueCheckedOut',
     'issue.released': 'issueReleased',
+    'issue.run_failed': 'issueRunFailed',
     'goal.created': 'goalCreated',
     'goal.updated': 'goalUpdated',
     'goal.status_changed': 'goalStatusChanged',
