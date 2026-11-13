@@ -141,9 +141,9 @@ Without the key, the Steward skips the onboarding and runs on the AI you connect
 
 ## A Composio app does not connect
 
-**"Composio connections are not configured on this server"**: set `COMPOSIO_API_KEY` and run `docker compose up -d`.
+**"Composio connections are not configured on this server"**: add the API key under **Composio** in the workspace menu, or set `COMPOSIO_API_KEY` in `.env` and run `docker compose up -d`.
 
-**An error from Composio when you click Connect**: the service has no auth config of yours yet. The ids shipped in the catalog are empty. Create one in Composio and write its id on the service. See [Composio](/self-host/services#composio).
+**"… needs a Composio auth config"** or **an error from Composio when you click Connect**: the app has no auth config of yours yet. The ids shipped in the catalog are empty. Pick or create one under **Composio** in the workspace menu. See [Composio](/self-host/services#composio).
 
 ## The screen does not show
 

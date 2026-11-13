@@ -13,7 +13,7 @@ A self-hosted Lumvika has no back office. You administer it with one variable, a
 ADMIN_EMAILS=you@example.com,ops@example.com
 ```
 
-Admins see a few extra switches in the app. After changing the list, run `docker compose up -d`.
+Admins see a few extra switches in the app, and **Composio** in the workspace menu, where they connect the install to Composio (see [Composio](/self-host/services#composio)). After changing the list, run `docker compose up -d`.
 
 There is no `/admin` page in the open source build. Everything else goes through the database.
 
@@ -44,6 +44,8 @@ The tables that matter:
 | `engine_pool` | One row per attached server: `engine_host`, `engine_api_key` and `claimed_by_workspace_id` |
 | `engine_pairing_tokens` | Pairing tokens, stored hashed, with `expires_at` and `used_at` |
 | `services` | The catalog: `slug`, `name`, `enabled`, `manifest`, `embedding` |
+| `instance_settings` | Settings of the install saved from the app, such as the Composio API key |
+| `composio_auth_configs` | The Composio auth config each toolkit uses, set from the Composio panel |
 
 The `agents` table is only an index. What a coworker knows and does lives on its server, in the data-dir. See [What is stored where](/self-host/overview#what-is-stored-where).
 

@@ -73,7 +73,10 @@
         "subscriptionOffer.arguments.unplug.label": "Selling point: the subscription can be disconnected at any time.",
         "subscriptionOffer.key.add": "Button: save the pasted API key.",
         "viewSettings.groupByRequired": "Form error of a board view: the user must pick the column whose distinct values become the board's columns.",
-        "newBox.suggestedNames": "Box names offered as chips under the Box name field: a Box groups coworkers by company division. Short, one or two words, title case where the language uses it."
+        "newBox.suggestedNames": "Box names offered as chips under the Box name field: a Box groups coworkers by company division. Short, one or two words, title case where the language uses it.",
+        "composio.key.fromApp": "{hint} is the last four characters of the API key.",
+        "composio.services.toolkitReady": "{toolkit} is a Composio toolkit slug such as gmail, {authConfigId} an id such as ac_12ab.",
+        "composio.service.optionManaged": "{name} is the name of an auth config in Composio. Composio's app = the OAuth app Composio provides."
     },
     "account": {
         "emailUpdated": "Email updated",
@@ -751,6 +754,79 @@
             "opencodeDetail": "Your coworkers now run on your OpenCode Go plan.",
             "keyDetail": "Your coworkers now run on this key.",
             "done": "Done"
+        }
+    },
+    "composio": {
+        "title": "Composio",
+        "description": "Connect Google, Microsoft and other apps through your own Composio project, for every workspace of this install.",
+        "back": "Back",
+        "loadFailed": "The Composio settings could not be read.",
+        "retry": "Try again",
+        "groups": {
+            "connection": "Connection",
+            "services": "Apps"
+        },
+        "key": {
+            "title": "API key",
+            "connected": "Connected",
+            "notConnected": "Not connected",
+            "fromEnvironment": "Set in the server environment (COMPOSIO_API_KEY)",
+            "fromApp": "Saved in Lumvika, ends in {hint}",
+            "fromAppNoHint": "Saved in Lumvika",
+            "missing": "Apps that sign in through Composio stay off until a key is added.",
+            "namespace": "Accounts are kept apart under the namespace {namespace}.",
+            "connect": "Add key",
+            "change": "Change",
+            "remove": "Remove",
+            "environmentOnly": "Change COMPOSIO_API_KEY in .env, then restart the app"
+        },
+        "keyPage": {
+            "title": "Composio API key",
+            "hint": "From the settings of your Composio project",
+            "label": "API key",
+            "placeholder": "Paste the API key",
+            "help": "Open the <link>Composio dashboard</link>, pick your project and copy its API key. It stays on this server and never reaches a coworker.",
+            "save": "Save key",
+            "saved": "Composio connected"
+        },
+        "removeKey": {
+            "title": "Remove the Composio key?",
+            "description": "Apps connected through Composio stop working for every coworker of this install until a key is saved again. The accounts stay in your Composio project.",
+            "confirm": "Remove",
+            "removed": "Composio key removed"
+        },
+        "services": {
+            "empty": "No app of the catalog signs in through Composio.",
+            "needsKey": "Add an API key first, then set up the apps you want.",
+            "ready": "Ready",
+            "notSetUp": "Not set up",
+            "off": "Off",
+            "toolkitReady": "{toolkit} · {authConfigId}",
+            "toolkitMissing": "{toolkit} · needs an auth config"
+        },
+        "service": {
+            "hint": "Composio toolkit {toolkit}",
+            "current": "Auth config in use",
+            "fromApp": "Set in Lumvika",
+            "fromCatalog": "Comes with the catalog",
+            "none": "None yet. Pick or create one below.",
+            "off": "This app is switched off in the catalog, so coworkers do not see it.",
+            "pickLabel": "Auth configs of your Composio project",
+            "pickPlaceholder": "Pick an auth config",
+            "noneInProject": "Your Composio project has no auth config for {toolkit} yet.",
+            "optionManaged": "{name} · Composio's app",
+            "optionCustom": "{name} · your own app",
+            "use": "Use",
+            "createTitle": "Create one with Composio's app",
+            "createHint": "The quickest way: Composio signs people in with its own OAuth app, nothing to set up. Some apps need your own OAuth app instead: create the auth config in the Composio dashboard, then pick it above.",
+            "create": "Create",
+            "manualLabel": "Or paste an auth config id",
+            "manualPlaceholder": "ac_...",
+            "save": "Save",
+            "clear": "Clear",
+            "clearDisabled": "Only an id set in Lumvika can be cleared",
+            "saved": "{name} is ready to connect",
+            "cleared": "Auth config cleared"
         }
     }
 }

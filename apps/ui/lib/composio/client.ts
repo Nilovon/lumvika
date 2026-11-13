@@ -11,16 +11,30 @@
 // An extra account of an app (registry key `<slug>@<instanceId>`) gets its own user_id, suffixed
 // with the instance id, so Composio holds one connected account per instance.
 
+import { composioApiKey } from '@/lib/composio/settings'
+
 const COMPOSIO_API_BASE = 'https://backend.composio.dev/api/v3.1'
 
 const TOOLS_CACHE_TTL_MS = 10 * 60 * 1000
 
 export class ComposioApiError extends Error {
     status: number
+    // Composio's own explanation (`error.message` of its answer), when it gave one.
+    reason: string | null
 
-    constructor(status: number, message: string) {
+    constructor(status: number, message: string, reason: string | null = null) {
         super(message)
         this.status = status
+        this.reason = reason
+    }
+}
+
+function reasonOf(detail: string): string | null {
+    try {
+        const parsed = JSON.parse(detail) as { error?: { message?: unknown } }
+        return typeof parsed.error?.message === 'string' ? parsed.error.message.slice(0, 300) : null
+    } catch {
+        return null
     }
 }
 
@@ -29,20 +43,21 @@ export function composioUserId(agentId: string, instanceId?: string): string {
     return instanceId ? `${base}_${instanceId}` : base
 }
 
-export function composioConfigured(): boolean {
-    return Boolean(process.env.COMPOSIO_API_KEY)
+export async function composioConfigured(): Promise<boolean> {
+    return Boolean(await composioApiKey())
 }
 
-async function composioFetch<T>(path: string, init?: RequestInit): Promise<T> {
-    const key = process.env.COMPOSIO_API_KEY
-    if (!key) throw new ComposioApiError(500, 'COMPOSIO_API_KEY is not configured on this server.')
+// `apiKey` checks a key an admin is about to save; every other call uses the install's own.
+async function composioFetch<T>(path: string, init?: RequestInit, apiKey?: string): Promise<T> {
+    const key = apiKey ?? (await composioApiKey())
+    if (!key) throw new ComposioApiError(500, 'Composio is not configured on this server.')
     const res = await fetch(`${COMPOSIO_API_BASE}${path}`, {
         ...init,
         headers: { 'x-api-key': key, 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     })
     if (!res.ok) {
         const detail = await res.text().catch(() => '')
-        throw new ComposioApiError(res.status, `Composio ${init?.method ?? 'GET'} ${path} failed (${res.status})${detail ? `: ${detail.slice(0, 300)}` : ''}`)
+        throw new ComposioApiError(res.status, `Composio ${init?.method ?? 'GET'} ${path} failed (${res.status})${detail ? `: ${detail.slice(0, 300)}` : ''}`, reasonOf(detail))
     }
     return (await res.json()) as T
 }
@@ -125,4 +140,57 @@ export async function executeTool(toolSlug: string, userId: string, args: Record
         body: JSON.stringify({ user_id: userId, arguments: args }),
     })
     return { successful: Boolean(data.successful), data: data.data ?? null, error: data.error ?? null }
+}
+
+export type ComposioAuthConfig = {
+    id: string
+    name: string
+    toolkit: string
+    authScheme: string | null
+    composioManaged: boolean
+    enabled: boolean
+}
+
+type ComposioAuthConfigRow = { id?: string; name?: string; status?: string; auth_scheme?: string; is_composio_managed?: boolean; toolkit?: { slug?: string } }
+
+const AUTH_CONFIGS_PAGE_SIZE = 200
+const AUTH_CONFIGS_MAX_PAGES = 20
+// The admin panel waits on these calls: a Composio that hangs answers an error instead.
+const ADMIN_CALL_TIMEOUT_MS = 10_000
+
+export async function listAuthConfigs(apiKey?: string): Promise<ComposioAuthConfig[]> {
+    const configs: ComposioAuthConfig[] = []
+    let cursor: string | null = null
+    for (let page = 0; page < AUTH_CONFIGS_MAX_PAGES; page++) {
+        const params = new URLSearchParams({ limit: String(AUTH_CONFIGS_PAGE_SIZE) })
+        if (cursor) params.set('cursor', cursor)
+        const body: { items?: ComposioAuthConfigRow[]; next_cursor?: string | null } = await composioFetch(`/auth_configs?${params.toString()}`, { signal: AbortSignal.timeout(ADMIN_CALL_TIMEOUT_MS) }, apiKey)
+        for (const row of body.items ?? []) {
+            if (!row.id) continue
+            configs.push({
+                id: row.id,
+                name: row.name ?? row.id,
+                toolkit: (row.toolkit?.slug ?? '').toLowerCase(),
+                authScheme: row.auth_scheme ?? null,
+                composioManaged: Boolean(row.is_composio_managed),
+                enabled: row.status !== 'DISABLED',
+            })
+        }
+        cursor = body.next_cursor ?? null
+        if (!cursor) break
+    }
+    return configs
+}
+
+// An auth config on Composio's own OAuth app: the quickest way to connect a toolkit, offered by
+// Composio for most of them. A toolkit it does not cover answers an error, and the admin creates
+// one with their own OAuth app in Composio's dashboard instead.
+export async function createManagedAuthConfig(toolkit: string): Promise<string> {
+    const data = await composioFetch<{ auth_config?: { id?: string } }>('/auth_configs', {
+        method: 'POST',
+        signal: AbortSignal.timeout(ADMIN_CALL_TIMEOUT_MS),
+        body: JSON.stringify({ toolkit: { slug: toolkit }, auth_config: { type: 'use_composio_managed_auth' } }),
+    })
+    if (!data.auth_config?.id) throw new ComposioApiError(502, 'Composio did not return the id of the new auth config')
+    return data.auth_config.id
 }

@@ -104,6 +104,7 @@
         "brainProposals": "{count, plural, one {# Vorschlag zu prüfen} other {# Vorschläge zu prüfen}}",
         "aiProviders": "KI-Anbieter",
         "servers": "Server",
+        "composio": "Composio",
         "billing": "Abrechnung",
         "newWorkspace": "Neuer Workspace",
         "templates": "Vorlagen",
