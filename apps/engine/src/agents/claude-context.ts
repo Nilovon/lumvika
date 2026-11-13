@@ -1,7 +1,7 @@
 import type { ContextOccupancy } from '@lumvika/contracts'
 import type { ClaudeCodeSettings, Query } from 'ai-sdk-provider-claude-code'
 import { cliModelsFresh, recordCliModels } from '../connections/cli-models.js'
-import { planLimitWindowsFromClaude, recordPlanLimits, type ClaudePlanUsage } from '../connections/plan-limits.js'
+import { planLimitsFromClaude, recordPlanLimitsReading, type ClaudePlanUsage } from '../connections/plan-limits.js'
 
 const CONTEXT_USAGE_TIMEOUT_MS = 3000
 const CLI_MODELS_MAX_AGE_MS = 30 * 60_000
@@ -11,11 +11,11 @@ export type ClaudeContextCapture = {
     settings: Pick<ClaudeCodeSettings, 'hooks' | 'onQueryCreated'>
 }
 
-type PlanUsageReader = (options: { skipBehaviors: boolean }) => Promise<ClaudePlanUsage>
+export type PlanUsageReader = (options: { skipBehaviors: boolean }) => Promise<ClaudePlanUsage>
 
 // The SDK ships the plan usage read under a name that announces it will be renamed. Looked up by
 // key rather than called as a method, so the CLI bump that moves it costs a gauge and not a run.
-function planUsageReaderOf(query: Query): PlanUsageReader | undefined {
+export function planUsageReaderOf(query: Query): PlanUsageReader | undefined {
     const reader = (query as unknown as Record<string, unknown>).usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET
     return typeof reader === 'function' ? (reader as PlanUsageReader).bind(query) : undefined
 }
@@ -57,7 +57,8 @@ export function claudeContextCapture(connectionId?: string): ClaudeContextCaptur
         if (!connectionId || !readPlanUsage) return
         // Wrapped in a function so a reader that throws synchronously lands in the same catch.
         const usage = await withinTimeout((async () => readPlanUsage({ skipBehaviors: true }))())
-        recordPlanLimits(connectionId, planLimitWindowsFromClaude(usage))
+        const reading = planLimitsFromClaude(usage)
+        if (reading && (reading.windows.length || reading.unavailable?.reason === 'unsupported')) recordPlanLimitsReading(connectionId, reading)
     }
 
     // Read off the initialization the run waits for anyway, never awaited by it. The binary is the one

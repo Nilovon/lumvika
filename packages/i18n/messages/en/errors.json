@@ -278,6 +278,7 @@
     "loadTemplateFailed": "Failed to load the template.",
     "loadCoworkersFailed": "Failed to load your coworkers",
     "loadCreditUsageFailed": "Failed to load your credit usage",
+    "loadUsageFailed": "Couldn't load the usage of this subscription",
     "loadInvoicesFailed": "Failed to load your invoices",
     "loadPayoutsAccountFailed": "Failed to load your payouts account.",
     "loadRevenueFailed": "Failed to load your revenue.",

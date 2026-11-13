@@ -272,6 +272,7 @@
     "loadTemplateFailed": "Die Vorlage konnte nicht geladen werden.",
     "loadCoworkersFailed": "Deine Coworker konnten nicht geladen werden",
     "loadCreditUsageFailed": "Dein Guthabenverbrauch konnte nicht geladen werden",
+    "loadUsageFailed": "Die Nutzung dieses Abos konnte nicht geladen werden",
     "loadInvoicesFailed": "Deine Rechnungen konnten nicht geladen werden",
     "loadPayoutsAccountFailed": "Dein Auszahlungskonto konnte nicht geladen werden.",
     "loadRevenueFailed": "Deine Einnahmen konnten nicht geladen werden.",

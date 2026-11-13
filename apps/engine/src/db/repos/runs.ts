@@ -1,7 +1,7 @@
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
-import type { ContextOccupancy } from '@lumvika/contracts'
+import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm'
+import type { ContextOccupancy, TokenUsageTotals } from '@lumvika/contracts'
 import { getSystemDb } from '../systemDb.js'
-import { runs, type RunRow } from '../schema.js'
+import { runs, runSteps, type RunRow } from '../schema.js'
 import { newId, nowIso } from '../../lib/ids.js'
 
 export type UsageBucket = {
@@ -37,6 +37,36 @@ export async function aggregateUsageByDay(agentId: string, sinceIso: string | nu
         .where(and(...conditions))
         .groupBy(day, runs.model)
         .orderBy(day)
+}
+
+export type ProviderTokenUsage = TokenUsageTotals & { provider: string }
+
+// Only a run that ended well carries its usage. The cache writes are only counted per step, and the
+// steps of a run are all written after it started, so the same `since` bounds both.
+export async function aggregateTokenUsageByProvider(agentId: string, sinceIso: string): Promise<ProviderTokenUsage[]> {
+    const { db } = await getSystemDb(agentId)
+    const stepCacheWrites = db
+        .select({ runId: runSteps.runId, cacheWriteTokens: sql<number>`coalesce(sum(${runSteps.cacheWriteTokens}), 0)`.as('cache_write_tokens') })
+        .from(runSteps)
+        .where(and(eq(runSteps.agentId, agentId), gte(runSteps.createdAt, sinceIso)))
+        .groupBy(runSteps.runId)
+        .as('step_cache_writes')
+    const rows = await db
+        .select({
+            provider: runs.provider,
+            runCount: sql<number>`count(*)`,
+            inputTokens: sql<number>`coalesce(sum(${runs.inputTokens}), 0)`,
+            outputTokens: sql<number>`coalesce(sum(${runs.outputTokens}), 0)`,
+            cacheReadTokens: sql<number>`coalesce(sum(${runs.cachedInputTokens}), 0)`,
+            cacheWriteTokens: sql<number>`coalesce(sum(${stepCacheWrites.cacheWriteTokens}), 0)`,
+            reasoningTokens: sql<number>`coalesce(sum(${runs.reasoningTokens}), 0)`,
+            costMicros: sql<number>`coalesce(sum(${runs.costMicros}), 0)`,
+        })
+        .from(runs)
+        .leftJoin(stepCacheWrites, eq(stepCacheWrites.runId, runs.id))
+        .where(and(eq(runs.agentId, agentId), eq(runs.status, 'done'), isNotNull(runs.provider), gte(runs.startedAt, sinceIso)))
+        .groupBy(runs.provider)
+    return rows.flatMap(row => (row.provider ? [{ ...row, provider: row.provider }] : []))
 }
 
 export async function getRun(agentId: string, id: string): Promise<RunRow | undefined> {

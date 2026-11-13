@@ -11,6 +11,7 @@ import { ModelBuckets } from '@/components/connections/ModelBuckets'
 import { OpencodeModels } from '@/components/connections/OpencodeModels'
 import { PlanConnect } from '@/components/connections/plan-connect/PlanConnect'
 import { PlanLimitsBlock } from '@/components/connections/PlanLimitsBlock'
+import { TokenUsageBlock } from '@/components/connections/TokenUsageBlock'
 import { DetailHeader } from '@/components/connections/SourceBits'
 import { Button } from '@/components/ui/button'
 import { CreditsUsageBar } from '@lumvika/cloud/billing.client'
@@ -89,7 +90,15 @@ export function ConnectionDetail({ connection, credit, defaultModel, reconnectRe
                 {error && <p className="text-[11px] text-destructive">{error}</p>}
                 <fieldset disabled={!!readOnlyReason} className="contents">
                 <SourceAlert connection={connection} credit={credit} reconnectRequested={rejected} onKeys={applyKeys} />
-                {sourceKind(connection.provider) === 'plan' && connection.connected && <PlanLimitsBlock connection={connection} />}
+                </fieldset>
+                {/* Reading usage is open to members, so its refresh and range sit outside the read-only fieldset. */}
+                {sourceKind(connection.provider) === 'plan' && connection.connected && (
+                    <>
+                        <PlanLimitsBlock connection={connection} />
+                        <TokenUsageBlock provider={connection.provider} />
+                    </>
+                )}
+                <fieldset disabled={!!readOnlyReason} className="contents">
                 {connection.provider === 'opencode' ? (
                     <OpencodeModels connection={connection} defaultModel={defaultModel} onModelsChange={models => void patch({ models })} />
                 ) : (

@@ -36,6 +36,8 @@ import {
     createConnection as engineCreateConnection,
     deleteConnection as engineDeleteConnection,
     getConnectionUsage as engineGetConnectionUsage,
+    getPlanLimits as engineGetPlanLimits,
+    getTokenUsage as engineGetTokenUsage,
     probeCustomEndpoint as engineProbeCustomEndpoint,
     supportsCustomProvider,
     supportsOpencode,
@@ -53,7 +55,7 @@ import { OPENCODE_ENABLED } from '@/lib/features'
 import { AppError, type ErrorCode, type ErrorParams } from '@/lib/i18n/action-error'
 import { recipientLocale } from '@/lib/i18n/recipient-locale'
 import { translatorFor } from '@/lib/i18n/server-translator'
-import { CONNECTION_TOKEN_KEY, DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID, canonicalModelId, canonicalModelIds, claudeTokenIssue, type AddableProvider, type AiConnectionView, type AiConnectionsView, type CustomProbeInput, type CustomProbeResult } from '@lumvika/contracts'
+import { CONNECTION_TOKEN_KEY, DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID, canonicalModelId, canonicalModelIds, claudeTokenIssue, type AddableProvider, type AiConnectionView, type AiConnectionsView, type CustomProbeInput, type CustomProbeResult, type PlanLimitsRead, type TokenUsage, type TokenUsageRange } from '@lumvika/contracts'
 
 // The AI providers of a workspace, for both the web dialog's server actions and the app's /api/v1
 // routes. They live at the root of the engine's data dir, never under a Box: the workspace is the
@@ -197,6 +199,15 @@ export async function updateAiConnectionKeys(workspaceId: number, id: string, bo
 
 export async function getAiConnectionUsage(workspaceId: number, id: string): Promise<BoxConnectionUsage> {
     return engineGetConnectionUsage(await getWorkspaceConnection(workspaceId), id)
+}
+
+// Where one subscription stands against its plan, read again by its CLI first when `refresh` says so.
+export async function readAiConnectionPlanLimits(workspaceId: number, id: string, refresh: boolean): Promise<PlanLimitsRead | null> {
+    return engineGetPlanLimits(await getWorkspaceConnection(workspaceId), id, refresh)
+}
+
+export async function readAiTokenUsage(workspaceId: number, range: TokenUsageRange): Promise<TokenUsage | null> {
+    return engineGetTokenUsage(await getWorkspaceConnection(workspaceId), range)
 }
 
 // The delete always goes through: whatever pointed at the connection is released onto the default

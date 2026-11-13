@@ -11,6 +11,8 @@ import {
     isOpencodeOfferedTo,
     listAiConnections,
     probeCustomEndpoint,
+    readAiConnectionPlanLimits,
+    readAiTokenUsage,
     setWorkspaceDefaultModel,
     startClaudeSignIn,
     startCodexSignIn,
@@ -21,7 +23,8 @@ import { NoPlanError } from '@/app/api/_services/capacity.service'
 import type { ClaudeOAuthStart } from '@/lib/engine/claude-oauth'
 import type { CodexDeviceAuthStart } from '@/lib/engine/codex-oauth'
 import type { BoxConnection, BoxConnectionsList, BoxConnectionUsage, BoxDefault, CreateBoxConnectionInput, UpdateBoxConnectionInput } from '@/lib/engine/types'
-import { customProbeInputSchema, type CustomProbeInput, type CustomProbeResult } from '@lumvika/contracts'
+import { customProbeInputSchema, tokenUsageRangeSchema, type CustomProbeInput, type CustomProbeResult, type PlanLimitsRead, type TokenUsage, type TokenUsageRange } from '@lumvika/contracts'
+import { z } from 'zod'
 import { refusal, refusalOf, type ActionRefusal, type ErrorCode } from '@/lib/i18n/action-error'
 
 // The AI providers of the workspace, for the web dialog. The workspace of the session is the whole
@@ -127,6 +130,25 @@ export async function getAiConnectionUsageAction(id: string): Promise<BoxConnect
         return await getAiConnectionUsage(await requireWorkspaceId(), id)
     } catch {
         return { agents: [], automations: [], isBoxDefault: false }
+    }
+}
+
+// Reading usage is open to every member, unlike the edits: it changes nothing on the machine. A
+// `null` reading means an engine older than the usage view.
+export async function readPlanLimitsAction(connectionId: string, refresh: boolean): Promise<{ success: true; read: PlanLimitsRead | null } | Refusal> {
+    try {
+        const id = z.string().min(1).parse(connectionId)
+        return { success: true, read: await readAiConnectionPlanLimits(await requireWorkspaceId(), id, z.boolean().parse(refresh)) }
+    } catch (err) {
+        return refused(err, 'loadUsageFailed')
+    }
+}
+
+export async function readTokenUsageAction(range: TokenUsageRange): Promise<{ success: true; usage: TokenUsage | null } | Refusal> {
+    try {
+        return { success: true, usage: await readAiTokenUsage(await requireWorkspaceId(), tokenUsageRangeSchema.parse(range)) }
+    } catch (err) {
+        return refused(err, 'loadUsageFailed')
     }
 }
 

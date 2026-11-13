@@ -104,16 +104,30 @@
         }
     },
     "_context": {
-        "panel.groups.included": "Heading of the group of AI sources that come with the Lumvika plan (the Lumvika credit).",
+        "usage.plan": "Small badge naming the user's subscription plan. {plan} is the plan name as the provider reports it, such as max, pro or plus: keep it as is.",
+        "usage.checkedAgo": "{age} is a short duration already localized, such as 5m, 3h, 2d.",
+        "usage.refreshFailed": "{age} is a short duration already localized, such as 5m, 3h.",
+        "usage.left": "Share of a usage window still available. {percent} is a whole number.",
+        "usage.used": "Share of a usage window already consumed. {percent} is a whole number.",
+        "usage.resets": "When a usage window starts over. {when} is a short relative time already localized, such as 'in 3h'. {date} is a date and time already localized.",
+        "usage.resetsOn": "Tooltip with the exact moment a usage window starts over. {date} is a date and time already localized.",
+        "usage.pace.ahead": "The subscription is being used faster than the window's time passes: it may run out before it resets.",
+        "usage.pace.under": "The subscription is being used slower than the window's time passes.",
+        "usage.paceTick": "Accessible label of the tick drawn on a usage bar. {percent} is a whole number.",
+        "usage.extra.title": "Anthropic's pay-as-you-go overflow once the plan's included usage is spent.",
+        "usage.extra.used": "{percent} is a whole number.",
+        "usage.unsupported.claude": "The user pasted a Claude token by hand instead of signing in, and such a token cannot read plan limits.",
+        "tokens.agentLine": "One coworker's token figures. {input} and {output} are token counts already formatted, such as 1.2M. {rate} is a percentage already formatted.",
+        "tokens.empty": "{provider} is a product name, such as Claude Code or Codex.",
+        "tokens.note": "Footnote under the token figures. {provider} is a product name, such as Claude Code or Codex.",
+        "tokens.composition": "Accessible label of a stacked bar. Every value is a token count already formatted.",
+        "panel.groups.included":"Heading of the group of AI sources that come with the Lumvika plan (the Lumvika credit).",
         "panel.default.change": "Button that opens the picker to change the workspace default model.",
         "panel.default.via": "{source} is the name of the connection the default model runs through.",
         "panel.default.stopped": "{source} is the name of the broken connection.",
         "status.paused": "Badge: the Lumvika credit is paused.",
         "status.ready": "Badge: the connection works.",
         "subtitle.apiKey": "{provider} is a provider name such as OpenAI or Anthropic.",
-        "planLimits.updatedAgo": "{age} is a short duration already localized, such as 5m, 3h, 2d, or a short date.",
-        "planLimits.used": "{percent} is a percentage already formatted, such as 42%.",
-        "planLimits.usedWithReset": "{percent} is a percentage already formatted. {reset} says when the limit resets, already localized.",
         "meter.planLimit": "Accessible label of a progress bar. {name} is the name of a plan window, such as 5-hour or Weekly.",
         "models.count": "How many of the models of this connection the coworkers can use, for example 3 of 8.",
         "opencode.count": "How many models of this catalog are switched on, for example 3 of 8 on.",
@@ -184,13 +198,61 @@
         "helper": "Send requests to your own OpenRouter-compatible router",
         "inputLabel": "OpenRouter base URL"
     },
+    "usage": {
+        "plan": "{plan} plan",
+        "checkedJustNow": "Checked just now",
+        "checkedAgo": "Checked {age} ago",
+        "refresh": "Refresh usage",
+        "refreshFailed": "Couldn't refresh. Showing the reading from {age} ago.",
+        "left": "{percent}% left",
+        "used": "{percent}% used",
+        "resets": "Resets {when} · {date}",
+        "resetsOn": "Resets on {date}",
+        "resetUnknown": "Reset time not reported",
+        "pace": {
+            "ahead": "Ahead of pace",
+            "on": "On pace",
+            "under": "Under pace"
+        },
+        "paceTick": "{percent}% of the window has gone by",
+        "extra": {
+            "title": "Extra usage",
+            "off": "Off",
+            "used": "{percent}% of the monthly cap used",
+            "on": "On",
+            "zeroCap": "On, with a spending cap of zero",
+            "hint": "Billed by Anthropic once the plan's limits are reached."
+        },
+        "empty": "No reading yet. Refresh to ask the subscription where it stands.",
+        "unsupported": {
+            "claude": "A pasted token can't read the plan limits. Sign in with Claude again to see them here.",
+            "other": "This account has no plan limits to show."
+        },
+        "probeFailed": "Couldn't read the limits just now. Try again in a minute."
+    },
+    "tokens": {
+        "title": "Token usage",
+        "range": {
+            "7d": "7 days",
+            "30d": "30 days"
+        },
+        "input": "Input",
+        "output": "Output",
+        "cacheRead": "Cache read",
+        "cacheWrite": "Cache write",
+        "uncached": "Uncached",
+        "hitRate": "Cache hit rate",
+        "runs": "Runs",
+        "cost": "Billed cost",
+        "composition": "Input tokens: {uncached} uncached, {read} read from the cache, {write} written to the cache",
+        "byAgent": "By coworker",
+        "agentLine": "{input} in · {output} out · {rate} cached",
+        "empty": "No run finished on {provider} in this period.",
+        "note": "Counted from the runs that finished on {provider}, across every coworker. A run records its provider, not its subscription, so every {provider} subscription of this workspace shares these figures. One run can make many model calls, each reading the conversation again, and the totals add them all up.",
+        "unavailable": "Update this workspace's machine to see its token usage."
+    },
     "planLimits": {
-        "title": "Plan usage",
-        "empty": "Usage shows up here after the next run on this plan.",
-        "updatedJustNow": "Updated just now",
-        "updatedAgo": "Updated {age} ago",
-        "used": "{percent} used",
-        "usedWithReset": "{percent} used, {reset}"
+        "title": "Plan usage"
     },
     "meter": {
         "planLimit": "{name} limit used",
