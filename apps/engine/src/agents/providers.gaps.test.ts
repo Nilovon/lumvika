@@ -42,7 +42,7 @@ const { afterEach, beforeEach, describe, expect, it } = await import('vitest')
 const { generateText, tool } = await import('ai')
 const { z } = await import('zod')
 const { agentConfigSchema, connectionConfigSchema } = await import('@lumvika/contracts')
-const { CLAUDE_HARNESS_ENV, CODEX_HARNESS_OVERRIDES, CODEX_ONE_SHOT_INSTRUCTIONS, modelFor, resolveModel } = await import('./providers.js')
+const { CLAUDE_HARNESS_ENV, CODEX_HARNESS_OVERRIDES, CODEX_ONE_SHOT_INSTRUCTIONS, claudeTranscriptPlace, modelFor, resolveModel } = await import('./providers.js')
 const { applyCaching } = await import('./caching.js')
 const { codexHomeDir, workspaceDir } = await import('../config/paths.js')
 
@@ -311,6 +311,34 @@ describe('resolveModel on the claude subscription', () => {
         agent.config.tools.web = false
         resolveModel(agent)
         expect(claudeCalls[0]!.defaultSettings.tools).toEqual([])
+    })
+
+    it('writes the session of a run to disk under the id the run made, so the next message can resume it', () => {
+        resolveModel(agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 't' }), undefined, undefined, undefined, { claudeSession: { id: '0b6c1c1e-8f2d-4a43-9d55-8a3c8f1b2e4d', resume: false } })
+        const settings = claudeCalls[0]!.defaultSettings
+        expect(settings.persistSession).toBe(true)
+        expect(settings.sessionId).toBe('0b6c1c1e-8f2d-4a43-9d55-8a3c8f1b2e4d')
+        expect(settings).not.toHaveProperty('resume')
+    })
+
+    // The CLI refuses a session id beside a resume unless it forks.
+    it('resumes a session by its id alone', () => {
+        resolveModel(agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 't' }), undefined, undefined, undefined, { claudeSession: { id: '0b6c1c1e-8f2d-4a43-9d55-8a3c8f1b2e4d', resume: true } })
+        const settings = claudeCalls[0]!.defaultSettings
+        expect(settings.persistSession).toBe(true)
+        expect(settings.resume).toBe('0b6c1c1e-8f2d-4a43-9d55-8a3c8f1b2e4d')
+        expect(settings).not.toHaveProperty('sessionId')
+    })
+
+    it('leaves no transcript behind a one-shot call', () => {
+        modelFor(agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 't' }))
+        expect(claudeCalls.at(-1)!.defaultSettings.persistSession).toBe(false)
+    })
+
+    it('finds the transcripts where the CLI it starts writes them', () => {
+        const agent = agentOn('claude', 'opus', { CLAUDE_CODE_OAUTH_TOKEN: 't' })
+        agent.env = { CLAUDE_CONFIG_DIR: '/srv/claude-home' }
+        expect(claudeTranscriptPlace(agent)).toEqual({ configDir: '/srv/claude-home', cwd: workspaceDir('agent-claude') })
     })
 
     it('sends an empty token rather than none for a claude agent without a connection', () => {
