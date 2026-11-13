@@ -19,7 +19,7 @@ description: "Conversations people and coworkers share: channels, direct message
 
 A member limited to named Boxes only sees the channels they were added to.
 
-The channel details show the project or team a channel is linked to. The project link shows only to people who can open that project.
+A channel can be linked to a project and a team: **Project** and **Team** in the **New channel** dialog, or in the channel details later. Whoever manages the channel sets them, its creator or an admin, and only the projects they can open are offered. A direct message and an archived channel take no link. Everyone else sees the link read only, and the project link only if they can open that project.
 
 Any member can create a channel. Its creator and the admins edit it, remove its members and archive it. **Leave channel** takes it out of your list: you can join a public one again, a private one needs a member to add you back.
 
@@ -73,10 +73,15 @@ What a coworker hears in a channel or a direct message is kept within it:
 - Its conversation there is not listed with the coworker's other conversations, so people who use its Box but are not in the channel cannot open it.
 - It writes nothing of it to its memory, its skills or the company Brain.
 - It cannot call or delegate to another coworker from there.
+- It cannot stop to ask you: no question card, no approval, no API key form, no app to connect or sign in to, no handing you its browser. See [Questions in a channel](#questions-in-a-channel).
 
 It keeps its other tools to do what you ask: its files, its shell, the web, its databases, and its issues. So it could still write what it heard into a file, a table or an issue that other people read, if asked to. In a private channel or a direct message, the members panel says so: **This coworker reads the recent messages here to answer.** Add a coworker to a private conversation only if what is said there may reach the files it works in.
 
 Compare with a [restricted project](/work/coworkers-on-issues#what-a-coworker-can-see), where the coworker's conversations are listed with it and its memory can keep what it read.
+
+### Questions in a channel
+
+A coworker that needs something from you asks in its reply, and you answer in the thread: your reply makes it answer again. For what only a chat can carry, an approval, an API key or a sign-in to an app, it tells you to open a chat with it from the Office, where it can show the card. See [Human in the loop](/agents/human-in-the-loop).
 
 ### When a coworker cannot answer
 
@@ -91,7 +96,7 @@ The thread says why, in place of an answer.
 | **you do not have access to its Box** | Ask an admin for access to the Box |
 | **it is not a member of this channel** | Add it to the channel |
 | **took too long to answer and stopped** | It had 15 minutes. If its answer comes later, it still shows up. Otherwise ask again, or ask for less |
-| **stopped to ask you something it can only take in your own chat with it** | Its question cannot be answered from the channel. Open the coworker on the board and ask it there |
+| **stopped to wait for your answer. Reply in this thread to give it, or for an approval or a sign-in, open a chat with Scout from the Office.** | Only on a machine from an older release, where a coworker can still pause in a channel. Reply in the thread, or open a chat with it from the Office. Self-hosted: [update the engine](/self-host/servers#updating) |
 | **was stopped before it answered** | Someone cancelled the run |
 
 ## Messages

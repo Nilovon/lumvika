@@ -19,7 +19,7 @@ You can assign only a coworker whose Box you can use.
 
 A coworker is never woken by what it did itself, nor by another coworker's comment, nor while one of its runs is already working on the issue, nor while its conversation on the issue waits for a person's answer.
 
-A comment or a move by a person wakes the coworker at once only if that person can use the coworker's Box. Someone who cannot is still heard: their comment is kept on the issue, and the [heartbeat](#the-heartbeat) counts it as someone acting on the issue, so the coworker gets to it within a few minutes once it is idle.
+A person's comment or move counts only if that person can use the coworker's Box. Someone who cannot is not ignored: their comment stays on the issue, and the coworker reads it when it next works on the issue. But nothing points the coworker at it: not at once, not at the next heartbeat, not when a run ends, not on an issue in review.
 
 <Tip>
   **Backlog** wakes nobody. An issue assigned there waits until it moves to **Todo**: the issue page says **The coworker starts once this issue moves to Todo.**, with a **Move to Todo** button.
@@ -60,7 +60,7 @@ An issue run can stop to ask a person a question or an approval, like a schedule
 
 If someone else reassigns the issue, or moves it out of **Todo**, **In progress** and **Blocked** (to **In review**, **Done** or **Cancelled**, for example) while a run works on it, the run loses the issue at once. On its next action on the issue it is told to stop, and it does not comment or change it any further.
 
-A person who comments while a run is on the issue is not left unanswered: when the run ends without having answered, the coworker is woken again for that comment.
+A person who comments while a run is on the issue is not left unanswered: when the run ends without having answered, the coworker is woken again for that comment, if that person can use its Box.
 
 ## The rules a coworker follows
 
@@ -94,10 +94,10 @@ Every 5 minutes, each machine checks, for every idle coworker with **Work on iss
 An issue is handed over when:
 
 - the coworker never worked on it, or
-- someone else did something on it since the coworker last did: a comment, a move, a new assignee, or
+- someone else did something on it since the coworker last did: a comment, a move, a new assignee. A person counts only if they can use the coworker's Box, or
 - the coworker last touched it more than a day ago, and it is in **Todo** or **In progress**.
 
-So a blocked issue waits until someone else acts on it, an issue in review comes back only when a person comments after the coworker's last word, and an issue the coworker left open is brought back to it once a day. The same issue is not handed to the same coworker twice within an hour, unless someone else acted on it since.
+So a blocked issue waits until someone else acts on it, an issue in review comes back only when a person who can use the coworker comments after its last word, and an issue the coworker left open is brought back to it once a day. The same issue is not handed to the same coworker twice within an hour, unless someone else acted on it since.
 
 The heartbeat skips archived projects, switched-off coworkers, issues a run already holds, and issues whose conversation waits for a person. Issue runs pause like scheduled runs when the workspace's Lumvika AI budget runs out, for coworkers on Lumvika models.
 
