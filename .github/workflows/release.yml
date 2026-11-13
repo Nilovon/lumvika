@@ -27,15 +27,8 @@ jobs:
       matrix:
         image: [app, engine]
         platform: [linux/amd64, linux/arm64]
-    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    runs-on: [self-hosted, linux, "${{ matrix.platform == 'linux/arm64' && 'ARM64' || 'X64' }}"]
     steps:
-      # The images fill the runner's disk ("No space left on device" on v0.1.0): the preinstalled
-      # toolchains they never use take ~30 GB.
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          df -h /
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.sha || github.sha }}
@@ -87,7 +80,7 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     strategy:
       matrix:
         image: [app, engine]

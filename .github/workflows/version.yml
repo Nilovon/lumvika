@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     outputs:
       tag: ${{ steps.next.outputs.tag }}
       sha: ${{ steps.next.outputs.sha }}
@@ -45,7 +45,7 @@ jobs:
 
   publish:
     needs: [plan, image]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: write
     steps:

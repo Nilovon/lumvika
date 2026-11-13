@@ -12,7 +12,7 @@ concurrency:
 jobs:
   check:
     name: Typecheck, lint, tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -29,7 +29,7 @@ jobs:
 
   database:
     name: Migrations, seed and row level security on a fresh database
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     services:
       postgres:
         image: pgvector/pgvector:0.8.0-pg17
@@ -68,7 +68,7 @@ jobs:
   docker-inputs:
     if: github.event_name == 'pull_request'
     name: Docker inputs changed
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
     steps:
@@ -89,14 +89,8 @@ jobs:
       always() &&
       ((github.event_name == 'push' && github.ref == 'refs/heads/main') || needs.docker-inputs.outputs.changed == 'true')
     name: Docker images build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     steps:
-      # Both images fill the runner's disk: the preinstalled toolchains they never use take ~30 GB.
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          df -h /
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Engine
