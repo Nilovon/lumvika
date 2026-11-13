@@ -263,6 +263,7 @@ export function coworkerPrompt(brief: CoworkerBrief, names: Names): string {
         `${speaker(brief.trigger)} wrote:\n${brief.trigger.body}`,
         'Reply to them. Your whole reply is posted as your message, so write only what they should read.',
         'What is said here stays here: you cannot hand it to another coworker nor keep it in your memory, skills or the company brain, so if you are asked to, say so.',
+        'If you need something from them, ask it in your reply and they will answer in the thread; for an approval, a secret or a sign-in, tell them to open a chat with you from the Office.',
     ]
         .filter(Boolean)
         .join('\n\n')

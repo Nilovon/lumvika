@@ -24,7 +24,7 @@ import { hubTools } from './builtin/hub.js'
 import { paidDataTools } from './builtin/paid-data.js'
 import { paidDataOffered } from '../paid-data/price.js'
 import { cardTools, stewardCardTools } from './builtin/cards.js'
-import { askUserTool, offersTakeover, requestApprovalTool, requestSecretTool, requestTakeoverTool, suggestServiceTool } from './builtin/hitl.js'
+import { askUserTool, HITL_TOOL_NAMES, offersTakeover, requestApprovalTool, requestSecretTool, requestTakeoverTool, suggestServiceTool } from './builtin/hitl.js'
 import { installTools } from './builtin/install.js'
 import { stewardTools } from './builtin/steward.js'
 import { agentFilesTools } from './builtin/agent-files.js'
@@ -37,7 +37,9 @@ import type { RunContext } from '../runtime/context.js'
 
 // What a run answering in a hub channel goes without: the tools that would remember what it heard
 // for later (its memory, its skills, the company brain, whose proposals every reviewer reads) or
-// hand it to another coworker, whose conversations the people of that coworker's Box read. Its files, shell, web, data and work tools stay, so it still does the
+// hand it to another coworker, whose conversations the people of that coworker's Box read. Nor does it
+// stop on a person (a question, an approval, a secret, a sign-in): nobody could answer it there, the
+// channel conversation being nobody's to open, so it asks in its reply. Its files, shell, web, data and work tools stay, so it still does the
 // work it is asked for. The one gate, whatever the provider: native, CLI bridge and opencode all run
 // this set.
 export const CHANNEL_CLOSED_TOOLS = [
@@ -57,6 +59,7 @@ export const CHANNEL_CLOSED_TOOLS = [
     'brain_propose',
     'brain_delete',
     'brain_decide',
+    ...HITL_TOOL_NAMES,
 ] as const
 
 export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; close: () => Promise<void> }> {

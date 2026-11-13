@@ -75,7 +75,7 @@
             "not_member": "{name} konnte nicht antworten: Dieser Coworker ist kein Mitglied dieses Kanals.",
             "timeout": "{name} hat zu lange gebraucht und aufgehört.",
             "failed": "{name} konnte diesmal nicht antworten.",
-            "needs_input": "{name} wartet auf eine Antwort, die nur in deinem eigenen Chat mit {name} ankommt. Öffne diesen Chat, um zu antworten.",
+            "needs_input": "{name} wartet auf deine Antwort. Antworte in diesem Thread, oder öffne für eine Freigabe oder eine Anmeldung einen Chat mit {name} im Büro.",
             "cancelled": "{name} wurde gestoppt, bevor eine Antwort kam."
         },
         "outsider": "{name} ist noch nicht in diesem Kanal und kann deshalb nicht antworten.",

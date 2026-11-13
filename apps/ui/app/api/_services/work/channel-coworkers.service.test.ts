@@ -135,6 +135,7 @@ describe('reactToChannelMessage', () => {
         expect(prompt).toContain('#pub')
         expect(prompt).toContain('Anna wrote:\nCan you draft the plan @ada?')
         expect(prompt).toContain('you cannot hand it to another coworker nor keep it in your memory, skills or the company brain')
+        expect(prompt).toContain('ask it in your reply and they will answer in the thread')
 
         const answer = rows.channel_messages.find(row => row.author_agent_id === 'ada')
         expect(answer).toMatchObject({ body: 'Here is the plan.', parent_message_id: message.id, author_user_id: null })
@@ -291,6 +292,26 @@ describe('finishing from the run-end webhook', () => {
         await expect(finishChannelTurnForRun(scope, ending!)).resolves.toBe('failed')
         expect(rows.channel_agent_turns[0]).toMatchObject({ status: 'failed', failure: 'needs_input', reply_message_id: expect.any(String) })
         expect(rows.channel_messages.filter(row => row.author_agent_id === 'ada')).toEqual([expect.objectContaining({ body: 'Before I start: which tone?' })])
+    })
+
+    it('lets the person answer a question an older engine stopped on by replying in the thread', async () => {
+        const { rows, scope, trigger } = await inFlight()
+        runEnds({ status: 'done', output: 'Which tone?' })
+        await finishChannelTurnForRun(scope, channelRunEndingOf({ event: 'agent.notification', kind: 'question', runId: 'run-1', metadata: { toolName: 'ask_user' } })!)
+        await drainAfter()
+        expect(startChat).toHaveBeenCalledTimes(1)
+
+        engineAccepts({ 'x-run-id': 'run-2', 'x-session-id': 'sess-1' })
+        runEnds({ status: 'done', output: 'Playful it is.' })
+        const answer = await postChannelMessage(scope, ANNA, 'pub', { body: 'Playful', parentMessageId: trigger.id })
+        await reactToChannelMessage(scope, anna, answer)
+        await drainAfter()
+
+        expect(vi.mocked(startChat).mock.calls[1][2]).toMatchObject({ sessionId: 'sess-1', message: expect.stringContaining('Anna wrote:\nPlayful') })
+        expect(rows.channel_agent_turns.map(turn => [turn.status, turn.failure])).toEqual([
+            ['failed', 'needs_input'],
+            ['answered', null],
+        ])
     })
 
     it('times out a turn its run never reported, and still takes a late answer', async () => {

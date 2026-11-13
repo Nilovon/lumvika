@@ -81,7 +81,7 @@
             "not_member": "{name} could not answer: it is not a member of this channel.",
             "timeout": "{name} took too long to answer and stopped.",
             "failed": "{name} could not answer this time.",
-            "needs_input": "{name} stopped to ask you something it can only take in your own chat with it. Open that chat to answer.",
+            "needs_input": "{name} stopped to wait for your answer. Reply in this thread to give it, or for an approval or a sign-in, open a chat with {name} from the Office.",
             "cancelled": "{name} was stopped before it answered."
         },
         "outsider": "{name} is not in this channel yet, so it cannot answer.",

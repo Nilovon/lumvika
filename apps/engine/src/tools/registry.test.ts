@@ -108,7 +108,7 @@ describe('buildTools', () => {
         const channel = await namesOf(ctxWith({}, { ...roster, channel: true }))
 
         const closed = CHANNEL_CLOSED_TOOLS.filter(name => chat.includes(name))
-        expect(closed).toEqual(expect.arrayContaining(['call_agent', 'delegate_tasks', 'memory_write', 'memory_delete', 'skill_propose', 'skill_create', 'brain_write', 'brain_propose']))
+        expect(closed).toEqual(expect.arrayContaining(['call_agent', 'delegate_tasks', 'memory_write', 'memory_delete', 'skill_propose', 'skill_create', 'brain_write', 'brain_propose', 'ask_user', 'request_approval', 'request_secret', 'suggest_service']))
         for (const name of CHANNEL_CLOSED_TOOLS) expect(channel, name).not.toContain(name)
         expect(chat.filter(name => !channel.includes(name)).sort()).toEqual([...closed].sort())
         expect(channel).toEqual(expect.arrayContaining(['memory_recall', 'skill_read', 'brain_search', 'brain_read', 'work_checkout']))
