@@ -27,6 +27,8 @@ export function WorkMemberAvatar({ member, size = 'sm', showName = false, workin
     const glyph =
         member?.kind === 'agent' ? (
             <AgentBuddy agentId={member.agentId} size={BUDDY_SIZES[size]} mood={working ? 'working' : 'idle'} animated={working} facing="right" className="shrink-0" />
+        ) : member?.kind === 'user' && label?.loading ? (
+            <span aria-hidden data-slot="skeleton" className={cn('shrink-0 animate-pulse rounded-full bg-accent', AVATAR_SIZES[size])} />
         ) : member?.kind === 'user' ? (
             <CardAvatar src={label?.photo ?? undefined} fileUrl={asIs} name={name} className={AVATAR_SIZES[size]} />
         ) : (
