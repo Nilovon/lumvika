@@ -19,6 +19,7 @@ import {
     loadStewardPlacement,
     stewardDockSqueezeQuery,
 } from '@/lib/steward-layout'
+import { rememberStewardFolds } from '@/lib/shell/steward-fold'
 import { loadStewardOpen } from '@/lib/steward-open'
 import { cn } from '@/lib/utils'
 import { useBoardStore } from '@/stores/board.store'
@@ -41,13 +42,16 @@ import { selectStewardVisible, useStewardStore } from '@/stores/steward.store'
 type BoardChatSplitProps = {
     initialOpen: boolean | null
     initialPlacement: StewardPlacement | null
+    // What the window measured on the last visit: whether the pages fold the column (the server
+    // cannot measure it). Replaced by the real measure as soon as the page runs.
+    initialFolds: boolean | null
     // The platform's navigation, on the frame left of the card from `md` up. Absent, the frame is
     // what it always was.
     sidebar?: { node: ReactNode; collapsed: boolean }
     children: ReactNode
 }
 
-export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, children }: BoardChatSplitProps) {
+export function BoardChatSplit({ initialOpen, initialPlacement, initialFolds, sidebar, children }: BoardChatSplitProps) {
     const visible = useStewardStore(selectStewardVisible)
     const requested = useStewardStore(state => state.open)
     const overlayOpen = useStewardStore(state => state.overlayOpen)
@@ -58,10 +62,13 @@ export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, childre
     // Elsewhere the column floats over the page from the orb's corner, and only while it is asked to.
     const sidebarWidth = sidebar ? (sidebar.collapsed ? SHELL_SIDEBAR_RAIL_WIDTH : SHELL_SIDEBAR_EXPANDED_WIDTH) : 0
     const tooNarrowToDock = useResolvedIsMobile(stewardDockSqueezeQuery({ dockWidth: preferredPlacement.dockWidth, sidebarWidth }))
-    const squeezed = pathname !== '/' && preferredPlacement.mode === 'dock' && tooNarrowToDock === true
+    const squeezed = pathname !== '/' && preferredPlacement.mode === 'dock' && (tooNarrowToDock ?? initialFolds ?? false)
     useEffect(() => {
         useStewardStore.getState().setSqueezed(squeezed)
     }, [squeezed])
+    useEffect(() => {
+        if (tooNarrowToDock !== null) rememberStewardFolds(tooNarrowToDock)
+    }, [tooNarrowToDock])
     useEffect(() => {
         useStewardStore.getState().closeOverlay()
     }, [pathname])

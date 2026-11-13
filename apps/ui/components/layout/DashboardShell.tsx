@@ -17,6 +17,8 @@ type DashboardShellProps = {
     initialSidebarCollapsed: boolean | null
     stewardOpen: boolean | null
     stewardPlacement: StewardPlacement | null
+    // Whether the pages folded the Steward column on the last visit (lib/shell/steward-fold).
+    stewardFolds: boolean | null
     children: ReactNode
 }
 
@@ -26,7 +28,7 @@ type DashboardShellProps = {
  * decided whether the sidebar shows from the request; once the session is known on the client it
  * follows it, so an anonymous visitor who signs up gets the sidebar without a reload.
  */
-export function DashboardShell({ initialShellOpen, platform, initialSidebarCollapsed, stewardOpen, stewardPlacement, children }: DashboardShellProps) {
+export function DashboardShell({ initialShellOpen, platform, initialSidebarCollapsed, stewardOpen, stewardPlacement, stewardFolds, children }: DashboardShellProps) {
     const { loading, isAnonymous, workspace } = useSession()
     const storedCollapsed = useShellStore(s => s.sidebarCollapsed)
     const collapsed = storedCollapsed ?? initialSidebarCollapsed ?? false
@@ -38,7 +40,7 @@ export function DashboardShell({ initialShellOpen, platform, initialSidebarColla
 
     return (
         <>
-            <BoardChatSplit initialOpen={stewardOpen} initialPlacement={stewardPlacement} sidebar={shellOpen ? { node: <AppSidebar collapsed={collapsed} />, collapsed } : undefined}>
+            <BoardChatSplit initialOpen={stewardOpen} initialPlacement={stewardPlacement} initialFolds={stewardFolds} sidebar={shellOpen ? { node: <AppSidebar collapsed={collapsed} />, collapsed } : undefined}>
                 {children}
                 <DashboardRuntime />
             </BoardChatSplit>
