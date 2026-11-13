@@ -139,7 +139,7 @@ export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, childre
         // Les couches `fixed` posées par-dessus (l'orbe) le rajoutent pour tomber au même écart du
         // bord visible que le mobilier qui, lui, est `absolute` dans la carte.
         // `relative` porte la sheet de la colonne sous `md`. Elle est `absolute` et non `fixed`
-        // justement pour que l'`overflow-hidden` ci-dessous la découpe : repliée, elle est translatée
+        // justement pour que l'`overflow-clip` ci-dessous la découpe : repliée, elle est translatée
         // sous le bas de l'écran, et un `fixed` échapperait au découpage en ajoutant sa hauteur de
         // défilement au document.
         // --steward-dock-track : la largeur tirée de la piste docké, bornée pour laisser sa part au
@@ -150,7 +150,9 @@ export function BoardChatSplit({ initialOpen, initialPlacement, sidebar, childre
             data-steward-split
             style={{ '--steward-dock-w': `${placement.dockWidth}px` } as CSSProperties}
             className={cn(
-                'relative h-dvh w-full overflow-hidden p-0 md:p-2 bg-frame flex flex-col [--board-inset:0px] md:[--board-inset:9px] [--steward-dock-track:min(var(--steward-dock-w),60vw)]',
+                // `clip` and not `hidden`: the frame never scrolls, not even when focus or a scrollIntoView
+                // reaches for something below it, which `hidden` allows and nothing could undo.
+                'relative h-dvh w-full overflow-clip p-0 md:p-2 bg-frame flex flex-col [--board-inset:0px] md:[--board-inset:9px] [--steward-dock-track:min(var(--steward-dock-w),60vw)]',
                 // The sidebar's width plus its gap to the card, as AppSidebar draws it: a rail below `lg`.
                 // With the sidebar the workspace pill leaves the card's top-left corner, and the orb parked there moves up into its row.
                 sidebar && 'md:[--shell-sidebar-w:52px] md:[--board-inset-start:calc(9px+var(--shell-sidebar-w))] md:[--steward-orb-top-row:1]',
