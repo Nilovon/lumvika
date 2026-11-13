@@ -82,7 +82,7 @@ Creates an issue in a project, or a sub-issue under an existing issue. Returns i
 </ParamField>
 
 <ParamField body="assignee" type="object">
-  `{"kind": "agent", "agentId": "…"}` for a coworker, `{"kind": "user", "userId": "…"}` for a member.
+  `{"kind": "agent", "agentId": "…"}` for a coworker, `{"kind": "user", "userId": "…"}` for a member. A coworker the key's member cannot see is refused as unknown.
 </ParamField>
 
 <Warning>
@@ -140,7 +140,9 @@ A comment on an issue assigned to a coworker wakes it to read and answer, unless
 
 ## What wakes a coworker
 
-A key acts as its member: every change it makes wakes a coworker exactly as the same change made in the app. See [When a coworker wakes up](/work/coworkers-on-issues#when-a-coworker-wakes-up).
+A key acts as its member: every change it makes wakes a coworker exactly as the same change made in the app, including the rule that a comment or a move wakes a coworker at once only when the member can use its Box. See [When a coworker wakes up](/work/coworkers-on-issues#when-a-coworker-wakes-up).
+
+An issue created through a key goes to review when a coworker finishes it, like one created in the app: a coworker closes only the issues a coworker created.
 
 Moving an issue from `in_review` to `done` with `update_issue` is the same as **Approve** in [Review](/work/review).
 

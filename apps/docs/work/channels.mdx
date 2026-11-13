@@ -19,6 +19,8 @@ description: "Conversations people and coworkers share: channels, direct message
 
 A member limited to named Boxes only sees the channels they were added to.
 
+The channel details show the project or team a channel is linked to. The project link shows only to people who can open that project.
+
 Any member can create a channel. Its creator and the admins edit it, remove its members and archive it. **Leave channel** takes it out of your list: you can join a public one again, a private one needs a member to add you back.
 
 **Archive channel** stops anyone from posting and takes it out of everyone's list. Its messages are kept. It cannot be undone from the app.
@@ -46,7 +48,9 @@ Who answers which message:
 
 Several coworkers mentioned in one message answer side by side, each in its own reply.
 
-A coworker answers one message of a thread at a time. While it is still answering there, a new message in the same thread does not make it answer again, and nothing says so: wait for its answer, then write.
+A coworker answers one message of a thread at a time. Write while it is still answering, and it answers once more when it is done: it takes the newest of the messages written meanwhile, with the others in view.
+
+The mention list only offers coworkers whose Box you can reach. A mention of a coworker you cannot see stays plain text and calls nobody. A reader who cannot reach a mentioned coworker's Box does not see its name, unless that coworker wrote in the channel.
 
 ### Add a coworker to a channel
 
@@ -58,9 +62,21 @@ You can also add coworkers from the channel details, with **Add members**. You c
 
 The coworker reads the message it answers, and the conversation before it: the last 20 messages of the channel, or of the thread, up to about 12,000 characters. It does not read further back.
 
-Each coworker keeps one conversation per channel, in its own history, named after the channel (`#launch`) or `Direct message`. What it read and answered there stays in that conversation, which everyone who can open the coworker can read. Deleting a message in the channel does not remove it from what a coworker already read.
+Each coworker keeps one conversation per channel, so it remembers what was said to it earlier in that channel. Deleting a message in the channel does not remove it from what a coworker already read.
 
 A coworker only speaks in a channel when a person asks it there. It cannot post on its own, from a scheduled task for example.
+
+### What stays in the channel
+
+What a coworker hears in a channel or a direct message is kept within it:
+
+- Its conversation there is not listed with the coworker's other conversations, so people who use its Box but are not in the channel cannot open it.
+- It writes nothing of it to its memory, its skills or the company Brain.
+- It cannot call or delegate to another coworker from there.
+
+It keeps its other tools to do what you ask: its files, its shell, the web, its databases, and its issues. So it could still write what it heard into a file, a table or an issue that other people read, if asked to. In a private channel or a direct message, the members panel says so: **This coworker reads the recent messages here to answer.** Add a coworker to a private conversation only if what is said there may reach the files it works in.
+
+Compare with a [restricted project](/work/coworkers-on-issues#what-a-coworker-can-see), where the coworker's conversations are listed with it and its memory can keep what it read.
 
 ### When a coworker cannot answer
 
@@ -75,7 +91,7 @@ The thread says why, in place of an answer.
 | **you do not have access to its Box** | Ask an admin for access to the Box |
 | **it is not a member of this channel** | Add it to the channel |
 | **took too long to answer and stopped** | It had 15 minutes. If its answer comes later, it still shows up. Otherwise ask again, or ask for less |
-| **stopped to ask you something** | It needs an approval or an answer, which it can only take in your own chat with it. Open that chat to answer |
+| **stopped to ask you something it can only take in your own chat with it** | Its question cannot be answered from the channel. Open the coworker on the board and ask it there |
 | **was stopped before it answered** | Someone cancelled the run |
 
 ## Messages

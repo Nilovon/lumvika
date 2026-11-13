@@ -191,7 +191,7 @@ docker compose exec engine node dist/cli/bin.js doctor
 
 ## Chat says to update the server
 
-**Update your server to use Chat** means the workspace's engine predates Chat. Update it: see [Updating](/self-host/servers#updating). **Chat needs a server** means the workspace has none yet: add a coworker, or [add a server](/self-host/servers).
+**Update your machine to use Chat** means the workspace's engine predates Chat. Update it: see [Updating](/self-host/servers#updating). **Chat needs a machine** means the workspace has none yet: add a coworker, or [add a server](/self-host/servers).
 
 ## A coworker does not pick up its issues
 
@@ -199,7 +199,9 @@ Check, in this order:
 
 - **The issue is in Backlog.** A coworker is not woken for a backlog issue. Move it to **Todo**.
 - **Work on issues is off** in the coworker **Capabilities** tab, or the coworker is switched off.
-- **The engine predates issues.** The app logs `this engine cannot start issue runs yet` once per engine. Update it.
+- **The engine predates issues.** The issue page says **This workspace's machine is too old to run coworkers on issues.** where you assign the coworker, and the app logs `this engine cannot start issue runs yet` once per engine. Update it.
+- **The coworker is waiting for an answer** in its conversation on the issue. The issue page says so: answer there.
+- **You cannot use the coworker's Box.** Your comment or move does not wake it at once. It gets to the issue at the next heartbeat.
 - **The coworker is busy.** It works one issue at a time. The next one waits for the heartbeat, every 5 minutes, once the coworker is idle.
 - **The engine cannot reach the app** at `LUMVIKA_HUB_BASE_URL`: the coworker can neither read the issue nor ask for the next one. Look for `work queue call failed` or `work queue sweep failed` in `docker compose logs engine`.
 

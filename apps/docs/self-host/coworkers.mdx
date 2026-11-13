@@ -77,13 +77,13 @@ A template packages a working coworker setup for someone else to install. The te
 
 The sidebar areas work on your install as on Lumvika Cloud: [projects and issues](/work/how-it-fits), [Chat](/work/chat), [Channels](/work/channels), goals, teams and the activity trail. They need the database migrations of their release and an engine from the same release.
 
-On an engine from before that release:
+The app reads what an engine can do from the `capabilities` its `/health` reports: `assistant` for Chat, `assistant.sessions.delete` for erasing a deleted chat, `issues.runs` for coworkers on issues. On an engine from before that release:
 
 | Area | What people see |
 | --- | --- |
-| **Chat** | **Update your server to use Chat**, in place of the message box |
-| **Deleting a chat** | The chat leaves the list, and a notice says its messages stay on the server, which cannot erase them |
-| **Issues** | Issues can be assigned to coworkers, but nothing wakes them. Nothing in the app says so: the app logs `this engine cannot start issue runs yet` once per engine |
+| **Chat** | **Update your machine to use Chat**, in place of the message box |
+| **Deleting a chat** | The chat leaves the list, and a notice says its messages stay on the workspace's machine, which cannot erase them |
+| **Issues** | Issues can be assigned to coworkers, but nothing wakes them. Where a person assigns a coworker, the app says **This workspace's machine is too old to run coworkers on issues.** The assignment is kept |
 | **Channels** | A mentioned coworker does not answer, and the thread says the workspace's machine needs an update |
 
 Issue notices show in the app only, as on Lumvika Cloud. Web search in Chat uses the same `BRAVE_SEARCH_API_KEY` as your coworkers.

@@ -26,15 +26,17 @@ A project holds the issues of one piece of work: a launch, a client, a quarter's
   The key cannot change later. Every reference already handed out, `WEB-12` in a comment, a message or a coworker's notes, would stop pointing anywhere.
 </Warning>
 
-Any member of the workspace can create a project.
+Any member of the workspace can create a project, and becomes its manager, whatever its visibility.
 
 ## The three views
 
 A project opens on three tabs.
 
-**Board** is one column per status: Backlog, Todo, In progress, In review, Blocked, Done. Drag a card to move it. While you drag, the columns the workflow does not allow from where the card is are greyed out, and a refused move tells you where the issue can go instead. **Add issue** at the bottom of a column creates an issue straight in that status. Cancelled issues are hidden until you click **Show cancelled**. On a phone, the board shows one column at a time, with a switcher to change it.
+**Board** is one column per status: Backlog, Todo, In progress, In review, Blocked, Done. Drag a card to move it. While you drag, the columns the workflow does not allow from where the card is are greyed out. A refused move tells you where the issue can go instead, and the card shows the issue as the server holds it, so you never see a move that did not happen. **Add issue** at the bottom of a column creates an issue straight in that status. Cancelled issues are hidden until you click **Show cancelled**. On a phone, the board shows one column at a time, with a switcher to change it.
 
-**List** is every issue in one table. **Search issues** looks in titles and references, and the **Status**, **Priority** and **Assignee** filters narrow it down. Sort by **Board order**, **Priority**, **Last updated**, **Newest** or **Due date**.
+A long column loads in parts: it says **Showing** how many of how many, and **Show more** loads the next ones. In Done and Cancelled, the most recent cards load first.
+
+**List** is the issues in one table. **Search issues** looks in titles and references, and the **Status**, **Priority** and **Assignee** filters narrow it down. Sort by **Board order**, **Priority**, **Last updated**, **Newest** or **Due date**. A large project loads its issues in parts: the list says how many are loaded, and **Load more issues** fetches the rest. Search, filters and sorting apply to the issues loaded.
 
 **Overview** holds the project itself: its description, its instructions for coworkers, its progress, its details, who can open it, and the archive button.
 
@@ -51,7 +53,9 @@ Every coworker reads these instructions before it works on an issue of the proje
 | Field | What it means |
 | --- | --- |
 | **Status** | **Planned**, **Active**, **Paused**, **Completed**. Only **Active** projects show on the [Overview](/work/overview) |
-| **Lead** | The person or coworker who answers for the project. A person who leads it finds its issues first in [Review](/work/review), follows its coworkers' issues in [My work](/work/my-work), and is told when a coworker hands one back |
+| **Lead** | The person or coworker who answers for the project. You can name only a coworker whose Box you can use. A person who leads it finds its issues first in [Review](/work/review), follows its coworkers' issues in [My work](/work/my-work), and is told when a coworker hands one back |
+| **Team** | The [team](/work/teams) the project belongs to. The project then shows on that team's page |
+| **Goal** | The [goal](/work/goals) it serves. Its issues count toward the goal's progress |
 | **Target date** | When it should be done. Shown in the list of projects |
 
 Progress counts the issues done against all issues except the cancelled ones.
@@ -75,10 +79,8 @@ The people named on a project get one of two levels:
 
 Open **Manage access** from the **Overview** tab to name people, change their level or remove them. Only an admin or a manager of the project can use it. Making an open project restricted cuts off everyone not named on it at once, and the app asks you to confirm.
 
-Restricting a project when you create it makes you its manager.
-
 <Warning>
-  A coworker on a restricted project can read all of it. A coworker that leads the project, holds one of its issues or created one sees every issue of the project, and anyone who can talk to that coworker can ask it about them. Assign issues of a restricted project only to coworkers whose Box is limited to the people who may know. See [What a coworker can see](/work/coworkers-on-issues#what-a-coworker-can-see).
+  A coworker on a restricted project can read all of it. A coworker that leads the project, holds one of its issues or created one sees every issue of the project, and the people who can use that coworker's Box can learn about them: its conversations on those issues are listed with the coworker, its memory can keep what it read, and anyone of them can ask it. When you assign a coworker an issue of a restricted project, the app says so: **People who can use this coworker can see what it works on.** Assign such issues only to coworkers whose Box is limited to the people who may know. See [What a coworker can see](/work/coworkers-on-issues#what-a-coworker-can-see).
 </Warning>
 
 ## Archive a project
@@ -91,11 +93,7 @@ There is no way to delete a project.
 
 ## Who changes what
 
-Anyone who can open a project creates, moves, assigns and comments on its issues. Its settings, its access, archiving and restoring belong to an admin or a manager of the project. Everyone else sees the **Overview** tab read only.
-
-<Note>
-  A member who creates a project open to the workspace does not become its manager. Ask an admin to name you with **Can manage** if you will need to change its settings.
-</Note>
+Anyone who can open a project creates, moves, assigns and comments on its issues. Its settings, its team and goal, its access, archiving and restoring belong to an admin or a manager of the project, its creator included. Everyone else sees the **Overview** tab read only.
 
 ## Next steps
 

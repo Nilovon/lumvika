@@ -36,9 +36,7 @@ The lead can be a person or a coworker. A person who leads a team can add and re
 
 A team holds no access of its own. Being on a team does not open a project, a Box or a channel.
 
-<Note>
-  The **Projects** list of a team stays empty for now: the project settings do not offer a team to pick yet.
-</Note>
+A project joins a team from its own details: **Team**, on the project's **Overview** tab, set by an admin or a manager of the project. It then shows in the team's **Projects**.
 
 ## Remove a member or delete a team
 
@@ -61,10 +59,14 @@ The org chart holds coworkers only. People are on teams, not in the chart.
 
 ## What the org chart changes
 
-Each coworker's title, manager, direct reports and teams are part of what it reads when it checks the other coworkers of the workspace, with the **See other coworkers** capability, and what the `get_team_status` tool of the [Lumvika API](/api/introduction) returns.
+**Who a coworker can hand issues to.** A coworker assigns issues only to itself, to the coworkers of its own Box, and to its manager and direct reports. A reporting line is how a coworker gets to delegate to one in another Box. See [Splitting work](/work/coworkers-on-issues#splitting-work).
 
-The org chart grants nothing. A manager does not see more of its reports, and a coworker calls the same coworkers it did before.
+**What it knows of its place.** Each coworker's title, manager, direct reports and teams are part of what it reads when it checks the other coworkers of the workspace, with the **See other coworkers** capability, and what the `get_team_status` tool of the [Lumvika API](/api/introduction) returns.
+
+Nothing else. A manager does not see more of its reports, and a coworker calls the same coworkers it did before with **Work with other coworkers**.
+
+A title and a manager are changed in the app only, by someone who manages the coworker's Box.
 
 ## What you see
 
-Coworkers in a Box you cannot reach are left out of the teams and the org chart you see, as everywhere else in the app.
+Coworkers in a Box you cannot reach are left out of the teams and the org chart you see, as everywhere else in the app. So are their changes in [Activity](/work/activity).
