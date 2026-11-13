@@ -7,6 +7,7 @@ import { useWorkMembers } from '@/components/issues/useWorkMembers'
 import type { ActivityEvent, GoalStatus, IssueStatus } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 // One event as a sentence: who did what to which, from one message per action.
 export function ActivitySentenceText({ event, refs, onOpenIssue }: { event: ActivityEvent; refs: ActivityRefs; onOpenIssue?: (ref: string) => void }) {
@@ -33,17 +34,21 @@ export function ActivitySentenceText({ event, refs, onOpenIssue }: { event: Acti
         }
     }
 
+    const actor = labelOf(event.actor)
+    const member = sentence.member ? labelOf(sentence.member) : null
+    if (member?.loading) return <NameSkeleton className="h-3.5 w-48 max-w-full" />
+
     const statusWord = (word: string): string => (sentence.status?.of === 'goal' ? t(`goalStatus.${word as GoalStatus}`) : tIssueStatus(word as IssueStatus))
 
     // Every sentence takes a subset of these values: one object serves them all, under the widest key.
     const key = `sentences.${sentence.key}` as 'sentences.genericWithTarget'
     const values = {
-        actor: labelOf(event.actor)?.name ?? t('fallback.someone'),
+        actor: actor?.name ?? t('fallback.someone'),
         target: targetLabel(sentence.target),
-        member: (sentence.member && labelOf(sentence.member)?.name) || t('fallback.member'),
+        member: member?.name || t('fallback.member'),
         from: sentence.status ? statusWord(sentence.status.from) : '',
         to: sentence.status ? statusWord(sentence.status.to) : '',
-        who: (chunks: ReactNode) => <span className="font-medium text-foreground">{chunks}</span>,
+        who: (chunks: ReactNode) => (actor?.loading ? <NameSkeleton className="h-3.5" /> : <span className="font-medium text-foreground">{chunks}</span>),
         link: (chunks: ReactNode) => (
             <ActivityTargetLink target={sentence.target} onOpenIssue={onOpenIssue}>
                 {chunks}

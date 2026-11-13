@@ -6,6 +6,7 @@ import type { WorkAuthor, WorkMemberRef } from '@lumvika/contracts'
 import { CardAvatar } from '@lumvika/ui/chat'
 import { AgentBuddy } from '@lumvika/ui/iso-grid'
 import { useTranslations } from 'next-intl'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 export type WorkMemberAvatarSize = 'xs' | 'sm' | 'md'
 
@@ -35,7 +36,7 @@ export function WorkMemberAvatar({ member, size = 'sm', showName = false, workin
     return (
         <span className={cn('inline-flex min-w-0 items-center gap-1.5', className)} title={showName ? undefined : name}>
             {glyph}
-            {showName ? <span className={cn('truncate', !member && 'text-muted-foreground')}>{name}</span> : <span className="sr-only">{name}</span>}
+            {!showName ? <span className="sr-only">{name}</span> : label?.loading ? <NameSkeleton className="h-3.5 w-20" /> : <span className={cn('truncate', !member && 'text-muted-foreground')}>{name}</span>}
         </span>
     )
 }

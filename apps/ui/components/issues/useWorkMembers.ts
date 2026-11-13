@@ -9,7 +9,9 @@ import type { MemberProfile, WorkAuthor, WorkMemberRef } from '@lumvika/contract
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-export type WorkMemberLabel = { name: string; photo: string | null; kind: 'user' | 'agent' | 'system'; known: boolean }
+// `loading` while the directory that names this member is still being read: the screen draws a
+// skeleton for the name rather than the fallback word, which is only for a name really unknown.
+export type WorkMemberLabel = { name: string; photo: string | null; kind: 'user' | 'agent' | 'system'; known: boolean; loading: boolean }
 
 const peopleCache = new Map<number, MemberProfile[]>()
 const peopleReads = new Map<number, Promise<MemberProfile[] | null>>()
@@ -37,6 +39,7 @@ export function useWorkMembers() {
     const { workspace, user } = useSession()
     const workspaceId = workspace?.id
     const agents = useBoardStore(state => state.agents)
+    const agentsLoaded = useBoardStore(state => state.hydrated)
     const [people, setPeople] = useState<MemberProfile[] | null>(() => (workspaceId === undefined ? null : (peopleCache.get(workspaceId) ?? null)))
 
     useEffect(() => {
@@ -64,16 +67,16 @@ export function useWorkMembers() {
     const labelOf = useCallback(
         (member: WorkMemberRef | WorkAuthor | null): WorkMemberLabel | null => {
             if (!member) return null
-            if (member.kind === 'system') return { name: t('system'), photo: null, kind: 'system', known: true }
+            if (member.kind === 'system') return { name: t('system'), photo: null, kind: 'system', known: true, loading: false }
             if (member.kind === 'agent') {
                 const agent = agentById.get(member.agentId)
-                return { name: agent?.name ?? t('coworker'), photo: null, kind: 'agent', known: !!agent }
+                return { name: agent?.name ?? t('coworker'), photo: null, kind: 'agent', known: !!agent, loading: !agent && !agentsLoaded }
             }
             const person = personById.get(member.userId)
             const name = person?.name && person.name !== UNNAMED ? person.name : t('teammate')
-            return { name, photo: person?.avatarUrl ?? null, kind: 'user', known: !!person }
+            return { name, photo: person?.avatarUrl ?? null, kind: 'user', known: !!person, loading: !person && people === null }
         },
-        [agentById, personById, t],
+        [agentById, agentsLoaded, people, personById, t],
     )
 
     return { people: people ?? [], peopleLoaded: people !== null, coworkers, labelOf, meId: user?.id ?? null }

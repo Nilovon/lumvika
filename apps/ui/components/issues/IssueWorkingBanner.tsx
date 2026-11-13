@@ -9,6 +9,7 @@ import { shortRelativeTime } from '@lumvika/i18n/format'
 import { AgentBuddy } from '@lumvika/ui/iso-grid'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 // The conversation in which the coworker works on the issue opens on the board, in its panel: the
 // same way a notification opens one.
@@ -34,13 +35,14 @@ export function IssueWorkingBanner({ issue }: { issue: IssueDetail }) {
     const waiting = useBoardStore(state => !!issue.sessionId && state.sessions.some(session => session.id === issue.sessionId && PAUSED_ON_PERSON.has(session.status)))
     const working = !!issue.checkoutRunId && !!agentId && !waiting
     if (!agentId || (!working && !waiting && !issue.sessionId)) return null
-    const name = labelOf(issue.assignee)?.name ?? ''
+    const assignee = labelOf(issue.assignee)
+    const name = assignee?.name ?? ''
 
     return (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
             <AgentBuddy agentId={agentId} size={28} mood={working ? 'working' : 'idle'} animated={working} facing="right" className="shrink-0" />
             <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-medium">{waiting ? t('waitingOnPerson', { name }) : working ? t('working', { name }) : t('assignedTo', { name })}</span>
+                {assignee?.loading ? <NameSkeleton className="my-1 h-3.5 w-48 max-w-full" /> : <span className="text-sm font-medium">{waiting ? t('waitingOnPerson', { name }) : working ? t('working', { name }) : t('assignedTo', { name })}</span>}
                 {waiting && <span className="text-xs text-muted-foreground">{t('waitingOnPersonHint')}</span>}
                 {working && issue.checkedOutAt && <span className="text-xs text-muted-foreground">{t('workingSince', { time: shortRelativeTime(issue.checkedOutAt, locale) })}</span>}
             </div>

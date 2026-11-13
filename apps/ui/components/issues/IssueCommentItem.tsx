@@ -9,6 +9,7 @@ import { fullDateTime, shortRelativeTime } from '@lumvika/i18n/format'
 import { Markdown } from '@lumvika/ui/markdown'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 export function IssueCommentItem({ comment, mine, onEdit }: { comment: IssueComment; mine: boolean; onEdit: (body: string) => Promise<boolean> }) {
     const t = useTranslations('issues.comments')
@@ -31,7 +32,7 @@ export function IssueCommentItem({ comment, mine, onEdit }: { comment: IssueComm
             <WorkMemberAvatar member={comment.author} size="sm" className="mt-0.5 self-start" />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="text-sm font-medium">{labelOf(comment.author)?.name}</span>
+                    {labelOf(comment.author)?.loading ? <NameSkeleton className="h-3.5 w-20" /> : <span className="text-sm font-medium">{labelOf(comment.author)?.name}</span>}
                     <time dateTime={comment.createdAt} title={fullDateTime(comment.createdAt, locale)} className="text-xs text-muted-foreground">
                         {shortRelativeTime(comment.createdAt, locale)}
                     </time>

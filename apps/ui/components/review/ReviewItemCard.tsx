@@ -12,6 +12,7 @@ import type { ReviewItem } from '@/lib/work/review-queue'
 import { fullDateTime, shortRelativeTime } from '@lumvika/i18n/format'
 import { Badge } from '@lumvika/ui/primitives'
 import { useLocale, useTranslations } from 'next-intl'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 type ReviewItemCardProps = {
     item: ReviewItem
@@ -29,8 +30,10 @@ export function ReviewItemCard({ item, onOpen, onApprove, onRequestChanges, onUn
     const { labelOf } = useWorkMembers()
     const { issue } = item
     const blocked = issue.status === 'blocked'
-    const handedName = item.handedBy ? labelOf(item.handedBy)?.name : null
-    const commentName = item.lastComment ? (labelOf(item.lastComment.author)?.name ?? '') : ''
+    const handed = item.handedBy ? labelOf(item.handedBy) : null
+    const handedName = handed?.name ?? null
+    const commentAuthor = item.lastComment ? labelOf(item.lastComment.author) : null
+    const commentName = commentAuthor?.name ?? ''
 
     return (
         <article className="@container flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:p-4">
@@ -57,7 +60,7 @@ export function ReviewItemCard({ item, onOpen, onApprove, onRequestChanges, onUn
             {item.handedBy && handedName && (
                 <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
                     <WorkMemberAvatar member={item.handedBy.kind === 'system' ? null : item.handedBy} size="xs" />
-                    <span className="truncate">{blocked ? t('handed.blocked', { name: handedName }) : t('handed.finished', { name: handedName })}</span>
+                    {handed?.loading ? <NameSkeleton className="w-44 max-w-full" /> : <span className="truncate">{blocked ? t('handed.blocked', { name: handedName }) : t('handed.finished', { name: handedName })}</span>}
                 </span>
             )}
 
@@ -69,7 +72,7 @@ export function ReviewItemCard({ item, onOpen, onApprove, onRequestChanges, onUn
                 </Alert>
             ) : item.lastComment ? (
                 <figure className="flex flex-col gap-1 border-l-2 border-border pl-3">
-                    <figcaption className="text-xs text-muted-foreground">{t('lastComment', { name: commentName })}</figcaption>
+                    <figcaption className="text-xs text-muted-foreground">{commentAuthor?.loading ? <NameSkeleton className="w-32" /> : t('lastComment', { name: commentName })}</figcaption>
                     <blockquote className="line-clamp-3 text-sm break-words whitespace-pre-line text-foreground/90">{item.lastComment.body}</blockquote>
                 </figure>
             ) : (

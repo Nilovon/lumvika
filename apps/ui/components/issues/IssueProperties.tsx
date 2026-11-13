@@ -14,6 +14,7 @@ import type { IssueDetail, IssuePriority, IssueStatus, IssueSummary, UpdateIssue
 import { fullDateTime } from '@lumvika/i18n/format'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
+import { NameSkeleton } from '@/components/issues/NameSkeleton'
 
 const NO_PARENT = '__none'
 
@@ -91,7 +92,7 @@ export function IssueProperties({ issue, disabled, onStatusChange, onPriorityCha
                     className="h-8 min-h-8 px-2.5"
                 />
             </Field>
-            <p className="col-span-2 text-xs text-muted-foreground md:col-span-1">{t('created', { name: labelOf(issue.createdBy)?.name ?? '', date: fullDateTime(issue.createdAt, locale) })}</p>
+            <p className="col-span-2 text-xs text-muted-foreground md:col-span-1">{labelOf(issue.createdBy)?.loading ? <NameSkeleton className="w-44 max-w-full" /> : t('created', { name: labelOf(issue.createdBy)?.name ?? '', date: fullDateTime(issue.createdAt, locale) })}</p>
         </div>
     )
 }
