@@ -46,6 +46,16 @@ export const ENGINE_CAPABILITY_OPENCODE = 'connections.opencode'
 // The engine runs custom OpenAI-compatible connections and answers `POST /connections/probe`.
 export const ENGINE_CAPABILITY_CUSTOM = 'connections.custom'
 
+// The engine runs the built-in assistant of the plain Chat (`ASSISTANT_AGENT_ID`).
+export const ENGINE_CAPABILITY_ASSISTANT = 'assistant'
+
+// `DELETE /agents/assistant/sessions/:sid` erases one conversation of the assistant for good.
+export const ENGINE_CAPABILITY_ASSISTANT_SESSION_DELETE = 'assistant.sessions.delete'
+
+// The engine starts issue runs (`POST /agents/:id/issue-runs`) and works the queue of assigned issues:
+// a coworker assigned an issue on an engine without it is never woken.
+export const ENGINE_CAPABILITY_ISSUE_RUNS = 'issues.runs'
+
 // What the last `lumvika update` on a box did, as `/health` reports it.
 export const engineLastUpdateSchema = z.object({
     status: z.enum(['running', 'error', 'restarting', 'success']),

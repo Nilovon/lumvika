@@ -1,0 +1,97 @@
+{
+    "_context": {
+        "row.progress": "Under a goal's progress bar: issues done out of all its issues, its sub-goals included.",
+        "actions.linkProject": "Menu item: attaches a project to this goal so its issues count toward it.",
+        "status.achieved": "A goal's status: it was reached."
+    },
+    "title": "Goals",
+    "description": "What your teams aim for, and how far along they are.",
+    "adminOnly": "Only an admin of the workspace can do this",
+    "newGoal": "New goal",
+    "loadFailed": "The goals could not be loaded.",
+    "retry": "Try again",
+    "empty": {
+        "title": "No goals yet",
+        "description": "A goal is what your teams aim for. Break it into sub-goals and link the projects that serve it: its progress fills in as their issues get done.",
+        "action": "Create a goal",
+        "askAdmin": "Ask an admin of the workspace to set the first goal."
+    },
+    "noMatch": {
+        "title": "No goal matches these filters",
+        "clear": "Clear filters"
+    },
+    "status": {
+        "planned": "Planned",
+        "active": "Active",
+        "achieved": "Achieved",
+        "cancelled": "Cancelled"
+    },
+    "filters": {
+        "status": "Status",
+        "team": "Team"
+    },
+    "row": {
+        "progress": "{done, number} of {total, number} issues done",
+        "noIssues": "No issues yet",
+        "target": "Due {date}",
+        "noOwner": "No owner",
+        "you": "{name} (you)",
+        "subGoals": "{count, plural, one {# sub-goal} other {# sub-goals}}",
+        "expand": "Show the sub-goals of {title}",
+        "collapse": "Hide the sub-goals of {title}",
+        "actionsFor": "Actions for {title}",
+        "unlink": "Unlink {project}"
+    },
+    "actions": {
+        "edit": "Edit",
+        "addSubGoal": "Add sub-goal",
+        "linkProject": "Link project",
+        "delete": "Delete"
+    },
+    "dialog": {
+        "createTitle": "New goal",
+        "createSubTitle": "New sub-goal",
+        "editTitle": "Edit goal",
+        "createDescription": "Say what you aim for. Link projects to it afterwards to follow its progress.",
+        "editDescription": "Change what this goal aims for, who owns it and when it is due.",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Double the newsletter audience",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Why it matters and how you will know it is reached",
+        "status": "Status",
+        "parent": "Parent goal",
+        "noParent": "None (top level)",
+        "underItself": "under this goal",
+        "team": "Team",
+        "noTeam": "No team",
+        "owner": "Owner",
+        "noOwner": "No owner",
+        "targetDate": "Target date",
+        "create": "Create goal",
+        "save": "Save",
+        "cancel": "Cancel",
+        "created": "Goal created",
+        "saved": "Goal saved"
+    },
+    "delete": {
+        "title": "Delete {title}?",
+        "description": "The goal is removed. Its sub-goals move up one level, and its projects and issues stay, without this goal. This cannot be undone.",
+        "confirm": "Delete",
+        "deleted": "Goal deleted"
+    },
+    "link": {
+        "title": "Link a project",
+        "description": "The issues of the project count toward {title}.",
+        "search": "Search projects",
+        "empty": "No project to link yet. Create one in Projects first.",
+        "noMatch": "No project matches.",
+        "linkedHere": "Linked",
+        "linkedElsewhere": "Linked to another goal",
+        "manageOnly": "You do not manage this project",
+        "linked": "{project} now counts toward {goal}",
+        "unlinked": "{project} no longer counts toward {goal}",
+        "unlinkTitle": "Unlink {project}?",
+        "unlinkDescription": "Its issues stop counting toward {goal}. The project itself does not change.",
+        "unlinkConfirm": "Unlink"
+    }
+}

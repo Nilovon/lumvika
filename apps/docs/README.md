@@ -21,6 +21,7 @@ Search is disabled in local preview unless you run `npx mint login`. Everything 
 - `docs.json` — site config: name, colors, navigation (three tabs), navbar, footer
 - `*.mdx` — pages, referenced by path (without extension) in `docs.json` navigation
 - `agents/` — building and configuring an agent
+- `work/` — the sidebar areas: projects, issues, review, goals, teams, channels, Chat, activity
 - `templates/` — installing, authoring and selling templates
 - `api/` — the MCP server and the webhook endpoint, with `api/tools/` holding the tool reference
 - `snippets/` — reusable MDX fragments, imported with `import X from '/snippets/x.mdx'`

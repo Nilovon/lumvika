@@ -24,6 +24,7 @@
         "./logo": "./src/logo/index.ts",
         "./markdown": "./src/markdown/index.ts",
         "./primitives": "./src/primitives/index.ts",
+        "./primitives/chart": "./src/primitives/chart.tsx",
         "./primitives/spinner": "./src/primitives/spinner.tsx",
         "./primitives/use-is-mobile": "./src/primitives/use-is-mobile.ts",
         "./forms": "./src/forms/index.ts",

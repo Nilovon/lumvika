@@ -21,5 +21,9 @@
         "copyright": "© Die Urheberinnen und Urheber des ursprünglichen Projekts. Änderungen © 2026 Schnebel Technologie GmbH.",
         "source": "Quellcode",
         "licenseText": "Lizenztext"
+    },
+    "dateField": {
+        "placeholder": "Datum wählen",
+        "clear": "Datum entfernen"
     }
 }

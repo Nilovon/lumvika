@@ -7,7 +7,6 @@ import { MyTemplatesDialog } from '@/components/templates/expert/MyTemplatesDial
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import { ChromeBar, ChromeButton, ChromeDivider } from '@lumvika/ui/chrome'
 import { Gauge } from '@/components/ui/gauge'
-import { ToolbarDialogs } from '@/components/layout/ToolbarActions'
 import { useIsTemplateAuthor } from '@/hooks/useIsTemplateAuthor'
 import { useWorkspaceAccess } from '@/hooks/useWorkspaceAccess'
 import { isPlaced } from '@/lib/board/iso'
@@ -52,8 +51,8 @@ export function BuilderToolbar() {
     const recruitingFirstAgent = hydrated && spaces.length === 0
 
     // Nothing in the bar is for an anonymous visitor: the sign-in pill in the top corner is their
-    // only way in. The store-driven dialogs stay mounted.
-    if (isAnonymous) return <ToolbarDialogs />
+    // only way in. The store-driven dialogs stay mounted, by the layout (DashboardRuntime).
+    if (isAnonymous) return null
 
     const showBar = placing || !recruitingFirstAgent || unplacedAgents.length > 0
 
@@ -139,7 +138,6 @@ export function BuilderToolbar() {
             <TemplateLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} priorityCategory={viewerSignals.category} preferredConnectorSlugs={viewerSignals.connectorSlugs} initialSlug={librarySlug} onCreateFromScratch={openNewAgent} />
             <ClaimSpaceDialog target={null} open={newBoxOpen} onClose={() => setNewBoxOpen(false)} />
             {isTemplateAuthor && <MyTemplatesDialog />}
-            <ToolbarDialogs />
         </>
     )
 }

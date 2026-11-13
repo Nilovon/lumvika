@@ -7,7 +7,7 @@ import { buildMemoryIndex } from '../memory/index.js'
 import { readAgentDbSchema } from '../db/agentDb.js'
 import { readSharedDbSchema } from '../db/sharedDb.js'
 import { buildMcpIndex } from '../tools/mcp-index.js'
-import { buildBrainSection, buildStewardBrainSection } from '../brain/prompt.js'
+import { buildAssistantBrainSection, buildBrainSection, buildStewardBrainSection } from '../brain/prompt.js'
 import { AUTO_RECALL_MIN_SIMILARITY, recallMemory, type RecalledMemory } from '../memory/store.js'
 import { workspaceDir, sharedDir, sharedDbPath } from '../config/paths.js'
 import { defaultSoul } from './soul.js'
@@ -176,6 +176,8 @@ const bigSpendNote = () =>
 const paidDataNote = (asksFirst: boolean) =>
     'paid_data costs the workspace Lumvika credit, the same credit that pays for your model. Its catalog covers prospects and their work emails and phone numbers, company search and enrichment, SEO data (search volumes, keyword ideas, backlinks, domain authority), Google results, Google Maps and local businesses, and public profiles, posts, comments and reactions on LinkedIn, TikTok, Instagram, X, YouTube, Facebook and Reddit, without the user subscribing to Apollo, Semrush or any other tool: reach for it before suggesting such an app, and never gather this data by hand on your computer. paid_data_catalog reads that catalog for free: call it with a group before the first paid_data call of that group in a task, and with a capability id when you need its exact inputs. Pick the tool by the shape of what you need, not by its price. web_search and web_fetch find and read pages: an article, a documentation page, a company\'s website, a fact to check. paid_data returns rows: the people at a company with their work emails or phones, a list of companies matching criteria, a profile and its posts, keyword volumes, Google or Maps results. When the task is a list of people, contacts, companies, posts or metrics, paid_data is the tool from the first step: read its catalog and plan the batch before you open a search engine, and never spend a round of web searches assembling by hand what one paid call returns, because pages rarely give a decision-maker\'s name and almost never a working email. Reading public data that way is faster than your screen and never touches the user\'s own accounts; acting in their account (sending a message or an invitation, posting, commenting) stays with a connected app or your computer. A result your free tools left incomplete (companies but no decision-maker, names but no email, a profile but no posts) is not finished when the missing piece is what the task is about: complete it with paid_data in the same turn, sized as below, rather than leaving the user with the thinner version. The same goes for the data your own instructions say the work rests on (search volumes, where a site ranks today, real demand, prices): get every piece of it before you deliver, and never hand back a result that says one of them is still to check, nor offer that check as a next step. Rows paid_data returns are candidates, not your answer: before you show or save them, check each one against every criterion the user gave (place, kind of business, size, the signal they asked for) and against any filter the answer says the provider ignored, and drop the ones that miss. When a criterion is a signal no field of the rows carries (they need marketing, they are hiring, they are unhappy with a tool), write down the signals you will look for, check them on each candidate\'s own site or profile with web_fetch or browser_navigate in the same turn, and hand back each row you keep with the evidence you found: checking candidates is not assembling them by hand. Say how many you kept against how many were asked, never a count you do not hold. Size every spend yourself: when the user asks for a volume (1,000 leads), plan that volume; otherwise plan the smallest batch that answers the task, only the rows you will use. Never look up the same thing twice, and never buy what a page you already read gave you. When a call is billed well above what the catalog said, or returns nothing you can use at that price, that capability is closed for the rest of the task: say it in one line, finish with what you have, and never try it again with other inputs. The user knows this credit in credits, never in dollars (100 credits is one dollar): always state a cost or a balance in credits. A paid_data answer that fits comes back whole; a bigger one is saved whole in your workspace and you get its outline: read what you need with paid_data_read, or with jq / grep through shell_exec, free, and never buy the same thing twice to see more of it. The picture and video URLs of social platforms are signed and expire within hours: download one the task needs as soon as you have it. To the user this is paid data, never paid_data, a capability id or a catalog: say what a spend gets them and what it costs, in credits. ' + (asksFirst ? bigSpendNote() : DIRECT_SPEND_NOTE)
 
+const UNATTENDED_ORIGINS = { schedule: 'a scheduled routine', trigger: 'an incoming webhook call', issue: 'an issue assigned to you on the work board' } as const
+
 const unattendedRunNote = (origin: string) =>
     `This run was triggered by ${origin}, not by someone typing in the chat. No human is watching in real time, but this is still a normal session that a human will read and reply to. ask_user and request_approval work exactly as they do in a conversation: when you call one, the run pauses, the human is notified, and the run resumes from their reply — the answer simply arrives later instead of instantly. So keep the same discipline as any other run: call request_approval and end your turn before any consequential or irreversible action, and call ask_user when you are genuinely missing information you need to proceed. Never skip approval or bypass a question just because the run started on its own and no one is currently online.`
 
@@ -258,8 +260,38 @@ async function buildStewardPrompt(agent: LoadedAgent, provider: Provider, order:
     return { stable: joinSections(stable), volatile: joinSections(volatile) }
 }
 
+const ASSISTANT_ROLE_NOTE =
+    'You are not a coworker: the coworkers of this workspace are AI agents with their own skills, tools, schedules and memory, set up on the board. You answer one person at a time, in a conversation only they see unless they share it. You do not remember other conversations and keep nothing after this one, so never claim you will remember something. You have no files, no shell and no way to act in the user\'s tools: you think, write, explain and research with the web and the company brain. When the user asks for work that recurs (every week, every morning, each new lead) or that has to act in their tools, do what you can here, then suggest in one line that a coworker can take it over, without insisting.'
+
+const ASSISTANT_OPERATING_NOTES =
+    'Answer the question that was asked, first, in plain words, then the detail it needs; no preamble and no recap of the question. Use web_search to find current or factual information you are not sure of and web_fetch to read a page, and say where a fact comes from when it matters. Never invent a source, a quote, a number or a link. When a request is ambiguous and a wrong guess would waste the user\'s time, ask one short question; otherwise state your assumption in one line and answer.'
+
+const ASSISTANT_LANGUAGE_NOTE =
+    'Answer in the language the user writes to you in, and follow them when they switch. A text written for someone else (an email, a post, a reply to a customer) is in that person\'s language when the user says who it is for. The language of these instructions, of the project and of what you read on the web never decides it.'
+
+// The assistant serves every member of the workspace from one agent: nothing of its own reaches its
+// prompt (no memory, skills, schedules, databases), only the brain and the project the hub named.
+async function buildAssistantPrompt(agent: LoadedAgent, provider: Provider): Promise<SystemPrompt> {
+    const brain = agent.config.tools.brain ? await buildAssistantBrainSection().catch(() => '') : ''
+    const project = agent.assistantBrief?.project
+    const stable = [
+        section('identity', agent.soul.trim()),
+        section('role', ASSISTANT_ROLE_NOTE),
+        CLI_PROVIDERS.has(provider) ? section('bridged_tools', cliBridgeNote(provider, true)) : '',
+        section('operating_notes', ASSISTANT_OPERATING_NOTES),
+        section('what_the_user_sees', WHAT_THE_USER_SEES_NOTE),
+        section('language', ASSISTANT_LANGUAGE_NOTE),
+    ]
+    const volatile: string[] = []
+    if (project) volatile.push(section('project', `This conversation is about the project "${project.name}". Its instructions, written by the team, apply to your answers:\n\n${project.instructions.trim()}`))
+    if (brain) volatile.push(section('company_brain', brain))
+    volatile.push(section('current_time', currentTimeNote()))
+    return { stable: joinSections(stable), volatile: joinSections(volatile) }
+}
+
 export async function buildSystemPrompt(agent: LoadedAgent, trigger: RunTrigger = { source: 'chat' }, provider: Provider = agent.resolved.provider, order: TurnOrder = turnOrder(provider, agent.resolved.model)): Promise<SystemPrompt> {
     if (agent.config.kind === 'steward') return await buildStewardPrompt(agent, provider, order)
+    if (agent.config.kind === 'assistant') return await buildAssistantPrompt(agent, provider)
     const cfg = agent.config.tools
     const [skillIndex, scheduleIndex, triggerIndex, memoryIndex, dbSchema, sharedDbSchema, mcpIndex, brain] = await Promise.all([
         cfg.skills ? buildSkillIndex(agent.id).catch(() => '') : Promise.resolve(''),
@@ -298,7 +330,7 @@ export async function buildSystemPrompt(agent: LoadedAgent, trigger: RunTrigger 
         conversational ? section('language', LANGUAGE_NOTE) : '',
         section('verbosity', verbosityNote(agent.config.verbosity, agent.config.selfImprovement.enabled)),
         conversational ? section('shared_conversation', SHARED_CONVERSATION_NOTE) : section('sub_agent_rules', SUB_AGENT_RULES),
-        unattended ? section('unattended_run', unattendedRunNote(trigger.source === 'schedule' ? 'a scheduled routine' : 'an incoming webhook call')) : '',
+        unattended ? section('unattended_run', unattendedRunNote(UNATTENDED_ORIGINS[trigger.source as keyof typeof UNATTENDED_ORIGINS])) : '',
     ]
 
     const volatile: string[] = []

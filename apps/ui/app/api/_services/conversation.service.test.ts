@@ -7,7 +7,9 @@ import { createClient } from '@/supabase/server'
 import { createServiceRoleClient } from '@/supabase/serviceRole'
 import { selectMany, selectMaybeSingle } from '@/supabase/supabase-helpers'
 import { fakeSupabase } from '@/test/supabase-fake'
+import { agentConversationsOverviewSchema, conversationSchema, SESSION_SOURCES_KNOWN_TO_EVERY_CLIENT } from '@lumvika/contracts'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 
 import { adoptEngineSession, cancelSessionRuns, EMPTY_SESSION_SNAPSHOT, listAgentConversations, listAgentThreads, listWorkspaceConversationOverview, markSessionsHandled, readSessionSnapshot, searchWorkspaceConversations, THREAD_FEED_LIMIT } from './conversation.service'
 
@@ -92,6 +94,21 @@ describe('listWorkspaceConversationOverview', () => {
         expect(overview.map(row => row.agentId)).toEqual(['a'])
         expect(vi.mocked(selectMany).mock.calls[1][3]).toEqual({ agent_id: ['a'] })
         expect(vi.mocked(selectMany).mock.calls[2][3]).toMatchObject({ agent_id: ['a'] })
+    })
+
+    it('hands a source older apps do not know to them as agent, so their board still parses', async () => {
+        answers([{ id: 'a' }, { id: 'b' }], [{ ...session('a', 's1', '2026-09-18T10:00:00Z'), source: 'issue' }, { ...session('b', 's2', '2026-09-17T10:00:00Z'), source: 'channel' }], [])
+
+        const overview = await listWorkspaceConversationOverview(ctx)
+
+        expect(overview.map(row => row.latest?.source)).toEqual(['agent', 'agent'])
+        const legacyApp = agentConversationsOverviewSchema.element.extend({ latest: conversationSchema.extend({ source: z.enum(SESSION_SOURCES_KNOWN_TO_EVERY_CLIENT) }).nullable() }).array()
+        expect(legacyApp.safeParse(overview).success).toBe(true)
+    })
+
+    it('lets an app built from these contracts read a source added after it as agent', () => {
+        const parsed = conversationSchema.parse({ id: 's1', agentId: 'a', engineSessionId: 'e1', title: 't', status: 'idle', source: 'a_source_from_the_future', updatedAt: '2026-09-18T10:00:00Z', originAgentName: null })
+        expect(parsed.source).toBe('agent')
     })
 
     it('does not query anything else when the workspace has no agent', async () => {
@@ -218,6 +235,14 @@ describe('adoptEngineSession', () => {
         vi.mocked(listSessions).mockResolvedValue([] as never)
 
         await expect(adoptEngineSession('agent-1', 'someone-elses-session', 'Title')).rejects.toThrow('Conversation not found')
+        expect(createSessionRow).not.toHaveBeenCalled()
+    })
+
+    it('never mirrors the conversation a coworker keeps for a channel', async () => {
+        vi.mocked(selectMaybeSingle).mockResolvedValueOnce({ data: null, error: null } as never)
+        vi.mocked(getSession).mockResolvedValue({ id: 'channel-session', source: 'channel', originAgentId: null } as never)
+
+        await expect(adoptEngineSession('agent-1', 'channel-session', 'Title')).rejects.toThrow('Conversation not found')
         expect(createSessionRow).not.toHaveBeenCalled()
     })
 
@@ -388,6 +413,15 @@ describe('listAgentConversations', () => {
             ['s2', null],
         ])
         expect(vi.mocked(selectMany).mock.calls[1][3]).toEqual({ agent_id: { in: ['a'] }, engine_session_id: { in: ['engine-s1'] }, kind: { neq: 'done' } })
+    })
+
+    it('sends an issue or a channel conversation as agent, and keeps the sources every app knows', async () => {
+        rows({ ...session('a', 's1', '2026-10-26T10:00:00Z'), source: 'issue' }, { ...session('a', 's2', '2026-10-25T10:00:00Z'), source: 'channel' }, { ...session('a', 's3', '2026-10-24T10:00:00Z'), source: 'schedule' })
+        unseenRuns({ data: [], error: null })
+
+        const conversations = await listAgentConversations(asMember, 'a')
+
+        expect(conversations.map(c => c.source)).toEqual(['agent', 'agent', 'schedule'])
     })
 
     it('leaves unseen out rather than failing when the read state cannot be fetched', async () => {

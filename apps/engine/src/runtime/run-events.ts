@@ -30,6 +30,7 @@ export type RunTerminal = {
 export function triggerFromRun(run: { triggerSource: string | null; triggerSlug: string | null }): RunTrigger {
     if (run.triggerSource === 'schedule') return { source: 'schedule', slug: run.triggerSlug ?? '', name: run.triggerSlug ?? 'schedule' }
     if (run.triggerSource === 'trigger') return { source: 'trigger', slug: run.triggerSlug ?? '', name: run.triggerSlug ?? 'trigger' }
+    if (run.triggerSource === 'issue') return { source: 'issue', slug: run.triggerSlug ?? '', name: run.triggerSlug ?? 'issue' }
     return { source: 'chat' }
 }
 
@@ -70,6 +71,7 @@ export async function emitRunTerminal(terminal: RunTerminal): Promise<void> {
     }
     if (trigger.source === 'schedule') metadata.scheduleSlug = trigger.slug
     if (trigger.source === 'trigger') metadata.triggerSlug = trigger.slug
+    if (trigger.source === 'issue') metadata.issueRef = trigger.slug
     // The hub titles an automated session after what its run did, from this answer: the routine's
     // name alone makes every run of it look the same in the list.
     const finalText = terminal.text?.trim()
@@ -82,7 +84,8 @@ export async function emitRunTerminal(terminal: RunTerminal): Promise<void> {
     // and without it every failing cron was read as an interactive run: the "Scheduled tasks"
     // preference silenced nothing and the errors arrived under the wrong switch. `chat` is not a
     // `session_source` on the hub side, and sending it would fail validation of the whole payload,
-    // so an interactive run stays null.
-    const source = trigger.source === 'chat' ? null : trigger.source
+    // so an interactive run stays null. A chat in a hub channel says so: the hub keeps it out of
+    // every inbox, its answer being posted in the channel.
+    const source = trigger.source === 'chat' ? (trigger.channel ? 'channel' : null) : trigger.source
     await sendNotification({ event, kind: terminal.kind, agentId: terminal.agentId, sessionId: terminal.sessionId, runId: terminal.runId, message, source, metadata }).catch(() => {})
 }

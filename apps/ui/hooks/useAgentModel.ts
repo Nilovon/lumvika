@@ -81,6 +81,12 @@ export function readAgentModel(agentId: string): ModelSelection {
     return getSnapshot(agentId)
 }
 
+// Carries a pick over to another key, outside of any render: a chat that gets its id keeps the model
+// picked while it had none.
+export function writeAgentModel(agentId: string, selection: ModelSelection) {
+    setSelection(agentId, selection)
+}
+
 export function useAgentModel(agentId: string) {
     const selection = useSyncExternalStore(
         cb => subscribe(agentId, cb),

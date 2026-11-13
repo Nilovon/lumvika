@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { sessionSourceSchema } from './session.js'
+import { clientSessionSourceSchema } from './session.js'
 
 export const sessionStatusSchema = z.enum(['idle', 'working', 'error', 'waiting_human', 'awaiting_question', 'awaiting_approval', 'awaiting_connector', 'awaiting_ack'])
 export type SessionStatus = z.infer<typeof sessionStatusSchema>
@@ -11,6 +11,11 @@ export type SessionStatus = z.infer<typeof sessionStatusSchema>
 export const ATTENTION_STATUSES = ['error', 'waiting_human', 'awaiting_question', 'awaiting_approval', 'awaiting_connector', 'awaiting_ack'] as const satisfies readonly SessionStatus[]
 
 const attentionStatuses: ReadonlySet<string> = new Set(ATTENTION_STATUSES)
+
+// The attention statuses in which the coworker stopped on a person (a question, an approval, a
+// connector, a hand-over) and goes on in the same conversation once they answer. `error` ends the run
+// and `awaiting_ack` is a heads-up the run does not stop for.
+export const PAUSED_ON_PERSON_STATUSES = ['waiting_human', 'awaiting_question', 'awaiting_approval', 'awaiting_connector'] as const satisfies readonly SessionStatus[]
 
 export function needsHuman(status: SessionStatus): boolean {
     return attentionStatuses.has(status)
@@ -32,7 +37,7 @@ export const conversationSchema = z.object({
     engineSessionId: z.string(),
     title: z.string(),
     status: sessionStatusSchema,
-    source: sessionSourceSchema,
+    source: clientSessionSourceSchema,
     updatedAt: z.string(),
     // Optional for a hub older than it: the app then names the coworker without drawing it.
     originAgentId: z.string().nullable().optional(),

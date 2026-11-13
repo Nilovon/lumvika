@@ -7,7 +7,8 @@ process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-settle-'))
 
 // Captured instead of sent: the assertions are about what the hub is told, which is the only thing
 // that moves a conversation off "working".
-const { sent, stream, partial, proposal } = vi.hoisted(() => ({
+const { sent, stream, partial, proposal, curated } = vi.hoisted(() => ({
+    curated: [] as string[],
     sent: [] as Array<Record<string, unknown>>,
     stream: { parts: [] as unknown[], hang: false },
     partial: { push: false },
@@ -24,6 +25,12 @@ vi.mock('./notify.js', async importOriginal => {
         },
     }
 })
+
+vi.mock('./curator.js', () => ({
+    runCurator: async (_agent: unknown, _sessionId: string, userText: string) => {
+        curated.push(userText)
+    },
+}))
 
 vi.mock('../tools/registry.js', () => ({
     buildTools: async (ctx: { partialResults?: { label: string; text: string }[]; skillProposals?: { proposalId: string; mode: string; title: string }[] }) => {
@@ -80,10 +87,10 @@ const textTurn = (finishReason: { unified: string; raw?: string }): unknown[] =>
     { type: 'finish', finishReason, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
 ]
 
-async function runToSettlement(message: string, author?: { id: string; name: string }) {
+async function runToSettlement(message: string, author?: { id: string; name: string }, channel?: boolean) {
     const session = await createSession(id, message)
     const agent = await getAgent(id)
-    const run = await runAgent(agent, session.id, message, undefined, undefined, undefined, { source: 'chat', author })
+    const run = await runAgent(agent, session.id, message, undefined, undefined, undefined, { source: 'chat', author, channel })
     return { run, sessionId: session.id, outcome: await run.settled }
 }
 
@@ -100,6 +107,18 @@ describe('a run always reaches a terminal state', () => {
         stream.hang = false
         partial.push = false
         proposal.push = false
+        curated.length = 0
+    })
+
+    it('curates what a chat taught, never what was heard in a hub channel', async () => {
+        stream.parts = textTurn({ unified: 'stop' })
+        await runToSettlement('I live in Lyon')
+        stream.parts = textTurn({ unified: 'stop' })
+        const { outcome } = await runToSettlement('the acquisition closes Friday', undefined, true)
+
+        expect(outcome.kind).toBe('done')
+        await vi.waitFor(() => expect(sent.filter(n => n.event === 'agent.message.completed')).toHaveLength(2))
+        expect(curated).toEqual(['I live in Lyon'])
     })
 
     // A spent Codex subscription arrives as a plain finish, not as an error. Taken at face value it

@@ -78,6 +78,9 @@ export function delegateTools(ctx: RunContext): ToolSet {
                     config.tools.schedule = false
                     config.tools.callAgent = false
                     config.tools.notify = false
+                    // A delegate has no row on the board: the issues stay with the coworker that
+                    // delegated, which checks them out, moves and hands them over itself.
+                    config.tools.work = false
                     config.selfImprovement.enabled = false
                     // Pinned from the run rather than copied from the config: a parent following the
                     // box default would hand the child a null model, and the child would resolve the

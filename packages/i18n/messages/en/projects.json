@@ -1,0 +1,228 @@
+{
+    "_context": {
+        "empty.description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task.",
+        "board.notFrom": "Shown over a board column a dragged card cannot be dropped on. {from} is the card's current status.",
+        "overview.instructionsTitle": "Section where people write the shared context AI coworkers read before working on any issue of the project.",
+        "list.progress": "{done} issues done out of {total}."
+    },
+    "title": "Projects",
+    "description": "Work that people and coworkers do together.",
+    "empty": {
+        "title": "Start your first project",
+        "description": "A project groups the issues people and coworkers work on together: a launch, a client, a quarter's goal. Every issue has one owner, a status and its own thread."
+    },
+    "detail": {
+        "back": "All projects",
+        "notFound": "This project is not available",
+        "notFoundHint": "It does not exist, or it is restricted to the people named on it.",
+        "tabs": {
+            "board": "Board",
+            "list": "List",
+            "overview": "Overview"
+        },
+        "restricted": "Restricted project",
+        "newIssue": "New issue",
+        "archivedBanner": "This project is archived. Its issues stay readable; restore it from the Overview to add new ones."
+    },
+    "status": {
+        "planned": "Planned",
+        "active": "Active",
+        "paused": "Paused",
+        "completed": "Completed",
+        "archived": "Archived"
+    },
+    "list": {
+        "new": "New project",
+        "loadFailed": "Projects could not be loaded",
+        "statusFilter": "Status",
+        "count": "{count, plural, one {# project} other {# projects}}",
+        "noMatch": "No project matches",
+        "noMatchHint": "Archived projects only show when Archived is picked.",
+        "clearFilter": "Clear the filter",
+        "columns": {
+            "name": "Project",
+            "status": "Status",
+            "lead": "Lead",
+            "progress": "Progress",
+            "target": "Target"
+        },
+        "restricted": "Restricted",
+        "noLead": "No lead",
+        "progress": "{done}/{total} done",
+        "noIssues": "No issues yet",
+        "noTarget": "No date"
+    },
+    "create": {
+        "title": "New project",
+        "description": "Name the work, and give it a short key: its issues are numbered with it.",
+        "nameLabel": "Name",
+        "namePlaceholder": "Website relaunch",
+        "keyLabel": "Key",
+        "keyHint": "Issues will read {example}. The key cannot change later.",
+        "keyInvalid": "2 to 6 letters or digits, starting with a letter.",
+        "keyTaken": "{key} is already used by another project.",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What this project is for, in a sentence or two.",
+        "leadLabel": "Lead",
+        "noLead": "No lead",
+        "targetLabel": "Target date",
+        "visibilityLabel": "Who can see it",
+        "visibility": {
+            "workspace": "Everyone in the workspace",
+            "restricted": "Only the people I add"
+        },
+        "visibilityWorkspaceHint": "Every member who sees all Boxes can open it and work on its issues.",
+        "visibilityRestrictedHint": "Only admins and the people you add later can open it. You manage it.",
+        "submit": "Create project",
+        "created": "{name} is ready"
+    },
+    "board": {
+        "dragHint": "Drag a card to move it. Columns the workflow does not allow are greyed out.",
+        "showCancelled": "Show cancelled ({count})",
+        "switcherLabel": "Board columns",
+        "columnLabel": "{status}, {count, plural, one {# issue} other {# issues}}",
+        "emptyColumn": "Nothing here",
+        "notFrom": "Not from {from}",
+        "refused": "{ref} cannot move from {from} to {to}",
+        "refusedHint": "From {from} it can go to {targets}.",
+        "quickAdd": "Add issue",
+        "quickAddIn": "Add an issue to {status}",
+        "quickAddPlaceholder": "Issue title",
+        "quickAddHint": "Enter to add, Esc to close",
+        "quickAddSubmit": "Add",
+        "columnShown": "Showing {shown} of {total}",
+        "showMore": "Show more",
+        "showMoreIn": "Show more issues in {status}"
+    },
+    "issueList": {
+        "emptyIssues": "No issues in this project yet",
+        "emptyIssuesHint": "Create the first one, or add them straight from a column of the board.",
+        "newIssue": "New issue",
+        "search": "Search issues",
+        "filters": {
+            "status": "Status",
+            "priority": "Priority",
+            "assignee": "Assignee"
+        },
+        "sortLabel": "Sort",
+        "sort": {
+            "board": "Board order",
+            "priority": "Priority",
+            "updated": "Last updated",
+            "created": "Newest",
+            "due": "Due date"
+        },
+        "noIssueMatch": "No issue matches",
+        "noIssueMatchHint": "Try another search or fewer filters.",
+        "clearFilters": "Clear filters",
+        "shown": "{shown} of {total, plural, one {# issue} other {# issues}}",
+        "loaded": "{loaded} of {total, plural, one {# issue} other {# issues}} loaded",
+        "loadMore": "Load more issues"
+    },
+    "overview": {
+        "readOnly": "You can work on the issues of this project. Only an admin or a manager of the project changes its settings.",
+        "aboutTitle": "About",
+        "nameLabel": "Name",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What this project is for, in a sentence or two.",
+        "instructionsTitle": "Instructions for coworkers",
+        "instructionsExplainer": "Every coworker reads these instructions before it works on an issue of this project. Put here what a newcomer would need: the goal, the tone, the links, what to avoid.",
+        "instructionsLabel": "Instructions",
+        "instructionsPlaceholder": "We relaunch the website on March 1. Write in a friendly, plain tone. Drafts go to the shared folder Website/Drafts. Never publish without a review.",
+        "instructionsHint": "Markdown works. People read it too, so keep it short.",
+        "unsaved": "Unsaved changes",
+        "save": "Save",
+        "saved": "Project saved",
+        "progressTitle": "Progress",
+        "progressLabel": "{percent}% of the issues done",
+        "percent": "{percent}%",
+        "noIssuesYet": "No issues yet.",
+        "progressSummary": "{done, plural, one {# done} other {# done}}, {open, plural, one {# open} other {# open}}",
+        "detailsTitle": "Details",
+        "statusLabel": "Status",
+        "archivedStatusHint": "Restore the project to change its status.",
+        "leadLabel": "Lead",
+        "leadHint": "The person or coworker who answers for the project.",
+        "noLead": "No lead",
+        "targetLabel": "Target date",
+        "accessTitle": "Access",
+        "accessWorkspace": "Everyone in the workspace who sees all Boxes can open this project.",
+        "accessRestricted": "Restricted: admins and {count, plural, =0 {nobody else yet} one {# person} other {# people}} can open this project.",
+        "manageAccess": "Manage access",
+        "manageOnly": "Only an admin or a manager of this project can change who reaches it.",
+        "archiveTitle": "Archive",
+        "archiveExplainer": "An archived project leaves the list and takes no new issues. Nothing is deleted.",
+        "archive": "Archive project",
+        "archiveConfirmTitle": "Archive {name}?",
+        "archiveConfirmDescription": "The project leaves the list of projects and no new issue can be added. Its issues, comments and history stay readable, and you can restore it at any time.",
+        "archived": "{name} is archived",
+        "restoreTitle": "Restore",
+        "restoreExplainer": "Bring the project back to the list, active again.",
+        "restore": "Restore project",
+        "restoreConfirmTitle": "Restore {name}?",
+        "restoreConfirmDescription": "The project comes back to the list as active, and issues can be added again.",
+        "restored": "{name} is restored",
+        "teamLabel": "Team",
+        "noTeam": "No team",
+        "teamHint": "The project shows on its team's page.",
+        "goalLabel": "Goal",
+        "noGoal": "No goal",
+        "goalHint": "Its issues count toward the goal's progress.",
+        "optionsUnavailable": "Teams and goals could not be loaded.",
+        "accessWorkspaceNamed": "Everyone in the workspace who sees all Boxes can open this project. {count, plural, one {# person is} other {# people are}} named on it with their own access."
+    },
+    "access": {
+        "title": "Access to {project}",
+        "description": "Admins always reach every project.",
+        "visibilityField": "Who can open this project",
+        "visibility": {
+            "workspace": "Everyone in the workspace",
+            "restricted": "Only the people named here"
+        },
+        "visibilityHint": {
+            "workspace": "Members who see all Boxes can open it. People named here can also be made managers.",
+            "restricted": "Only admins and the people below can open it, see its issues and work on them."
+        },
+        "people": "People",
+        "addPeople": "Add people",
+        "emptyOpen": "Nobody is named on this project. Name someone to make them a manager, or to give access to a member who only sees the Boxes named to them.",
+        "emptyRestricted": "Only admins can open this project for now.",
+        "restrict": {
+            "title": "Restrict {project}?",
+            "descriptionWithPeople": "Only admins and the people named here will open it. Everyone else loses access to its issues at once.",
+            "descriptionEmpty": "Only admins will open it until you name people. Everyone else loses access to its issues at once.",
+            "confirm": "Restrict"
+        },
+        "teammate": "Teammate",
+        "admin": "Admin",
+        "adminsAlways": "Admins always reach every project",
+        "accessOf": "Access of {person}",
+        "levels": {
+            "use": {
+                "label": "Can use",
+                "description": "Sees the project and works on its issues"
+            },
+            "manage": {
+                "label": "Can manage",
+                "description": "Also changes its settings and who reaches it"
+            }
+        },
+        "remove": {
+            "title": "Remove {person}?",
+            "restricted": "They will no longer open this project nor its issues.",
+            "open": "They keep the access every member has, without the level given here.",
+            "confirm": "Remove",
+            "ariaLabel": "Remove {person}"
+        },
+        "add": {
+            "title": "Add people",
+            "back": "Back to access",
+            "peopleField": "People",
+            "placeholder": "Pick members",
+            "search": "Search members",
+            "empty": "No member left to add",
+            "accessField": "Access",
+            "submit": "{count, plural, =0 {Add} one {Add # person} other {Add # people}}"
+        }
+    }
+}

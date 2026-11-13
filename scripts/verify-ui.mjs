@@ -32,8 +32,9 @@
 // `report.json` with the load timings, the console errors and every failed request.
 
 import { execFileSync, spawn } from 'node:child_process'
-import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -164,6 +165,11 @@ async function ensureServer(base, outDir) {
         const environ = execFileSync('ps', ['eww', '-o', 'command=', '-p', pid], { encoding: 'utf8' })
         if (/NEXT_PUBLIC_SUPABASE_URL=https:/.test(environ)) fail(`The server on port ${PORT} was started with a remote NEXT_PUBLIC_SUPABASE_URL in its environment. Restart it.`)
         log(`Reusing the hub already running on port ${PORT}.`)
+        return null
+    }
+    // `lsof` does not see every listener (a sandbox, another user): a hub that answers is reused all the same.
+    if (await fetch(`${base}/api/version`).then((response) => response.ok, () => false)) {
+        log(`Reusing the hub answering on port ${PORT}.`)
         return null
     }
     log(`Starting next dev on port ${PORT}.`)
@@ -369,7 +375,10 @@ assertMigrated()
 const base = `http://localhost:${PORT}`
 const outDir = join(REPO_ROOT, '.context/verify', new Date().toISOString().replace(/[:.]/g, '-'))
 mkdirSync(outDir, { recursive: true })
-const server = await ensureServer(base, outDir)
+// The hub and engine logs grow on every request: written inside the repository, they wake the dev
+// server's file watcher, which recompiles mid sign-in and sends the magic link page round again.
+const logDir = mkdtempSync(join(tmpdir(), 'lumvika-verify-'))
+const server = await ensureServer(base, logDir)
 
 // Chromium's Local Network Access checks hold every request the page makes to the loopback stack
 // (127.0.0.1:54421) and the dev server's HMR socket behind a permission prompt nobody answers.
@@ -388,16 +397,21 @@ try {
     await signIn(context, base, account)
     const engineLink = await linkTestEngine(account.admin, account.userId)
     if (options.onboarded) await markOnboarded(account.admin, engineLink.workspaceId)
-    if (options.engine) engine = await startEngine(base, engineLink.apiKey, outDir)
+    if (options.engine) engine = await startEngine(base, engineLink.apiKey, logDir)
     log(`Signed in as ${account.email}, workspace ${engineLink.workspaceId}.`)
 
     const pages = options.paths.length > 0 ? await capturePaths(context, base, options, outDir) : []
     const scenario = options.scenario ? await runScenario(context, base, options, outDir, { admin: account.admin, workspaceId: engineLink.workspaceId }) : null
     writeFileSync(join(outDir, 'report.json'), JSON.stringify({ base, account: account.email, pages, scenario }, null, 2))
     failed = Boolean(scenario?.error) || pages.some((page) => page.pageErrors.length > 0)
-    log(`Report: ${join(outDir, 'report.json')}`)
+    log(`Report: ${join(outDir, 'report.json')}${server || engine ? `, logs in ${logDir}` : ''}`)
 } finally {
     await browser.close()
-    if (!options.keep) for (const child of [server, engine]) if (child) process.kill(-child.pid)
+    if (!options.keep)
+        for (const child of [server, engine]) {
+            try {
+                if (child) process.kill(-child.pid)
+            } catch {}
+        }
 }
 process.exit(failed ? 1 : 0)

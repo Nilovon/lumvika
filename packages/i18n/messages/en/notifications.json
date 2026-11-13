@@ -13,9 +13,12 @@
         "inbox.detail.status.awaiting_ack": "Kind of a notification: something a coworker flagged that the user has not read yet.",
         "notices": "Notices the app sends the whole workspace (in-app and by email) about a paid app (LinkedIn Pro, WhatsApp Pro) or the credits. {provider} is LinkedIn or WhatsApp, {account} the name of the connected account. Settings → Apps names a screen of the app.",
         "notices.trialEndsSoon": "{endsAt} is the day the free slot ends.",
+        "notices.issueInReview": "A coworker handed an issue (a work item on a project board) back for a person to review. {ref} is its reference like ENG-12, {title} its title.",
+        "notices.issueBlocked": "A coworker cannot go on with an issue. {reason} says who must do what.",
         "toast.coworker": "Title of a notification from a coworker whose name is not known.",
         "toast.scheduledTask": "Title of a notification from a scheduled run. {name} is the coworker.",
-        "inbox.reasons": "Line under a notification row: why it reached the user. {agentName} is a coworker."
+        "inbox.reasons": "Line under a notification row: why it reached the user. {agentName} is a coworker.",
+        "notices.issueRunFailed": "An AI coworker's run on an issue (a work item, German: Ticket) failed. {ref} is its reference like ENG-12, {title} its title, {reason} why the run failed."
     },
     "toast": {
         "close": "Close notification",
@@ -168,6 +171,9 @@
         "trialEndedDeclined": "Your free {provider} slot ended and the card was declined, so {account, select, none {the account} other {{account}}} is paused. Add a slot in Billing within a week to keep it, or it will be disconnected.",
         "rateLimited": "{provider} asked {account, select, none {one of your accounts} other {{account}}} to slow down. Your coworkers will not use it for 24 hours, so the account stays safe.",
         "signedOut": "{provider} signed {account, select, none {one of your accounts} other {{account}}} out. Reconnect it from Settings → Apps so your coworkers can use it again.",
-        "budgetExhausted": "Your Lumvika credits for this month are used up. Scheduled and triggered runs on Lumvika models are paused, and coworkers cannot buy leads, SEO or social data, until they reset or you add credits."
+        "budgetExhausted": "Your Lumvika credits for this month are used up. Scheduled and triggered runs on Lumvika models are paused, and coworkers cannot buy leads, SEO or social data, until they reset or you add credits.",
+        "issueInReview": "{agentName} moved {ref} “{title}” to review.",
+        "issueBlocked": "{agentName} is blocked on {ref} “{title}”: {reason}",
+        "issueRunFailed": "{agentName} could not work on {ref} “{title}”: {reason, select, no_model {it has no AI model it can use} coworker_disabled {it is switched off} cancelled {its run was stopped} other {its run failed}}."
     }
 }

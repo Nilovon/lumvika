@@ -1,5 +1,5 @@
 import { isAdminEmail } from '@/lib/auth/admin-emails'
-import { COMPUTER_RELEASED, I18N_RELEASED, PUBLISHED_ACCESS_RELEASED, REWIND_RELEASED } from '@/lib/features'
+import { COMPUTER_RELEASED, I18N_RELEASED, PLATFORM_RELEASED, PUBLISHED_ACCESS_RELEASED, REWIND_RELEASED } from '@/lib/features'
 import { createClient } from '@/supabase/server'
 import { dedupe, flag } from 'flags/next'
 
@@ -52,4 +52,11 @@ export const i18nFlag = flag<boolean, Entities>({
     defaultValue: false,
     identify,
     decide: releasedOrEarlyAccess(I18N_RELEASED, ['lumvika.local']),
+})
+
+export const platformFlag = flag<boolean, Entities>({
+    key: 'platform',
+    defaultValue: false,
+    identify,
+    decide: releasedOrEarlyAccess(PLATFORM_RELEASED),
 })

@@ -8,9 +8,9 @@ import type { StewardCorner, StewardPlacement } from '@/lib/steward-layout'
  * classes plutôt qu'en pixels mesurés : le serveur rend la fenêtre déjà dans son coin.
  */
 export const FLOAT_CORNER_CLASSES: Record<StewardCorner, string> = {
-    'top-left': 'md:top-[calc(1rem+var(--board-inset,0px))] md:left-[calc(1rem+var(--board-inset,0px))] md:origin-top-left',
+    'top-left': 'md:top-[calc(1rem+var(--board-inset,0px))] md:left-[calc(1rem+var(--board-inset-start,var(--board-inset,0px)))] md:origin-top-left',
     'top-right': 'md:top-[calc(1rem+var(--board-inset,0px))] md:right-[calc(1rem+var(--board-inset,0px))] md:origin-top-right',
-    'bottom-left': 'md:bottom-[calc(1rem+var(--board-inset,0px)+var(--consent-inset))] md:left-[calc(1rem+var(--board-inset,0px))] md:origin-bottom-left',
+    'bottom-left': 'md:bottom-[calc(1rem+var(--board-inset,0px)+var(--consent-inset))] md:left-[calc(1rem+var(--board-inset-start,var(--board-inset,0px)))] md:origin-bottom-left',
     'bottom-right': 'md:bottom-[calc(1rem+var(--board-inset,0px)+var(--consent-inset))] md:right-[calc(1rem+var(--board-inset,0px))] md:origin-bottom-right',
 }
 

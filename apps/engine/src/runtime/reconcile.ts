@@ -1,4 +1,4 @@
-import { STEWARD_AGENT_ID } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID } from '@lumvika/contracts'
 import { failInterruptedRuns, type InterruptedRun } from '../db/repos/runs.js'
 import { listAgentIndex, resetBusyAgents } from '../db/repos/agents.js'
 import { failInterruptedSkillProposals } from '../db/repos/skill-proposals.js'
@@ -17,9 +17,9 @@ export type Reconciliation = { runs: number; agents: number; notified: number; p
 export async function reconcileInterruptedRuns(now = Date.now()): Promise<Reconciliation> {
     const interrupted: Array<InterruptedRun & { agentId: string }> = []
     let proposals = 0
-    // The steward is kept out of the index, so it is named here or its interrupted runs stay
-    // `running` forever.
-    const agentIds = [...(await listAgentIndex()).map(agent => agent.id), STEWARD_AGENT_ID]
+    // The steward and the assistant are kept out of the index, so they are named here or their
+    // interrupted runs stay `running` forever.
+    const agentIds = [...(await listAgentIndex()).map(agent => agent.id), STEWARD_AGENT_ID, ASSISTANT_AGENT_ID]
     for (const agentId of agentIds) {
         if (!systemDbExists(agentId)) continue
         for (const run of await failInterruptedRuns(agentId)) interrupted.push({ ...run, agentId })

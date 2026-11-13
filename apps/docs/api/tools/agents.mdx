@@ -29,6 +29,20 @@ Lists the coworkers of the workspace, newest first.
 
 Each coworker carries `id`, `name` (the display name), `handle` (the mention and call key), `description`, `status`, `space_id` and `created_at`. The `id` is what every other tool takes as `agentId`.
 
+## get_team_status
+
+What each coworker is doing right now, read from the machine at the moment of the call. The `status` in `list_agents` can be stale; this one is not.
+
+<ParamField body="spaceId" type="string">
+  Restrict to one Box.
+</ParamField>
+
+<ParamField body="agentId" type="string">
+  Restrict to one coworker.
+</ParamField>
+
+For each coworker you can see: its `status` (`working`, `waiting_human`, `error`, `idle`, `offline`, `switched_off`, `unconfigured`), the runs in flight with their trigger, start and step count, the conversations waiting on a person, and the last run that ended, with its error when it failed. It also carries its place in the [org chart](/work/teams#the-org-chart): `title`, `reportsTo` (its manager's handle), `directReports` (handles) and `teams` (names).
+
 ## get_agent
 
 The full picture of one coworker in a single call. Read this before changing anything.
@@ -190,6 +204,36 @@ Sets the workspace default: the connection and model every coworker that picked 
 <Warning>
   It moves every coworker that follows the default at once, and with them which account is billed. A coworker pinned to a model of its own is not touched.
 </Warning>
+
+## write_memory
+
+Adds memories to a coworker: what it knows about its owner, their preferences, the facts it learned. Each entry is one memory, indexed for recall.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="memories" type="object[]" required>
+  Up to 100 entries per call, 20,000 characters each. Each entry has a `content`, an optional `kind` (`preference`, `fact`, `learned`, `note` or `task`, default `note`) and optional `tags`.
+</ParamField>
+
+Split a long memory file into one entry per fact or section. Entries that fail are listed in `failed` with the reason, and the others are kept.
+
+## upload_workspace_file
+
+Writes one file into the coworker's own workspace folder, creating the folders on the way and replacing a file already at that path.
+
+<ParamField body="agentId" type="string" required />
+
+<ParamField body="path" type="string" required>
+  Relative to the workspace, for example `notes/clients.md`.
+</ParamField>
+
+<ParamField body="content" type="string" required />
+
+<ParamField body="encoding" type="string">
+  `utf8`, the default, for text. `base64` for a binary file.
+</ParamField>
+
+Up to 5 MB once decoded. One file per call.
 
 ## delete_agent
 

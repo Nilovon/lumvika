@@ -157,7 +157,8 @@
             "recentConversations": "Letzte Unterhaltungen",
             "assistant": "Assistent",
             "open": "Öffnen",
-            "moveTo": "Verschieben nach"
+            "moveTo": "Verschieben nach",
+            "goTo": "Gehe zu"
         },
         "agent": {
             "desktop": "Desktop",
@@ -202,12 +203,47 @@
             "account": "Konto",
             "notifications": "Benachrichtigungen",
             "shortcuts": "Tastenkürzel",
-            "whats_new": "Neuigkeiten"
+            "whats_new": "Neuigkeiten",
+            "go_overview": "Übersicht öffnen",
+            "go_office": "Büro öffnen",
+            "go_chat": "Chat öffnen",
+            "go_work": "Meine Arbeit öffnen",
+            "go_projects": "Projekte öffnen",
+            "go_goals": "Ziele öffnen",
+            "go_review": "Prüfung öffnen",
+            "go_channels": "Kanäle öffnen",
+            "go_teams": "Teams öffnen",
+            "go_activity": "Aktivität öffnen"
         }
     },
     "boxNameSuggestions": "Oder wähle einen Namen",
     "dashboard": {
         "metaTitle": "Dashboard",
         "metaDescription": "Deine Boxes und Coworker auf Lumvika."
+    },
+    "nav": {
+        "label": "Navigation",
+        "drawerDescription": "Alle Bereiche deines Workspace.",
+        "open": "Navigation öffnen",
+        "search": "Suchen",
+        "help": "Hilfe",
+        "collapse": "Seitenleiste einklappen",
+        "expand": "Seitenleiste ausklappen",
+        "groups": {
+            "work": "Arbeit",
+            "collaborate": "Zusammenarbeit"
+        },
+        "items": {
+            "overview": "Übersicht",
+            "office": "Büro",
+            "chat": "Chat",
+            "work": "Meine Arbeit",
+            "projects": "Projekte",
+            "goals": "Ziele",
+            "review": "Prüfung",
+            "channels": "Kanäle",
+            "teams": "Teams",
+            "activity": "Aktivität"
+        }
     }
 }

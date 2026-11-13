@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { abortRun, activeRunCount, agentHasLiveRun, claimSession, registerRunAbort, releaseSession, sessionClaim, sessionClaimCount, setRunCancel, unregisterRunAbort } from './run-control.js'
+import { abortRun, activeRunCount, agentHasLiveRun, claimSession, liveRunIds, registerRunAbort, releaseSession, sessionClaim, sessionClaimCount, setRunCancel, unregisterRunAbort } from './run-control.js'
 
 describe('abortRun', () => {
     it('returns false for a run it never registered', () => {
@@ -128,5 +128,14 @@ describe('session claims', () => {
         claimSession('sess-author', 'run-unsigned')
         expect(sessionClaim('sess-author')?.authorId).toBeUndefined()
         releaseSession('run-unsigned')
+    })
+})
+
+describe('liveRunIds', () => {
+    it('lists the runs in flight and forgets one that ended', () => {
+        registerRunAbort('run-live-1', 'agent-9')
+        expect(liveRunIds()).toContain('run-live-1')
+        unregisterRunAbort('run-live-1')
+        expect(liveRunIds()).not.toContain('run-live-1')
     })
 })

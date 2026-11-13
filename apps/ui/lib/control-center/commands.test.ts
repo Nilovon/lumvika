@@ -5,7 +5,7 @@ vi.mock('@lumvika/cloud/support', () => ({ SUPPORT_CHAT_ENABLED: true }))
 
 import { buildControlCommands, pushRecentAgent, type ControlGates } from './commands'
 
-const OPEN: ControlGates = { isSandbox: false, workspaceAdmin: true, apiEntitled: true, needsMachineReason: null, assistantReady: true, hasChangelog: true, darkTheme: false }
+const OPEN: ControlGates = { isSandbox: false, workspaceAdmin: true, apiEntitled: true, needsMachineReason: null, assistantReady: true, hasChangelog: true, darkTheme: false, platform: true }
 
 function find(gates: Partial<ControlGates>, id: string) {
     return buildControlCommands({ ...OPEN, ...gates }).find(command => command.id === id)
@@ -49,6 +49,33 @@ describe('buildControlCommands', () => {
     it('names the theme it switches to', () => {
         expect(find({ darkTheme: true }, 'toggle_theme')?.label).toBe('Switch to light theme')
         expect(find({ darkTheme: false }, 'toggle_theme')?.label).toBe('Switch to dark theme')
+    })
+})
+
+describe('the Go to commands', () => {
+    it('offers one per area of the platform, in the order of the sidebar, each with its route', () => {
+        const goTo = buildControlCommands(OPEN).filter(command => command.group === 'navigation')
+        expect(goTo.map(command => [command.id, command.href])).toEqual([
+            ['go_overview', '/overview'],
+            ['go_office', '/'],
+            ['go_chat', '/chat'],
+            ['go_work', '/work'],
+            ['go_projects', '/projects'],
+            ['go_goals', '/goals'],
+            ['go_review', '/review'],
+            ['go_channels', '/channels'],
+            ['go_teams', '/teams'],
+            ['go_activity', '/activity'],
+        ])
+        expect(goTo.every(command => command.disabledReason === null && !command.paid)).toBe(true)
+    })
+
+    it('leaves them out while the platform is off', () => {
+        expect(buildControlCommands({ ...OPEN, platform: false }).some(command => command.group === 'navigation')).toBe(false)
+    })
+
+    it('finds an area by what lives in it', () => {
+        expect(find({}, 'go_work')?.keywords).toContain('issues')
     })
 })
 

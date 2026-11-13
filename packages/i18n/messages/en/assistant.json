@@ -1,0 +1,125 @@
+{
+    "_context": {
+        "list.groups.previous7": "Chats whose last message is from the past week, before yesterday.",
+        "conversation.readOnly": "Shown instead of the message box when someone opens a chat another member shared. {name} is that member.",
+        "states.outdated.description": "The workspace machine runs an engine version from before the Chat area existed.",
+        "empty.suggestions.draftEmail.prompt": "Sent as the first message when the suggestion is clicked.",
+        "empty.suggestions.explain.prompt": "Sent as the first message when the suggestion is clicked.",
+        "empty.suggestions.brainstorm.prompt": "Sent as the first message when the suggestion is clicked.",
+        "empty.suggestions.summarize.prompt": "Sent as the first message when the suggestion is clicked."
+    },
+    "title": "Chat",
+    "description": "Talk with the assistant, without opening a coworker.",
+    "list": {
+        "label": "Your chats",
+        "new": "New chat",
+        "search": "Search chats",
+        "groups": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "previous7": "Previous 7 days",
+            "previous30": "Previous 30 days",
+            "older": "Older",
+            "shared": "Shared with me",
+            "archived": "Archived"
+        },
+        "showArchived": "Show archived ({count})",
+        "hideArchived": "Hide archived",
+        "empty": "No chats yet. Start one and it shows up here.",
+        "noResults": "No chat matches “{query}”.",
+        "sharedBy": "Shared by {name}",
+        "someone": "a teammate",
+        "sharedBadge": "Shared"
+    },
+    "menu": {
+        "open": "Chat options",
+        "rename": "Rename",
+        "share": "Share with the workspace",
+        "unshare": "Stop sharing",
+        "archive": "Archive",
+        "restore": "Restore",
+        "delete": "Delete"
+    },
+    "rename": {
+        "title": "Rename chat",
+        "label": "Name",
+        "save": "Save",
+        "cancel": "Cancel"
+    },
+    "delete": {
+        "title": "Delete this chat?",
+        "description": "“{title}” and its whole conversation are erased for good, for you and for anyone you shared it with. This cannot be undone.",
+        "confirm": "Delete"
+    },
+    "toasts": {
+        "shared": "Members of the workspace can now read this chat.",
+        "unshared": "This chat is private again.",
+        "archived": "Chat archived.",
+        "restored": "Chat restored.",
+        "deleted": "Chat deleted.",
+        "deletedOutdated": "The chat is removed here. Its messages stay on your workspace's machine, which runs an older version of Lumvika that cannot erase them.",
+        "deletedUnreachable": "The chat is removed here. Its messages could not be erased from your workspace's machine, which did not answer."
+    },
+    "project": {
+        "label": "Project",
+        "none": "No project",
+        "pick": "Add a project",
+        "hint": "The assistant reads the project's instructions.",
+        "search": "Search projects",
+        "empty": "No project found."
+    },
+    "conversation": {
+        "back": "All chats",
+        "placeholder": "Ask anything",
+        "readOnly": "Shared by {name}. Only they can write in this chat.",
+        "readOnlyBadge": "Read only",
+        "transcriptUnavailable": "The messages of this chat cannot be read right now. Try again in a moment.",
+        "notFound": {
+            "title": "Chat not found",
+            "description": "It was deleted, or it is not shared with you.",
+            "cta": "Start a new chat"
+        }
+    },
+    "empty": {
+        "title": "What can I help with?",
+        "description": "Ask a question, draft a text or think something through. Your chats stay private unless you share them.",
+        "suggestions": {
+            "draftEmail": {
+                "label": "Draft an email",
+                "prompt": "Help me draft a short, friendly email to a customer about a delayed delivery."
+            },
+            "explain": {
+                "label": "Explain a concept",
+                "prompt": "Explain how a sales pipeline works, with a simple example."
+            },
+            "brainstorm": {
+                "label": "Brainstorm ideas",
+                "prompt": "Give me ten ideas for a LinkedIn post about our company this week."
+            },
+            "summarize": {
+                "label": "Summarize a page",
+                "prompt": "Summarize this page in five bullet points: "
+            }
+        }
+    },
+    "states": {
+        "outdated": {
+            "title": "Update your machine to use Chat",
+            "description": "Your workspace's machine runs an older version of Lumvika. Chat works once it is updated."
+        },
+        "noEngine": {
+            "title": "Chat needs a machine",
+            "description": "Your workspace has no machine yet. It gets one when you add your first coworker."
+        },
+        "unreachable": {
+            "title": "Your machine is not answering",
+            "description": "Chat runs on your workspace's machine, which cannot be reached right now.",
+            "retry": "Try again"
+        },
+        "noProvider": {
+            "title": "Connect an AI provider",
+            "description": "Chat needs a model to answer. Connect a provider or a subscription to start.",
+            "cta": "Connect a provider"
+        }
+    }
+}

@@ -99,6 +99,7 @@ GET    /agents/:id/memories                  POST /agents/:id/memories
 POST   /agents/:id/memories/recall
 GET    /agents/:id/skills                    POST /agents/:id/skills
 GET    /agents/:id/skills/:slug              PATCH /agents/:id/skills/:slug
+POST   /agents/:id/issue-runs                start a headless run on an issue the hub woke the agent for
 GET    /agents/:id/files   /read   /raw       PUT /agents/:id/files   POST /raw /move /dir   DELETE   (private workspace)
 GET    /shared/files       /read   /raw       PUT /shared/files       POST /raw /move /dir   DELETE   (shared space)
 ```
@@ -115,7 +116,7 @@ curl -X POST localhost:3000/agents -H 'content-type: application/json' -d '{
 
 ## Tools and self-improvement
 
-Each agent gets a tool set gated by `config.json`: `filesystem` (jailed to its private `workspace/`, with `fs_edit` surgical edits and `fs_search` regex grep), `shared` (`shared_read/write/list/edit/search` on the global `shared/` space all agents share), `shell`, `web` (`web_fetch`, `web_search`, `download`), `memory` (`memory_write` / `memory_recall`), `skills` (`skill_read/create/update/delete/list`), `self` (`tool_install` to npm-install into its workspace, `mcp_register` to add an MCP server), `delegate` (`delegate_task` spawns an ephemeral sub-agent), `browser` (`browser_navigate` via a windowed Chromium on a virtual display, patched by patchright, with a persistent profile per agent — needs `lumvika install-browser`), and `vision` (`vision_analyze` on workspace images). After each run a curator can distil a memory or a new skill automatically (`selfImprovement` flags).
+Each agent gets a tool set gated by `config.json`: `filesystem` (jailed to its private `workspace/`, with `fs_edit` surgical edits and `fs_search` regex grep), `shared` (`shared_read/write/list/edit/search` on the global `shared/` space all agents share), `shell`, `web` (`web_fetch`, `web_search`, `download`), `memory` (`memory_write` / `memory_recall`), `skills` (`skill_read/create/update/delete/list`), `self` (`tool_install` to npm-install into its workspace, `mcp_register` to add an MCP server), `delegate` (`delegate_task` spawns an ephemeral sub-agent), `work` (`work_inbox`, `work_checkout`, `work_update_status`… on the issues of the workspace's projects, answered by the hub; every few minutes the scheduler asks the hub which idle agent has an issue waiting and starts an issue run for it), `browser` (`browser_navigate` via a windowed Chromium on a virtual display, patched by patchright, with a persistent profile per agent — needs `lumvika install-browser`), and `vision` (`vision_analyze` on workspace images). After each run a curator can distil a memory or a new skill automatically (`selfImprovement` flags).
 
 Shell and install run inside the agent workspace with a command-policy denylist. Run the engine in its own container (see Dockerfile) so arbitrary shell stays contained.
 

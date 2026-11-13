@@ -9,7 +9,7 @@ Lumvika exposes two programmatic surfaces, and only two.
 
 <CardGroup cols={2}>
   <Card title="The MCP server" icon="plug" href="/api/protocol">
-    A single endpoint, `POST https://app.lumvika.com/api/mcp/account`, that speaks the Model Context Protocol. It carries 53 tools covering coworkers, skills, scheduled tasks, webhook triggers, apps, databases, runs, share links and template authoring.
+    A single endpoint, `POST https://app.lumvika.com/api/mcp/account`, that speaks the Model Context Protocol. It carries 61 tools covering coworkers, skills, scheduled tasks, webhook triggers, apps, databases, runs, projects and issues, share links and template authoring.
   </Card>
   <Card title="Webhook triggers" icon="bolt" href="/api/webhooks">
     A public URL per trigger. Anything that can send an HTTP request can start a coworker run, with no SDK and no key exchange.
@@ -40,7 +40,7 @@ An API key is scoped to **one workspace** and nothing finer. It reaches every Bo
 
 <Columns cols={2}>
   <Card title="Coworkers" icon="bot" href="/api/tools/agents">
-    `list_spaces` `list_agents` `get_agent` `create_agent` `update_agent` `delete_agent` `list_ai_connections` `set_default_model`
+    `list_spaces` `list_agents` `get_team_status` `get_agent` `create_agent` `update_agent` `delete_agent` `list_ai_connections` `set_default_model` `write_memory` `upload_workspace_file`
   </Card>
   <Card title="Skills" icon="book" href="/api/tools/skills">
     `list_skills` `get_skill` `read_skill_file` `upsert_skill` `delete_skill`
@@ -53,6 +53,9 @@ An API key is scoped to **one workspace** and nothing finer. It reaches every Bo
   </Card>
   <Card title="Messages and runs" icon="messages-square" href="/api/tools/runs">
     `send_message` `list_runs` `get_run`
+  </Card>
+  <Card title="Projects and issues" icon="folder-kanban" href="/api/tools/issues">
+    `list_projects` `list_issues` `get_issue` `create_issue` `update_issue` `comment_issue`
   </Card>
   <Card title="Databases" icon="database" href="/api/tools/databases">
     `list_tables` `db_query` `db_execute` `list_space_tables` `space_db_query` `space_db_execute`
@@ -73,7 +76,7 @@ An API key is scoped to **one workspace** and nothing finer. It reaches every Bo
 Some things are deliberately left to the app, mostly because they involve a secret or a decision that should not be automated. See [Limits and guarantees](/api/limits) for the full list. The short version:
 
 - No credential ever goes through the API. `attach_connector` declares a connector, and the account owner finishes the sign-in in the app.
-- No billing, no plan change, no member management, no Box creation.
+- No billing, no plan change, no member management, no Box or project creation.
 - No API key management. You cannot mint or revoke a key over MCP.
 - No template publication. You submit a draft, the Lumvika team publishes it.
 

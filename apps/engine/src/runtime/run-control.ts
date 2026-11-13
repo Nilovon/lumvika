@@ -54,6 +54,10 @@ export function agentHasLiveRun(agentId: string): boolean {
     return false
 }
 
+export function liveRunIds(): string[] {
+    return [...controllers.keys()]
+}
+
 export function activeRunCount(): number {
     return controllers.size
 }

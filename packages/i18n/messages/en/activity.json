@@ -1,0 +1,89 @@
+{
+    "_context": {
+        "description": "\"Issue\" is the work item of a project (German: Ticket), never a coworker's scheduled task, which the app already calls a task.",
+        "sentences": "One line of the activity feed. <who>{actor}</who> wraps the name of the person or AI coworker who did it; <link>{target}</link> wraps a link to what it was done to (an issue reference and title, a project, a goal, a team, a channel, a coworker). {from} and {to} are status names, {member} a person or coworker name.",
+        "filters.actor": "Filter on who did it: people or AI coworkers.",
+        "filters.entity": "Filter on what kind of thing the event is about."
+    },
+    "title": "Activity",
+    "description": "Everything that happened in your workspace.",
+    "filters": {
+        "project": "Project",
+        "actor": "Who",
+        "people": "People",
+        "coworkers": "Coworkers",
+        "entity": "About",
+        "entities": {
+            "issue": "Issues",
+            "issue_comment": "Comments",
+            "project": "Projects",
+            "goal": "Goals",
+            "team": "Teams",
+            "channel": "Channels",
+            "agent": "Coworkers"
+        },
+        "clear": "Clear filters"
+    },
+    "loadMore": "Load more",
+    "end": "That is everything since the workspace started.",
+    "loadFailed": "The activity could not be loaded",
+    "retry": "Try again",
+    "empty": {
+        "title": "Nothing happened yet",
+        "description": "When people and coworkers create projects, move issues or comment, it shows up here as it happens."
+    },
+    "noMatch": {
+        "title": "Nothing matches these filters",
+        "description": "Try another project, or show what everyone did."
+    },
+    "fallback": {
+        "someone": "Someone",
+        "issue": "an issue",
+        "project": "a project",
+        "goal": "a goal",
+        "team": "a team",
+        "channel": "a channel",
+        "coworker": "a coworker",
+        "member": "someone"
+    },
+    "goalStatus": {
+        "planned": "Planned",
+        "active": "Active",
+        "achieved": "Achieved",
+        "cancelled": "Cancelled"
+    },
+    "sentences": {
+        "projectCreated": "<who>{actor}</who> created the project <link>{target}</link>",
+        "projectUpdated": "<who>{actor}</who> updated the project <link>{target}</link>",
+        "projectArchived": "<who>{actor}</who> archived the project <link>{target}</link>",
+        "projectRestored": "<who>{actor}</who> restored the project <link>{target}</link>",
+        "projectMemberGranted": "<who>{actor}</who> gave {member} access to <link>{target}</link>",
+        "projectMemberRevoked": "<who>{actor}</who> removed the access of {member} to <link>{target}</link>",
+        "issueCreated": "<who>{actor}</who> created <link>{target}</link>",
+        "issueUpdated": "<who>{actor}</who> updated <link>{target}</link>",
+        "issueStatusChanged": "<who>{actor}</who> moved <link>{target}</link> from {from} to {to}",
+        "issueAssigned": "<who>{actor}</who> assigned <link>{target}</link> to {member}",
+        "issueUnassigned": "<who>{actor}</who> unassigned <link>{target}</link>",
+        "issueCommented": "<who>{actor}</who> commented on <link>{target}</link>",
+        "issueCommentEdited": "<who>{actor}</who> edited a comment on <link>{target}</link>",
+        "issueCheckedOut": "<who>{actor}</who> started working on <link>{target}</link>",
+        "issueReleased": "<who>{actor}</who> stopped working on <link>{target}</link>",
+        "issueRunFailed": "<who>{actor}</who> could not work on <link>{target}</link>",
+        "goalCreated": "<who>{actor}</who> created the goal <link>{target}</link>",
+        "goalUpdated": "<who>{actor}</who> updated the goal <link>{target}</link>",
+        "goalStatusChanged": "<who>{actor}</who> moved the goal <link>{target}</link> from {from} to {to}",
+        "goalDeleted": "<who>{actor}</who> deleted the goal {target}",
+        "teamCreated": "<who>{actor}</who> created the team <link>{target}</link>",
+        "teamUpdated": "<who>{actor}</who> updated the team <link>{target}</link>",
+        "teamDeleted": "<who>{actor}</who> deleted the team {target}",
+        "teamMemberAdded": "<who>{actor}</who> added {member} to the team <link>{target}</link>",
+        "teamMemberRemoved": "<who>{actor}</who> removed {member} from the team <link>{target}</link>",
+        "teamMemberRoleChanged": "<who>{actor}</who> changed the role of {member} in the team <link>{target}</link>",
+        "channelCreated": "<who>{actor}</who> created the channel <link>{target}</link>",
+        "channelUpdated": "<who>{actor}</who> updated the channel <link>{target}</link>",
+        "channelArchived": "<who>{actor}</who> archived the channel <link>{target}</link>",
+        "coworkerReportingChanged": "<who>{actor}</who> changed the reporting line of <link>{target}</link>",
+        "generic": "<who>{actor}</who> made a change",
+        "genericWithTarget": "<who>{actor}</who> changed <link>{target}</link>"
+    }
+}

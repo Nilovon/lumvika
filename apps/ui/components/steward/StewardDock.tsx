@@ -2,6 +2,7 @@
 
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from 'motion/react'
 import { useTranslations } from 'next-intl'
+import { usePathname } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { CHROME_SIZE } from '@lumvika/ui/chrome'
 import type { OrbGaze } from '@lumvika/ui/steward'
@@ -34,10 +35,13 @@ import { useSession } from '@/supabase/session/SessionProvider'
 // elle partage leur axe : posée dans une rangée, elle déborde d'autant au-dessus qu'en dessous
 // (--orb-overhang), au lieu de s'aligner par le bord.
 const CORNER_CLASSES: Record<StewardCorner, string> = {
-    'top-left': 'top-[calc(var(--chrome-edge)+var(--chrome-size)+var(--chrome-gap)+var(--board-inset,0px))] left-[calc(var(--chrome-edge)+var(--board-inset,0px))]',
+    // `--steward-orb-top-row` is 1 once the sidebar has taken the workspace pill out of that corner:
+    // the orb then sits in the first row, on the axis of the other top pills.
+    'top-left':
+        'top-[calc(var(--chrome-edge)+var(--board-inset,0px)+(1-var(--steward-orb-top-row,0))*(var(--chrome-size)+var(--chrome-gap))-var(--steward-orb-top-row,0)*var(--orb-overhang))] left-[calc(var(--chrome-edge)+var(--board-inset-start,var(--board-inset,0px)))]',
     'top-right': 'top-[calc(var(--chrome-edge)-var(--orb-overhang)+var(--board-inset,0px))] right-[calc(var(--chrome-edge)+var(--chrome-size)+var(--chrome-gap)+var(--board-inset,0px))]',
     'bottom-left':
-        'bottom-[calc(var(--chrome-edge)-var(--orb-overhang)+var(--board-inset,0px)+var(--consent-inset))] left-[calc(var(--chrome-edge)+var(--board-corner-width,var(--chrome-size))+var(--chrome-gap)+var(--board-inset,0px))]',
+        'bottom-[calc(var(--chrome-edge)-var(--orb-overhang)+var(--board-inset,0px)+var(--consent-inset))] left-[calc(var(--chrome-edge)+var(--board-corner-width,var(--chrome-size))+var(--chrome-gap)+var(--board-inset-start,var(--board-inset,0px)))]',
     'bottom-right': 'bottom-[calc(var(--chrome-edge)-var(--orb-overhang)+var(--board-inset,0px)+var(--consent-inset))] right-[calc(var(--chrome-edge)+var(--board-inset,0px))]',
 }
 
@@ -110,8 +114,10 @@ export function StewardDock() {
 
     // The pill is the Steward's composer while its column is closed: what is typed or said in it
     // leaves from here, the run shows in it and the answer above it. The control center anchors to
-    // the ball and a drag carries it away, so the pill steps aside for both without going away.
-    const pillAvailable = isMobile === false && tooNarrow === false && assistantReady && !!workspace && !isAnonymous && !open
+    // the ball and a drag carries it away, so the pill steps aside for both without going away. It
+    // belongs to the board: on a page it would lie over the page's own composer and its send button.
+    const onBoard = usePathname() === '/'
+    const pillAvailable = onBoard && isMobile === false && tooNarrow === false && assistantReady && !!workspace && !isAnonymous && !open
     const pillVisible = pillAvailable && !centerOpen && !dragging
     const setPillAvailable = useStewardStore(state => state.setPillAvailable)
     useEffect(() => {

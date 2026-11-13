@@ -14,6 +14,70 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          action: string
+          actor_agent_id: string | null
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          issue_id: string | null
+          metadata: Json
+          project_id: string | null
+          workspace_id: number
+        }
+        Insert: {
+          action: string
+          actor_agent_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          issue_id?: string | null
+          metadata?: Json
+          project_id?: string | null
+          workspace_id: number
+        }
+        Update: {
+          action?: string
+          actor_agent_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          issue_id?: string | null
+          metadata?: Json
+          project_id?: string | null
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_issue_id_workspace_id_fkey"
+            columns: ["issue_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "activity_events_project_id_workspace_id_fkey"
+            columns: ["project_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "activity_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_shares: {
         Row: {
           archive_bytes: number
@@ -104,11 +168,14 @@ export type Database = {
           engine_agent_id: string | null
           handle: string | null
           id: string
+          monthly_budget_micros: number | null
           name: string
+          reports_to_agent_id: string | null
           row: number
           space_id: string
           status: Database["public"]["Enums"]["agent_status"]
           template_id: string | null
+          title: string | null
           workspace_id: number
         }
         Insert: {
@@ -121,11 +188,14 @@ export type Database = {
           engine_agent_id?: string | null
           handle?: string | null
           id?: string
+          monthly_budget_micros?: number | null
           name: string
+          reports_to_agent_id?: string | null
           row?: number
           space_id: string
           status?: Database["public"]["Enums"]["agent_status"]
           template_id?: string | null
+          title?: string | null
           workspace_id: number
         }
         Update: {
@@ -138,14 +208,24 @@ export type Database = {
           engine_agent_id?: string | null
           handle?: string | null
           id?: string
+          monthly_budget_micros?: number | null
           name?: string
+          reports_to_agent_id?: string | null
           row?: number
           space_id?: string
           status?: Database["public"]["Enums"]["agent_status"]
           template_id?: string | null
+          title?: string | null
           workspace_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "agents_reports_to_agent_id_fkey"
+            columns: ["reports_to_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agents_space_id_fkey"
             columns: ["space_id", "workspace_id"]
@@ -426,6 +506,69 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_chats: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          engine_session_id: string | null
+          id: string
+          last_message_at: string | null
+          model: string | null
+          project_id: string | null
+          shared: boolean
+          stop_requested_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          workspace_id: number
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          engine_session_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          model?: string | null
+          project_id?: string | null
+          shared?: boolean
+          stop_requested_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          workspace_id: number
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          engine_session_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          model?: string | null
+          project_id?: string | null
+          shared?: boolean
+          stop_requested_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_chats_project_id_workspace_id_fkey"
+            columns: ["project_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "assistant_chats_user_id_workspace_id_fkey"
+            columns: ["user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+        ]
+      }
       blocked_email_domains: {
         Row: {
           created_at: string
@@ -554,6 +697,335 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      channel_agent_sessions: {
+        Row: {
+          agent_id: string
+          channel_id: string
+          created_at: string
+          engine_session_id: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          agent_id: string
+          channel_id: string
+          created_at?: string
+          engine_session_id: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          agent_id?: string
+          channel_id?: string
+          created_at?: string
+          engine_session_id?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_agent_sessions_agent_id_workspace_id_fkey"
+            columns: ["agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_sessions_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      channel_agent_turns: {
+        Row: {
+          agent_id: string
+          channel_id: string
+          created_at: string
+          engine_run_id: string | null
+          failure: string | null
+          finished_at: string | null
+          id: string
+          reply_message_id: string | null
+          requested_by: string | null
+          status: string
+          thread_message_id: string
+          trigger_message_id: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          agent_id: string
+          channel_id: string
+          created_at?: string
+          engine_run_id?: string | null
+          failure?: string | null
+          finished_at?: string | null
+          id?: string
+          reply_message_id?: string | null
+          requested_by?: string | null
+          status?: string
+          thread_message_id: string
+          trigger_message_id: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          agent_id?: string
+          channel_id?: string
+          created_at?: string
+          engine_run_id?: string | null
+          failure?: string | null
+          finished_at?: string | null
+          id?: string
+          reply_message_id?: string | null
+          requested_by?: string | null
+          status?: string
+          thread_message_id?: string
+          trigger_message_id?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_agent_turns_agent_id_workspace_id_fkey"
+            columns: ["agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_thread_message_id_channel_id_fkey"
+            columns: ["thread_message_id", "channel_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id", "channel_id"]
+          },
+          {
+            foreignKeyName: "channel_agent_turns_trigger_message_id_channel_id_fkey"
+            columns: ["trigger_message_id", "channel_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id", "channel_id"]
+          },
+        ]
+      }
+      channel_members: {
+        Row: {
+          agent_id: string | null
+          channel_id: string
+          created_at: string
+          id: string
+          last_read_at: string | null
+          updated_at: string
+          user_id: string | null
+          workspace_id: number
+        }
+        Insert: {
+          agent_id?: string | null
+          channel_id: string
+          created_at?: string
+          id?: string
+          last_read_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          workspace_id: number
+        }
+        Update: {
+          agent_id?: string | null
+          channel_id?: string
+          created_at?: string
+          id?: string
+          last_read_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_members_agent_id_workspace_id_fkey"
+            columns: ["agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_members_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_members_user_id_workspace_id_fkey"
+            columns: ["user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+        ]
+      }
+      channel_messages: {
+        Row: {
+          author_agent_id: string | null
+          author_user_id: string | null
+          body: string
+          channel_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          mentions: Json
+          parent_message_id: string | null
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          author_agent_id?: string | null
+          author_user_id?: string | null
+          body: string
+          channel_id: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          mentions?: Json
+          parent_message_id?: string | null
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          author_agent_id?: string | null
+          author_user_id?: string | null
+          body?: string
+          channel_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          mentions?: Json
+          parent_message_id?: string | null
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_messages_author_agent_id_workspace_id_fkey"
+            columns: ["author_agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_messages_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_messages_channel_id_workspace_id_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channel_messages_parent_message_id_channel_id_fkey"
+            columns: ["parent_message_id", "channel_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id", "channel_id"]
+          },
+        ]
+      }
+      channels: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["channel_kind"]
+          name: string
+          project_id: string | null
+          team_id: string | null
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["channel_kind"]
+          name: string
+          project_id?: string | null
+          team_id?: string | null
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["channel_kind"]
+          name?: string
+          project_id?: string | null
+          team_id?: string | null
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_project_id_workspace_id_fkey"
+            columns: ["project_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channels_team_id_workspace_id_fkey"
+            columns: ["team_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "channels_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       connector_requests: {
         Row: {
@@ -1161,6 +1633,431 @@ export type Database = {
             columns: ["application_reviewed_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          owner_user_id: string | null
+          parent_goal_id: string | null
+          status: Database["public"]["Enums"]["goal_status"]
+          target_date: string | null
+          team_id: string | null
+          title: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_user_id?: string | null
+          parent_goal_id?: string | null
+          status?: Database["public"]["Enums"]["goal_status"]
+          target_date?: string | null
+          team_id?: string | null
+          title: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_user_id?: string | null
+          parent_goal_id?: string | null
+          status?: Database["public"]["Enums"]["goal_status"]
+          target_date?: string | null
+          team_id?: string | null
+          title?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_owner_user_id_workspace_id_fkey"
+            columns: ["owner_user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "goals_parent_goal_id_workspace_id_fkey"
+            columns: ["parent_goal_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "goals_team_id_workspace_id_fkey"
+            columns: ["team_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "goals_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issue_comments: {
+        Row: {
+          author_agent_id: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          issue_id: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          author_agent_id?: string | null
+          author_user_id?: string | null
+          body: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          issue_id: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          author_agent_id?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          issue_id?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_comments_author_agent_id_workspace_id_fkey"
+            columns: ["author_agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issue_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issue_comments_issue_id_workspace_id_fkey"
+            columns: ["issue_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          assignee_agent_id: string | null
+          assignee_user_id: string | null
+          blocked_reason: string | null
+          checked_out_at: string | null
+          checkout_run_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by_agent_id: string | null
+          created_by_user_id: string | null
+          description: string | null
+          due_date: string | null
+          goal_id: string | null
+          id: string
+          number: number
+          parent_issue_id: string | null
+          position: number
+          priority: Database["public"]["Enums"]["issue_priority"]
+          project_id: string
+          session_id: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["issue_status"]
+          title: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          assignee_agent_id?: string | null
+          assignee_user_id?: string | null
+          blocked_reason?: string | null
+          checked_out_at?: string | null
+          checkout_run_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_agent_id?: string | null
+          created_by_user_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          goal_id?: string | null
+          id?: string
+          number?: number
+          parent_issue_id?: string | null
+          position?: number
+          priority?: Database["public"]["Enums"]["issue_priority"]
+          project_id: string
+          session_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["issue_status"]
+          title: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          assignee_agent_id?: string | null
+          assignee_user_id?: string | null
+          blocked_reason?: string | null
+          checked_out_at?: string | null
+          checkout_run_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_agent_id?: string | null
+          created_by_user_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          goal_id?: string | null
+          id?: string
+          number?: number
+          parent_issue_id?: string | null
+          position?: number
+          priority?: Database["public"]["Enums"]["issue_priority"]
+          project_id?: string
+          session_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["issue_status"]
+          title?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_assignee_agent_id_workspace_id_fkey"
+            columns: ["assignee_agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issues_assignee_user_id_workspace_id_fkey"
+            columns: ["assignee_user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issues_created_by_agent_id_workspace_id_fkey"
+            columns: ["created_by_agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issues_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_goal_id_workspace_id_fkey"
+            columns: ["goal_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issues_parent_issue_id_workspace_id_fkey"
+            columns: ["parent_issue_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issues_project_id_workspace_id_fkey"
+            columns: ["project_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "issues_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          access: string
+          created_at: string
+          granted_by: string | null
+          project_id: string
+          user_id: string
+          workspace_id: number
+        }
+        Insert: {
+          access: string
+          created_at?: string
+          granted_by?: string | null
+          project_id: string
+          user_id: string
+          workspace_id: number
+        }
+        Update: {
+          access?: string
+          created_at?: string
+          granted_by?: string | null
+          project_id?: string
+          user_id?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_project_id_workspace_id_fkey"
+            columns: ["project_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "project_members_user_id_workspace_id_fkey"
+            columns: ["user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          goal_id: string | null
+          id: string
+          instructions: string | null
+          issue_counter: number
+          key: string
+          lead_agent_id: string | null
+          lead_user_id: string | null
+          monthly_budget_micros: number | null
+          name: string
+          status: Database["public"]["Enums"]["project_status"]
+          target_date: string | null
+          team_id: string | null
+          updated_at: string
+          visibility: string
+          workspace_id: number
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          goal_id?: string | null
+          id?: string
+          instructions?: string | null
+          issue_counter?: number
+          key: string
+          lead_agent_id?: string | null
+          lead_user_id?: string | null
+          monthly_budget_micros?: number | null
+          name: string
+          status?: Database["public"]["Enums"]["project_status"]
+          target_date?: string | null
+          team_id?: string | null
+          updated_at?: string
+          visibility?: string
+          workspace_id: number
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          goal_id?: string | null
+          id?: string
+          instructions?: string | null
+          issue_counter?: number
+          key?: string
+          lead_agent_id?: string | null
+          lead_user_id?: string | null
+          monthly_budget_micros?: number | null
+          name?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          target_date?: string | null
+          team_id?: string | null
+          updated_at?: string
+          visibility?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_goal_id_workspace_id_fkey"
+            columns: ["goal_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "projects_lead_agent_id_workspace_id_fkey"
+            columns: ["lead_agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "projects_lead_user_id_workspace_id_fkey"
+            columns: ["lead_user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "projects_team_id_workspace_id_fkey"
+            columns: ["team_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -2494,6 +3391,99 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["team_member_role"]
+          team_id: string
+          updated_at: string
+          user_id: string | null
+          workspace_id: number
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          team_id: string
+          updated_at?: string
+          user_id?: string | null
+          workspace_id: number
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          team_id?: string
+          updated_at?: string
+          user_id?: string | null
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_agent_id_workspace_id_fkey"
+            columns: ["agent_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "team_members_team_id_workspace_id_fkey"
+            columns: ["team_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_workspace_id_fkey"
+            columns: ["user_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id", "workspace_id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       template_purchases: {
         Row: {
           activated_at: string | null
@@ -3716,6 +4706,14 @@ export type Database = {
         Returns: undefined
       }
       before_user_created: { Args: { event: Json }; Returns: Json }
+      channel_summaries: {
+        Args: { p_user_id: string; p_workspace_id: number }
+        Returns: {
+          channel_id: string
+          last_message_id: string
+          unread_count: number
+        }[]
+      }
       check_email_exists: { Args: { email: string }; Returns: boolean }
       claim_app_quota: {
         Args: {
@@ -3796,7 +4794,36 @@ export type Database = {
         Args: { p_micros: number; p_workspace_id: number }
         Returns: undefined
       }
+      issue_actor_touches: {
+        Args: { p_issue_ids: string[]; p_workspace_id: number }
+        Returns: {
+          action: string
+          actor_agent_id: string
+          actor_user_id: string
+          issue_id: string
+          last_at: string
+        }[]
+      }
+      issue_run_failures: {
+        Args: { p_issue_ids: string[]; p_workspace_id: number }
+        Returns: {
+          actor_agent_id: string
+          created_at: string
+          issue_id: string
+          metadata: Json
+        }[]
+      }
+      issue_touches: {
+        Args: { p_issue_ids: string[]; p_workspace_id: number }
+        Returns: {
+          assignee_touched_at: string
+          issue_id: string
+          others_touched_at: string
+          person_commented_at: string
+        }[]
+      }
       manageable_agent_ids: { Args: never; Returns: string[] }
+      manageable_project_ids: { Args: never; Returns: string[] }
       manageable_space_ids: { Args: never; Returns: string[] }
       mark_getting_started: {
         Args: { p_item: string; p_workspace_id: number }
@@ -3837,6 +4864,14 @@ export type Database = {
           source: string
         }[]
       }
+      project_issue_counts: {
+        Args: { p_workspace_id: number }
+        Returns: {
+          issue_count: number
+          project_id: string
+          status: Database["public"]["Enums"]["issue_status"]
+        }[]
+      }
       resolve_notification_incidents: {
         Args: { p_source_key: string }
         Returns: string[]
@@ -3856,12 +4891,15 @@ export type Database = {
         }[]
       }
       visible_agent_ids: { Args: never; Returns: string[] }
+      visible_channel_ids: { Args: never; Returns: string[] }
+      visible_project_ids: { Args: never; Returns: string[] }
       visible_space_ids: { Args: never; Returns: string[] }
     }
     Enums: {
       account_role: "member" | "expert"
       agent_service_status: "active" | "needs_config" | "error"
       agent_status: "idle" | "working" | "error" | "waiting_human" | "offline"
+      channel_kind: "public" | "private" | "dm"
       cloud_provider: "incus"
       engine_pool_status:
         | "provisioning"
@@ -3875,6 +4913,16 @@ export type Database = {
       expert_source: "seed" | "import" | "application"
       expert_status: "draft" | "invited" | "published" | "declined"
       expert_type: "studio" | "freelancer" | "expert"
+      goal_status: "planned" | "active" | "achieved" | "cancelled"
+      issue_priority: "none" | "low" | "medium" | "high" | "urgent"
+      issue_status:
+        | "backlog"
+        | "todo"
+        | "in_progress"
+        | "in_review"
+        | "done"
+        | "blocked"
+        | "cancelled"
       lifecycle_email_status: "sent" | "failed"
       newsletter_recipient_status: "pending" | "sent" | "failed" | "skipped"
       newsletter_send_status:
@@ -3891,6 +4939,7 @@ export type Database = {
         | "done"
         | "error"
         | "connector"
+      project_status: "planned" | "active" | "paused" | "completed" | "archived"
       session_kind: "general" | "thread"
       session_outcome: "done" | "nothing" | "failed"
       session_source:
@@ -3901,6 +4950,8 @@ export type Database = {
         | "delegate"
         | "api"
         | "trigger"
+        | "issue"
+        | "channel"
       session_status:
         | "idle"
         | "working"
@@ -3910,6 +4961,7 @@ export type Database = {
         | "awaiting_approval"
         | "awaiting_connector"
         | "awaiting_ack"
+      team_member_role: "lead" | "member"
       template_pricing_model: "free" | "one_time" | "recurring"
       template_purchase_status:
         | "pending"
@@ -4061,6 +5113,7 @@ export const Constants = {
       account_role: ["member", "expert"],
       agent_service_status: ["active", "needs_config", "error"],
       agent_status: ["idle", "working", "error", "waiting_human", "offline"],
+      channel_kind: ["public", "private", "dm"],
       cloud_provider: ["incus"],
       engine_pool_status: [
         "provisioning",
@@ -4075,6 +5128,17 @@ export const Constants = {
       expert_source: ["seed", "import", "application"],
       expert_status: ["draft", "invited", "published", "declined"],
       expert_type: ["studio", "freelancer", "expert"],
+      goal_status: ["planned", "active", "achieved", "cancelled"],
+      issue_priority: ["none", "low", "medium", "high", "urgent"],
+      issue_status: [
+        "backlog",
+        "todo",
+        "in_progress",
+        "in_review",
+        "done",
+        "blocked",
+        "cancelled",
+      ],
       lifecycle_email_status: ["sent", "failed"],
       newsletter_recipient_status: ["pending", "sent", "failed", "skipped"],
       newsletter_send_status: [
@@ -4093,6 +5157,7 @@ export const Constants = {
         "error",
         "connector",
       ],
+      project_status: ["planned", "active", "paused", "completed", "archived"],
       session_kind: ["general", "thread"],
       session_outcome: ["done", "nothing", "failed"],
       session_source: [
@@ -4103,6 +5168,8 @@ export const Constants = {
         "delegate",
         "api",
         "trigger",
+        "issue",
+        "channel",
       ],
       session_status: [
         "idle",
@@ -4114,6 +5181,7 @@ export const Constants = {
         "awaiting_connector",
         "awaiting_ack",
       ],
+      team_member_role: ["lead", "member"],
       template_pricing_model: ["free", "one_time", "recurring"],
       template_purchase_status: [
         "pending",

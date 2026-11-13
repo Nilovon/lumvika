@@ -1,7 +1,8 @@
 'use client'
 
 import { useAgentTabs } from '@/components/agent/agent-tabs'
-import { useComputerEnabled } from '@/components/layout/FeatureFlagsProvider'
+import { useComputerEnabled, usePlatformEnabled } from '@/components/layout/FeatureFlagsProvider'
+import { NAV_ICONS } from '@/components/layout/sidebar/nav-icons'
 import { useBoxViewer, useManageableSpaceIds } from '@/hooks/useBoxAccess'
 import { useIsTemplateAuthor } from '@/hooks/useIsTemplateAuthor'
 import { useModKeyLabel } from '@/hooks/useModKeyLabel'
@@ -9,9 +10,10 @@ import { useWorkspaceAccess } from '@/hooks/useWorkspaceAccess'
 import { isWorkspaceApiEntitled } from '@lumvika/cloud/billing'
 import { ATTENTION_STATUSES } from '@/lib/board/attention'
 import type { AgentStatus, IsoAgent } from '@/lib/board/types'
-import { buildControlCommands, type ControlCommand, type ControlCommandId } from '@/lib/control-center/commands'
+import { buildControlCommands, type ControlCommand, type ControlCommandId, type GoToCommandId } from '@/lib/control-center/commands'
 import { openCrisp } from '@/lib/crisp'
 import { parseQuery, searchItems } from '@/lib/control-center/search'
+import { NAV_ITEMS } from '@/lib/shell/nav'
 import { BellIcon, BoxIcon, BrainIcon, CirclePlusIcon, CreditCardIcon, FocusCenterIcon, FolderIcon, GridIcon, HeadsetIcon, KeyboardIcon, KeyIcon, LockKeyholeIcon, MegaphoneIcon, MessageCircle, MessageCircleQuestionIcon, MonitorIcon, MoonIcon, SettingsIcon, SunIcon, UserRoundIcon, UsersIcon } from '@/lib/icons'
 import { useAccountStore } from '@/stores/account.store'
 import { useBillingStore } from '@/stores/billing.store'
@@ -28,6 +30,7 @@ import { useIsWorkspaceAdmin, useSession } from '@/supabase/session/SessionProvi
 import type { BadgeTone } from '@lumvika/ui/primitives'
 import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, type ComponentType } from 'react'
 
 import { ControlCenterView } from './ControlCenterView'
@@ -42,7 +45,10 @@ const AGENT_RESULTS = 8
 const BOX_RESULTS = 5
 const MIN_CONVERSATION_QUERY = 2
 
+const GO_TO_ICONS = Object.fromEntries(NAV_ITEMS.map(({ id }) => [`go_${id}`, NAV_ICONS[id]])) as Record<GoToCommandId, ComponentType<{ className?: string }>>
+
 const COMMAND_ICONS: Record<ControlCommandId, ComponentType<{ className?: string }>> = {
+    ...GO_TO_ICONS,
     new_agent: CirclePlusIcon,
     browse_templates: GridIcon,
     new_box: BoxIcon,
@@ -98,6 +104,9 @@ export function ControlCenter() {
     const workspaceAdmin = useIsWorkspaceAdmin()
     const { needsMachineReason } = useWorkspaceAccess()
     const desktopEnabled = useComputerEnabled()
+    const platform = usePlatformEnabled()
+    const router = useRouter()
+    const pathname = usePathname()
     const isTemplateAuthor = useIsTemplateAuthor()
     const assistantReady = useStewardStore(s => selectStewardVisible(s) && s.funnel === 'companion')
     const assistantOpen = useStewardStore(selectStewardOpen)
@@ -179,6 +188,13 @@ export function ControlCenter() {
         action()
     }
 
+    // What lives on the board (an agent's panel, the recruiting dialogs, the camera) needs the board on
+    // screen: from another area, the palette goes back to it first. The stores carry the request over.
+    const onBoard = (action: () => void) => () => {
+        if (pathname !== '/') router.push('/')
+        action()
+    }
+
     const drill = (next: Page) => () => {
         setPages(stack => [...stack, next])
         setQuery('')
@@ -195,7 +211,7 @@ export function ControlCenter() {
         detail: boxName(agent.spaceId),
         leading: { kind: 'agent', agentId: agent.id },
         badge: agent.disabledAt ? { label: t('status.off'), tone: 'neutral' } : isBadgedStatus(agent.status) ? { label: t(`status.${agent.status}`), tone: STATUS_BADGE_TONES[agent.status] } : undefined,
-        onSelect: run(() => useBoardStore.getState().focusAgentOnBoard(agent.id, 'chat')),
+        onSelect: run(onBoard(() => useBoardStore.getState().focusAgentOnBoard(agent.id, 'chat'))),
         onDrill: drill({ kind: 'agent', agentId: agent.id }),
     })
 
@@ -205,11 +221,13 @@ export function ControlCenter() {
             label: hit.title,
             detail: withAgentName ? agents.find(agent => agent.id === hit.agentId)?.name : undefined,
             leading: { kind: 'icon', icon: MessageCircle },
-            onSelect: run(() => {
-                const board = useBoardStore.getState()
-                board.focusAgentOnBoard(hit.agentId, 'chat')
-                board.setPendingOpenSession({ agentId: hit.agentId, sessionId: hit.id, runId: null, title: hit.title })
-            }),
+            onSelect: run(
+                onBoard(() => {
+                    const board = useBoardStore.getState()
+                    board.focusAgentOnBoard(hit.agentId, 'chat')
+                    board.setPendingOpenSession({ agentId: hit.agentId, sessionId: hit.id, runId: null, title: hit.title })
+                })
+            ),
         }))
 
     const conversationSection = (section: string, heading: string, withAgentName: boolean): ControlSection[] => {
@@ -218,13 +236,16 @@ export function ControlCenter() {
         return rows.length > 0 || loading ? [{ id: section, heading, rows, loading }] : []
     }
 
+    const goToActions = Object.fromEntries(NAV_ITEMS.map(({ id, href }) => [`go_${id}`, () => router.push(href)])) as Record<GoToCommandId, () => void>
+
     const commandActions: Record<ControlCommandId, () => void> = {
-        new_agent: () => useBuilderDialogsStore.getState().openNewAgent(),
-        browse_templates: () => useBuilderDialogsStore.getState().openLibrary(),
-        new_box: () => useBuilderDialogsStore.getState().setNewBoxOpen(true),
+        ...goToActions,
+        new_agent: onBoard(() => useBuilderDialogsStore.getState().openNewAgent()),
+        browse_templates: onBoard(() => useBuilderDialogsStore.getState().openLibrary()),
+        new_box: onBoard(() => useBuilderDialogsStore.getState().setNewBoxOpen(true)),
         ask_assistant: () => (text ? useStewardStore.getState().askSteward(query.trim()) : useStewardStore.getState().toggle()),
         contact_support: () => openCrisp(session?.user?.email),
-        recenter_board: () => useBoardStore.getState().recenterBoard(),
+        recenter_board: onBoard(() => useBoardStore.getState().recenterBoard()),
         toggle_theme: () => setTheme(darkTheme ? 'light' : 'dark'),
         workspace: () => useWorkspaceSettingsStore.getState().openWorkspacePanel('workspace'),
         members: () => useWorkspaceSettingsStore.getState().openWorkspacePanel('members'),
@@ -249,7 +270,7 @@ export function ControlCenter() {
     })
 
     function rootSections(): ControlSection[] {
-        const commands = buildControlCommands({ isSandbox: workspace?.is_sandbox ?? false, workspaceAdmin, apiEntitled: workspace ? isWorkspaceApiEntitled(workspace) : false, needsMachineReason, assistantReady, hasChangelog, darkTheme }, { sandbox: tReasons('sandboxNone'), admin: tReasons('adminsOnly'), singleBox: tReasons('sandboxSingleBox') }).map(command => ({
+        const commands = buildControlCommands({ isSandbox: workspace?.is_sandbox ?? false, workspaceAdmin, apiEntitled: workspace ? isWorkspaceApiEntitled(workspace) : false, needsMachineReason, assistantReady, hasChangelog, darkTheme, platform }, { sandbox: tReasons('sandboxNone'), admin: tReasons('adminsOnly'), singleBox: tReasons('sandboxSingleBox') }).map(command => ({
             ...command,
             label: command.id === 'toggle_theme' ? t(darkTheme ? 'commands.toggle_theme_light' : 'commands.toggle_theme_dark') : t(`commands.${command.id}`),
         }))
@@ -257,6 +278,7 @@ export function ControlCenter() {
         const listed = text ? commands.filter(command => command.id !== 'ask_assistant') : commands
         const commandSections: ControlSection[] = [
             { id: 'actions', heading: t('headings.actions'), rows: searchItems(listed.filter(command => command.group === 'actions'), text).map(commandRow) },
+            { id: 'navigation', heading: t('headings.goTo'), rows: searchItems(listed.filter(command => command.group === 'navigation'), text).map(commandRow) },
             { id: 'settings', heading: t('headings.settings'), rows: searchItems(listed.filter(command => command.group === 'settings'), text).map(commandRow) },
         ]
         const searchableAgents = agents.map(agent => ({ agent, label: agent.name, keywords: [agent.handle ?? '', boxName(agent.spaceId)] }))
@@ -304,7 +326,7 @@ export function ControlCenter() {
         // Same gate as the panel's rail: the agent's own status ranks `working` above what waits on a human.
         const hasToHandle = sessions.some(session => session.agentId === agent.id && ATTENTION_STATUSES.has(session.status))
         const tabs = agentTabs.filter(tab => (tab.id !== 'actions' || hasToHandle) && (tab.id !== 'setup' || isTemplateAuthor))
-        const tabRows = searchItems(tabs, text).map((tab): ControlRow => ({ id: `tab-${tab.id}`, label: tab.label, detail: tab.description, leading: { kind: 'icon', icon: tab.icon }, onSelect: run(() => board.focusAgentOnBoard(agent.id, tab.id)) }))
+        const tabRows = searchItems(tabs, text).map((tab): ControlRow => ({ id: `tab-${tab.id}`, label: tab.label, detail: tab.description, leading: { kind: 'icon', icon: tab.icon }, onSelect: run(onBoard(() => board.focusAgentOnBoard(agent.id, tab.id))) }))
 
         const actions: (ControlRow & { keywords?: string[] })[] = []
         if (desktopEnabled) {
@@ -315,10 +337,12 @@ export function ControlCenter() {
                 keywords: ['screen', 'browser', 'computer'],
                 leading: { kind: 'icon', icon: MonitorIcon },
                 disabledReason: needsMachineReason,
-                onSelect: run(() => {
-                    board.focusAgentOnBoard(agent.id)
-                    useDesktopStore.getState().openDesktop(agent.id)
-                }),
+                onSelect: run(
+                    onBoard(() => {
+                        board.focusAgentOnBoard(agent.id)
+                        useDesktopStore.getState().openDesktop(agent.id)
+                    })
+                ),
             })
         }
         if (spaces.length > 1) {

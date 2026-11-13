@@ -1,0 +1,142 @@
+{
+    "status": {
+        "backlog": "Backlog",
+        "todo": "Zu erledigen",
+        "in_progress": "In Arbeit",
+        "in_review": "In Prüfung",
+        "blocked": "Blockiert",
+        "done": "Erledigt",
+        "cancelled": "Abgebrochen"
+    },
+    "priority": {
+        "none": "Keine Priorität",
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "urgent": "Dringend",
+        "ariaLabel": "Priorität: {priority}"
+    },
+    "member": {
+        "unassigned": "Nicht zugewiesen",
+        "teammate": "Teammitglied",
+        "coworker": "Coworker",
+        "system": "Lumvika"
+    },
+    "assignee": {
+        "unassigned": "Nicht zugewiesen",
+        "ariaLabel": "Zuständig: {name}",
+        "search": "Personen und Coworker suchen",
+        "empty": "Niemand gefunden",
+        "people": "Personen",
+        "coworkers": "Coworker",
+        "you": "{name} (du)",
+        "restrictedNotice": "Wer diesen Coworker nutzen kann, sieht, woran er arbeitet."
+    },
+    "statusPicker": {
+        "ariaLabel": "Status: {status}. Status ändern",
+        "moveTo": "Verschieben nach",
+        "noMove": "Von {status} geht es nirgendwohin"
+    },
+    "row": {
+        "due": "Fällig am {date}",
+        "overdue": "Überfällig seit {date}",
+        "workingShort": "Arbeitet",
+        "failedShort": "Fehlgeschlagen"
+    },
+    "blocked": {
+        "title": "Warum ist {ref} blockiert?",
+        "description": "Personen und Coworker, die das Ticket als Nächstes übernehmen, lesen den Grund.",
+        "reasonLabel": "Grund",
+        "placeholder": "Wartet auf die rechtliche Prüfung",
+        "confirm": "Als blockiert markieren"
+    },
+    "detail": {
+        "loading": "Ticket wird geladen",
+        "notFound": "Dieses Ticket ist nicht verfügbar",
+        "srDescription": "Details, Kommentare und Verlauf von {ref}",
+        "titleLabel": "Titel",
+        "editTitle": "Klicken, um den Titel zu bearbeiten",
+        "copyLink": "Link kopieren",
+        "linkCopied": "Link zu {ref} kopiert",
+        "linkCopyFailed": "Der Link konnte nicht kopiert werden",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Was passieren soll und wann es erledigt ist. Markdown funktioniert.",
+        "addDescription": "Beschreibung hinzufügen",
+        "noDescription": "Keine Beschreibung.",
+        "edit": "Bearbeiten",
+        "working": "{name} arbeitet an diesem Ticket",
+        "assignedTo": "Zugewiesen an {name}",
+        "workingSince": "Begonnen {time}",
+        "openConversation": "Unterhaltung öffnen",
+        "runFailedTitle": "{name} konnte nicht an diesem Ticket arbeiten",
+        "runFailedReason": "{reason, select, no_model {Es steht kein nutzbares KI-Modell zur Verfügung. Verbinde eines in seinen Einstellungen und versuche es dann erneut.} coworker_disabled {Er ist ausgeschaltet. Schalte ihn wieder ein und versuche es dann erneut.} cancelled {Sein Lauf wurde gestoppt, bevor er fertig war.} other {Sein Lauf ist mit einem Fehler abgebrochen. Die Unterhaltung zeigt, was passiert ist.}}",
+        "retry": "Erneut versuchen",
+        "retryStarted": "{name} legt noch einmal los",
+        "retryRefused": "{refusal, select, not_failed {Dieses Ticket hat sich inzwischen geändert, deshalb wurde nichts gestartet.} not_allowed {Du kannst {name} nicht nutzen und ihn deshalb nicht wecken. Frag jemanden, der es kann.} paused {{name} wartet in seiner Unterhaltung auf eine Antwort. Antworte stattdessen dort.} outdated {Die Maschine dieses Workspaces ist zu alt, um Coworker an Tickets arbeiten zu lassen. Aktualisiere sie und versuche es dann erneut.} unreachable {Die Maschine dieses Workspaces antwortet gerade nicht. Versuche es gleich noch einmal.} no_engine {Noch läuft keine Maschine für diesen Workspace, deshalb können Coworker nicht an Tickets arbeiten.} busy {{name} arbeitet gerade an einem anderen Ticket. Versuche es erneut, sobald er fertig ist.} disabled {{name} ist ausgeschaltet. Schalte ihn wieder ein und versuche es dann erneut.} other {{name} konnte nicht starten. Versuche es gleich noch einmal.}}",
+        "blockedTitle": "Blockiert",
+        "blockedNoReason": "Es wurde kein Grund angegeben.",
+        "subIssues": "Unter-Tickets",
+        "subIssuesCount": "Unter-Tickets, {done} von {total} erledigt",
+        "addSubIssue": "Unter-Ticket hinzufügen",
+        "addSubIssueSubmit": "Hinzufügen",
+        "subIssuePlaceholder": "Titel des Unter-Tickets",
+        "noSubIssues": "Noch keine Unter-Tickets. Teile größere Arbeit in Schritte, die jemand abschließen kann.",
+        "done": "Schließen",
+        "status": "Status",
+        "priority": "Priorität",
+        "assignee": "Zuständig",
+        "dueDate": "Fällig am",
+        "parent": "Übergeordnetes Ticket",
+        "noParent": "Keins",
+        "parentSearch": "Tickets dieses Projekts suchen",
+        "created": "Erstellt von {name}, {date}",
+        "commentsTab": "Kommentare ({count})",
+        "activityTab": "Verlauf",
+        "waitingOnPerson": "{name} wartet in der Unterhaltung auf eine Antwort",
+        "waitingOnPersonHint": "Antworte dort, dann arbeitet er an diesem Ticket weiter.",
+        "coworkerBacklogHint": "Der Coworker legt los, sobald dieses Ticket auf Zu erledigen steht.",
+        "moveToTodo": "Auf Zu erledigen setzen"
+    },
+    "comments": {
+        "empty": "Noch keine Kommentare. Stell hier Fragen, gib Kontext weiter oder melde Fortschritt.",
+        "placeholder": "Schreib einen Kommentar. Markdown funktioniert.",
+        "hint": "Strg oder Cmd + Enter zum Senden",
+        "submit": "Kommentieren",
+        "edited": "bearbeitet",
+        "edit": "Bearbeiten",
+        "editLabel": "Deinen Kommentar bearbeiten"
+    },
+    "activity": {
+        "empty": "Noch ist nichts passiert.",
+        "created": "{actor} hat das Ticket erstellt",
+        "statusChanged": "{actor} hat es von {from} nach {to} verschoben",
+        "assigned": "{actor} hat es {assignee} zugewiesen",
+        "unassigned": "{actor} hat die Zuweisung entfernt",
+        "commented": "{actor} hat kommentiert",
+        "commentEdited": "{actor} hat einen Kommentar bearbeitet",
+        "checkedOut": "{actor} hat mit der Arbeit begonnen",
+        "released": "{actor} hat die Arbeit beendet",
+        "runFailed": "{actor} konnte nicht daran arbeiten",
+        "updated": "{actor} hat das Ticket bearbeitet"
+    },
+    "create": {
+        "title": "Neues Ticket",
+        "description": "Ein Ticket in {project}: ein Stück Arbeit mit einer zuständigen Person und einem Status.",
+        "titleLabel": "Titel",
+        "titlePlaceholder": "Ankündigung zum Launch entwerfen",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Was passieren soll und wann es erledigt ist.",
+        "statusLabel": "Status",
+        "priorityLabel": "Priorität",
+        "assigneeLabel": "Zuständig",
+        "dueLabel": "Fällig am",
+        "coworkerHint": "Der Coworker wird benachrichtigt und übernimmt das Ticket selbstständig.",
+        "submit": "Ticket erstellen",
+        "coworkerBacklogHint": "Im Backlog wird niemand geweckt: Der Coworker legt los, sobald das Ticket auf Zu erledigen steht."
+    },
+    "engine": {
+        "outdated": "Die Maschine dieses Workspaces ist zu alt, um Coworker an Tickets arbeiten zu lassen. Aktualisiere sie, dann kann der Coworker loslegen; die Zuweisung bleibt bestehen.",
+        "unreachable": "Die Maschine dieses Workspaces antwortet gerade nicht, deshalb kann der Coworker noch nicht mit dem Ticket anfangen. Die Zuweisung bleibt bestehen.",
+        "noEngine": "Noch läuft keine Maschine für diesen Workspace, deshalb können Coworker nicht an Tickets arbeiten. Die Zuweisung bleibt bestehen."
+    }
+}
