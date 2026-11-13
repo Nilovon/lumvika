@@ -77,6 +77,13 @@ describe('probeClaudeUsage', () => {
         expect(env.LUMVIKA_API_KEY).toBeUndefined()
     })
 
+    // A Claude Code login of the machine's own user must never answer for the connection's token.
+    it("keeps the CLI off the machine's own Claude config", async () => {
+        await probeClaudeUsage(claudeConnection('probe-config'))
+        const { env, cwd } = sdk.calls[0].options
+        expect(env.CLAUDE_CONFIG_DIR).toBe(cwd)
+    })
+
     it('answers null when the CLI does not start, and stops it all the same', async () => {
         sdk.initFails = true
         expect(await probeClaudeUsage(claudeConnection('probe-3'))).toBeNull()

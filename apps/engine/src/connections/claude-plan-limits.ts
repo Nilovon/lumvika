@@ -37,7 +37,8 @@ async function withinTimeout<T>(task: Promise<T>, ms: number): Promise<T> {
 
 // The prompt never yields, so the CLI starts, answers its control requests and never sends a
 // message to the model: the read costs the subscription nothing. The working directory is a
-// throwaway one, nothing of it is kept on the box.
+// throwaway one, nothing of it is kept on the box, and it is the CLI's config dir too: without it
+// a Claude Code login of the machine's own user answers for a token that cannot read its limits.
 export async function probeClaudeUsage(connection: LoadedConnection): Promise<ClaudePlanUsage | null> {
     const abort = new AbortController()
     const cwd = await mkdtemp(join(tmpdir(), 'lumvika-claude-usage-'))
@@ -51,7 +52,7 @@ export async function probeClaudeUsage(connection: LoadedConnection): Promise<Cl
             options: {
                 abortController: abort,
                 cwd,
-                env: { ...childProcessEnv({}), ...CLAUDE_HARNESS_ENV, ...claudeAuthEnv(connection.env), ANTHROPIC_API_KEY: undefined },
+                env: { ...childProcessEnv({}), ...CLAUDE_HARNESS_ENV, ...claudeAuthEnv(connection.env), CLAUDE_CONFIG_DIR: cwd, ANTHROPIC_API_KEY: undefined },
                 persistSession: false,
                 settingSources: [],
                 tools: [],

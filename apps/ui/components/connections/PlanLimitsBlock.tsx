@@ -145,9 +145,8 @@ function WindowRow({ window, provider, now }: { window: PlanLimitWindow; provide
         <div className="space-y-1.5">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-xs">
                 <span className="font-medium">{name}</span>
-                <span className="tabular-nums">
-                    <span className="font-medium">{t('usage.left', { percent: remainingPercent(window) })}</span>
-                    <span className="text-muted-foreground"> · {t('usage.used', { percent: used })}</span>
+                <span className="text-muted-foreground tabular-nums">
+                    {t.rich('usage.leftAndUsed', { left: remainingPercent(window), used, strong: chunks => <span className="font-medium text-foreground">{chunks}</span> })}
                 </span>
             </div>
             <div className="relative">
