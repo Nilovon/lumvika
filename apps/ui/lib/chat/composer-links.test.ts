@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { collapseLinks, expandLinks, remarkMentions, remarkShortLinks, shortenUrl, tokenizeComposer, tokenRanges, trimUrl, urlBeforeCaret, type ComposerLinks, type ComposerMention } from './composer-links'
 
-const PR = 'https://github.com/schnebel-technologie/lumvika/pull/839/files?diff=split'
+const PR = 'https://github.com/lucabmn/lumvika/pull/839/files?diff=split'
 const chip = (label: string) => `  ${label} `
 
 describe('shortenUrl', () => {
@@ -41,7 +41,7 @@ describe('collapseLinks / expandLinks', () => {
 
     it('gives two URLs sharing a label distinct labels', () => {
         const links: ComposerLinks = new Map()
-        const other = 'https://github.com/schnebel-technologie/other-repo/pull/12/files?diff=unified'
+        const other = 'https://github.com/lucabmn/other-repo/pull/12/files?diff=unified'
         const collapsed = collapseLinks(`${PR} ${other}`, links)
         expect(collapsed).toBe(`${chip('github.com/…/files…')} ${chip('github.com/…/files…~2')}`)
         expect(expandLinks(collapsed, links)).toBe(`${PR} ${other}`)

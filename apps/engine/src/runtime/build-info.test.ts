@@ -7,7 +7,7 @@ const FULL = 'abc1234def5678abc1234def5678abc1234def56'
 const REPO_ROOT = resolve(import.meta.dirname, '../../../..')
 
 function releaseDir(info: Record<string, unknown> | string): string {
-    const dir = mkdtempSync(resolve(tmpdir(), 'schnebel-technologie-info-'))
+    const dir = mkdtempSync(resolve(tmpdir(), 'lucabmn-info-'))
     mkdirSync(resolve(dir, 'dist'))
     writeFileSync(resolve(dir, 'build-info.json'), typeof info === 'string' ? info : JSON.stringify(info))
     return dir

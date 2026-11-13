@@ -10,8 +10,8 @@
 # buckets and loads the services catalog into an empty database. See https://docs.lumvika.com/self-host.
 name: lumvika
 
-x-app-image: &app-image ghcr.io/schnebel-technologie/lumvika-app:${LUMVIKA_VERSION:-latest}
-x-engine-image: &engine-image ghcr.io/schnebel-technologie/lumvika-engine:${LUMVIKA_VERSION:-latest}
+x-app-image: &app-image ghcr.io/lucabmn/lumvika-app:${LUMVIKA_VERSION:-latest}
+x-engine-image: &engine-image ghcr.io/lucabmn/lumvika-engine:${LUMVIKA_VERSION:-latest}
 
 x-env-file: &env-file
   - path: .env

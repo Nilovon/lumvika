@@ -54,14 +54,14 @@ pnpm build
 
 ## Self-hosting
 
-Lumvika runs from two public images, `ghcr.io/schnebel-technologie/lumvika-app` and
-`ghcr.io/schnebel-technologie/lumvika-engine`. [`docker-compose.yml`](docker-compose.yml) starts them
+Lumvika runs from two public images, `ghcr.io/lucabmn/lumvika-app` and
+`ghcr.io/lucabmn/lumvika-engine`. [`docker-compose.yml`](docker-compose.yml) starts them
 with Postgres, an S3 file store and a mail catcher, and generates every password and key on the first
 start. You need Docker with Compose 2.24 or newer, nothing else:
 
 ```bash
 mkdir lumvika && cd lumvika
-curl -fsSLO https://raw.githubusercontent.com/schnebel-technologie/lumvika/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/lucabmn/lumvika/main/docker-compose.yml
 docker compose up -d
 ```
 
