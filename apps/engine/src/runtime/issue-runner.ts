@@ -60,7 +60,7 @@ export function buildIssueRunMessage(request: IssueRunRequest): string {
         `1. Read it with work_get_issue ${request.ref}, then take it with work_checkout ${request.ref}. If the checkout says another run holds it, stop there.`,
         "2. Do the work, following the project's instructions, and post what matters with work_comment. Split work that is too big into sub-issues with work_create_issue and assign them.",
         '3. Finish with work_update_status: done for an issue a coworker created, in_review for any other, or blocked with who must do what when you cannot go on.',
-        'If it is in_review, a person is checking your work: answer them with work_comment, and only if they ask for changes move it back with work_update_status in_progress, then take it.',
+        'If it is in_review, a person is checking your work: answer the comment its reviewNote names with work_comment, nothing else, and only if that comment asks for changes move it back with work_update_status in_progress, then take it.',
         'If a work tool says the issue was reassigned or moved by someone else, stop working on it at once.',
         '',
         'Work only on this issue in this conversation: your next issue gets a conversation of its own.',

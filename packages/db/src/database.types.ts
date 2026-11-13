@@ -4794,6 +4794,16 @@ export type Database = {
         Args: { p_micros: number; p_workspace_id: number }
         Returns: undefined
       }
+      issue_actor_touches: {
+        Args: { p_issue_ids: string[]; p_workspace_id: number }
+        Returns: {
+          action: string
+          actor_agent_id: string
+          actor_user_id: string
+          issue_id: string
+          last_at: string
+        }[]
+      }
       issue_touches: {
         Args: { p_issue_ids: string[]; p_workspace_id: number }
         Returns: {

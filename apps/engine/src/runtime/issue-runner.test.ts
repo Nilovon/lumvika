@@ -177,7 +177,7 @@ describe('buildIssueRunMessage', () => {
 
     it('tells a run woken on an issue in review to answer rather than take it, and to stop on an issue taken away', () => {
         const message = buildIssueRunMessage({ ...request, reason: 'comment', note: 'Why this title?' })
-        expect(message).toContain('If it is in_review, a person is checking your work: answer them with work_comment')
+        expect(message).toContain('If it is in_review, a person is checking your work: answer the comment its reviewNote names with work_comment')
         expect(message).toContain('reassigned or moved by someone else, stop')
     })
 

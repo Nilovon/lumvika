@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { workDatabase, type Row, type Tables } from '@/test/work-fake'
 
 vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
-vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn() }))
+// Anna and the admin may use the coworkers; the outsider is a member whose Boxes do not reach them.
+const access = vi.hoisted(() => ({ outsiders: new Set(['outsider']) }))
+vi.mock('@/app/api/_services/work/issue-effects.service', () => ({
+    reactToIssueChange: vi.fn(),
+    authorMayWake: vi.fn(async (_scope: unknown, author: { kind: string; userId?: string }) => author.kind !== 'user' || !access.outsiders.has(author.userId ?? '')),
+}))
 vi.mock('@/lib/features', () => ({ PLATFORM_RELEASED: true }))
 
 const { reactToIssueChange } = await import('@/app/api/_services/work/issue-effects.service')
@@ -34,24 +39,20 @@ function issue(overrides: Row = {}): Row {
     }
 }
 
-const OWN_ACTIONS = ['issue.assigned', 'issue.status_changed', 'issue.commented', 'issue.updated', 'issue.checked_out']
+const TRACKED = ['issue.created', 'issue.assigned', 'issue.status_changed', 'issue.commented', 'issue.updated', 'issue.checked_out']
 
-// `issue_touches` as the migration computes it, over the rows of the fake.
-function issueTouches(rows: Tables) {
+// `issue_actor_touches` as the migration computes it, over the rows of the fake.
+function issueActorTouches(rows: Tables) {
     return (args: Row) => {
         const ids = args.p_issue_ids as string[]
-        return rows.issues
-            .filter(row => row.workspace_id === args.p_workspace_id && ids.includes(row.id as string))
-            .map(row => {
-                const events = rows.activity_events.filter(event => event.issue_id === row.id)
-                const latest = (keep: (event: Row) => boolean) => events.filter(keep).map(event => event.created_at as string).sort().at(-1) ?? null
-                return {
-                    issue_id: row.id,
-                    assignee_touched_at: latest(event => event.actor_agent_id === row.assignee_agent_id && OWN_ACTIONS.includes(event.action as string)),
-                    others_touched_at: latest(event => event.actor_agent_id !== row.assignee_agent_id && [...OWN_ACTIONS, 'issue.created'].includes(event.action as string)),
-                    person_commented_at: latest(event => event.action === 'issue.commented' && !!event.actor_user_id),
-                }
-            })
+        const latest = new Map<string, Row>()
+        for (const event of rows.activity_events) {
+            if (!ids.includes(event.issue_id as string) || !TRACKED.includes(event.action as string)) continue
+            const key = [event.issue_id, event.actor_user_id, event.actor_agent_id, event.action].join('/')
+            const known = latest.get(key)
+            if (!known || (known.last_at as string) < (event.created_at as string)) latest.set(key, { issue_id: event.issue_id, actor_user_id: event.actor_user_id, actor_agent_id: event.actor_agent_id, action: event.action, last_at: event.created_at })
+        }
+        return [...latest.values()]
     }
 }
 
@@ -73,7 +74,7 @@ function setup(tables: Partial<Tables> = {}) {
         sessions: [],
         ...tables,
     }
-    const db = workDatabase(rows, { rpc: { issue_touches: issueTouches(rows) } })
+    const db = workDatabase(rows, { rpc: { issue_actor_touches: issueActorTouches(rows) } })
     return { db, rows, scope: { workspaceId: WORKSPACE, supabase: db.client } }
 }
 
@@ -118,6 +119,18 @@ describe('releaseRunCheckouts and a comment made while the run held the issue', 
 
         await releaseRunCheckouts(scope, 'run-9')
 
+        expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'commented', issueId: 'issue-1', body: 'Make it shorter', author: { kind: 'user', userId: 'anna' } })
+    })
+
+    it('wakes the coworker for the newest comment of someone who may use it, never for an outsider', async () => {
+        const { scope } = setup({
+            issues: [issue({ status: 'in_progress', checkout_run_id: 'run-9', checked_out_at: ago(60_000) }), issue({ id: 'issue-2', number: 2, status: 'in_progress', checkout_run_id: 'run-9', checked_out_at: ago(60_000) })],
+            issue_comments: [comment({ author_user_id: 'anna', created_at: ago(40_000) }), comment({ author_user_id: 'outsider', created_at: ago(20_000), body: 'Do it my way' }), comment({ issue_id: 'issue-2', author_user_id: 'outsider', created_at: ago(20_000), body: 'Drop everything' })],
+        })
+
+        await releaseRunCheckouts(scope, 'run-9')
+
+        expect(reactToIssueChange).toHaveBeenCalledTimes(1)
         expect(reactToIssueChange).toHaveBeenCalledWith(scope, { kind: 'commented', issueId: 'issue-1', body: 'Make it shorter', author: { kind: 'user', userId: 'anna' } })
     })
 
@@ -249,6 +262,36 @@ describe('nextIssuesFor', () => {
         const after = setup({ issues: [issue()], activity_events: [event('issue-1', 'issue.checked_out', { agent: 'agent-1' }, ago(29 * 60_000)), event('issue-1', 'issue.commented', { user: 'anna' }, ago(5 * 60_000))] })
         expect(await nextIssuesFor(after.scope, [{ agentId: 'engine-1', skipRefs: ['ENG-1'], wokenAt }], NOW)).toEqual([{ agentId: 'engine-1', ref: 'ENG-1', title: 'Write the launch post' }])
         expect(await nextIssuesFor(after.scope, [{ agentId: 'engine-1', skipRefs: ['ENG-1'] }], NOW)).toEqual([])
+    })
+
+    it('lets only a person who may use the coworker, an admin, another coworker or the system make an issue due', async () => {
+        const touched = event('issue-1', 'issue.status_changed', { agent: 'agent-1' }, ago(60_000))
+        const due = async (actor: { agent?: string; user?: string }, action = 'issue.commented', status = 'blocked') => {
+            const { scope } = setup({ issues: [issue({ status })], activity_events: [touched, event('issue-1', action, actor, ago(1000))] })
+            return (await nextIssuesFor(scope, [{ agentId: 'engine-1', skipRefs: [] }], NOW)).length === 1
+        }
+        expect(await due({ user: 'outsider' })).toBe(false)
+        expect(await due({ user: 'outsider' }, 'issue.status_changed')).toBe(false)
+        expect(await due({ user: 'outsider' }, 'issue.commented', 'in_review')).toBe(false)
+        expect(await due({ user: 'anna' })).toBe(true)
+        expect(await due({ user: 'admin' })).toBe(true)
+        expect(await due({ user: 'anna' }, 'issue.commented', 'in_review')).toBe(true)
+        expect(await due({ agent: 'agent-2' })).toBe(true)
+        expect(await due({})).toBe(true)
+    })
+
+    it('keeps the cooldown for an issue only an outsider touched after the wake', async () => {
+        const wokenAt = { 'ENG-1': ago(30 * 60_000) }
+        const outsider = setup({ issues: [issue()], activity_events: [event('issue-1', 'issue.checked_out', { agent: 'agent-1' }, ago(29 * 60_000)), event('issue-1', 'issue.commented', { user: 'outsider' }, ago(5 * 60_000))] })
+        expect(await nextIssuesFor(outsider.scope, [{ agentId: 'engine-1', skipRefs: ['ENG-1'], wokenAt }], NOW)).toEqual([])
+        const member = setup({ issues: [issue()], activity_events: [event('issue-1', 'issue.checked_out', { agent: 'agent-1' }, ago(29 * 60_000)), event('issue-1', 'issue.commented', { user: 'admin' }, ago(5 * 60_000))] })
+        expect(await nextIssuesFor(member.scope, [{ agentId: 'engine-1', skipRefs: ['ENG-1'], wokenAt }], NOW)).toHaveLength(1)
+    })
+
+    it('hands out nothing when the touches cannot be read', async () => {
+        const { scope } = setup({ issues: [issue()] })
+        const failing = { ...scope, supabase: new Proxy(scope.supabase, { get: (target, key) => (key === 'rpc' ? async () => ({ data: null, error: { message: 'down' } }) : Reflect.get(target, key)) }) }
+        await expect(nextIssuesFor(failing, [{ agentId: 'engine-1', skipRefs: [] }], NOW)).rejects.toThrow('Failed to read when the issues were last touched')
     })
 
     it('hands out nothing with the platform switched off', async () => {

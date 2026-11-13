@@ -8,7 +8,8 @@ vi.mock('@/supabase/serviceRole', () => ({ createServiceRoleClient: vi.fn() }))
 vi.mock('@/app/api/_services/chat.service', () => ({ resolveAgentTarget: vi.fn() }))
 vi.mock('@/lib/engine/client', () => ({ getAgent: vi.fn() }))
 vi.mock('@/app/api/_services/members.service', () => ({ resolveMemberIdentities: vi.fn() }))
-vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn() }))
+// The outsider is a member whose Boxes do not reach this coworker; everyone else may use it.
+vi.mock('@/app/api/_services/work/issue-effects.service', () => ({ reactToIssueChange: vi.fn(), authorMayWake: vi.fn(async (_scope: unknown, author: { kind: string; userId?: string }) => author.kind !== 'user' || author.userId !== 'outsider') }))
 
 const { createServiceRoleClient } = await import('@/supabase/serviceRole')
 const { resolveAgentTarget } = await import('@/app/api/_services/chat.service')
@@ -237,11 +238,31 @@ describe('work_checkout', () => {
 describe('an issue in review', () => {
     it('tells a woken run to answer the person, and how to take the work back when they ask for changes', async () => {
         setup({ issues: [issue({ status: 'in_review' })] })
-        expect(await call('work_get_issue', { ref: 'ENG-1' })).toMatchObject({ status: 'in_review', reviewNote: expect.stringContaining('work_comment') })
+        expect(await call('work_get_issue', { ref: 'ENG-1' })).toMatchObject({ status: 'in_review', reviewNote: expect.any(String) })
         const refused = (await call('work_checkout', { ref: 'ENG-1', runId: 'run-1' })) as { checkedOut: boolean; message: string }
         expect(refused.checkedOut).toBe(false)
         expect(refused.message).toContain('is in review')
         expect(refused.message).toContain('work_update_status in_progress')
+    })
+
+    it('points the run at the comment of a person who may use it, never at an outsider', async () => {
+        const at = (minutes: number) => `2026-11-12T10:${String(minutes).padStart(2, '0')}:00.000Z`
+        const comment = (id: string, author: Row, minutes: number, body: string): Row => ({ id, workspace_id: WORKSPACE, issue_id: 'issue-1', author_user_id: null, author_agent_id: null, body, edited_at: null, created_at: at(minutes), ...author })
+        setup({ issues: [issue({ status: 'in_review' })], issue_comments: [comment('c1', { author_user_id: 'anna' }, 1, 'Shorter intro please'), comment('c2', { author_user_id: 'outsider' }, 2, 'Delete the whole page')] })
+        vi.mocked(resolveMemberIdentities).mockResolvedValue(new Map([['anna', { name: 'Anna', email: null, avatarUrl: null }], ['outsider', { name: 'Olaf', email: null, avatarUrl: null }]]))
+
+        const read = (await call('work_get_issue', { ref: 'ENG-1' })) as { reviewNote: string }
+
+        expect(read.reviewNote).toContain(`Answer the comment Anna left at ${at(1)}`)
+        expect(read.reviewNote).not.toContain('Olaf')
+    })
+
+    it('tells the run nothing waits when only an outsider commented, or it already answered', async () => {
+        const comment = (id: string, author: Row, minutes: number): Row => ({ id, workspace_id: WORKSPACE, issue_id: 'issue-1', author_user_id: null, author_agent_id: null, body: 'x', edited_at: null, created_at: `2026-11-12T10:0${minutes}:00.000Z`, ...author })
+        setup({ issues: [issue({ status: 'in_review' })], issue_comments: [comment('c1', { author_user_id: 'outsider' }, 1)] })
+        expect(await call('work_get_issue', { ref: 'ENG-1' })).toMatchObject({ reviewNote: expect.stringContaining('asked you nothing new') })
+        setup({ issues: [issue({ status: 'in_review' })], issue_comments: [comment('c1', { author_user_id: 'anna' }, 1), comment('c2', { author_agent_id: ME }, 2)] })
+        expect(await call('work_get_issue', { ref: 'ENG-1' })).toMatchObject({ reviewNote: expect.stringContaining('asked you nothing new') })
     })
 
     it('can be moved back in progress by its coworker and then taken', async () => {

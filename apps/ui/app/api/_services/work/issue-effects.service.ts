@@ -133,7 +133,8 @@ async function readIssue(scope: WorkScope, issueId: string): Promise<(IssueRow &
 
 // A person wakes a coworker only if they may use it: a comment or a move by someone its Box is
 // closed to is kept, and sets nothing off. A coworker's or the system's change keeps its own rules.
-async function authorMayWake(scope: WorkScope, author: WorkAuthor, agentId: string): Promise<boolean> {
+// The heartbeat reads touches through the same rule (work-queue.service.ts).
+export async function authorMayWake(scope: WorkScope, author: WorkAuthor, agentId: string): Promise<boolean> {
     if (author.kind !== 'user') return true
     const actor = await memberActor(scope.workspaceId, author.userId)
     return !!actor && hasAccess(await readAgentAccess(actor, agentId), 'use')

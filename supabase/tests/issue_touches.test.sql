@@ -1,12 +1,13 @@
 -- `issue_touches` (migration 20261112170000): the last touch of each issue by its assignee, by
 -- anyone else and by a person's comment, exact per issue however much activity the workspace holds,
--- and readable only by the service role.
+-- and readable only by the service role. `issue_actor_touches` (migration 20261113100000): the same,
+-- per actor and action, so the hub can leave out a person who may not use the coworker.
 -- Runs with `pnpm exec supabase test db` on the local stack; everything is rolled back.
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path to public, extensions;
 
-select plan(10);
+select plan(16);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000b101', 'touches-admin@lumvika.test');
 insert into public.workspaces (id, icon_url, name) values (990201, '', 'Touches test');
@@ -65,6 +66,29 @@ select is(
     'an issue its assignee never touched reads null'
 );
 select is((select count(*)::integer from public.issue_touches(990202, array['00000000-0000-0000-0000-0000001b0001'::uuid])), 0, 'another workspace reads nothing of these issues');
+
+select is(
+    (select last_at from public.issue_actor_touches(990201, array['00000000-0000-0000-0000-0000001b0001'::uuid]) where action = 'issue.commented' and actor_user_id = '00000000-0000-0000-0000-00000000b101'),
+    '2026-11-01T11:00:00Z'::timestamptz,
+    'per actor: the person who commented, kept apart from everyone else'
+);
+select is(
+    (select last_at from public.issue_actor_touches(990201, array['00000000-0000-0000-0000-0000001b0001'::uuid]) where action = 'issue.commented' and actor_agent_id = '00000000-0000-0000-0000-0000000eb002'),
+    '2026-11-01T12:00:00Z'::timestamptz,
+    'per actor: the other coworker who commented'
+);
+select is(
+    (select count(*)::integer from public.issue_actor_touches(990201, array['00000000-0000-0000-0000-0000001b0001'::uuid]) where action = 'issue.released'),
+    0,
+    'an action that is no touch is left out'
+);
+select is(
+    (select last_at from public.issue_actor_touches(990201, array['00000000-0000-0000-0000-0000001b0001'::uuid, '00000000-0000-0000-0000-0000001b0002'::uuid]) where issue_id = '00000000-0000-0000-0000-0000001b0001' and action = 'issue.checked_out'),
+    '2026-11-01T10:00:00Z'::timestamptz,
+    'per actor: an issue with old activity keeps it next to one with thousands of newer events'
+);
+select is((select count(*)::integer from public.issue_actor_touches(990202, array['00000000-0000-0000-0000-0000001b0001'::uuid])), 0, 'per actor: another workspace reads nothing of these issues');
+select ok(not has_function_privilege('authenticated', 'public.issue_actor_touches(bigint, uuid[])', 'execute') and has_function_privilege('service_role', 'public.issue_actor_touches(bigint, uuid[])', 'execute'), 'per actor: the service role alone can call it');
 
 delete from public.projects where id = '00000000-0000-0000-0000-0000000fb001';
 select is((select count(*)::integer from public.activity_events where workspace_id = 990201), 0, 'activity goes with the project, so no touch outlives its issue');

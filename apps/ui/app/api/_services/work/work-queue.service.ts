@@ -2,7 +2,7 @@ import 'server-only'
 
 import { SYSTEM_AUTHOR, formatIssueRef, type IssuePriority, type IssueStatus } from '@lumvika/contracts'
 
-import { reactToIssueChange } from '@/app/api/_services/work/issue-effects.service'
+import { authorMayWake, reactToIssueChange } from '@/app/api/_services/work/issue-effects.service'
 import { releaseIssue } from '@/app/api/_services/work/issues.service'
 import { sessionsPausedOnPerson } from '@/app/api/_services/work/paused-runs'
 import { clientOf, type WorkScope } from '@/app/api/_services/work/refs'
@@ -39,21 +39,44 @@ async function releaseAll(scope: WorkScope, held: Held[]): Promise<Held[]> {
     return released
 }
 
+// Whether a person may wake a coworker, asked once per pair for a whole heartbeat: the rule of a wake
+// (`authorMayWake`), so a touch by someone the coworker's Box is closed to never sets it off later.
+function wakeRule(scope: WorkScope): (userId: string, agentId: string) => Promise<boolean> {
+    const answers = new Map<string, Promise<boolean>>()
+    return (userId, agentId) => {
+        const key = `${userId}/${agentId}`
+        let answer = answers.get(key)
+        if (!answer) {
+            answer = authorMayWake(scope, { kind: 'user', userId }, agentId)
+            answers.set(key, answer)
+        }
+        return answer
+    }
+}
+
 // A person who commented while the run held the issue was not answered by a wake (the run was on
 // it), and the engine's cooldown would hold the heartbeat back for an hour: the coworker is woken for
-// that comment now, through the same rules as any comment. A comment the coworker answered in the
-// issue before its run ended needs nothing more.
+// that comment now, through the same rules as any comment. Only a person who may use the coworker
+// counts, and a comment the coworker answered in the issue before its run ended needs nothing more.
 async function wakeForMissedComments(scope: WorkScope, released: Held[]): Promise<void> {
     const supabase = clientOf(scope)
+    const mayWake = wakeRule(scope)
     for (const issue of released) {
         if (!issue.checked_out_at) continue
         const [{ data: personal }, { data: issueRow }] = await Promise.all([
-            selectMany(supabase, 'issue_comments', ['author_user_id', 'body', 'created_at'] as const, { workspace_id: scope.workspaceId, issue_id: issue.id, author_user_id: { notNull: true }, created_at: { gt: issue.checked_out_at } }, { column: 'created_at', ascending: false }, 1),
+            selectMany(supabase, 'issue_comments', ['author_user_id', 'body', 'created_at'] as const, { workspace_id: scope.workspaceId, issue_id: issue.id, author_user_id: { notNull: true }, created_at: { gt: issue.checked_out_at } }, { column: 'created_at', ascending: false }),
             selectMany(supabase, 'issues', ['assignee_agent_id'] as const, { id: issue.id, workspace_id: scope.workspaceId }),
         ])
-        const comment = personal?.[0]
         const assignee = issueRow?.[0]?.assignee_agent_id
-        if (!comment?.author_user_id || !assignee) continue
+        if (!assignee) continue
+        let comment: NonNullable<typeof personal>[number] | undefined
+        for (const candidate of personal ?? []) {
+            if (candidate.author_user_id && (await mayWake(candidate.author_user_id, assignee))) {
+                comment = candidate
+                break
+            }
+        }
+        if (!comment?.author_user_id) continue
         const { data: answers } = await selectMany(supabase, 'issue_comments', ['created_at'] as const, { workspace_id: scope.workspaceId, issue_id: issue.id, author_agent_id: assignee, created_at: { gt: comment.created_at } }, undefined, 1)
         if (answers?.length) continue
         reactToIssueChange(scope, { kind: 'commented', issueId: issue.id, body: comment.body, author: { kind: 'user', userId: comment.author_user_id } })
@@ -83,8 +106,9 @@ export async function releaseStaleCheckouts(scope: WorkScope, liveRunIds: readon
 
 type Candidate = { id: string; project_id: string; number: number; title: string; status: IssueStatus; priority: IssuePriority; due_date: string | null; position: number; assignee_agent_id: string | null; session_id: string | null }
 
-// When the issue was last touched by its assignee, by anyone else, and by a person's comment, read
-// exactly per issue (`issue_touches`). Null for what never happened.
+// When the issue was last touched by its assignee, by anyone else who could have woken it (another
+// coworker, the system, a person who may use the coworker), and by such a person's comment, read
+// exactly per issue and actor (`issue_actor_touches`). Null for what never happened.
 export type IssueTouches = { assigneeTouchedAt: string | null; othersTouchedAt: string | null; personCommentedAt: string | null }
 
 const timeOf = (at: string | null | undefined) => (at ? new Date(at).getTime() : 0)
@@ -112,10 +136,29 @@ function byWorkingOrder(a: Candidate, b: Candidate): number {
     )
 }
 
-async function readTouches(scope: WorkScope, issueIds: string[]): Promise<Map<string, IssueTouches>> {
-    const { data, error } = await clientOf(scope).rpc('issue_touches', { p_workspace_id: scope.workspaceId, p_issue_ids: issueIds })
+const latest = (current: string | null, at: string) => (!current || timeOf(at) > timeOf(current) ? at : current)
+
+// Every issue asked for gets its touches, empty for one nobody touched: a read that fails throws,
+// so nothing is handed out on missing data.
+async function readTouches(scope: WorkScope, issues: ReadonlyArray<Pick<Candidate, 'id' | 'assignee_agent_id'>>): Promise<Map<string, IssueTouches>> {
+    const { data, error } = await clientOf(scope).rpc('issue_actor_touches', { p_workspace_id: scope.workspaceId, p_issue_ids: issues.map(issue => issue.id) })
     if (error) throw new Error(`Failed to read when the issues were last touched: ${error.message}`)
-    return new Map((data ?? []).map(row => [row.issue_id, { assigneeTouchedAt: row.assignee_touched_at ?? null, othersTouchedAt: row.others_touched_at ?? null, personCommentedAt: row.person_commented_at ?? null }]))
+    const mayWake = wakeRule(scope)
+    const assigneeOf = new Map(issues.map(issue => [issue.id, issue.assignee_agent_id]))
+    const touches = new Map<string, IssueTouches>(issues.map(issue => [issue.id, { assigneeTouchedAt: null, othersTouchedAt: null, personCommentedAt: null }]))
+    for (const row of data ?? []) {
+        const assignee = assigneeOf.get(row.issue_id)
+        const current = touches.get(row.issue_id)
+        if (!assignee || !current) continue
+        if (row.actor_agent_id === assignee) {
+            if (row.action !== 'issue.created') current.assigneeTouchedAt = latest(current.assigneeTouchedAt, row.last_at)
+            continue
+        }
+        if (row.actor_user_id && !(await mayWake(row.actor_user_id, assignee))) continue
+        current.othersTouchedAt = latest(current.othersTouchedAt, row.last_at)
+        if (row.action === 'issue.commented' && row.actor_user_id) current.personCommentedAt = latest(current.personCommentedAt, row.last_at)
+    }
+    return touches
 }
 
 // The engine skips what it woke within its cooldown, unless someone other than the coworker touched
@@ -151,7 +194,7 @@ export async function nextIssuesFor(scope: WorkScope, coworkers: readonly Queued
     const open = (issues ?? []).filter(issue => keyOf.has(issue.project_id))
     if (open.length === 0) return []
 
-    const [touchesOf, paused] = await Promise.all([readTouches(scope, open.map(issue => issue.id)), sessionsPausedOnPerson(scope, open.map(issue => issue.session_id))])
+    const [touchesOf, paused] = await Promise.all([readTouches(scope, open), sessionsPausedOnPerson(scope, open.map(issue => issue.session_id))])
 
     const coworkerOf = new Map(coworkers.map(coworker => [coworker.agentId, coworker]))
     const runs = new Map<string, QueuedRun>()

@@ -11,6 +11,7 @@ import {
     formatIssueRef,
     parseIssueRef,
     type AgentIssueStatus,
+    type IssueComment,
     type IssueDetail,
     type IssuePriority,
     type IssueStatus,
@@ -24,6 +25,7 @@ import { workspaceActor } from '@/app/api/_auth/access'
 import { coworkerVisibleProjectIds } from '@/app/api/_auth/project-access'
 import { resolveAgentTarget } from '@/app/api/_services/chat.service'
 import { resolveMemberIdentities } from '@/app/api/_services/members.service'
+import { authorMayWake } from '@/app/api/_services/work/issue-effects.service'
 import { addIssueComment, listIssueComments } from '@/app/api/_services/work/issue-comments.service'
 import { checkoutIssue, createIssue, getIssueByRef, listIssues, releaseIssue, transitionIssue, type CheckoutConflict } from '@/app/api/_services/work/issues.service'
 import { listProjects } from '@/app/api/_services/work/projects.service'
@@ -233,7 +235,7 @@ async function getIssueForAgent(caller: Caller, args: Record<string, unknown>) {
         // system or an API key filed goes to review.
         needsReview: issue.createdBy.kind !== 'agent',
         checkedOut: !!issue.checkoutRunId,
-        ...(issue.status === 'in_review' ? { reviewNote: IN_REVIEW_NOTE } : {}),
+        ...(issue.status === 'in_review' ? { reviewNote: await reviewNoteFor(caller, shownComments, label) } : {}),
         project: project ? { key: project.key, name: project.name, instructions: project.instructions, lead: label(project.lead_user_id ? { kind: 'user', userId: project.lead_user_id } : project.lead_agent_id ? { kind: 'agent', agentId: project.lead_agent_id } : null) } : null,
         goal: goal ? { title: goal.title, status: goal.status } : null,
         parent: parent && project ? { ref: formatIssueRef(project.key, parent.number), title: parent.title, status: parent.status } : null,
@@ -244,8 +246,20 @@ async function getIssueForAgent(caller: Caller, args: Record<string, unknown>) {
 }
 
 // An issue in review is a person checking finished work: a comment there is answered, and only work
-// they ask for brings it back in progress.
-const IN_REVIEW_NOTE = 'A person is reviewing this work. Answer their latest comments with work_comment. Only if they ask for changes, move it back with work_update_status in_progress, then take it with work_checkout and do them.'
+// they ask for brings it back in progress. The comment to answer is the latest of a person who may use
+// this coworker, the rule of a wake: one from someone its Box is closed to stays readable on the
+// issue, and is never what the coworker is pointed at.
+const IN_REVIEW_NOTHING_NEW = 'A person is reviewing this work and has asked you nothing new since your last comment. Leave it as it is.'
+
+async function reviewNoteFor(caller: Caller, comments: readonly IssueComment[], label: (who: WorkAuthor) => string | null): Promise<string> {
+    for (const comment of [...comments].reverse()) {
+        if (comment.author.kind === 'agent' && comment.author.agentId === caller.agentId) return IN_REVIEW_NOTHING_NEW
+        if (comment.author.kind === 'user' && (await authorMayWake(caller.scope, comment.author, caller.agentId))) {
+            return `A person is reviewing this work. Answer the comment ${label(comment.author)} left at ${comment.createdAt} with work_comment. Only if it asks for changes, move it back with work_update_status in_progress, then take it with work_checkout and do them.`
+        }
+    }
+    return IN_REVIEW_NOTHING_NEW
+}
 
 const CHECKOUT_REFUSALS: Record<Exclude<CheckoutConflict, 'checked_out'>, (ref: string) => string> = {
     not_found: ref => `No issue ${ref} in this workspace.`,
@@ -263,7 +277,9 @@ async function checkout(caller: Caller, args: Record<string, unknown>) {
     const { data: session } = engineSessionId ? await selectMaybeSingle(clientOf(caller.scope), 'sessions', ['id'] as const, { agent_id: caller.agentId, engine_session_id: engineSessionId }) : { data: null }
     const result = await checkoutIssue(caller.scope, issue.id, caller.agentId, runId, session ? { sessionId: session.id } : {})
     if (result.ok) return { ref: result.issue.ref, status: result.issue.status, checkedOut: true, message: `You hold ${result.issue.ref} until this run ends. Work on it, comment what matters, then move it with work_update_status.` }
-    if (result.reason === 'not_ready' && issue.status === 'in_review') return { ref: issue.ref, checkedOut: false, message: `${issue.ref} is in review, so it cannot be taken. ${IN_REVIEW_NOTE}` }
+    if (result.reason === 'not_ready' && issue.status === 'in_review') {
+        return { ref: issue.ref, checkedOut: false, message: `${issue.ref} is in review, so it cannot be taken. Its reviewNote in work_get_issue says which comment of a person to answer, if any. Only if that comment asks for changes, move it back with work_update_status in_progress, then take it.` }
+    }
     if (result.reason === 'checked_out') return { ref: issue.ref, checkedOut: false, heldByRunId: result.heldByRunId, message: `${issue.ref} is already held by another run that is working on it. Do not retry and do not work on it: move on to the next issue of your inbox, or stop.` }
     return { ref: issue.ref, checkedOut: false, message: CHECKOUT_REFUSALS[result.reason](issue.ref) }
 }
