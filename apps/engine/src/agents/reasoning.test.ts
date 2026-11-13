@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { reasoningEffortLevels, supportsReasoningEffort } from '@lumvika/contracts'
 import { applyCaching } from './caching.js'
 import { mergeProviderOptions, reasoningProviderOptions } from './reasoning.js'
 
@@ -27,6 +28,23 @@ describe('reasoning provider options', () => {
         expect(reasoningProviderOptions('openrouter')).toBeUndefined()
     })
 
+    it('adds the effort in each provider dialect, beside the reasoning ask', () => {
+        expect(reasoningProviderOptions('anthropic', 'claude-opus-5-5', 'xhigh')).toEqual({ anthropic: { thinking: { type: 'adaptive', display: 'summarized' }, effort: 'xhigh' } })
+        expect(reasoningProviderOptions('openai', 'gpt-6.1-sol', 'low')).toEqual({ openai: { reasoningSummary: 'auto', reasoningEffort: 'low' } })
+        expect(reasoningProviderOptions('google', 'gemini-4-argon', 'high')).toEqual({ google: { thinkingConfig: { includeThoughts: true, thinkingLevel: 'high' } } })
+        expect(reasoningProviderOptions('codex', 'gpt-6.1-sol', 'medium')).toEqual({ 'codex-app-server': { effort: 'medium' } })
+    })
+
+    it('sends what it sent before when no effort is picked', () => {
+        expect(reasoningProviderOptions('anthropic', 'claude-opus-5-5', undefined)).toEqual(reasoningProviderOptions('anthropic'))
+        expect(reasoningProviderOptions('codex', 'gpt-6.1-sol', undefined)).toBeUndefined()
+    })
+
+    it('leaves effort to the claude CLI settings and to nobody on OpenRouter', () => {
+        expect(reasoningProviderOptions('claude', 'claude-opus-5-5', 'high')).toBeUndefined()
+        expect(reasoningProviderOptions('openrouter', 'anthropic/claude-opus-5.5', 'high')).toBeUndefined()
+    })
+
     it('keeps the prompt cache key when both write under the same provider', () => {
         const cached = applyCaching('openai', { system: { stable: 'be useful', volatile: '' }, messages: [], sessionId: 'session-1' })
 
@@ -48,5 +66,25 @@ describe('reasoning provider options', () => {
         expect(merged).toEqual({ anthropic: { thinking: { type: 'adaptive', display: 'summarized' } } })
         expect(cached.messages.filter(m => m.providerOptions?.anthropic)).toHaveLength(1)
         expect(cached.messages.at(-1)?.role).toBe('user')
+    })
+})
+
+describe('reasoning effort levels', () => {
+    it('offers each model only the levels its provider accepts', () => {
+        expect(reasoningEffortLevels('anthropic', 'claude-opus-5-5')).toEqual(['low', 'medium', 'high', 'xhigh', 'max'])
+        expect(reasoningEffortLevels('claude', 'claude-sonnet-4-6[1m]')).toEqual(['low', 'medium', 'high', 'max'])
+        expect(reasoningEffortLevels('claude', 'haiku')).toEqual([])
+        expect(reasoningEffortLevels('anthropic', 'claude-haiku-4-5')).toEqual([])
+        expect(reasoningEffortLevels('codex', 'gpt-6.1-sol')).toEqual(['low', 'medium', 'high', 'xhigh'])
+        expect(reasoningEffortLevels('openai', 'gpt-4o')).toEqual([])
+        expect(reasoningEffortLevels('google', 'gemini-4-argon')).toEqual(['low', 'medium', 'high'])
+        expect(reasoningEffortLevels('lumvika', 'lumvika-max')).toEqual([])
+        expect(reasoningEffortLevels('openrouter', 'anthropic/claude-opus-5.5')).toEqual([])
+    })
+
+    it('refuses a level kept from another model', () => {
+        expect(supportsReasoningEffort('codex', 'gpt-6.1-sol', 'max')).toBe(false)
+        expect(supportsReasoningEffort('claude', 'claude-opus-5-5', 'max')).toBe(true)
+        expect(supportsReasoningEffort('claude', 'claude-opus-5-5', undefined)).toBe(false)
     })
 })

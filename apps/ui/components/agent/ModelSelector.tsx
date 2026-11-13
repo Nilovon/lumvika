@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ModelPillTrigger } from '@/components/agent/ModelPillTrigger'
 import { PlanLimitDetail, PlanLimitHint, LumvikaCreditHint, usePlanWindowsSummary, useLumvikaCreditDetail } from '@/components/agent/PlanLimitHint'
 import { ModelTierRow } from '@/components/agent/ModelTierRow'
+import { ReasoningEffortPicker } from '@/components/agent/ReasoningEffortPicker'
 import { PowerBars } from '@/components/ui/power-bars'
 import { TooltipDisabledReason, TooltipLabeled } from '@/components/ui/tooltip'
 import { useAgentModel } from '@/hooks/useAgentModel'
@@ -23,7 +24,7 @@ import { useBoardStore } from '@/stores/board.store'
 import { useModelPickerStore } from '@/stores/model-picker.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
 import { track } from '@lumvika/analytics/client'
-import { LUMVIKA_CONNECTION_ID } from '@lumvika/contracts'
+import { LUMVIKA_CONNECTION_ID, reasoningEffortLevels, supportsReasoningEffort, type ReasoningEffort } from '@lumvika/contracts'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -60,6 +61,7 @@ type ModelSelectorProps = {
 export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, onConnectionChange, onRefusedModelChange, pickerKey, selectionKey, canSetDefault: canSetDefaultOverride }: ModelSelectorProps) {
     const t = useTranslations('agent.modelSelector')
     const tShared = useTranslations('agent.modelsShared')
+    const tEffort = useTranslations('agent.modelSelector.effort')
     const creditDetail = useLumvikaCreditDetail()
     const windowsSummary = usePlanWindowsSummary()
     const [open, setOpen] = useState(false)
@@ -103,6 +105,12 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
     const modelText = model ? modelLabel(model) : t('select')
     const refusedMessage = refusedReason ? t('refused', { model: modelText, reason: refusedReason }) : null
 
+    // The level shown is the one the engine will send: a pick the current model does not take is
+    // dropped there, so it is not shown here either.
+    const effortLevels = active ? reasoningEffortLevels(active.provider, model) : []
+    const effort = active && supportsReasoningEffort(active.provider, model, selection.effort) ? selection.effort : undefined
+    const keptEffort = useCallback((provider: string, nextModel: string) => (supportsReasoningEffort(provider, nextModel, selection.effort) ? { effort: selection.effort } : {}), [selection.effort])
+
     // A pin or an override that no longer resolves (a template just imported, a connection removed)
     // is repointed at whatever the Box can actually run, the Box default first: Lumvika only heads the
     // list, it is not what the owner chose. Writing the override rather than just the display
@@ -111,8 +119,8 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
         if (loading || active || !hasAvailable || engineResolvesModel) return
         const fallback = connectionOf(model, connectionId) ?? availableGroups.find(group => group.connectionId === boxDefaultPick?.connectionId) ?? availableGroups[0]
         const nextModel = model && fallback.models.some(m => m.id === model) ? model : fallback.defaultModel
-        select({ connectionId: fallback.connectionId, model: nextModel })
-    }, [loading, active, hasAvailable, engineResolvesModel, availableGroups, connectionOf, boxDefaultPick, model, connectionId, select])
+        select({ connectionId: fallback.connectionId, model: nextModel, ...keptEffort(fallback.provider, nextModel) })
+    }, [loading, active, hasAvailable, engineResolvesModel, availableGroups, connectionOf, boxDefaultPick, model, connectionId, select, keptEffort])
 
     // With nothing to pick from, the request lands where a model gets set up.
     useEffect(() => {
@@ -132,10 +140,19 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
     // Box default changes. Clearing the conversation override too, or the next message would still
     // carry the model the user just walked away from.
     const useBoxDefault = useCallback(() => {
-        select({})
+        select(selection.effort ? { effort: selection.effort } : {})
         if (canSetDefault) followBoxDefault()
         setOpen(false)
-    }, [select, followBoxDefault, canSetDefault])
+    }, [select, selection.effort, followBoxDefault, canSetDefault])
+
+    // Kept open: the level is read alongside the model, and a second click picks the model.
+    const selectEffort = useCallback(
+        (next: ReasoningEffort | undefined) => {
+            const { effort: _previous, ...pick } = selection
+            select(next ? { ...pick, effort: next } : pick)
+        },
+        [select, selection]
+    )
 
     useEffect(() => {
         // Don't report "not ready" while still loading — that would block the composer and flash a
@@ -149,10 +166,10 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
 
     const selectModel = useCallback(
         (group: ConnectionGroup, nextModel: string) => {
-            select({ connectionId: group.connectionId, model: nextModel })
+            select({ connectionId: group.connectionId, model: nextModel, ...keptEffort(group.provider, nextModel) })
             setOpen(false)
         },
-        [select]
+        [select, keptEffort]
     )
 
     const manage = useCallback(() => {
@@ -186,7 +203,8 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
     const usageLabel = !usage || !active ? null : usageOfCredit ? creditDetail(lumvikaCredit) : windowsSummary(usage.windows, active.provider)
     const usageDetail = !usage || !active ? null : usageOfCredit ? usageLabel : <PlanLimitDetail windows={active.planWindows} provider={active.provider} />
 
-    const label = !hasAvailable ? t('setUp') : engineResolvesModel ? t('defaultLabel', { model: modelText }) : !active ? t('select') : modelText
+    const modelPart = !hasAvailable ? t('setUp') : engineResolvesModel ? t('defaultLabel', { model: modelText }) : !active ? t('select') : modelText
+    const label = effort ? t('withEffort', { model: modelPart, effort: tEffort(effort) }) : modelPart
 
     const trigger = (
         <PopoverTrigger asChild>
@@ -226,7 +244,8 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
             ) : (
                 trigger
             )}
-            <PopoverContent align="start" className="w-80 gap-0 p-0">
+            <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)] gap-0 p-0">
+                {effortLevels.length > 0 && <ReasoningEffortPicker levels={effortLevels} value={effort} onChange={selectEffort} />}
                 <Command>
                     <CommandList className="max-h-[min(32rem,70vh)]">
                         <CommandEmpty>{t('empty')}</CommandEmpty>

@@ -14,7 +14,7 @@ import {
     type LocalTool,
 } from 'ai-sdk-provider-codex-cli'
 import type { ZodObject, ZodRawShape, ZodType } from 'zod'
-import type { ContextOccupancy, McpServer, Provider } from '@lumvika/contracts'
+import type { ContextOccupancy, McpServer, Provider, ReasoningEffort } from '@lumvika/contracts'
 import { env } from '../config/env.js'
 import { codexPath } from '../runtime/codex-cli.js'
 import { codexHomeDir } from '../config/paths.js'
@@ -244,14 +244,14 @@ export function codexMcpConfig(tools?: ToolSet, mcpServers: McpServer[] = []): R
 //
 // `sessionId` is what an OpenCode request names its conversation by: a one-shot call inside a run
 // (compaction, vision) passes the run's own, the others one of their own making.
-export type CliModelOptions = { system?: string; claudeTools?: readonly string[]; screenshots?: ScreenshotLookup; sessionId?: string; claudeSession?: ClaudeRunSession }
+export type CliModelOptions = { system?: string; claudeTools?: readonly string[]; screenshots?: ScreenshotLookup; sessionId?: string; claudeSession?: ClaudeRunSession; effort?: ReasoningEffort }
 
 // The Claude CLI session a run writes its turn to: a new one under `id`, or `id` resumed.
 export type ClaudeRunSession = { id: string; resume: boolean }
 
 // What a run hands its model beyond the tools: the prompt and the screenshots for the CLIs, the
 // conversation for OpenCode, the session for Claude.
-export type ResolveModelOptions = { system?: string; screenshots?: ScreenshotLookup; sessionId?: string; claudeSession?: ClaudeRunSession }
+export type ResolveModelOptions = { system?: string; screenshots?: ScreenshotLookup; sessionId?: string; claudeSession?: ClaudeRunSession; effort?: ReasoningEffort }
 
 function oneShotSessionId(agent: LoadedAgent, options?: { sessionId?: string }): string {
     return options?.sessionId ?? `${agent.id}:one-shot`
@@ -324,6 +324,7 @@ function claudeProvider(agent: LoadedAgent, tools?: ToolSet, mcpServers: RunMcpS
             // Without this the CLI emits no thinking block at all, so the chat never shows what the
             // agent is working through. `adaptive` leaves the model to decide when it is worth it.
             thinking: { type: 'adaptive', display: 'summarized' },
+            ...(options.effort ? { effort: options.effort } : {}),
             env,
             ...(options.system !== undefined ? { systemPrompt: options.system } : {}),
             ...(allowedTools.length ? { mcpServers: servers, allowedTools } : {}),
@@ -484,7 +485,7 @@ export type ResolvedModel = { model: LanguageModel; close: () => Promise<void>; 
 
 const noClose = async (): Promise<void> => {}
 
-export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools?: ToolSet, mcpServers?: RunMcpServer[], { system, screenshots, sessionId, claudeSession }: ResolveModelOptions = {}): ResolvedModel {
+export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools?: ToolSet, mcpServers?: RunMcpServer[], { system, screenshots, sessionId, claudeSession, effort }: ResolveModelOptions = {}): ResolvedModel {
     const { provider, model } = pairFor(agent, override)
     // `wrapLanguageModel` runs the list from the end: the guard sits nearest the model, so no other
     // middleware ever reads a fake tool call, the card tags go next, and the quick replies read the
@@ -498,7 +499,7 @@ export function resolveModel(agent: LoadedAgent, override?: ModelOverride, tools
     }
     if (provider === 'claude') {
         const capture = claudeContextCapture(agent.resolved.connection?.id)
-        const claude = claudeProvider(agent, tools, mcpServers, capture, { system, screenshots, claudeSession, claudeTools: agent.config.tools.web ? CLAUDE_RUN_TOOLS : [] }).languageModel(model)
+        const claude = claudeProvider(agent, tools, mcpServers, capture, { system, screenshots, claudeSession, effort, claudeTools: agent.config.tools.web ? CLAUDE_RUN_TOOLS : [] }).languageModel(model)
         return { model: wrapLanguageModel({ model: claude, middleware: [claudeScreenshotMiddleware, replies.middleware, cardTags, guard] }), close: noClose, contextUsage: capture.read, quickReplies: replies.read }
     }
     // OpenCode runs in Lumvika's own loop, on the SDK of whichever format the model is served on.

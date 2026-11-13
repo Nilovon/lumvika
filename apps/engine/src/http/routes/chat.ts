@@ -54,7 +54,7 @@ chatRoutes.post('/chat', async c => {
     })
     const response = toResumableStreamResponse(run.id, async writer => {
         try {
-            const agentRun = await runAgent(runAgentView, session.id, body.message, override, writer, run.id, { source: 'chat', author: body.author, userLanguage: claim ? body.userLanguage : undefined, callableAgentIds: body.callableAgentIds, channel })
+            const agentRun = await runAgent(runAgentView, session.id, body.message, override, writer, run.id, { source: 'chat', author: body.author, effort: body.effort, userLanguage: claim ? body.userLanguage : undefined, callableAgentIds: body.callableAgentIds, channel })
             mergeRunStream(writer, agentRun, meta)
         } catch (err) {
             // runAgent registers the run's abort controller itself, and unregistering it is what

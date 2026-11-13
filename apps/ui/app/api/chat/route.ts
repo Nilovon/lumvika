@@ -11,7 +11,7 @@ import { installSessionTitle, parseInstallMessage } from '@/lib/chat/install-mar
 import { preferredLanguage } from '@/lib/steward/language'
 import { stripVoiceMarker } from '@/lib/voice/marker'
 import { serviceScope, updateRows } from '@/lib/db'
-import { ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND, type MessageAuthor, type SessionKind, type SessionSource } from '@lumvika/contracts'
+import { ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND, parseReasoningEffort, type MessageAuthor, type SessionKind, type SessionSource } from '@lumvika/contracts'
 
 type ChatRequestBody = {
     agentId?: unknown
@@ -19,6 +19,7 @@ type ChatRequestBody = {
     text?: unknown
     connectionId?: string
     model?: string
+    effort?: unknown
     source?: SessionSource
     queued?: boolean
     // `general` opens the coworker's main conversation when no `sessionId` names it yet. Read only
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
     for (let attempt = 0; attempt < 2; attempt++) {
         try {
             console.log(`[CHAT START] agent=${agentId} session=${sessionId ?? '(new)'} inputLength=${text.length}${queued ? ' queued' : ''}`)
-            engineRes = await startChat(target.conn, target.engineAgentId, { sessionId: engineSessionId, message: text, connectionId, model, source, author, callableAgentIds: await callablePromise, install: !!install && !sessionId, userLanguage: install && !sessionId ? (preferredLanguage(request.headers.get('accept-language')) ?? undefined) : undefined }, queued ? QUEUED_RETRY_DELAYS_MS : null)
+            engineRes = await startChat(target.conn, target.engineAgentId, { sessionId: engineSessionId, message: text, connectionId, model, effort: parseReasoningEffort(body.effort), source, author, callableAgentIds: await callablePromise, install: !!install && !sessionId, userLanguage: install && !sessionId ? (preferredLanguage(request.headers.get('accept-language')) ?? undefined) : undefined }, queued ? QUEUED_RETRY_DELAYS_MS : null)
         } catch (err) {
             return Response.json({ error: `Engine error: ${err instanceof Error ? err.message : 'Failed to start chat'}` }, { status: 502 })
         }

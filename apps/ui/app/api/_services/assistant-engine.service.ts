@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { ASSISTANT_AGENT_ID, ENGINE_CAPABILITY_ASSISTANT, ENGINE_CAPABILITY_ASSISTANT_SESSION_DELETE, type AssistantBrief, type MessageAuthor } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, ENGINE_CAPABILITY_ASSISTANT, ENGINE_CAPABILITY_ASSISTANT_SESSION_DELETE, type AssistantBrief, type MessageAuthor, type ReasoningEffort } from '@lumvika/contracts'
 import type { UIMessage } from 'ai'
 
 import { ADMIN_ONLY, AuthorizationError, requireWorkspaceContext } from '@/app/api/_auth/ownership'
@@ -63,7 +63,7 @@ export async function tailAssistantRun(conn: EngineConnection, engineSessionId: 
     return { runId: activeRunId, res }
 }
 
-export type AssistantTurn = { engineSessionId: string | null; text: string; connectionId?: string; model?: string; author: MessageAuthor; brief: AssistantBrief; queued: boolean }
+export type AssistantTurn = { engineSessionId: string | null; text: string; connectionId?: string; model?: string; effort?: ReasoningEffort; author: MessageAuthor; brief: AssistantBrief; queued: boolean }
 
 export async function sendAssistantTurn(conn: EngineConnection, turn: AssistantTurn): Promise<Response> {
     // `assistant` rides beside the fields the client types: the engine reads it for this agent only.
@@ -72,6 +72,7 @@ export async function sendAssistantTurn(conn: EngineConnection, turn: AssistantT
         message: turn.text,
         connectionId: turn.connectionId,
         model: turn.model,
+        effort: turn.effort,
         source: 'dashboard',
         author: turn.author,
         assistant: turn.brief,
