@@ -34,6 +34,7 @@ export const toolsSchema = z.object({
     delegate: z.boolean().default(true),
     callAgent: z.boolean().default(true),
     team: z.boolean().default(true),
+    work: z.boolean().default(true),
     browser: z.boolean().default(true),
     vision: z.boolean().default(true),
     notify: z.boolean().default(true),
@@ -140,9 +141,9 @@ export function isSetupAnswered(setup: { required: boolean | null; prompt: strin
 
 export const agentConfigSchema = z.object({
     name: z.string(),
-    // `steward` is the one built-in agent each engine writes for itself at boot. Never settable
-    // through the API: `updateAgentSchema` leaves it out.
-    kind: z.enum(['user', 'steward']).default('user'),
+    // `steward` and `assistant` are the built-in agents each engine writes for itself at boot. Never
+    // settable through the API: `updateAgentSchema` leaves it out.
+    kind: z.enum(['user', 'steward', 'assistant']).default('user'),
     ephemeral: z.boolean().default(false),
     // An agent switched off by its host (a plan that no longer covers it) keeps everything it has
     // and simply stops running: no chat, no schedule, no call from a peer. Defaults to true so a

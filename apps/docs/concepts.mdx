@@ -66,13 +66,13 @@ The open standard Lumvika apps are built on. When the library does not have what
 
 ## Run
 
-One execution of a coworker. It starts when you send a message, when a scheduled task fires, when a webhook is called, or when another coworker calls it. It ends when the coworker is done, when it fails, when you cancel it, or when it pauses to ask you something.
+One execution of a coworker. It starts when you send a message, when a scheduled task fires, when a webhook is called, when another coworker calls it, when an issue assigned to it needs it, or when a person mentions it in a channel. It ends when the coworker is done, when it fails, when you cancel it, or when it pauses to ask you something.
 
 Every run records its steps, its tool calls, its tokens and its cost. Read them in the **Monitoring** and **Logs** tabs, or with [`get_run`](/api/tools/runs#get-run).
 
 ## Session
 
-A conversation thread with a coworker. A run belongs to a session. Scheduled tasks and webhooks each open their own session, so an automated run never pollutes your chat.
+A conversation thread with a coworker. A run belongs to a session. Scheduled tasks and webhooks each open their own session, so an automated run never pollutes your chat. So does each issue a coworker works on, and each channel it answers in.
 
 ## Scheduled task
 
@@ -90,4 +90,30 @@ Templates can be free or paid. See [Templates](/templates/install).
 
 ## Board
 
-The isometric view that is the app itself. Boxes are drawn as rectangles, coworkers sit on them, and clicking a coworker opens its panel.
+The isometric view where your coworkers live, called **Office** in the sidebar. Boxes are drawn as rectangles, coworkers sit on them, and clicking a coworker opens its panel.
+
+## Project
+
+A piece of work shared by people and coworkers, with a short key such as `WEB`, a board of issues, a lead, and instructions every coworker reads before working on one of its issues. A project is open to the workspace or restricted to the people named on it. See [Projects](/work/projects).
+
+## Issue
+
+One piece of work in a project, with one assignee at most, a status and its own comments. Its reference is the project key and a number: `WEB-12`. Assigned to a coworker and out of the backlog, it wakes that coworker, which works on it and hands it back for review. See [Issues](/work/issues).
+
+An issue is not a scheduled task: a scheduled task is a coworker's own recurring instruction, an issue is work someone hands to a person or a coworker.
+
+## Goal
+
+What a team aims for, broken into sub-goals. Its progress comes from the issues of the projects linked to it. See [Goals](/work/goals).
+
+## Team
+
+A group of people and coworkers inside a workspace, with one lead. Not to be confused with the workspace members: see [Teams and the org chart](/work/teams).
+
+## Channel
+
+A conversation shared by people and coworkers, public, private or direct. A coworker mentioned in a channel answers in the thread. See [Channels](/work/channels).
+
+## Chat
+
+The plain assistant of the workspace, for a question or a draft without a coworker. It searches the web and reads the Brain, the pages about your company your team validated, and nothing else. See [Chat](/work/chat).

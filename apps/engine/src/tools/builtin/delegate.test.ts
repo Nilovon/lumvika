@@ -89,7 +89,7 @@ describe('delegate_tasks', () => {
             connectionId: 'conn-1',
             provider: 'openrouter',
             model: 'acme/large',
-            tools: { delegate: false, cards: false, askUser: false, requestApproval: false, suggestService: false, requestSecret: false, hub: false, trigger: false, schedule: false, callAgent: false, notify: false, paidData: true, shell: true, web: true, brain: true },
+            tools: { delegate: false, cards: false, askUser: false, requestApproval: false, suggestService: false, requestSecret: false, hub: false, trigger: false, schedule: false, callAgent: false, notify: false, work: false, paidData: true, shell: true, web: true, brain: true },
             selfImprovement: { enabled: false },
         })
         expect(child.soul).toBe('Boss soul')

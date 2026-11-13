@@ -7,14 +7,14 @@ process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-chat-'))
 process.env.LUMVIKA_API_KEY = ''
 
 const state = vi.hoisted(() => ({
-    calls: [] as { agent: { id: string; brief?: unknown }; sessionId: string; message: string; override: unknown; runId: string; trigger?: { userLanguage?: string; callableAgentIds?: string[] } }[],
+    calls: [] as { agent: { id: string; brief?: unknown }; sessionId: string; message: string; override: unknown; runId: string; trigger?: { userLanguage?: string; callableAgentIds?: string[]; channel?: boolean } }[],
     runAgentError: null as Error | null,
     startRunError: null as Error | null,
 }))
 
 vi.mock('../../runtime/loop.js', async importOriginal => ({
     ...(await importOriginal<typeof import('../../runtime/loop.js')>()),
-    runAgent: async (agent: { id: string; brief?: unknown }, sessionId: string, message: string, override: unknown, _writer: unknown, runId: string, trigger?: { userLanguage?: string; callableAgentIds?: string[] }) => {
+    runAgent: async (agent: { id: string; brief?: unknown }, sessionId: string, message: string, override: unknown, _writer: unknown, runId: string, trigger?: { userLanguage?: string; callableAgentIds?: string[]; channel?: boolean }) => {
         state.calls.push({ agent, sessionId, message, override, runId, trigger })
         if (state.runAgentError) throw state.runAgentError
         const { releaseSession } = await import('../../runtime/run-control.js')
@@ -73,6 +73,7 @@ beforeAll(async () => {
     await seed(id, { name: 'chat' })
     await seed('sleepy', { name: 'sleepy', enabled: false })
     await seed('boss', { name: 'boss', kind: 'steward' })
+    await seed('helper', { name: 'helper', kind: 'assistant' })
     await seed('installer', { name: 'installer', setup: { required: true } })
     await writeFile(installPath('installer'), 'Connect Gmail.\n', 'utf8')
 })
@@ -143,6 +144,17 @@ describe('POST /agents/:id/chat', () => {
         expect(state.calls[1].agent.brief).toBeUndefined()
     })
 
+    it('hands the project context to the assistant only', async () => {
+        const assistant = { project: { name: 'Launch', instructions: 'Ship small.' } }
+        await (await chat('helper', { message: 'hi', assistant })).text()
+        expect((state.calls[0].agent as { assistantBrief?: unknown }).assistantBrief).toEqual(assistant)
+
+        await (await chat('helper', { message: 'hi' })).text()
+        await (await chat(id, { message: 'hi', assistant })).text()
+        expect((state.calls[1].agent as { assistantBrief?: unknown }).assistantBrief).toBeUndefined()
+        expect((state.calls[2].agent as { assistantBrief?: unknown }).assistantBrief).toBeUndefined()
+    })
+
     it('frees the session when the run row cannot be written', async () => {
         const session = await createSession(id, 'start fails')
         state.startRunError = new Error('disk is full')
@@ -195,5 +207,15 @@ describe('POST /agents/:id/chat', () => {
         await (await chat(id, { message: 'again' })).text()
 
         expect(state.calls.map(call => call.trigger?.callableAgentIds)).toEqual([['agent-x'], undefined])
+    })
+
+    it('marks a run in a channel conversation as such, even when a later message names no source', async () => {
+        const opened = await chat(id, { message: '@chat what is the plan?', source: 'channel' })
+        await opened.text()
+        const sessionId = opened.headers.get('x-session-id')!
+        await (await chat(id, { sessionId, message: 'and the budget?' })).text()
+        await (await chat(id, { message: 'hi' })).text()
+
+        expect(state.calls.map(call => call.trigger?.channel)).toEqual([true, true, false])
     })
 })

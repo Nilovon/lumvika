@@ -8,6 +8,7 @@ import { isDue } from '../schedules/cron.js'
 import { sweepMemoriesIfDue } from '../memory/maintenance.js'
 import { maintainBrainIfDue } from '../brain/maintenance.js'
 import { sweepCodexHomesIfDue } from '../connections/codex-sweep.js'
+import { sweepIssueQueueIfDue } from './issue-queue.js'
 import { isPlanLimitLatched } from '../connections/plan-limits.js'
 import { offersComputer } from '../tools/builtin/computer.js'
 import { startHeadlessRun } from './headless-run.js'
@@ -102,6 +103,7 @@ async function tick(): Promise<void> {
     void sweepMemoriesIfDue(agentIds)
     void maintainBrainIfDue()
     void sweepCodexHomesIfDue()
+    void sweepIssueQueueIfDue(agentIds)
     for (const agentId of agentIds) {
         // A switched-off agent normally has its schedules paused too, so this only catches the
         // case where the host could not reach the box at the time. Skipping here rather than

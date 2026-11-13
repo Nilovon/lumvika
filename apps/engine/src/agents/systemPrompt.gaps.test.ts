@@ -229,6 +229,7 @@ describe('buildSystemPrompt unattended runs', () => {
     it.each([
         ['schedule', 'a scheduled routine'],
         ['trigger', 'an incoming webhook call'],
+        ['issue', 'an issue assigned to you on the work board'],
     ] as const)('names the %s as the origin of a run nobody watches', async (source, origin) => {
         const prompt = await buildSystemPrompt(agentWith({ tools: { askUser: true } }), { source, slug: 's', name: 'S' } as any)
         expect(prompt).toContain('<unattended_run>')

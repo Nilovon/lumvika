@@ -1,6 +1,6 @@
 import { realEmail } from '@/lib/auth/placeholder-email'
 import { after } from 'next/server'
-import { STEWARD_AGENT_ID } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID } from '@lumvika/contracts'
 
 import { boxAccessOf, toAccessLevel } from '@/app/api/_auth/access'
 import { toBoxScope } from '@/app/api/_auth/box-scope'
@@ -45,6 +45,11 @@ export async function recordNotification(token: string, payload: NotificationPay
     // The steward answers in the column the user is looking at: none of its runs is inbox news, an
     // email, or the first agent run that counts as activation.
     if (payload.agentId === STEWARD_AGENT_ID) return { ok: true }
+    // The assistant's conversations are each one person's: its engine sends none, and one that
+    // arrives anyway is never stored where another member could read it.
+    if (payload.agentId === ASSISTANT_AGENT_ID) return { ok: true }
+
+    if (await isChannelRun(scope, engine.workspaceId, payload)) return { ok: true }
 
     const { data: agent } = await selectMaybeSingle(scope, 'agents', ['id', 'name', 'space_id'] as const, { workspace_id: engine.workspaceId, engine_agent_id: payload.agentId })
 
@@ -108,11 +113,27 @@ export async function recordNotification(token: string, payload: NotificationPay
     return { ok: true }
 }
 
+// A coworker answering in a channel or a direct message: its answer is posted there, and its
+// conversation belongs to the channel, with no `sessions` row anyone else could open. None of its
+// events becomes a notification, whose message would carry the start of the answer to members of
+// the coworker's Box who are not in the channel. An engine names the source; an older one is known by
+// the run (or the conversation) the hub stored for the channel.
+export async function isChannelRun(scope: DbScope, workspaceId: number, payload: Pick<NotificationPayload, 'source' | 'runId' | 'sessionId'>): Promise<boolean> {
+    if (payload.source === 'channel') return true
+    const [{ data: turn }, { data: conversation }] = await Promise.all([
+        payload.runId ? selectMaybeSingle(scope, 'channel_agent_turns', ['id'] as const, { workspace_id: workspaceId, engine_run_id: payload.runId }) : Promise.resolve({ data: null }),
+        payload.sessionId ? selectMaybeSingle(scope, 'channel_agent_sessions', ['channel_id'] as const, { workspace_id: workspaceId, engine_session_id: payload.sessionId }) : Promise.resolve({ data: null }),
+    ])
+    return !!turn || !!conversation
+}
+
 // Chat runs only: schedules and triggers run on their own and say nothing about whether someone is
 // getting value out of the product. Captured here rather than in the browser because the lead's
 // first run is started by the server, and ends whether or not a tab is still watching it.
 async function reportChatRun(workspaceId: number, agentId: string, notification: StoredNotification): Promise<void> {
     if (notification.event !== 'agent.message.completed' || (notification.kind !== 'done' && notification.kind !== 'error')) return
+    // An issue run ends under the message event, but nobody typed it.
+    if (notification.source === 'issue') return
     try {
         const metadata = notification.metadata ?? {}
         // Credited to the member who sent the message. An engine that predates `authorId`, or a run

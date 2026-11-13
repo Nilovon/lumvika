@@ -6,6 +6,7 @@ import { AccessDeniedError, assertAgentInWorkspace, assertSessionInWorkspace, ke
 import { requireWorkspaceId } from '@/app/api/_auth/ownership'
 import { activateAgent } from '@/app/api/_services/agent-activation.service'
 import { getAgentChatTarget, resolveRunTarget, sessionRowOf } from '@/app/api/_services/chat.service'
+import { resolveAssistantModelTarget } from '@/app/api/_services/assistant-engine.service'
 import { assertModelEntitled } from '@/app/api/_services/engine-plan.service'
 import { getWorkspaceConnection, NoEngineError } from '@/app/api/_services/workspace-engine.service'
 import { followCoworker } from '@/app/api/_services/notification-audience.service'
@@ -77,7 +78,7 @@ import { transformEngineMessages } from '@/lib/chat/engine-history'
 import { findPendingHitl, pendingSecrets } from '@/lib/chat-hitl'
 import type { EngineConnection, EngineAgentConfigPatch, EngineAgentDetail, EngineMcpServer, EngineDbRows, EngineMemory, EngineRun, EngineRunDetail, EngineRunStep, EngineSchedule, EngineTrigger, EngineSkill, EngineSkillFilePayload, EngineSkillSummary, EngineSkillWithSource, EngineToolCall, EngineToolFamily, EngineUsageBucket, EngineStatsPoint } from '@/lib/engine/types'
 import type { StatsQuery, UsageTimeRange } from '@lumvika/contracts'
-import { STEWARD_AGENT_ID, statsQuerySchema } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID, statsQuerySchema } from '@lumvika/contracts'
 import { sealAgentDetail, sealSchedule, sealSkill, sealSkillFile, sealTrigger } from '@/app/api/_services/agent-content.service'
 import { connectorMcpServerNames, connectorSkillOwners, connectorSkillSlugs, readRegistry } from '@/lib/services/registry'
 import { TEXT_FILE_PAGE_CHARS } from '@lumvika/contracts'
@@ -177,7 +178,7 @@ export async function activateAgentAutomationsAction(agentId: string): Promise<v
 
 export async function updateAgentConfigAction(agentId: string, patch: EngineAgentConfigPatch & { soul?: string; install?: string }): Promise<SuccessResult> {
     try {
-        const { conn, engineAgentId, contentLocked } = await resolveRunTarget(agentId, 'manage')
+        const { conn, engineAgentId, contentLocked } = agentId === ASSISTANT_AGENT_ID ? await resolveAssistantModelTarget('manage') : await resolveRunTarget(agentId, 'manage')
         await assertModelEntitled(patch.model)
         // Same reason as the skill body: a sealed soul is dropped from the patch, not written back.
         await enginePatchAgent(conn, engineAgentId, contentLocked ? { ...patch, soul: undefined } : patch)
@@ -232,7 +233,7 @@ export type AgentContext = { model: ModelSelectorContext; setup: AgentSetupInfo 
 
 export async function getAgentContextAction(agentId: string): Promise<AgentContext> {
     try {
-        const { conn, engineAgentId } = await resolveRunTarget(agentId)
+        const { conn, engineAgentId } = agentId === ASSISTANT_AGENT_ID ? await resolveAssistantModelTarget('use') : await resolveRunTarget(agentId)
         const detail = await engineGetAgent(conn, engineAgentId)
         const installSession = detail.config.setup.sessionId
         return {
@@ -244,7 +245,7 @@ export async function getAgentContextAction(agentId: string): Promise<AgentConte
                 loaded: true,
             },
             setup:
-                agentId === STEWARD_AGENT_ID
+                agentId === STEWARD_AGENT_ID || agentId === ASSISTANT_AGENT_ID
                     ? null
                     : {
                           required: detail.config.setup.required,

@@ -1,0 +1,129 @@
+{
+    "_context": {
+        "tabs.org": "Tab that shows the reporting tree of the coworkers.",
+        "card.lead": "Marks the member who leads a team.",
+        "detail.makeLead": "Menu item: makes this member the lead of the team.",
+        "org.status.waiting_human": "A coworker's live status: it waits for a person to answer.",
+        "org.dialog.reportsTo": "Field label: the coworker's manager in the org chart.",
+        "picker.add": "Button that opens a list of people and coworkers to add to the team."
+    },
+    "title": "Teams",
+    "description": "Who works with whom, people and coworkers alike.",
+    "tabs": {
+        "label": "Teams views",
+        "teams": "Teams",
+        "org": "Org chart"
+    },
+    "adminOnly": "Only an admin of the workspace can do this",
+    "newTeam": "New team",
+    "loadFailed": "The teams could not be loaded.",
+    "retry": "Try again",
+    "empty": {
+        "title": "No teams yet",
+        "description": "A team groups the people and coworkers who work toward the same thing. Give it a lead and link its projects, and everyone sees who owns what.",
+        "action": "Create a team",
+        "askAdmin": "Ask an admin of the workspace to create the first team."
+    },
+    "card": {
+        "members": "{count, plural, =0 {No members yet} one {# member} other {# members}}",
+        "projects": "{count, plural, one {# project} other {# projects}}",
+        "lead": "Lead",
+        "more": "+{count, number}",
+        "open": "Open {name}"
+    },
+    "member": {
+        "you": "{name} (you)",
+        "unknownPerson": "Former member",
+        "unknownCoworker": "Coworker",
+        "person": "Person",
+        "coworker": "Coworker"
+    },
+    "dialog": {
+        "createTitle": "New team",
+        "editTitle": "Edit team",
+        "createDescription": "Name the team, then add its people and coworkers.",
+        "editDescription": "Change how the team is named and shown.",
+        "name": "Name",
+        "namePlaceholder": "Growth",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What this team works on",
+        "color": "Colour",
+        "colorOption": "Colour {index, number}",
+        "noColor": "No colour",
+        "create": "Create team",
+        "save": "Save",
+        "cancel": "Cancel",
+        "created": "Team created",
+        "saved": "Team saved"
+    },
+    "detail": {
+        "members": "Members",
+        "projects": "Projects",
+        "noMembers": "Nobody is on this team yet. Add people and coworkers, then choose who leads it.",
+        "noProjects": "No project is linked to this team yet. A project joins a team from its own settings.",
+        "readOnly": "Only an admin or the lead of this team can change who is on it.",
+        "edit": "Edit team",
+        "delete": "Delete team",
+        "more": "More actions",
+        "deleteTitle": "Delete {name}?",
+        "deleteDescription": "The team and its member list are removed. Its projects and goals stay, without a team. This cannot be undone.",
+        "deleteConfirm": "Delete",
+        "deleted": "Team deleted",
+        "makeLead": "Make lead",
+        "removeLead": "Remove as lead",
+        "remove": "Remove from team",
+        "memberActions": "Actions for {name}",
+        "removeTitle": "Remove {name} from {team}?",
+        "removeDescription": "{name} leaves the team. Nothing else changes: their work and projects stay as they are.",
+        "removeConfirm": "Remove",
+        "removed": "{name} removed from {team}",
+        "leadSet": "{name} now leads {team}",
+        "leadCleared": "{name} no longer leads {team}",
+        "added": "{name} added to {team}"
+    },
+    "picker": {
+        "add": "Add member",
+        "search": "Search people and coworkers",
+        "people": "People",
+        "coworkers": "Coworkers",
+        "empty": "No one left to add.",
+        "noMatch": "No one matches."
+    },
+    "org": {
+        "loadFailed": "The org chart could not be loaded.",
+        "empty": {
+            "title": "No coworkers yet",
+            "description": "Create coworkers on the board, then give each a title and a manager here to draw your org chart."
+        },
+        "hint": "Coworkers without a manager sit at the top. Click a coworker to give it a title and a manager.",
+        "reports": "{count, plural, =0 {No reports} one {# report} other {# reports}}",
+        "noTitle": "No title",
+        "unnamedBox": "Untitled Box",
+        "status": {
+            "idle": "Idle",
+            "working": "Working",
+            "waiting_human": "Needs you",
+            "error": "Error",
+            "offline": "Offline",
+            "disabled": "Switched off"
+        },
+        "open": "Open coworker",
+        "edit": "Edit title and manager",
+        "actionsFor": "Actions for {name}",
+        "expand": "Show the reports of {name}",
+        "collapse": "Hide the reports of {name}",
+        "dialog": {
+            "title": "Title and manager",
+            "description": "Where {name} sits in the org chart.",
+            "titleLabel": "Title",
+            "titlePlaceholder": "Head of growth",
+            "reportsTo": "Reports to",
+            "noManager": "No manager (top of the chart)",
+            "loopHint": "reports to {name}",
+            "save": "Save",
+            "cancel": "Cancel",
+            "saved": "Org chart updated",
+            "manageOnly": "Only someone who manages this coworker's Box can change this"
+        }
+    }
+}

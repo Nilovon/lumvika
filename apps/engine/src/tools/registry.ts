@@ -15,6 +15,7 @@ import { triggerTools } from './builtin/trigger.js'
 import { delegateTools } from './builtin/delegate.js'
 import { callAgentTools } from './builtin/call-agent.js'
 import { teamTools } from './builtin/team.js'
+import { workTools } from './builtin/work.js'
 import { browserTools } from './builtin/browser.js'
 import { visionTools } from './builtin/vision.js'
 import { computerTools, runOffersComputer } from './builtin/computer.js'
@@ -23,17 +24,46 @@ import { hubTools } from './builtin/hub.js'
 import { paidDataTools } from './builtin/paid-data.js'
 import { paidDataOffered } from '../paid-data/price.js'
 import { cardTools, stewardCardTools } from './builtin/cards.js'
-import { askUserTool, offersTakeover, requestApprovalTool, requestSecretTool, requestTakeoverTool, suggestServiceTool } from './builtin/hitl.js'
+import { askUserTool, HITL_TOOL_NAMES, offersTakeover, requestApprovalTool, requestSecretTool, requestTakeoverTool, suggestServiceTool } from './builtin/hitl.js'
 import { installTools } from './builtin/install.js'
 import { stewardTools } from './builtin/steward.js'
 import { agentFilesTools } from './builtin/agent-files.js'
+import { assistantTools } from './assistant.js'
 import { hasPendingSetup } from '../agents/setup.js'
 import { pooledMcpTools } from './mcp-pool.js'
 import { CLI_PROVIDERS } from '../agents/providers.js'
 import { closeAgentDb } from '../db/agentDb.js'
 import type { RunContext } from '../runtime/context.js'
 
+// What a run answering in a hub channel goes without: the tools that would remember what it heard
+// for later (its memory, its skills, the company brain, whose proposals every reviewer reads) or
+// hand it to another coworker, whose conversations the people of that coworker's Box read. Nor does it
+// stop on a person (a question, an approval, a secret, a sign-in): nobody could answer it there, the
+// channel conversation being nobody's to open, so it asks in its reply. Its files, shell, web, data and work tools stay, so it still does the
+// work it is asked for. The one gate, whatever the provider: native, CLI bridge and opencode all run
+// this set.
+export const CHANNEL_CLOSED_TOOLS = [
+    'call_agent',
+    'delegate_tasks',
+    'memory_write',
+    'memory_delete',
+    'skill_propose',
+    'skill_create',
+    'skill_import',
+    'skill_edit',
+    'skill_update',
+    'skill_delete',
+    'skill_write_file',
+    'skill_delete_file',
+    'brain_write',
+    'brain_propose',
+    'brain_delete',
+    'brain_decide',
+    ...HITL_TOOL_NAMES,
+] as const
+
 export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; close: () => Promise<void> }> {
+    if (ctx.agent.config.kind === 'assistant') return { tools: assistantTools(ctx), close: async () => {} }
     const cfg = ctx.agent.config.tools
     const tools: ToolSet = {}
     if (ctx.agent.config.kind === 'steward') Object.assign(tools, stewardTools(ctx), agentFilesTools())
@@ -55,6 +85,8 @@ export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; clo
     if (cfg.delegate) Object.assign(tools, delegateTools(ctx))
     if (cfg.callAgent && ctx.callTargets?.length) Object.assign(tools, callAgentTools(ctx))
     if (cfg.team) Object.assign(tools, teamTools(ctx))
+    // A coworker on the board only: neither the steward nor the built-in assistant holds issues.
+    if (cfg.work && ctx.agent.config.kind === 'user') Object.assign(tools, workTools(ctx))
     if (cfg.browser) Object.assign(tools, browserTools(ctx))
     if (offersTakeover(ctx.agent.config)) Object.assign(tools, requestTakeoverTool(ctx))
     if (cfg.vision) Object.assign(tools, visionTools(ctx))
@@ -74,6 +106,7 @@ export async function buildTools(ctx: RunContext): Promise<{ tools: ToolSet; clo
 
     // The connections are the pool's, kept across runs: the run's close leaves them open.
     if (!CLI_PROVIDERS.has(ctx.provider) && ctx.agent.config.mcpServers.length > 0) Object.assign(tools, await pooledMcpTools(ctx.agent))
+    if (ctx.channel) for (const name of CHANNEL_CLOSED_TOOLS) delete tools[name]
 
     return {
         tools,

@@ -1,0 +1,76 @@
+---
+title: "Chat"
+description: "A plain assistant for a question, a draft or a bit of research, without setting up a coworker."
+---
+
+**Chat** is an assistant every member of the workspace can talk to. It is not a coworker: it has no Box, no skills, no schedule and no memory. Use it to think something through, draft a text or look something up. When the work recurs or has to act in your tools, give it to a coworker instead.
+
+## Start a chat
+
+Click **Chat** in the sidebar, then **New chat**, and write. Four suggestions on the empty screen send a first message for you.
+
+The chat is named after its first message. Rename it from its **Chat options** menu (the `⋯` on the row or in the header). Your chats are listed by when you last wrote in them, and **Search chats** filters them by name.
+
+## Pick a model
+
+The model picker under the message box works like a coworker's: Lumvika models, your Claude or ChatGPT subscription, or your own API keys. See [Model and provider](/agents/configure#model-and-provider).
+
+The model you pick applies to that chat. An admin can also make it the default of Chat for the whole workspace.
+
+## Add a project
+
+**Add a project**, in the chat header, attaches one of the projects you can open. The assistant then reads that project's **Instructions for coworkers** and follows them in its answers.
+
+It reads the instructions only. It does not see the project's issues, comments or progress. If you lose access to the project later, its instructions stop reaching the chat.
+
+## What the assistant can do
+
+It has four tools:
+
+| Tool | What it does |
+| --- | --- |
+| `web_search` | Searches the web. On a Claude or ChatGPT subscription, the subscription's own search takes its place |
+| `web_fetch` | Reads a web page |
+| `brain_search` | Searches the Brain, the pages about your company your team validated |
+| `brain_read` | Reads a page of the Brain |
+
+And nothing else:
+
+- **No files.** You cannot attach a file, and it has no folder of its own.
+- **No memory.** It does not remember your other chats, and keeps nothing once a chat is over.
+- **No access to your tools.** No apps, no shell, no browser, no database, no way to send an email or touch your accounts.
+- **No view of the work.** It cannot read your issues, your channels or what your coworkers do.
+
+It answers in the language you write in. You can stop an answer while it is being written, the very first one of a chat included.
+
+## Private and shared
+
+A chat is yours. No other member sees it in their list or can open it.
+
+**Share with the workspace**, in the **Chat options** menu, lets the other members read it. They find it under **Shared with me**, read only: only you write in it, rename it or change its project. When the chat has a project, only the members who can open that project see it. **Stop sharing** makes it private again.
+
+<Warning>
+  Private means private in the app. The conversation is stored on your workspace's machine, like every coworker conversation, so the people who operate that machine can technically read it: Lumvika for a workspace on Lumvika Cloud, whoever runs the server on a self-hosted install. The AI provider of the model you picked receives your messages to answer them.
+</Warning>
+
+## Archive or delete
+
+**Archive** takes the chat out of your list without erasing anything. It also stops a shared chat from showing to the others. **Show archived** lists them again, and **Restore** brings one back.
+
+**Delete** erases the chat for good, for you and for anyone you shared it with. Lumvika removes it from the list, then erases the conversation on your workspace's machine: its messages, the steps and tool calls of each answer, and the pages the assistant read for it. It cannot be undone.
+
+Two cases keep the messages on the machine, and the app says so when it happens:
+
+- The machine runs an older version of Lumvika that cannot erase them.
+- The machine did not answer.
+
+Either way the chat is gone from the list. On a self-hosted install, a backup of the engine data-dir taken before the deletion still holds the conversation.
+
+## When Chat cannot answer
+
+| The screen says | What it means |
+| --- | --- |
+| **Chat needs a machine** | Your workspace has no machine yet. It gets one when you add your first coworker |
+| **Update your machine to use Chat** | Your workspace's machine runs a version of Lumvika from before Chat. Self-hosted: see [Updating](/self-host/servers#updating) |
+| **Your machine is not answering** | The machine cannot be reached right now. **Try again** in a moment |
+| **Connect an AI provider** | No model is available to answer. Connect a provider or a subscription |

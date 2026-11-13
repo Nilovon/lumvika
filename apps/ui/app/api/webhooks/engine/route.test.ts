@@ -1,4 +1,4 @@
-import { STEWARD_AGENT_ID } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID } from '@lumvika/contracts'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { resolveWorkspaceMemberEmail, resolveWorkspaceOwner } from '@/app/api/_services/workspace-owner.service'
@@ -7,6 +7,7 @@ import { sendIncidentResolvedEmail, sendNotificationEmail } from '@lumvika/cloud
 import { loadPresence } from '@/app/api/_services/presence.service'
 import { captureServer } from '@lumvika/analytics/server'
 import { generateRunTitle } from '@/lib/ai/generate-run-title'
+import { releaseRunCheckouts } from '@/app/api/_services/work/work-queue.service'
 import type { DbCall } from '@/test/db-fake'
 import { POST } from './route'
 
@@ -26,6 +27,7 @@ vi.mock('@/lib/ai/generate-run-title', () => ({ generateRunTitle: vi.fn() }))
 // The session is retitled after the response, so a test reads it once those tasks settled.
 const afterResponse = () => Promise.all(afterTasks.splice(0))
 vi.mock('@/app/api/_services/capacity.service', () => ({ assertEngineEntitlement: vi.fn() }))
+vi.mock('@/app/api/_services/work/work-queue.service', () => ({ releaseRunCheckouts: vi.fn().mockResolvedValue(0) }))
 vi.mock('@/lib/engine/client', () => ({ listConnections: vi.fn(), listSchedules: vi.fn() }))
 // Notification emails are paused in production; the incident tests describe what leaves once they resume.
 const emailFlags = vi.hoisted(() => ({ paused: false }))
@@ -249,6 +251,42 @@ describe('POST /api/webhooks/engine', () => {
             expect(captureServer).toHaveBeenCalledWith('member@lumvika.test', 'agent_run_completed', expect.any(Object), expect.any(Object))
         })
 
+        it('reports nothing to analytics for an issue run, which nobody typed', async () => {
+            sandbox = false
+            await POST(request(notification({ event: 'agent.message.completed', kind: 'done', source: 'issue', metadata: {} })))
+            expect(captureServer).not.toHaveBeenCalled()
+        })
+
+        it('lets go of every issue a run still held once it ended, and only then', async () => {
+            await POST(request(notification({ event: 'agent.message.completed', kind: 'done', runId: 'run-9' })))
+            await afterResponse()
+            expect(releaseRunCheckouts).toHaveBeenCalledWith({ workspaceId: WORKSPACE_ID }, 'run-9')
+
+            vi.mocked(releaseRunCheckouts).mockClear()
+            await POST(request(notification({ event: 'agent.notification', kind: 'question', runId: 'run-9' })))
+            await POST(request(notification({ event: 'agent.message.completed', kind: 'done', runId: null })))
+            await afterResponse()
+            expect(releaseRunCheckouts).not.toHaveBeenCalled()
+        })
+
+        it('answers the engine before the release is done, so a slow release cannot run past its timeout', async () => {
+            let finish!: () => void
+            vi.mocked(releaseRunCheckouts).mockImplementationOnce(() => new Promise(resolve => (finish = () => resolve(1))))
+            const response = await POST(request(notification({ event: 'agent.message.completed', kind: 'done', runId: 'run-9' })))
+            expect(response.status).toBe(202)
+            expect(releaseRunCheckouts).toHaveBeenCalledTimes(1)
+            finish()
+            await afterResponse()
+        })
+
+        it('still stores the notification when the release fails', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => undefined)
+            vi.mocked(releaseRunCheckouts).mockRejectedValueOnce(new Error('db down'))
+            const response = await POST(request(notification({ event: 'agent.schedule.completed', kind: 'done', runId: 'run-9' })))
+            expect(response.status).toBe(202)
+            await afterResponse()
+        })
+
         it('falls back to the owner when the engine names no author', async () => {
             sandbox = false
             vi.mocked(resolveWorkspaceOwner).mockResolvedValueOnce({ userId: 'user-1', email: 'owner@lumvika.test' })
@@ -418,6 +456,14 @@ describe('POST /api/webhooks/engine', () => {
 
             expect(response.status).toBe(202)
             expect(callsOn('agents')).toHaveLength(0)
+            expect(callsOn('notifications')).toHaveLength(0)
+            expect(callsOn('sessions')).toHaveLength(0)
+        })
+
+        it('stores nothing of an assistant run, whose text belongs to one person', async () => {
+            const response = await POST(request(notification({ agentId: ASSISTANT_AGENT_ID, event: 'agent.message.completed', kind: 'done', message: 'a private answer' })))
+
+            expect(response.status).toBe(202)
             expect(callsOn('notifications')).toHaveLength(0)
             expect(callsOn('sessions')).toHaveLength(0)
         })

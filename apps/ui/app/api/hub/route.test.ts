@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { dispatchAccountTool } from '@/app/api/_services/mcp-account.service'
 import { dispatchHubTool } from '@/app/api/_services/services.service'
 import { dispatchTeamHubTool } from '@/app/api/_services/team-hub.service'
+import { dispatchWorkHubTool } from '@/app/api/_services/work/work-hub.service'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { mintStewardHubToken } from '@/lib/steward/hub-token'
 import { selectMaybeSingle } from '@/lib/db'
@@ -13,6 +14,7 @@ import { POST } from './route'
 vi.mock('@/app/api/_services/workspace-engine.service', () => ({ authenticateEngineToken: vi.fn() }))
 vi.mock('@/app/api/_services/services.service', () => ({ dispatchHubTool: vi.fn() }))
 vi.mock('@/app/api/_services/team-hub.service', async () => ({ dispatchTeamHubTool: vi.fn(), isTeamHubTool: (name: string) => name.startsWith('team_') }))
+vi.mock('@/app/api/_services/work/work-hub.service', () => ({ dispatchWorkHubTool: vi.fn(), isWorkHubTool: (name: string) => name.startsWith('work_') }))
 vi.mock('@/app/api/_services/mcp-account.service', () => ({ dispatchAccountTool: vi.fn() }))
 vi.mock('@/app/api/_auth/ownership', () => ({ workspaceFounderUserId: vi.fn().mockResolvedValue('founder') }))
 vi.mock('@/lib/steward/onboarding-tools', () => ({ dispatchWorkspaceOnboardingTool: vi.fn() }))
@@ -101,6 +103,19 @@ describe('POST /api/hub', () => {
         expect(dispatchTeamHubTool).toHaveBeenCalledWith('agent-1', WORKSPACE_ID, 'team_status', {})
         expect(dispatchHubTool).not.toHaveBeenCalled()
         expect(dispatchAccountTool).not.toHaveBeenCalled()
+    })
+
+    it('routes a coworker working its issues to the work dispatch', async () => {
+        vi.mocked(selectMaybeSingle).mockResolvedValue({ data: { id: 'agent-1' }, error: null })
+        vi.mocked(dispatchWorkHubTool).mockResolvedValue({ issues: [] })
+
+        const response = await POST(hubRequest({ agent: 'engine-agent', body: { tool: 'work_inbox', args: { runId: 'run-1' } } }))
+
+        expect(response.status).toBe(200)
+        expect(await response.json()).toEqual({ issues: [] })
+        expect(dispatchWorkHubTool).toHaveBeenCalledWith('agent-1', WORKSPACE_ID, 'work_inbox', { runId: 'run-1' })
+        expect(dispatchHubTool).not.toHaveBeenCalled()
+        expect(dispatchTeamHubTool).not.toHaveBeenCalled()
     })
 
     it('routes the steward to its own belt, scoped to the workspace of the engine key', async () => {

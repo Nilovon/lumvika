@@ -271,6 +271,11 @@
                 "blurb": "Ihre Routinen und Ausführungen lesen",
                 "help": "Erlaubt dem Coworker, die anderen Coworker des Workspace einzusehen: ihren Status, geplante Aufgaben, Auslöser und letzte Ausführungen, samt den Tools, die jede Ausführung aufgerufen hat, wenn er einen Fehler verstehen muss. Er kann nichts ändern. Eine Ausführung kann Daten aus den verbundenen Apps des anderen Coworkers enthalten."
             },
+            "work": {
+                "label": "An Tickets arbeiten",
+                "blurb": "Tickets übernehmen, bearbeiten, weitergeben",
+                "help": "Erlaubt dem Coworker, die ihm zugewiesenen Tickets deiner Projekte zu bearbeiten: Er wird geweckt, wenn ihm eins zugewiesen wird oder jemand kommentiert, übernimmt das Ticket, kommentiert seinen Fortschritt und verschiebt es in die Prüfung oder auf erledigt, oder auf blockiert mit dem Hinweis, wer was tun muss. Er kann Arbeit auch in Unter-Tickets aufteilen und sie anderen Coworkern zuweisen."
+            },
             "askUser": {
                 "label": "Dir Fragen stellen",
                 "blurb": "Anhalten und mit Antwortoptionen fragen",

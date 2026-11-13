@@ -293,7 +293,7 @@ type DuplicateAgentParams = {
 }
 
 export type DuplicatedAgent = {
-    agent: AgentRow
+    agent: Pick<AgentRow, (typeof AGENT_ROW_COLUMNS)[number]>
     schedules: string[]
     triggers: string[]
 }

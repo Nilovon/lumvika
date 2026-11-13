@@ -48,6 +48,30 @@
             ]
           },
           {
+            "group": "Work together",
+            "pages": [
+              "work/how-it-fits",
+              "work/overview",
+              "work/chat",
+              "work/activity"
+            ]
+          },
+          {
+            "group": "Projects and issues",
+            "pages": [
+              "work/projects",
+              "work/issues",
+              "work/coworkers-on-issues",
+              "work/my-work",
+              "work/review",
+              "work/goals"
+            ]
+          },
+          {
+            "group": "Collaborate",
+            "pages": ["work/channels", "work/teams"]
+          },
+          {
             "group": "Your account",
             "pages": ["billing", "teams"]
           }
@@ -120,6 +144,7 @@
               "api/tools/schedules",
               "api/tools/triggers",
               "api/tools/runs",
+              "api/tools/issues",
               "api/tools/databases",
               "api/tools/connectors",
               "api/tools/sharing",

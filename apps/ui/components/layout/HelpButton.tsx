@@ -9,9 +9,22 @@ import { HeadsetIcon, HelpCircleIcon } from '@/lib/icons'
 import { openCrisp } from '@/lib/crisp'
 import { useSession } from '@/lib/auth/session/SessionProvider'
 import { useTranslations } from 'next-intl'
-import { useRef } from 'react'
+import { useRef, type ReactNode } from 'react'
 
 export function HelpButton() {
+    const t = useTranslations('layout.help')
+    return (
+        <HelpMenu>
+            <ChromePill start="icon" end="icon" aria-label={t('label')}>
+                <HelpCircleIcon className="size-4 text-muted-foreground" />
+            </ChromePill>
+        </HelpMenu>
+    )
+}
+
+// The trigger is a child so the menu can sit on the board as a pill and in the sidebar as a row.
+// It carries its own tooltip: the row of an expanded sidebar has a visible label.
+export function HelpMenu({ children, side = 'bottom', tooltip = true }: { children: ReactNode; side?: 'top' | 'right' | 'bottom'; tooltip?: boolean }) {
     const t = useTranslations('layout.help')
     const { session } = useSession()
     // The menu hands focus back to its trigger as it closes, which the checklist popover would read
@@ -20,16 +33,16 @@ export function HelpButton() {
 
     return (
         <DropdownMenu>
-            <TooltipLabeled label={t('label')} side="bottom">
-                <DropdownMenuTrigger asChild>
-                    <ChromePill start="icon" end="icon" aria-label={t('label')}>
-                        <HelpCircleIcon className="size-4 text-muted-foreground" />
-                    </ChromePill>
-                </DropdownMenuTrigger>
-            </TooltipLabeled>
+            {tooltip ? (
+                <TooltipLabeled label={t('label')} side={side === 'top' ? 'right' : 'bottom'}>
+                    <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+                </TooltipLabeled>
+            ) : (
+                <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+            )}
             <DropdownMenuContent
                 align="start"
-                side="bottom"
+                side={side}
                 className="w-56 max-h-[calc(100dvh-5rem)] overflow-y-auto"
                 onCloseAutoFocus={event => {
                     if (!openingGettingStarted.current) return

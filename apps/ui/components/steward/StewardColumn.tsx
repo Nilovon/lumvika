@@ -60,7 +60,10 @@ const TRANSITION_MS = 300
 // `open` vaut `null` tant que la préférence n'est pas tranchée, le temps de l'hydratation : la piste
 // de grille s'ouvre quand même (le défaut desktop), mais le panneau reste hors de la tabulation, au
 // cas où l'écran serait un téléphone — là le calque est translaté hors champ.
-export function StewardColumn({ open, placement }: { open: boolean | null; placement: StewardPlacement }) {
+// `placement` is where the column sits now, `preferredPlacement` where the person put it. They differ
+// only `overPage`: on a page too narrow to dock, the column floats over it from the orb's corner, and
+// moving or resizing it there would rewrite the place it keeps on the board.
+export function StewardColumn({ open, placement, preferredPlacement, overPage }: { open: boolean | null; placement: StewardPlacement; preferredPlacement: StewardPlacement; overPage: boolean }) {
     const sessionId = useStewardStore(state => state.sessionId)
     const guided = useStewardStore(state => state.funnel === 'guided')
     // Le tunnel guidé n'affiche pas de tabs : un onglet resté ouvert avant ne doit pas y cacher le chat.
@@ -236,12 +239,20 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
     // L'orbe en tête de colonne est décorative : Escape et le bouton de l'en-tête sont les deux
     // seules sorties, et le tunnel les condamne toutes les deux : la carte d'accueil vit ici. Ouvrir un agent ne fait que mettre la colonne en retrait (BoardChatSplit) :
     // elle revient quand sa sheet se referme.
+    // An Escape typed in the page beside it (a mention menu, a quick add, an inline editor) belongs to
+    // the page: only one typed in the column, or with nothing focused, closes it.
+    const panelRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         if (!open || guided) return
         // Un Escape tapé dans une dialog ouverte par-dessus (le compte, le checkout) ferme la dialog,
         // pas la colonne d'où elle a été ouverte.
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key !== 'Escape' || (event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"], [role="menu"]'))) return
+            if (event.key !== 'Escape' || event.defaultPrevented) return
+            const target = event.target instanceof Element ? event.target : null
+            if (target?.closest('[role="dialog"], [role="alertdialog"], [role="menu"]')) return
+            const inColumn = !!target && !!panelRef.current?.contains(target)
+            const nothingFocused = !target || target === document.body || target === document.documentElement
+            if (!inColumn && !nothingFocused) return
             useStewardStore.getState().close()
         }
         window.addEventListener('keydown', onKeyDown)
@@ -329,7 +340,6 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
     const { rate: rateMessage, votes } = feedback
     const messageActions = useMemo(() => (backend === 'engine' ? { onRegenerate: regenerate, onRate: rateMessage, ratingOf: (messageId: string) => votes.get(messageId)?.rating ?? null } : null), [backend, regenerate, rateMessage, votes])
 
-    const panelRef = useRef<HTMLDivElement>(null)
     const { onPointerDown: onHeaderPointerDown, dragOrigin } = useStewardDrag({ panelRef, placement })
     const dragging = useStewardStore(state => state.dropTarget !== null)
     const floating = placement.mode === 'float' || dragging
@@ -342,9 +352,9 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
     const handleHeaderPointerDown = useCallback(
         (event: PointerEvent<HTMLElement>) => {
             onSheetPointerDown(event)
-            onHeaderPointerDown(event)
+            if (!overPage) onHeaderPointerDown(event)
         },
-        [onSheetPointerDown, onHeaderPointerDown]
+        [onSheetPointerDown, onHeaderPointerDown, overPage]
     )
 
     // Redimensionner la piste de grille redimensionne le layer GPU du board à chaque frame : on le
@@ -434,7 +444,7 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
                           )
                 )}
             >
-                <StewardHeader placement={placement} onDragPointerDown={handleHeaderPointerDown} onToggleSheetDetent={toggleDetent} onNewChat={startNewChat} />
+                <StewardHeader placement={preferredPlacement} onDragPointerDown={handleHeaderPointerDown} onToggleSheetDetent={toggleDetent} onNewChat={startNewChat} />
                 {/* Masqués et pas démontés hors de l'onglet Assistant : un aller-retour sur Routines
                     ne doit perdre ni le brouillon du composer ni la position dans la conversation. */}
                 {arrivalStep && arrivalPick && (
@@ -491,7 +501,7 @@ export function StewardColumn({ open, placement }: { open: boolean | null; place
                 <MessageFeedbackDialog open={feedback.dialogOpen} rating={feedback.dialogRating} onOpenChange={feedback.onDialogOpenChange} onSubmit={feedback.submitDetails} />
                 {onRoutines && <StewardRoutines docked={placement.mode === 'dock'} className="min-h-0 flex-1 pt-24" />}
             </div>
-            {placement.mode === 'float' && !dragging && open && <StewardResizeHandle panelRef={panelRef} placement={placement} />}
+            {placement.mode === 'float' && !overPage && !dragging && open && <StewardResizeHandle panelRef={panelRef} placement={placement} />}
             {placement.mode === 'dock' && !dragging && open && <StewardDockResizeHandle panelRef={panelRef} placement={placement} />}
         </div>
     )

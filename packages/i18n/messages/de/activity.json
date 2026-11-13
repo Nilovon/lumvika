@@ -1,0 +1,83 @@
+{
+    "title": "Aktivität",
+    "description": "Alles, was in deinem Workspace passiert ist.",
+    "filters": {
+        "project": "Projekt",
+        "actor": "Wer",
+        "people": "Personen",
+        "coworkers": "Coworker",
+        "entity": "Worum",
+        "entities": {
+            "issue": "Tickets",
+            "issue_comment": "Kommentare",
+            "project": "Projekte",
+            "goal": "Ziele",
+            "team": "Teams",
+            "channel": "Kanäle",
+            "agent": "Coworker"
+        },
+        "clear": "Filter zurücksetzen"
+    },
+    "loadMore": "Mehr laden",
+    "end": "Das ist alles seit dem Start des Workspaces.",
+    "loadFailed": "Die Aktivität konnte nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "empty": {
+        "title": "Noch ist nichts passiert",
+        "description": "Wenn Personen und Coworker Projekte anlegen, Tickets verschieben oder kommentieren, erscheint es hier, sobald es passiert."
+    },
+    "noMatch": {
+        "title": "Nichts passt zu diesen Filtern",
+        "description": "Probier ein anderes Projekt oder zeig, was alle getan haben."
+    },
+    "fallback": {
+        "someone": "Jemand",
+        "issue": "ein Ticket",
+        "project": "ein Projekt",
+        "goal": "ein Ziel",
+        "team": "ein Team",
+        "channel": "einen Kanal",
+        "coworker": "einen Coworker",
+        "member": "jemanden"
+    },
+    "goalStatus": {
+        "planned": "Geplant",
+        "active": "Aktiv",
+        "achieved": "Erreicht",
+        "cancelled": "Abgebrochen"
+    },
+    "sentences": {
+        "projectCreated": "<who>{actor}</who> hat das Projekt <link>{target}</link> erstellt",
+        "projectUpdated": "<who>{actor}</who> hat das Projekt <link>{target}</link> aktualisiert",
+        "projectArchived": "<who>{actor}</who> hat das Projekt <link>{target}</link> archiviert",
+        "projectRestored": "<who>{actor}</who> hat das Projekt <link>{target}</link> wiederhergestellt",
+        "projectMemberGranted": "<who>{actor}</who> hat {member} Zugriff auf <link>{target}</link> gegeben",
+        "projectMemberRevoked": "<who>{actor}</who> hat {member} den Zugriff auf <link>{target}</link> entzogen",
+        "issueCreated": "<who>{actor}</who> hat <link>{target}</link> erstellt",
+        "issueUpdated": "<who>{actor}</who> hat <link>{target}</link> aktualisiert",
+        "issueStatusChanged": "<who>{actor}</who> hat <link>{target}</link> von {from} auf {to} gesetzt",
+        "issueAssigned": "<who>{actor}</who> hat <link>{target}</link> {member} zugewiesen",
+        "issueUnassigned": "<who>{actor}</who> hat die Zuweisung von <link>{target}</link> aufgehoben",
+        "issueCommented": "<who>{actor}</who> hat <link>{target}</link> kommentiert",
+        "issueCommentEdited": "<who>{actor}</who> hat einen Kommentar zu <link>{target}</link> bearbeitet",
+        "issueCheckedOut": "<who>{actor}</who> hat mit der Arbeit an <link>{target}</link> begonnen",
+        "issueReleased": "<who>{actor}</who> hat die Arbeit an <link>{target}</link> beendet",
+        "issueRunFailed": "<who>{actor}</who> konnte nicht an <link>{target}</link> arbeiten",
+        "goalCreated": "<who>{actor}</who> hat das Ziel <link>{target}</link> erstellt",
+        "goalUpdated": "<who>{actor}</who> hat das Ziel <link>{target}</link> aktualisiert",
+        "goalStatusChanged": "<who>{actor}</who> hat das Ziel <link>{target}</link> von {from} auf {to} gesetzt",
+        "goalDeleted": "<who>{actor}</who> hat das Ziel {target} gelöscht",
+        "teamCreated": "<who>{actor}</who> hat das Team <link>{target}</link> erstellt",
+        "teamUpdated": "<who>{actor}</who> hat das Team <link>{target}</link> aktualisiert",
+        "teamDeleted": "<who>{actor}</who> hat das Team {target} gelöscht",
+        "teamMemberAdded": "<who>{actor}</who> hat {member} zum Team <link>{target}</link> hinzugefügt",
+        "teamMemberRemoved": "<who>{actor}</who> hat {member} aus dem Team <link>{target}</link> entfernt",
+        "teamMemberRoleChanged": "<who>{actor}</who> hat die Rolle von {member} im Team <link>{target}</link> geändert",
+        "channelCreated": "<who>{actor}</who> hat den Kanal <link>{target}</link> erstellt",
+        "channelUpdated": "<who>{actor}</who> hat den Kanal <link>{target}</link> aktualisiert",
+        "channelArchived": "<who>{actor}</who> hat den Kanal <link>{target}</link> archiviert",
+        "coworkerReportingChanged": "<who>{actor}</who> hat die Berichtslinie von <link>{target}</link> geändert",
+        "generic": "<who>{actor}</who> hat etwas geändert",
+        "genericWithTarget": "<who>{actor}</who> hat <link>{target}</link> geändert"
+    }
+}

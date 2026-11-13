@@ -1,5 +1,6 @@
 import { BILLING_ENABLED } from '@lumvika/cloud/billing'
 import { SUPPORT_CHAT_ENABLED } from '@lumvika/cloud/support'
+import { NAV_ITEMS, type NavItemId } from '@/lib/shell/nav'
 
 export const CONTROL_COMMAND_IDS = [
     'new_agent',
@@ -22,9 +23,11 @@ export const CONTROL_COMMAND_IDS = [
     'whats_new',
 ] as const
 
-export type ControlCommandId = (typeof CONTROL_COMMAND_IDS)[number]
+export type GoToCommandId = `go_${NavItemId}`
 
-export type ControlCommandGroup = 'actions' | 'settings'
+export type ControlCommandId = (typeof CONTROL_COMMAND_IDS)[number] | GoToCommandId
+
+export type ControlCommandGroup = 'actions' | 'navigation' | 'settings'
 
 export type ControlCommand = {
     id: ControlCommandId
@@ -34,6 +37,8 @@ export type ControlCommand = {
     disabledReason: string | null
     // Paid plans only: selecting it on another plan opens billing instead of the panel.
     paid: boolean
+    // The route a "Go to" command opens.
+    href?: string
 }
 
 export type ControlGates = {
@@ -44,10 +49,25 @@ export type ControlGates = {
     assistantReady: boolean
     hasChangelog: boolean
     darkTheme: boolean
+    // The platform shell is open: its areas get a "Go to" command each.
+    platform: boolean
 }
 
 // Why a command is disabled, in the reader's language. The English is for the tests and the labs.
 export type ControlReasons = { sandbox: string; admin: string; singleBox: string }
+
+const GO_TO: Record<NavItemId, { label: string; keywords: string[] }> = {
+    overview: { label: 'Go to Overview', keywords: ['dashboard', 'home', 'summary'] },
+    office: { label: 'Go to the Office', keywords: ['board', 'boxes', 'coworkers', 'map'] },
+    chat: { label: 'Go to Chat', keywords: ['assistant', 'conversation', 'ask'] },
+    work: { label: 'Go to My work', keywords: ['issues', 'assigned', 'inbox', 'todo'] },
+    projects: { label: 'Go to Projects', keywords: ['issues', 'board', 'backlog'] },
+    goals: { label: 'Go to Goals', keywords: ['objectives', 'okr', 'targets'] },
+    review: { label: 'Go to Review', keywords: ['approve', 'check', 'feedback'] },
+    channels: { label: 'Go to Channels', keywords: ['messages', 'discussion', 'team chat'] },
+    teams: { label: 'Go to Teams', keywords: ['org chart', 'people', 'members'] },
+    activity: { label: 'Go to Activity', keywords: ['feed', 'history', 'log', 'updates'] },
+}
 
 const ENGLISH_REASONS: ControlReasons = { sandbox: 'The expert sandbox has none of its own', admin: 'Admins only', singleBox: 'A sandbox has a single Box' }
 
@@ -76,6 +96,8 @@ export function buildControlCommands(gates: ControlGates, reasons: ControlReason
         command('notifications', 'settings', 'Notifications', ['alerts', 'email', 'push', 'slack']),
         command('shortcuts', 'settings', 'Keyboard shortcuts', ['keys', 'hotkeys']),
         gates.hasChangelog && command('whats_new', 'settings', "What's new", ['changelog', 'updates', 'release']),
+
+        ...(gates.platform ? NAV_ITEMS.map(({ id, href }): ControlCommand => ({ ...command(`go_${id}`, 'navigation', GO_TO[id].label, GO_TO[id].keywords), href })) : []),
     ]
 
     return commands.filter((entry): entry is ControlCommand => entry !== false)

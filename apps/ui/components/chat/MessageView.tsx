@@ -123,6 +123,8 @@ export type MessageViewProps = {
     // The agent's suggested replies only stand while this is the last word of a finished turn.
     showQuickReplies?: boolean
     onRegenerate?: (messageId: string) => void
+    // The copy action under an answer, for a chat that offers no regenerate (it comes with it otherwise).
+    copyable?: boolean
     // Thumbs only show when this is passed, so read-only transcripts and the onboarding stay without them.
     onRateMessage?: (messageId: string, rating: MessageFeedbackRating, messageText: string) => void
     feedbackRating?: MessageFeedbackRating | null
@@ -163,7 +165,7 @@ export function UnderText({ children }: { children: ReactNode }) {
     return children
 }
 
-function MessageViewInner({ message, isActive = false, isLastAssistant = false, agentId, pendingHitlToolCallId, pendingMcpSignIn, hitlCall, pendingAlertToolCallId, activeRunId, onStopTask: stopTaskOverride, onSendMessage, onDraftReply, showQuickReplies = false, onRegenerate, onRateMessage, feedbackRating = null, rawUrlFor, readFile, sharedFiles, skillProposals, decidingProposalId, onDecideProposal, pinnedProposalIds, renderToolPart, installing, mentions, assistantLayout, createdAt, paidSources }: MessageViewProps) {
+function MessageViewInner({ message, isActive = false, isLastAssistant = false, agentId, pendingHitlToolCallId, pendingMcpSignIn, hitlCall, pendingAlertToolCallId, activeRunId, onStopTask: stopTaskOverride, onSendMessage, onDraftReply, showQuickReplies = false, onRegenerate, copyable = false, onRateMessage, feedbackRating = null, rawUrlFor, readFile, sharedFiles, skillProposals, decidingProposalId, onDecideProposal, pinnedProposalIds, renderToolPart, installing, mentions, assistantLayout, createdAt, paidSources }: MessageViewProps) {
     const t = useTranslations('chat')
     const tTools = useTranslations('tools')
     const toolDisplay = useToolDisplay(agentId)
@@ -424,12 +426,14 @@ function MessageViewInner({ message, isActive = false, isLastAssistant = false, 
                     ))}
                 </Suggestions>
             )}
-            {message.role === 'assistant' && !isActive && onRegenerate && messageText(message).length > 0 && (
+            {message.role === 'assistant' && !isActive && (onRegenerate || copyable) && messageText(message).length > 0 && (
                 <MessageActions className={cn('-mt-1 transition-opacity group-hover:opacity-100 group-[:not(:last-child)]:-mb-4', feedbackRating === null && 'opacity-0')}>
                     <CopyAction text={messageText(message)} />
-                    <MessageAction tooltip={t('message.regenerate')} onClick={() => onRegenerate(message.id)}>
-                        <RefreshCcwIcon className="size-3.5" />
-                    </MessageAction>
+                    {onRegenerate && (
+                        <MessageAction tooltip={t('message.regenerate')} onClick={() => onRegenerate(message.id)}>
+                            <RefreshCcwIcon className="size-3.5" />
+                        </MessageAction>
+                    )}
                     {onRateMessage && (
                         <>
                             <FeedbackAction rating="up" current={feedbackRating} onRate={rating => onRateMessage(message.id, rating, messageText(message))} />

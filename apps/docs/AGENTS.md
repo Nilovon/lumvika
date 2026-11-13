@@ -16,6 +16,8 @@
 - App: an integration with an external service, not "plugin" or "connector". The code and the API say `connector` (`attach_connector`), the product says App
 - Run: one execution of an agent
 - Template: a packaged agent setup installable from the marketplace
+- Issue: a piece of work in a project, numbered with the project key (`WEB-12`), assigned to a person or a coworker. Never "task" or "ticket": a task is a coworker's scheduled task, and "Ticket" is only the German UI word
+- Chat: the plain assistant of the sidebar, not a coworker. A coworker's own conversation is a chat with that coworker
 
 ## Style preferences
 
@@ -30,11 +32,12 @@
 ## Accuracy
 
 - Every default, bound and limit quoted in a page comes from the code, never from memory. Read the source before writing a number
-- Tool parameters mirror `apps/ui/lib/mcp/account-tools.ts` and `apps/ui/lib/mcp/template-tools.ts`
+- Tool parameters mirror `apps/ui/lib/mcp/account-tools.ts`, `apps/ui/lib/mcp/work-tools.ts` and `apps/ui/lib/mcp/template-tools.ts`
+- Issue statuses and the allowed moves mirror `packages/contracts/src/work.ts`. Button and label names are quoted from `packages/i18n/messages/en/*.json`
 - Prices and plan contents mirror `packages/contracts/src/billing.ts` and `packages/contracts/src/template.ts`
 
 ## Content boundaries
 
-- Document the product as a user sees it: Boxes, agents, apps, triggers, templates, billing
+- Document the product as a user sees it: Boxes, agents, apps, triggers, templates, billing, and the sidebar areas (projects, issues, review, goals, teams, channels, Chat)
 - Never document the `/admin` back office, internal scripts, or infrastructure topology
 - Never include API keys, tokens, engine IPs, or database connection strings

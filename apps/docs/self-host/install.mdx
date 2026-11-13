@@ -171,6 +171,10 @@ docker compose up -d
 
 The engine migrates its data-dir on start, and the `migrate` step applies the database migrations a release adds before the app starts. Back up first: see [Backups](/self-host/servers#backups).
 
+<Note>
+  The release that brings Projects, Chat and Channels adds database migrations, which `migrate` applies. Update every engine with it, the [paired servers](/self-host/servers#updating) too. See [Projects, Chat and Channels](/self-host/coworkers#projects-chat-and-channels) for what an engine left behind does.
+</Note>
+
 ## Build the images yourself
 
 For modified code, or for the browser keys only a build bakes in (the captcha site keys and `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`), build both images from a clone. It needs 6 GB of memory for Docker and about 40 GB of disk.

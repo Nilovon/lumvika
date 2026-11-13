@@ -1,4 +1,4 @@
-import type { AgentConfig, StewardBrief, Provider } from '@lumvika/contracts'
+import type { AgentConfig, AssistantBrief, StewardBrief, Provider } from '@lumvika/contracts'
 import type { RunModel } from './availability.js'
 
 export { mcpServerSchema, toolsSchema, selfImprovementSchema, agentSetupSchema, agentConfigSchema, verbositySchema, MCP_SERVER_NAME_RE } from '@lumvika/contracts'
@@ -29,4 +29,6 @@ export type LoadedAgent = {
     // The steward's instructions and tools for this one run, handed over by the hub with the chat
     // request. Never on disk, and absent on every other agent.
     brief?: StewardBrief
+    // The assistant's context for this one run (the project of the conversation), the same way.
+    assistantBrief?: AssistantBrief
 }

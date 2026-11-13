@@ -1,0 +1,112 @@
+---
+title: "Channels"
+description: "Conversations people and coworkers share: channels, direct messages, threads, and coworkers that answer when you mention them."
+---
+
+**Channels** is where your team talks, with its coworkers in the room. A channel gathers people and coworkers around one topic, a direct message is between two, and any message can open a thread.
+
+## Channels
+
+**#general** is there from the start: a workspace gets it the first time someone opens Channels, and a person who is in no channel yet joins it.
+
+**New channel** creates one, with a **Name**, a **Description** and the **Private** switch.
+
+| | Public channel | Private channel |
+| --- | --- | --- |
+| Who finds it | Members who see all Boxes, and admins, in **Browse channels** | Only its members |
+| Who joins | They **Join** it themselves | A member adds them |
+| Who adds people and coworkers | Anyone in it | An admin or its creator |
+
+A member limited to named Boxes only sees the channels they were added to.
+
+A channel can be linked to a project and a team: **Project** and **Team** in the **New channel** dialog, or in the channel details later. Whoever manages the channel sets them, its creator or an admin, and only the projects they can open are offered. A direct message and an archived channel take no link. Everyone else sees the link read only, and the project link only if they can open that project.
+
+Any member can create a channel. Its creator and the admins edit it, remove its members and archive it. **Leave channel** takes it out of your list: you can join a public one again, a private one needs a member to add you back.
+
+**Archive channel** stops anyone from posting and takes it out of everyone's list. Its messages are kept. It cannot be undone from the app.
+
+## Direct messages
+
+**New message** writes to a teammate or a coworker. A direct message always keeps its two members.
+
+With a coworker, a direct message is a quick way to ask it something: it answers right in the conversation.
+
+## Threads
+
+**Reply in thread**, on any message, opens its thread on the side. Its replies stay there, and the channel shows how many there are.
+
+## Mention a coworker
+
+Type `@` to mention someone: the list holds **People** and **Coworkers**. Mention a coworker, and it answers in the thread of your message. While it works, the thread says **Scout is answering…**.
+
+Who answers which message:
+
+- **In a channel**, the coworkers you mention, if they are members of the channel.
+- **In a thread**, also the coworkers that already spoke or were mentioned in that thread. Reply to their answer and they answer again, without a new mention.
+- **In a direct message** with a coworker, that coworker, every time.
+- **Only a person's message** makes a coworker answer. A coworker never answers another coworker, so two of them cannot set each other off.
+
+Several coworkers mentioned in one message answer side by side, each in its own reply.
+
+A coworker answers one message of a thread at a time. Write while it is still answering, and it answers once more when it is done: it takes the newest of the messages written meanwhile, with the others in view.
+
+The mention list only offers coworkers whose Box you can reach. A mention of a coworker you cannot see stays plain text and calls nobody. A reader who cannot reach a mentioned coworker's Box does not see its name, unless that coworker wrote in the channel.
+
+### Add a coworker to a channel
+
+A coworker answers only in a channel it is a member of. Mention one that is not, and the app offers **Add and ask**: it joins the channel and answers. In a private channel, only its creator or an admin can do that; anyone else is told to ask them.
+
+You can also add coworkers from the channel details, with **Add members**. You can only add, or summon, a coworker whose Box you can reach.
+
+### What the coworker reads
+
+The coworker reads the message it answers, and the conversation before it: the last 20 messages of the channel, or of the thread, up to about 12,000 characters. It does not read further back.
+
+Each coworker keeps one conversation per channel, so it remembers what was said to it earlier in that channel. Deleting a message in the channel does not remove it from what a coworker already read.
+
+A coworker only speaks in a channel when a person asks it there. It cannot post on its own, from a scheduled task for example.
+
+### What stays in the channel
+
+What a coworker hears in a channel or a direct message is kept within it:
+
+- Its conversation there is not listed with the coworker's other conversations, so people who use its Box but are not in the channel cannot open it.
+- It writes nothing of it to its memory, its skills or the company Brain.
+- It cannot call or delegate to another coworker from there.
+- It cannot stop to ask you: no question card, no approval, no API key form, no app to connect or sign in to, no handing you its browser. See [Questions in a channel](#questions-in-a-channel).
+
+It keeps its other tools to do what you ask: its files, its shell, the web, its databases, and its issues. So it could still write what it heard into a file, a table or an issue that other people read, if asked to. In a private channel or a direct message, the members panel says so: **This coworker reads the recent messages here to answer.** Add a coworker to a private conversation only if what is said there may reach the files it works in.
+
+Compare with a [restricted project](/work/coworkers-on-issues#what-a-coworker-can-see), where the coworker's conversations are listed with it and its memory can keep what it read.
+
+### Questions in a channel
+
+A coworker that needs something from you asks in its reply, and you answer in the thread: your reply makes it answer again. For what only a chat can carry, an approval, an API key or a sign-in to an app, it tells you to open a chat with it from the Office, where it can show the card. See [Human in the loop](/agents/human-in-the-loop).
+
+### When a coworker cannot answer
+
+The thread says why, in place of an answer.
+
+| The thread says | What to do |
+| --- | --- |
+| **your workspace's machine cannot be reached right now** | Try again in a moment |
+| **your workspace's machine needs an update** | The machine runs a version from before Channels. Self-hosted: [update the engine](/self-host/servers#updating) |
+| **this coworker is switched off** | Switch it back on in its settings |
+| **it has no AI model it can use** | Connect a model in its settings |
+| **you do not have access to its Box** | Ask an admin for access to the Box |
+| **it is not a member of this channel** | Add it to the channel |
+| **took too long to answer and stopped** | It had 15 minutes. If its answer comes later, it still shows up. Otherwise ask again, or ask for less |
+| **stopped to wait for your answer. Reply in this thread to give it, or for an approval or a sign-in, open a chat with Scout from the Office.** | Only on a machine from an older release, where a coworker can still pause in a channel. Reply in the thread, or open a chat with it from the Office. Self-hosted: [update the engine](/self-host/servers#updating) |
+| **was stopped before it answered** | Someone cancelled the run |
+
+## Messages
+
+Edit or delete your own messages from their **More actions** menu. The creator of a channel and the admins can also delete others' messages. A deleted message reads **This message was deleted.**, and the replies of its thread stay.
+
+Messages are Markdown. A channel shows how many unread messages it holds.
+
+## Not available yet
+
+- No attachments in a message. Put the file in the shared folder and link to it.
+- No notification when you are mentioned, in the app or by email. The unread count is the signal.
+- No link to Slack, Microsoft Teams, WhatsApp or email: a channel lives in Lumvika only.

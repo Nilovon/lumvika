@@ -1,6 +1,6 @@
 import { loadMessages } from '@lumvika/i18n/messages'
 import { localeNativeName, matchLocale, parseAcceptLanguage, resolveLocale } from '@lumvika/i18n'
-import { formatBytes, formatDuration, longDate, messageDayLabel, shortDate, shortRelativeTime, shortUntil, weekdayNames } from '@lumvika/i18n/format'
+import { formatBytes, formatDuration, formatList, longDate, messageDayLabel, shortDate, shortRelativeTime, shortUntil, weekdayNames } from '@lumvika/i18n/format'
 import { pseudoLocalize } from '@lumvika/i18n/pseudo'
 import { mergeMessages } from '@lumvika/i18n'
 import { describe, expect, it } from 'vitest'
@@ -62,6 +62,12 @@ describe('format', () => {
         expect(plain(shortUntil(ahead(3 * HOUR + 1000), 'de', NOW))).toBe('in 3 Std.')
         expect(shortDate('2026-03-05T12:00:00Z', 'de')).toBe('5. März')
         expect(plain(formatBytes(1536, 'de'))).toBe('1,5 kB')
+    })
+
+    it('joins a list the way each language does', () => {
+        expect(formatList(['Todo', 'Blocked', 'Cancelled'], 'en', 'disjunction')).toBe('Todo, Blocked, or Cancelled')
+        expect(formatList(['Todo', 'Blocked'], 'en')).toBe('Todo and Blocked')
+        expect(formatList(['Zu erledigen', 'Blockiert', 'Abgebrochen'], 'de', 'disjunction')).toBe('Zu erledigen, Blockiert oder Abgebrochen')
     })
 
     it('labels the days of a conversation', () => {

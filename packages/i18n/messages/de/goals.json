@@ -1,0 +1,92 @@
+{
+    "title": "Ziele",
+    "description": "Worauf deine Teams hinarbeiten und wie weit sie sind.",
+    "adminOnly": "Nur ein Admin des Workspaces kann das tun",
+    "newGoal": "Neues Ziel",
+    "loadFailed": "Die Ziele konnten nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "empty": {
+        "title": "Noch keine Ziele",
+        "description": "Ein Ziel ist das, worauf deine Teams hinarbeiten. Teil es in Unterziele und verknüpfe die Projekte, die darauf einzahlen: Sein Fortschritt wächst, sobald ihre Tickets erledigt sind.",
+        "action": "Ziel erstellen",
+        "askAdmin": "Bitte einen Admin des Workspaces, das erste Ziel festzulegen."
+    },
+    "noMatch": {
+        "title": "Kein Ziel passt zu diesen Filtern",
+        "clear": "Filter zurücksetzen"
+    },
+    "status": {
+        "planned": "Geplant",
+        "active": "Aktiv",
+        "achieved": "Erreicht",
+        "cancelled": "Abgebrochen"
+    },
+    "filters": {
+        "status": "Status",
+        "team": "Team"
+    },
+    "row": {
+        "progress": "{done, number} von {total, number} Tickets erledigt",
+        "noIssues": "Noch keine Tickets",
+        "target": "Fällig am {date}",
+        "noOwner": "Keine verantwortliche Person",
+        "you": "{name} (du)",
+        "subGoals": "{count, plural, one {# Unterziel} other {# Unterziele}}",
+        "expand": "Unterziele von {title} anzeigen",
+        "collapse": "Unterziele von {title} ausblenden",
+        "actionsFor": "Aktionen für {title}",
+        "unlink": "{project} lösen"
+    },
+    "actions": {
+        "edit": "Bearbeiten",
+        "addSubGoal": "Unterziel hinzufügen",
+        "linkProject": "Projekt verknüpfen",
+        "delete": "Löschen"
+    },
+    "dialog": {
+        "createTitle": "Neues Ziel",
+        "createSubTitle": "Neues Unterziel",
+        "editTitle": "Ziel bearbeiten",
+        "createDescription": "Sag, worauf du hinarbeitest. Verknüpfe danach Projekte, um den Fortschritt zu verfolgen.",
+        "editDescription": "Ändere, worauf dieses Ziel hinarbeitet, wer verantwortlich ist und wann es fällig ist.",
+        "titleLabel": "Titel",
+        "titlePlaceholder": "Newsletter-Publikum verdoppeln",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Warum es zählt und woran du merkst, dass es erreicht ist",
+        "status": "Status",
+        "parent": "Übergeordnetes Ziel",
+        "noParent": "Keines (oberste Ebene)",
+        "underItself": "unter diesem Ziel",
+        "team": "Team",
+        "noTeam": "Kein Team",
+        "owner": "Verantwortlich",
+        "noOwner": "Niemand",
+        "targetDate": "Zieldatum",
+        "create": "Ziel erstellen",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "created": "Ziel erstellt",
+        "saved": "Ziel gespeichert"
+    },
+    "delete": {
+        "title": "{title} löschen?",
+        "description": "Das Ziel wird entfernt. Seine Unterziele rücken eine Ebene nach oben, seine Projekte und Tickets bleiben, ohne dieses Ziel. Das lässt sich nicht rückgängig machen.",
+        "confirm": "Löschen",
+        "deleted": "Ziel gelöscht"
+    },
+    "link": {
+        "title": "Projekt verknüpfen",
+        "description": "Die Tickets des Projekts zählen für {title}.",
+        "search": "Projekte suchen",
+        "empty": "Noch kein Projekt zum Verknüpfen. Erstell zuerst eins unter Projekte.",
+        "noMatch": "Kein Projekt passt.",
+        "linkedHere": "Verknüpft",
+        "linkedElsewhere": "Mit einem anderen Ziel verknüpft",
+        "manageOnly": "Du verwaltest dieses Projekt nicht",
+        "linked": "{project} zählt jetzt für {goal}",
+        "unlinked": "{project} zählt nicht mehr für {goal}",
+        "unlinkTitle": "{project} lösen?",
+        "unlinkDescription": "Seine Tickets zählen nicht mehr für {goal}. Das Projekt selbst ändert sich nicht.",
+        "unlinkConfirm": "Lösen"
+    }
+}

@@ -1,4 +1,4 @@
-import { STEWARD_AGENT_ID } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, STEWARD_AGENT_ID } from '@lumvika/contracts'
 import { rm } from 'node:fs/promises'
 import { prepareDataDir } from '../../datadir/ladder.js'
 import { createAgent } from '../../agents/factory.js'
@@ -45,6 +45,7 @@ export async function agentCommand(args: string[]): Promise<void> {
         const id = args[1]
         if (!id || !agentExists(id)) throw new Error('Usage: lumvika agent delete <id>')
         if (id === STEWARD_AGENT_ID) throw new Error('The steward is managed by the engine and cannot be deleted')
+        if (id === ASSISTANT_AGENT_ID) throw new Error('The assistant is managed by the engine and cannot be deleted')
         unloadAgent(id)
         await deleteAgentIndex(id)
         await rm(agentDir(id), { recursive: true, force: true })

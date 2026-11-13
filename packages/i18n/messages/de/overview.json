@@ -1,0 +1,80 @@
+{
+    "title": "Übersicht",
+    "description": "Dein Workspace auf einen Blick.",
+    "loadFailed": "Die Übersicht konnte nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "needsYou": {
+        "label": "Was dich braucht",
+        "toReview": "Zu prüfen",
+        "blocked": "Blockiert",
+        "waiting": "Wartet in Unterhaltungen",
+        "assigned": "Mir zugewiesen"
+    },
+    "coworkers": {
+        "title": "Coworker gerade",
+        "all": "Büro öffnen",
+        "workingOn": "Arbeitet an {ref}: {title}",
+        "status": {
+            "working": "Arbeitet",
+            "waiting": "Wartet auf eine Person",
+            "error": "Braucht einen Blick",
+            "idle": "Bereit",
+            "off": "Aus"
+        },
+        "more": "{count, plural, one {# weiterer Coworker} other {# weitere Coworker}}",
+        "empty": "Noch kein Coworker. Stell einen im Büro ein."
+    },
+    "projects": {
+        "title": "Aktive Projekte",
+        "all": "Alle Projekte",
+        "progress": "{done} von {total} erledigt",
+        "noIssues": "Noch keine Tickets",
+        "inReview": "{count} in Prüfung",
+        "blocked": "{count} blockiert",
+        "empty": "Kein aktives Projekt. Leg eins an, um die Arbeit mit deinen Coworkern zu planen."
+    },
+    "goals": {
+        "title": "Ziele in Arbeit",
+        "all": "Alle Ziele",
+        "progress": "{done} von {total} erledigt",
+        "noIssues": "Noch keine Tickets verknüpft",
+        "target": "Fällig am {date}",
+        "empty": "Kein Ziel in Arbeit. Ein Ziel verbindet Projekte mit ihrem Zweck."
+    },
+    "recent": {
+        "title": "Neueste Aktivität",
+        "all": "Alle Aktivitäten",
+        "empty": "Noch ist nichts passiert."
+    },
+    "throughput": {
+        "title": "Ticket-Durchsatz",
+        "description": "Erstellt und erledigt pro Tag, letzte 14 Tage",
+        "created": "Erstellt",
+        "completed": "Erledigt",
+        "summary": "{created, plural, one {# erstellt} other {# erstellt}}, {completed, plural, one {# erledigt} other {# erledigt}}",
+        "showTable": "Als Tabelle zeigen",
+        "showChart": "Als Diagramm zeigen",
+        "day": "Tag",
+        "quiet": "In den letzten 14 Tagen wurde kein Ticket erstellt oder erledigt."
+    },
+    "firstRun": {
+        "title": "Willkommen in deinem Workspace",
+        "description": "Drei Schritte, und deine Coworker arbeiten mit dir an echten Tickets.",
+        "step": "Schritt {number}",
+        "recruit": {
+            "title": "Stell einen Coworker ein",
+            "description": "Wähl einen aus den Vorlagen oder beschreib den, den du brauchst.",
+            "action": "Coworker einstellen"
+        },
+        "project": {
+            "title": "Leg ein Projekt an",
+            "description": "Ein Projekt bündelt die Tickets einer Arbeit, mit einem kurzen Kürzel wie WEB.",
+            "action": "Projekt anlegen"
+        },
+        "assign": {
+            "title": "Weise ein Ticket zu",
+            "description": "Gib einem Coworker ein Ticket: Er übernimmt es selbst und meldet sich, wenn eine Person draufschauen soll.",
+            "action": "Projekte öffnen"
+        }
+    }
+}

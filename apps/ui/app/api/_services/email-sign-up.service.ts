@@ -1,5 +1,6 @@
 import 'server-only'
 import { callerRateKey } from '@/lib/auth/caller-ip'
+import { randomUuid } from '@/lib/random-uuid'
 import { callScalar, findAuthUserIdByEmail, serviceScope } from '@/lib/db'
 import { authUsers } from '@lumvika/db/schema'
 
@@ -80,7 +81,7 @@ export async function ensureEmailAccount(email: string, ip: string): Promise<Ema
 
     try {
         // Another tab of the same visitor may have created it a moment earlier, and counts it there.
-        const created = await serviceScope().run(db => db.insert(authUsers).values({ id: crypto.randomUUID(), name: '', email, emailVerified: false }).onConflictDoNothing().returning({ id: authUsers.id }))
+        const created = await serviceScope().run(db => db.insert(authUsers).values({ id: randomUuid(), name: '', email, emailVerified: false }).onConflictDoNothing().returning({ id: authUsers.id }))
         return { ok: true, created: created.length > 0 }
     } catch (error) {
         console.error('[email-sign-up] account creation failed', error instanceof Error ? error.message : error)

@@ -42,6 +42,12 @@ type ModelSelectorProps = {
     onRefusedModelChange?: (reason: string | null) => void
     // The key a notice outside the composer requests this picker open by (see model-picker.store).
     pickerKey?: string
+    // Where the per-conversation pick is kept, when it is not the agent's own (one per chat of the
+    // assistant, which every member talks to).
+    selectionKey?: string
+    // Who may star a model as the default, when the agent decides it otherwise (the assistant's
+    // default is the whole workspace's: admins only).
+    canSetDefault?: boolean
 }
 
 // In-chat model picker shown in the prompt footer. One group per Box connection, so two Claude
@@ -51,7 +57,7 @@ type ModelSelectorProps = {
 //
 // The "Box default" entry is the one exception: it is not a per-conversation choice but a statement
 // about the agent, so it clears both the override and the pin in one click.
-export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, onConnectionChange, onRefusedModelChange, pickerKey }: ModelSelectorProps) {
+export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, onConnectionChange, onRefusedModelChange, pickerKey, selectionKey, canSetDefault: canSetDefaultOverride }: ModelSelectorProps) {
     const t = useTranslations('agent.modelSelector')
     const tShared = useTranslations('agent.modelsShared')
     const creditDetail = useLumvikaCreditDetail()
@@ -59,12 +65,12 @@ export function ModelSelector({ agentId, onReadyChange, onOwnConnectionChange, o
     const [open, setOpen] = useState(false)
     const { availableGroups, connectionOf, pinnedModel, pinnedConnectionId, resolvedModel, resolvedConnectionId, followsBoxDefault, supportsBoxDefault, boxDefaultPick, setDefault, followBoxDefault, refreshConnections, loading } =
         useAvailableModels(agentId)
-    const { selection, select } = useAgentModel(agentId)
+    const { selection, select } = useAgentModel(selectionKey ?? agentId)
     // Picking a model for this conversation stays open: only what the coworker runs by default is
     // managed through its Box. The steward has no Box, so its default is left as it was.
     const canManageCoworker = useCanManageAgent(agentId)
     const isBoardCoworker = useBoardStore(state => state.agents.some(agent => agent.id === agentId))
-    const canSetDefault = canManageCoworker || !isBoardCoworker
+    const canSetDefault = canSetDefaultOverride ?? (canManageCoworker || !isBoardCoworker)
     const lumvikaCredit = useLumvikaCredit()
     const openAiProviders = useWorkspaceSettingsStore(state => state.openAiProviders)
     const addAiProvider = useWorkspaceSettingsStore(state => state.addAiProvider)

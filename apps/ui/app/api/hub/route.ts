@@ -4,6 +4,7 @@ import { STEWARD_AGENT_ID, STEWARD_HUB_TOKEN_HEADER } from '@lumvika/contracts'
 import { dispatchStewardHubTool } from '@/app/api/_services/steward-hub.service'
 import { dispatchHubTool } from '@/app/api/_services/services.service'
 import { dispatchTeamHubTool, isTeamHubTool } from '@/app/api/_services/team-hub.service'
+import { dispatchWorkHubTool, isWorkHubTool } from '@/app/api/_services/work/work-hub.service'
 import { authenticateEngineToken } from '@/app/api/_services/workspace-engine.service'
 import { stewardHubTokenRequired, verifyStewardHubToken } from '@/lib/steward/hub-token'
 import { selectMaybeSingle, serviceScope } from '@/lib/db'
@@ -67,7 +68,9 @@ export async function POST(req: Request): Promise<Response> {
             ? await dispatchStewardHubTool(stewardActor, tool, args)
             : isTeamHubTool(tool)
               ? await dispatchTeamHubTool(agent.id, engine.workspaceId, tool, args)
-              : await dispatchHubTool(agent.id, tool, args, engine.workspaceId)
+              : isWorkHubTool(tool)
+                ? await dispatchWorkHubTool(agent.id, engine.workspaceId, tool, args)
+                : await dispatchHubTool(agent.id, tool, args, engine.workspaceId)
         return Response.json(out)
     } catch (err) {
         const message = err instanceof Error ? err.message : 'Hub tool failed'

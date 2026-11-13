@@ -44,6 +44,13 @@ describe('runDataDirChecks', () => {
         expect(report).toMatchObject({ ok: true, dataVersion: 4, dataVersionTarget: 4, agentIds: ['alpha'] })
     })
 
+    it('counts the built-in steward and assistant folders as expected, outside the index', async () => {
+        await seedAgent('alpha')
+        await seedAgent('steward', { indexed: false })
+        await seedAgent('assistant', { indexed: false })
+        expect(failing(await runDataDirChecks())).toEqual([])
+    })
+
     it('flags a data-dir the ladder has not reached', async () => {
         await rm(dataVersionPath())
         const report = await runDataDirChecks()

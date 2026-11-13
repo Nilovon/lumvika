@@ -35,8 +35,9 @@
 // `report.json` with the load timings, the console errors and every failed request.
 
 import { execFileSync, spawn } from 'node:child_process'
-import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -194,6 +195,11 @@ async function ensureServer(base, outDir) {
         const databaseUrl = environ.match(/\bDATABASE_URL=(\S+)/)?.[1]
         if (databaseUrl && !LOOPBACK.test(databaseUrl)) fail(`The server on port ${PORT} was started with a remote DATABASE_URL in its environment. Restart it.`)
         log(`Reusing the hub already running on port ${PORT}.`)
+        return
+    }
+    // `lsof` does not see every listener (a sandbox, another user): a hub that answers is reused all the same.
+    if (await fetch(`${base}/api/version`).then((response) => response.ok, () => false)) {
+        log(`Reusing the hub answering on port ${PORT}.`)
         return
     }
     log(`Starting next dev on port ${PORT}.`)
@@ -460,7 +466,10 @@ await assertMigrated(db)
 const base = `http://localhost:${PORT}`
 const outDir = join(REPO_ROOT, '.context/verify', new Date().toISOString().replace(/[:.]/g, '-'))
 mkdirSync(outDir, { recursive: true })
-await ensureServer(base, outDir)
+// The hub and engine logs grow on every request: written inside the repository, they wake the dev
+// server's file watcher, which recompiles mid sign-in and sends the sign-in page round again.
+const logDir = mkdtempSync(join(tmpdir(), 'lumvika-verify-'))
+await ensureServer(base, logDir)
 
 // Chromium's Local Network Access checks hold every request the page makes to the loopback stack
 // (the S3 store on 127.0.0.1:54437) and the dev server's HMR socket behind a permission prompt nobody answers.
@@ -478,14 +487,14 @@ try {
     await signIn(context, base, db, account)
     const engineLink = await linkTestEngine(db, account.userId)
     if (options.onboarded) await markOnboarded(db, engineLink.workspaceId)
-    if (options.engine) await startEngine(base, engineLink.apiKey, outDir)
+    if (options.engine) await startEngine(base, engineLink.apiKey, logDir)
     log(`Signed in as ${account.email}, workspace ${engineLink.workspaceId}.`)
 
     const pages = options.paths.length > 0 ? await capturePaths(context, base, options, outDir) : []
     const scenario = options.scenario ? await runScenario(context, base, options, outDir, { db, userId: account.userId, workspaceId: engineLink.workspaceId }) : null
     writeFileSync(join(outDir, 'report.json'), JSON.stringify({ base, account: account.email, pages, scenario }, null, 2))
     failed = Boolean(scenario?.error) || pages.some((page) => page.pageErrors.length > 0)
-    log(`Report: ${join(outDir, 'report.json')}`)
+    log(`Report: ${join(outDir, 'report.json')}, logs in ${logDir}`)
 } finally {
     await browser.close()
     await db.end()

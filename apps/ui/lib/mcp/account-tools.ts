@@ -1,5 +1,6 @@
 import { SHARE_TOOL_DEFS } from './share-tools'
 import { TEMPLATE_TOOL_DEFS } from './template-tools'
+import { WORK_ACCOUNT_TOOL_DEFS } from './work-tools'
 
 export const MAX_MEMORIES_PER_CALL = 100
 export const MAX_MEMORY_CHARS = 20_000
@@ -73,7 +74,7 @@ const AGENT_TOOL_DEFS = [
     {
         name: 'get_team_status',
         description:
-            'What each coworker is doing right now, read from the machine at the moment of the call (the status list_agents carries can be stale). For each: `status` (working, waiting_human, error, idle, offline, switched_off, unconfigured), the runs in flight with their trigger, start and step count, the conversations waiting on a person (an approval, a question, a connector to sign in), and the last run that ended, with its error when it failed. Call this to answer who is working, what is blocked or who is in error.',
+            'What each coworker is doing right now, read from the machine at the moment of the call (the status list_agents carries can be stale). For each: `status` (working, waiting_human, error, idle, offline, switched_off, unconfigured), the runs in flight with their trigger, start and step count, the conversations waiting on a person (an approval, a question, a connector to sign in), and the last run that ended, with its error when it failed; and where it sits in the org chart: `title`, `reportsTo` (its manager\'s handle), `directReports` (handles) and `teams` (names). Call this to answer who is working, what is blocked, who is in error or who reports to whom.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -589,6 +590,6 @@ const AGENT_TOOL_DEFS = [
 // The sharing and template halves are declared next door: same server, same key, and this file was
 // already long enough. Sharing sits between the two because it acts on the agents of any account,
 // where the template tools need an expert sandbox.
-export const ACCOUNT_TOOL_DEFS = [...AGENT_TOOL_DEFS, ...SHARE_TOOL_DEFS, ...TEMPLATE_TOOL_DEFS]
+export const ACCOUNT_TOOL_DEFS = [...AGENT_TOOL_DEFS, ...WORK_ACCOUNT_TOOL_DEFS, ...SHARE_TOOL_DEFS, ...TEMPLATE_TOOL_DEFS]
 
 export const ACCOUNT_TOOL_NAMES = ACCOUNT_TOOL_DEFS.map(t => t.name)

@@ -106,6 +106,14 @@ describe('responses for an older build', () => {
         expect(agentModelsForClient(old, models).groups.map(g => g.connectionId)).toEqual(['lumvika'])
     })
 
+    it('reads a built-in agent kind an old build does not know as an ordinary coworker', () => {
+        const legacyKind = legacyAgentView.extend({ detail: legacyAgentView.shape.detail.unwrap().extend({ config: agentConfigSchema.extend({ provider: legacyProvider.nullable().default(null), kind: z.enum(['user', 'steward']) }) }).nullable() })
+        const assistant = { ...agentView, detail: { ...agentView.detail!, config: { ...agentView.detail!.config, kind: 'assistant' as const } } }
+        const sent = agentViewForClient(old, assistant)
+        expect(sent.detail?.config.kind).toBe('user')
+        expect(legacyKind.safeParse(sent).success).toBe(true)
+    })
+
     it('hands a build that knows every provider the response untouched', () => {
         vi.stubEnv('MOBILE_IOS_OPENCODE_BUILD', '40')
         vi.stubEnv('MOBILE_IOS_CUSTOM_BUILD', '40')

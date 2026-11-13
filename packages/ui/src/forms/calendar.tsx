@@ -69,3 +69,5 @@ function Calendar({
 export { Calendar };
 export type { DateRange } from "react-day-picker";
 export { fr as calendarLocaleFr } from "react-day-picker/locale/fr";
+export { de as calendarLocaleDe } from "react-day-picker/locale/de";
+export { enUS as calendarLocaleEn } from "react-day-picker/locale/en-US";

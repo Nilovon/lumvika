@@ -50,9 +50,19 @@ export function agentModelsForClient(req: Request, models: AgentModels): AgentMo
     return { ...models, groups: models.groups.filter(group => !unknownToLegacy(group.provider)) }
 }
 
+// The agent kinds every build parses. A built-in agent added later (the assistant) has no board row,
+// so it never reaches the app; were one to, it reads as an ordinary coworker rather than failing.
+const AGENT_KINDS_KNOWN_TO_EVERY_CLIENT: ReadonlySet<string> = new Set(['user', 'steward'])
+
+function withKnownKind(view: AgentView): AgentView {
+    if (!view.detail || AGENT_KINDS_KNOWN_TO_EVERY_CLIENT.has(view.detail.config.kind)) return view
+    return { ...view, detail: { ...view.detail, config: { ...view.detail.config, kind: 'user' } } }
+}
+
 // Both pairs are nullable already: an old build reads them as "follows the machine" and "not
 // resolved yet", which is what it can show without knowing the provider.
-export function agentViewForClient(req: Request, view: AgentView): AgentView {
+export function agentViewForClient(req: Request, agentView: AgentView): AgentView {
+    const view = withKnownKind(agentView)
     const unknownToLegacy = unknownTo(req)
     if (!unknownToLegacy || !view.detail) return view
     const { detail } = view

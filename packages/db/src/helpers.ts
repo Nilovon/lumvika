@@ -98,9 +98,18 @@ export type JoinFilters<J extends AnyJoins> = {
 type ResolvedJoin = { alias: string; target: PgTable; localColumns: string[]; foreignColumns: string[]; columns: string[]; filters?: Record<string, unknown> }
 
 function propertyOf(table: PgTable, column: PgColumn): string {
-    const entry = Object.entries(table as unknown as Record<string, unknown>).find(([, value]) => value === column)
+    // The columns a foreign key declared in the table's extra config holds are not the table's own
+    // column objects, so they are matched by name.
+    const entry = Object.entries(table as unknown as Record<string, unknown>).find(([, value]) => value === column || (value as PgColumn | undefined)?.name === column.name)
     if (!entry) throw new Error(`Column ${column.name} is not on ${getTableName(table)}.`)
     return entry[0]
+}
+
+// The columns a join goes through: `foreignKey` names the target table, `table!constraint` when
+// the source has several foreign keys to it.
+export function joinColumnsOf(source: TableName, foreignKey: string): { localColumns: string[]; foreignColumns: string[] } {
+    const { localColumns, foreignColumns } = resolveJoin(tableOf(source) as PgTable, foreignKey, { table: foreignKey.split('!')[0], foreignKey, columns: [] })
+    return { localColumns, foreignColumns }
 }
 
 function resolveJoin(source: PgTable, alias: string, config: JoinConfig<any, readonly any[]>, filters?: Record<string, unknown>): ResolvedJoin {

@@ -11,7 +11,7 @@
 export const LIVE_PATH = '/api/live'
 export const LIVE_BROADCAST_PATH = '/api/live/broadcast'
 
-export const LIVE_TABLES = ['agents', 'notifications', 'sessions', 'spaces', 'users', 'workspace_members', 'workspaces', 'workspace_getting_started', 'session_reads', 'space_members'] as const
+export const LIVE_TABLES = ['agents', 'notifications', 'sessions', 'spaces', 'users', 'workspace_members', 'workspaces', 'workspace_getting_started', 'session_reads', 'space_members', 'projects', 'issues', 'issue_comments', 'activity_events', 'channels', 'channel_members', 'channel_messages', 'channel_agent_turns'] as const
 
 export type LiveTable = (typeof LIVE_TABLES)[number]
 export type LiveOp = 'INSERT' | 'UPDATE' | 'DELETE'

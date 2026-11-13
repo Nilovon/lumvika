@@ -6,7 +6,7 @@ process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-health-'))
 process.env.LUMVIKA_API_KEY = 'secret'
 
 const { describe, expect, it } = await import('vitest')
-const { ENGINE_CAPABILITY_ARTIFACT_UPDATE, ENGINE_CAPABILITY_FILES_STREAM, ENGINE_CAPABILITY_STEWARD_FILES, ENGINE_CAPABILITY_SCHEDULE_RENAME, ENGINE_CAPABILITY_OPENCODE } = await import('@lumvika/contracts')
+const { ENGINE_CAPABILITY_ARTIFACT_UPDATE, ENGINE_CAPABILITY_FILES_STREAM, ENGINE_CAPABILITY_STEWARD_FILES, ENGINE_CAPABILITY_SCHEDULE_RENAME, ENGINE_CAPABILITY_OPENCODE, ENGINE_CAPABILITY_ISSUE_RUNS } = await import('@lumvika/contracts')
 const { createServer } = await import('../server.js')
 const { claimSession, registerRunAbort, releaseSession, unregisterRunAbort } = await import('../../runtime/run-control.js')
 const { buildCommit, processStartedAt } = await import('../../runtime/build-info.js')
@@ -36,6 +36,7 @@ describe('GET /health', () => {
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_SCHEDULE_RENAME)
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_OPENCODE)
         expect(body.capabilities).toContain(ENGINE_CAPABILITY_ARTIFACT_UPDATE)
+        expect(body.capabilities).toContain(ENGINE_CAPABILITY_ISSUE_RUNS)
         expect(Number.isNaN(Date.parse(body.startedAt))).toBe(false)
     })
 

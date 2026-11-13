@@ -1,6 +1,7 @@
 // Runs Better Auth against a real Postgres: `pnpm db:start` first. Skipped when it is not reachable.
 import { closeDb, getDb, selectMaybeSingle, serviceScope, userScope } from '@lumvika/db'
 import { authUsers } from '@lumvika/db/schema'
+import { randomUuid } from '@/lib/random-uuid'
 import { resetTestDatabase, testDatabaseReachable, testDatabaseUrl } from '@lumvika/db/testing'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
@@ -63,7 +64,7 @@ describe.skipIf(!reachable)('Better Auth on Postgres', () => {
 
     it('signs an existing address in with a code and resolves its bearer token', async () => {
         const email = `existing-${Date.now()}@example.com`
-        await getDb().insert(authUsers).values({ id: crypto.randomUUID(), name: '', email, emailVerified: true })
+        await getDb().insert(authUsers).values({ id: randomUuid(), name: '', email, emailVerified: true })
 
         await auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } })
         const code = sentCodes.get(email)
@@ -77,7 +78,7 @@ describe.skipIf(!reachable)('Better Auth on Postgres', () => {
 
     it('signs into an account the hub opened unverified for a new address, and verifies it', async () => {
         const email = `opened-${Date.now()}@example.com`
-        const id = crypto.randomUUID()
+        const id = randomUuid()
         await getDb().insert(authUsers).values({ id, name: '', email, emailVerified: false })
 
         await auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } })

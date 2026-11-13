@@ -49,6 +49,7 @@ import {
     type BrainRevision,
     type BrainSeedPage,
     type BrainSeedResult,
+    type IssueRunRequest,
 } from '@lumvika/contracts'
 import { isNetworkFailure } from '@/lib/net/network-error'
 import {
@@ -499,6 +500,12 @@ export async function getSessionMessages(conn: EngineConnection, agentId: string
     return engineMessagesListSchema.parse(await res.json()).messages
 }
 
+// Erases one conversation for good. Only the built-in assistant takes it; the status says the rest
+// (404 for a conversation already gone, 409 while a run is still going on it).
+export async function deleteSession(conn: EngineConnection, agentId: string, sessionId: string): Promise<Response> {
+    return fetchEngine(`${conn.baseUrl}/agents/${encodeURIComponent(agentId)}/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: buildHeaders(conn), signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) })
+}
+
 // --- Chat (SSE, AI-SDK UI message stream protocol) ---
 
 // Returns the raw fetch Response so the caller can read the `x-session-id`
@@ -805,6 +812,13 @@ export async function updateSchedule(conn: EngineConnection, agentId: string, sl
 
 export async function runScheduleNow(conn: EngineConnection, agentId: string, slug: string): Promise<{ runId: string; sessionId: string }> {
     return request(conn, `/agents/${encodeURIComponent(agentId)}/schedules/${encodeURIComponent(slug)}/run`, { method: 'POST' }, d => d as { runId: string; sessionId: string })
+}
+
+export type IssueRunOutcome = { started: true; runId: string; sessionId: string } | { started: false; reason: string; runId?: string }
+
+// A 404 is an engine that predates issue runs: the engine answers 200 for anything it knows.
+export async function startIssueRun(conn: EngineConnection, agentId: string, run: IssueRunRequest): Promise<IssueRunOutcome> {
+    return request(conn, `/agents/${encodeURIComponent(agentId)}/issue-runs`, { method: 'POST', body: JSON.stringify(run) }, d => d as IssueRunOutcome)
 }
 
 export async function deleteSchedule(conn: EngineConnection, agentId: string, slug: string): Promise<void> {

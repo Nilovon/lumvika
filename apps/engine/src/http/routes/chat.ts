@@ -27,7 +27,7 @@ chatRoutes.post('/chat', async c => {
     const agent = await getAgent(agentId)
     if (!agent.config.enabled) throw agentDisabled()
     const body = chatRequestSchema.parse(await c.req.json())
-    const runAgentView = agent.config.kind === 'steward' && body.steward ? { ...agent, brief: body.steward } : agent
+    const runAgentView = agent.config.kind === 'steward' && body.steward ? { ...agent, brief: body.steward } : agent.config.kind === 'assistant' && body.assistant ? { ...agent, assistantBrief: body.assistant } : agent
     const source = body.source ?? 'dashboard'
     const claim = body.install && !body.sessionId ? await claimInstallSession(agentId, () => createSession(agentId, undefined, undefined, source)) : null
     if (claim && 'inFlight' in claim) return c.json({ error: 'the installation is already under way in another conversation', code: 'install_in_flight', sessionId: claim.inFlight }, 409)
@@ -39,6 +39,8 @@ chatRoutes.post('/chat', async c => {
     const { provider, model } = await resolveRunModel(agent, override)
     const meta = { provider, model }
     const runId = newId()
+    // A conversation opened for a hub channel stays one, whatever a later message names.
+    const channel = source === 'channel' || session.source === 'channel'
     const holder = claimSession(session.id, runId, body.author?.id)
     if (holder) {
         // `startedAt` lets the dashboard say how long the conversation has been busy and offer to
@@ -52,7 +54,7 @@ chatRoutes.post('/chat', async c => {
     })
     const response = toResumableStreamResponse(run.id, async writer => {
         try {
-            const agentRun = await runAgent(runAgentView, session.id, body.message, override, writer, run.id, { source: 'chat', author: body.author, userLanguage: claim ? body.userLanguage : undefined, callableAgentIds: body.callableAgentIds })
+            const agentRun = await runAgent(runAgentView, session.id, body.message, override, writer, run.id, { source: 'chat', author: body.author, userLanguage: claim ? body.userLanguage : undefined, callableAgentIds: body.callableAgentIds, channel })
             mergeRunStream(writer, agentRun, meta)
         } catch (err) {
             // runAgent registers the run's abort controller itself, and unregistering it is what

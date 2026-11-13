@@ -350,6 +350,11 @@
                 "blurb": "Read their routines and runs",
                 "help": "Lets the coworker check the other coworkers of the workspace: their status, scheduled tasks, triggers and recent runs, with the tools each run called when it needs to understand a failure. It cannot change anything. A run can hold data from the other coworker's connected apps."
             },
+            "work": {
+                "label": "Work on issues",
+                "blurb": "Take, update and hand off issues",
+                "help": "Lets the coworker work the issues assigned to it on your projects: it is woken when one is assigned or when someone comments, takes the issue, comments on its progress and moves it to review or done, or to blocked saying who must do what. It can also split work into sub-issues and assign them to other coworkers."
+            },
             "askUser": {
                 "label": "Ask you questions",
                 "blurb": "Pause to ask with answer options",

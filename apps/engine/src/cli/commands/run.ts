@@ -4,6 +4,7 @@ import { createServer } from '../../http/server.js'
 import { attachDesktopBridge } from '../../desktop/bridge.js'
 import { prepareDataDir } from '../../datadir/ladder.js'
 import { ensureSteward } from '../../agents/steward.js'
+import { ensureAssistant } from '../../agents/assistant.js'
 import { startScheduler } from '../../runtime/scheduler.js'
 import { reconcileInterruptedRuns } from '../../runtime/reconcile.js'
 import { installBrowserInBackground, installDesktopInBackground, updateCliToolsInBackground } from './update.js'
@@ -25,6 +26,7 @@ export async function runCommand(): Promise<void> {
     const lastUpdate = settleLastUpdateOnBoot()
     if (lastUpdate?.status === 'error') logger.warn({ error: lastUpdate.error, commit: lastUpdate.commit }, 'last update did not land')
     await ensureSteward()
+    await ensureAssistant()
     await reconcileInterruptedRuns()
     if (await installBrowserInBackground()) logger.info('chromium missing: installing it in the background')
     if (installDesktopInBackground()) logger.info('desktop missing: installing it in the background')

@@ -1,7 +1,7 @@
 // Pulled from the database the Supabase migrations had built (2026-11-09). From here on it is the
 // source of truth: change it, then `pnpm db:generate` writes the migration.
 
-import { type PgTableExtraConfigValue, pgTable, unique, uuid, text, boolean, index, foreignKey, uniqueIndex, integer, bigint, jsonb, check, smallint, vector, type AnyPgColumn, varchar, date, primaryKey, real, pgEnum } from 'drizzle-orm/pg-core'
+import { type PgTableExtraConfigValue, pgTable, unique, uuid, text, boolean, index, foreignKey, uniqueIndex, integer, bigint, jsonb, check, smallint, vector, type AnyPgColumn, varchar, date, primaryKey, real, pgEnum, doublePrecision } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 import { authUsers } from './auth'
@@ -25,8 +25,14 @@ export const notification_email_status = pgEnum('notification_email_status', ['s
 export const notification_kind = pgEnum('notification_kind', ['info', 'question', 'approval', 'done', 'error', 'connector'])
 export const session_kind = pgEnum('session_kind', ['general', 'thread'])
 export const session_outcome = pgEnum('session_outcome', ['done', 'nothing', 'failed'])
-export const session_source = pgEnum('session_source', ['dashboard', 'builder', 'schedule', 'agent', 'delegate', 'api', 'trigger'])
+export const session_source = pgEnum('session_source', ['dashboard', 'builder', 'schedule', 'agent', 'delegate', 'api', 'trigger', 'issue', 'channel'])
 export const session_status = pgEnum('session_status', ['idle', 'working', 'error', 'waiting_human', 'awaiting_question', 'awaiting_approval', 'awaiting_connector', 'awaiting_ack'])
+export const team_member_role = pgEnum('team_member_role', ['lead', 'member'])
+export const goal_status = pgEnum('goal_status', ['planned', 'active', 'achieved', 'cancelled'])
+export const project_status = pgEnum('project_status', ['planned', 'active', 'paused', 'completed', 'archived'])
+export const issue_status = pgEnum('issue_status', ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'blocked', 'cancelled'])
+export const issue_priority = pgEnum('issue_priority', ['none', 'low', 'medium', 'high', 'urgent'])
+export const channel_kind = pgEnum('channel_kind', ['public', 'private', 'dm'])
 export const template_pricing_model = pgEnum('template_pricing_model', ['free', 'one_time', 'recurring'])
 export const template_purchase_status = pgEnum('template_purchase_status', ['pending', 'active', 'past_due', 'canceled', 'refunded'])
 export const template_status = pgEnum('template_status', ['draft', 'in_review', 'published', 'unlisted', 'archived'])
@@ -57,8 +63,22 @@ export const agents = pgTable(
             .array()
             .default(sql`'{}'::text[]`)
             .notNull(),
+        title: text(),
+        reports_to_agent_id: uuid(),
+        monthly_budget_micros: bigint({ mode: 'number' }),
     },
     (table): PgTableExtraConfigValue[] => [
+        unique('agents_id_workspace_key').on(table.id, table.workspace_id),
+        index('agents_reports_to_idx')
+            .using('btree', table.reports_to_agent_id)
+            .where(sql`(reports_to_agent_id IS NOT NULL)`),
+        foreignKey({
+            columns: [table.reports_to_agent_id],
+            foreignColumns: [table.id],
+            name: 'agents_reports_to_agent_id_fkey',
+        }).onDelete('set null'),
+        check('agents_monthly_budget_micros_check', sql`(monthly_budget_micros IS NULL) OR (monthly_budget_micros >= 0)`),
+        check('agents_title_length_check', sql`(title IS NULL) OR (char_length(title) <= 120)`),
         index('agents_created_at_idx').using('btree', table.created_at),
         index('agents_disabled_idx')
             .using('btree', table.workspace_id)
@@ -2275,5 +2295,424 @@ export const engine_host_metrics = pgTable(
             name: 'engine_host_metrics_host_id_fkey',
         }).onDelete('cascade'),
         primaryKey({ columns: [table.host_id, table.sampled_at], name: 'engine_host_metrics_pkey' }),
+    ]
+)
+
+export const teams = pgTable(
+    'teams',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        name: text().notNull(),
+        description: text(),
+        color: text(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        uniqueIndex('teams_workspace_name_key').using('btree', sql`workspace_id`, sql`lower(name)`),
+        unique('teams_id_workspace_id_key').on(table.id, table.workspace_id),
+        foreignKey({ columns: [table.workspace_id], foreignColumns: [workspaces.id], name: 'teams_workspace_id_fkey' }).onDelete('cascade'),
+        check('teams_name_check', sql`(char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 80)`),
+        check('teams_description_check', sql`(description IS NULL) OR (char_length(description) <= 2000)`),
+        check('teams_color_check', sql`(color IS NULL) OR (color ~ '^#[0-9a-fA-F]{6}$'::text)`),
+    ]
+)
+
+export const team_members = pgTable(
+    'team_members',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        team_id: uuid().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        user_id: uuid(),
+        agent_id: uuid(),
+        role: team_member_role().default('member').notNull(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('team_members_agent_idx').using('btree', table.agent_id).where(sql`(agent_id IS NOT NULL)`),
+        uniqueIndex('team_members_team_agent_key').using('btree', table.team_id, table.agent_id).where(sql`(agent_id IS NOT NULL)`),
+        uniqueIndex('team_members_team_user_key').using('btree', table.team_id, table.user_id).where(sql`(user_id IS NOT NULL)`),
+        index('team_members_user_idx').using('btree', table.user_id, table.workspace_id).where(sql`(user_id IS NOT NULL)`),
+        index('team_members_workspace_idx').using('btree', table.workspace_id),
+        foreignKey({ columns: [table.agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'team_members_agent_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.team_id, table.workspace_id], foreignColumns: [teams.id, teams.workspace_id], name: 'team_members_team_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'team_members_user_id_workspace_id_fkey' }).onDelete('cascade'),
+        check('team_members_check', sql`num_nonnulls(user_id, agent_id) = 1`),
+    ]
+)
+
+export const goals = pgTable(
+    'goals',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        parent_goal_id: uuid(),
+        team_id: uuid(),
+        title: text().notNull(),
+        description: text(),
+        status: goal_status().default('planned').notNull(),
+        owner_user_id: uuid(),
+        target_date: date(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('goals_parent_idx').using('btree', table.parent_goal_id).where(sql`(parent_goal_id IS NOT NULL)`),
+        index('goals_team_idx').using('btree', table.team_id).where(sql`(team_id IS NOT NULL)`),
+        index('goals_workspace_idx').using('btree', table.workspace_id, table.status),
+        unique('goals_id_workspace_id_key').on(table.id, table.workspace_id),
+        foreignKey({ columns: [table.owner_user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'goals_owner_user_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.parent_goal_id, table.workspace_id], foreignColumns: [table.id, table.workspace_id], name: 'goals_parent_goal_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.team_id, table.workspace_id], foreignColumns: [teams.id, teams.workspace_id], name: 'goals_team_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.workspace_id], foreignColumns: [workspaces.id], name: 'goals_workspace_id_fkey' }).onDelete('cascade'),
+        check('goals_title_check', sql`(char_length(btrim(title)) >= 1) AND (char_length(btrim(title)) <= 200)`),
+        check('goals_description_check', sql`(description IS NULL) OR (char_length(description) <= 20000)`),
+        check('goals_check', sql`(parent_goal_id IS NULL) OR (parent_goal_id <> id)`),
+    ]
+)
+
+export const projects = pgTable(
+    'projects',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        key: text().notNull(),
+        name: text().notNull(),
+        description: text(),
+        instructions: text(),
+        status: project_status().default('active').notNull(),
+        visibility: text().default('workspace').notNull(),
+        team_id: uuid(),
+        goal_id: uuid(),
+        lead_user_id: uuid(),
+        lead_agent_id: uuid(),
+        monthly_budget_micros: bigint({ mode: 'number' }),
+        target_date: date(),
+        created_by: uuid(),
+        archived_at: timestamptz(),
+        issue_counter: integer().default(0).notNull(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('projects_goal_idx').using('btree', table.goal_id).where(sql`(goal_id IS NOT NULL)`),
+        index('projects_team_idx').using('btree', table.team_id).where(sql`(team_id IS NOT NULL)`),
+        index('projects_workspace_idx').using('btree', table.workspace_id, table.status),
+        unique('projects_id_workspace_id_key').on(table.id, table.workspace_id),
+        unique('projects_workspace_id_key_key').on(table.workspace_id, table.key),
+        foreignKey({ columns: [table.created_by], foreignColumns: [users.id], name: 'projects_created_by_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.goal_id, table.workspace_id], foreignColumns: [goals.id, goals.workspace_id], name: 'projects_goal_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.lead_agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'projects_lead_agent_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.lead_user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'projects_lead_user_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.team_id, table.workspace_id], foreignColumns: [teams.id, teams.workspace_id], name: 'projects_team_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.workspace_id], foreignColumns: [workspaces.id], name: 'projects_workspace_id_fkey' }).onDelete('cascade'),
+        check('projects_key_check', sql`key ~ '^[A-Z][A-Z0-9]{1,5}$'::text`),
+        check('projects_name_check', sql`(char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 120)`),
+        check('projects_description_check', sql`(description IS NULL) OR (char_length(description) <= 20000)`),
+        check('projects_instructions_check', sql`(instructions IS NULL) OR (char_length(instructions) <= 50000)`),
+        check('projects_visibility_check', sql`visibility = ANY (ARRAY['workspace'::text, 'restricted'::text])`),
+        check('projects_monthly_budget_micros_check', sql`(monthly_budget_micros IS NULL) OR (monthly_budget_micros >= 0)`),
+        check('projects_check', sql`num_nonnulls(lead_user_id, lead_agent_id) <= 1`),
+    ]
+)
+
+export const project_members = pgTable(
+    'project_members',
+    {
+        project_id: uuid().notNull(),
+        user_id: uuid().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        access: text().notNull(),
+        granted_by: uuid(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('project_members_user_idx').using('btree', table.user_id, table.workspace_id),
+        index('project_members_workspace_idx').using('btree', table.workspace_id),
+        primaryKey({ columns: [table.project_id, table.user_id], name: 'project_members_pkey'}),
+        foreignKey({ columns: [table.granted_by], foreignColumns: [users.id], name: 'project_members_granted_by_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.project_id, table.workspace_id], foreignColumns: [projects.id, projects.workspace_id], name: 'project_members_project_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'project_members_user_id_workspace_id_fkey' }).onDelete('cascade'),
+        check('project_members_access_check', sql`access = ANY (ARRAY['use'::text, 'manage'::text])`),
+    ]
+)
+
+export const issues = pgTable(
+    'issues',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        project_id: uuid().notNull(),
+        number: integer().default(0).notNull(),
+        title: text().notNull(),
+        description: text(),
+        status: issue_status().default('backlog').notNull(),
+        priority: issue_priority().default('none').notNull(),
+        assignee_user_id: uuid(),
+        assignee_agent_id: uuid(),
+        created_by_user_id: uuid(),
+        created_by_agent_id: uuid(),
+        parent_issue_id: uuid(),
+        goal_id: uuid(),
+        due_date: date(),
+        position: doublePrecision().default(0).notNull(),
+        blocked_reason: text(),
+        checkout_run_id: text(),
+        checked_out_at: timestamptz(),
+        session_id: uuid(),
+        started_at: timestamptz(),
+        completed_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('issues_assignee_agent_idx').using('btree', table.assignee_agent_id, table.status).where(sql`(assignee_agent_id IS NOT NULL)`),
+        index('issues_assignee_user_idx').using('btree', table.assignee_user_id, table.status).where(sql`(assignee_user_id IS NOT NULL)`),
+        index('issues_board_idx').using('btree', table.project_id, table.status, table.position),
+        index('issues_checkout_idx').using('btree', table.checkout_run_id).where(sql`(checkout_run_id IS NOT NULL)`),
+        index('issues_goal_idx').using('btree', table.goal_id).where(sql`(goal_id IS NOT NULL)`),
+        index('issues_parent_idx').using('btree', table.parent_issue_id).where(sql`(parent_issue_id IS NOT NULL)`),
+        index('issues_session_idx').using('btree', table.session_id).where(sql`(session_id IS NOT NULL)`),
+        index('issues_workspace_updated_idx').using('btree', table.workspace_id, table.updated_at.desc().nullsFirst()),
+        unique('issues_id_workspace_id_key').on(table.id, table.workspace_id),
+        unique('issues_project_id_number_key').on(table.project_id, table.number),
+        foreignKey({ columns: [table.assignee_agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'issues_assignee_agent_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.assignee_user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'issues_assignee_user_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.created_by_agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'issues_created_by_agent_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.created_by_user_id], foreignColumns: [users.id], name: 'issues_created_by_user_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.goal_id, table.workspace_id], foreignColumns: [goals.id, goals.workspace_id], name: 'issues_goal_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.parent_issue_id, table.workspace_id], foreignColumns: [table.id, table.workspace_id], name: 'issues_parent_issue_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.project_id, table.workspace_id], foreignColumns: [projects.id, projects.workspace_id], name: 'issues_project_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.session_id], foreignColumns: [sessions.id], name: 'issues_session_id_fkey' }).onDelete('set null'),
+        check('issues_title_check', sql`(char_length(btrim(title)) >= 1) AND (char_length(btrim(title)) <= 300)`),
+        check('issues_description_check', sql`(description IS NULL) OR (char_length(description) <= 100000)`),
+        check('issues_blocked_reason_check', sql`(blocked_reason IS NULL) OR (char_length(blocked_reason) <= 2000)`),
+        check('issues_check', sql`num_nonnulls(assignee_user_id, assignee_agent_id) <= 1`),
+        check('issues_check1', sql`num_nonnulls(created_by_user_id, created_by_agent_id) <= 1`),
+        check('issues_check2', sql`(checkout_run_id IS NULL) = (checked_out_at IS NULL)`),
+        check('issues_check3', sql`(parent_issue_id IS NULL) OR (parent_issue_id <> id)`),
+    ]
+)
+
+export const issue_comments = pgTable(
+    'issue_comments',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        issue_id: uuid().notNull(),
+        author_user_id: uuid(),
+        author_agent_id: uuid(),
+        body: text().notNull(),
+        edited_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('issue_comments_issue_idx').using('btree', table.issue_id, table.created_at),
+        index('issue_comments_workspace_idx').using('btree', table.workspace_id),
+        foreignKey({ columns: [table.author_agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'issue_comments_author_agent_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.author_user_id], foreignColumns: [users.id], name: 'issue_comments_author_user_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.issue_id, table.workspace_id], foreignColumns: [issues.id, issues.workspace_id], name: 'issue_comments_issue_id_workspace_id_fkey' }).onDelete('cascade'),
+        check('issue_comments_body_check', sql`(char_length(btrim(body)) >= 1) AND (char_length(btrim(body)) <= 50000)`),
+        check('issue_comments_check', sql`num_nonnulls(author_user_id, author_agent_id) <= 1`),
+    ]
+)
+
+export const activity_events = pgTable(
+    'activity_events',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        project_id: uuid(),
+        issue_id: uuid(),
+        entity_type: text().notNull(),
+        entity_id: uuid().notNull(),
+        action: text().notNull(),
+        actor_user_id: uuid(),
+        actor_agent_id: uuid(),
+        metadata: jsonb().$type<Json>().default({}).notNull(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('activity_events_actor_agent_idx').using('btree', table.actor_agent_id, table.created_at.desc().nullsFirst()).where(sql`(actor_agent_id IS NOT NULL)`),
+        index('activity_events_entity_idx').using('btree', table.entity_type, table.entity_id, table.created_at.desc().nullsFirst()),
+        index('activity_events_issue_idx').using('btree', table.issue_id, table.created_at.desc().nullsFirst()).where(sql`(issue_id IS NOT NULL)`),
+        index('activity_events_project_idx').using('btree', table.project_id, table.created_at.desc().nullsFirst()).where(sql`(project_id IS NOT NULL)`),
+        uniqueIndex('activity_events_run_failed_once').using('btree', sql`workspace_id`, sql`((metadata ->> 'runId'::text))`).where(sql`(action = 'issue.run_failed'::text)`),
+        index('activity_events_workspace_idx').using('btree', table.workspace_id, table.created_at.desc().nullsFirst()),
+        foreignKey({ columns: [table.issue_id, table.workspace_id], foreignColumns: [issues.id, issues.workspace_id], name: 'activity_events_issue_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.project_id, table.workspace_id], foreignColumns: [projects.id, projects.workspace_id], name: 'activity_events_project_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.workspace_id], foreignColumns: [workspaces.id], name: 'activity_events_workspace_id_fkey' }).onDelete('cascade'),
+        check('activity_events_entity_type_check', sql`entity_type ~ '^[a-z_]{1,40}$'::text`),
+        check('activity_events_action_check', sql`action ~ '^[a-z_]{1,40}\\.[a-z_]{1,40}$'::text`),
+        check('activity_events_check', sql`num_nonnulls(actor_user_id, actor_agent_id) <= 1`),
+    ]
+)
+
+export const channels = pgTable(
+    'channels',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        name: text().notNull(),
+        description: text(),
+        kind: channel_kind().default('public').notNull(),
+        project_id: uuid(),
+        team_id: uuid(),
+        created_by: uuid(),
+        archived_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('channels_project_idx').using('btree', table.project_id).where(sql`(project_id IS NOT NULL)`),
+        index('channels_team_idx').using('btree', table.team_id).where(sql`(team_id IS NOT NULL)`),
+        index('channels_workspace_idx').using('btree', table.workspace_id, table.kind),
+        uniqueIndex('channels_workspace_name_key').using('btree', sql`workspace_id`, sql`lower(name)`).where(sql`((kind <> 'dm'::channel_kind) AND (archived_at IS NULL))`),
+        unique('channels_id_workspace_id_key').on(table.id, table.workspace_id),
+        foreignKey({ columns: [table.created_by], foreignColumns: [users.id], name: 'channels_created_by_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.project_id, table.workspace_id], foreignColumns: [projects.id, projects.workspace_id], name: 'channels_project_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.team_id, table.workspace_id], foreignColumns: [teams.id, teams.workspace_id], name: 'channels_team_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.workspace_id], foreignColumns: [workspaces.id], name: 'channels_workspace_id_fkey' }).onDelete('cascade'),
+        check('channels_name_check', sql`char_length(name) <= 80`),
+        check('channels_description_check', sql`(description IS NULL) OR (char_length(description) <= 2000)`),
+        check('channels_check', sql`(kind = 'dm'::channel_kind) OR (char_length(btrim(name)) >= 1)`),
+    ]
+)
+
+export const channel_members = pgTable(
+    'channel_members',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        channel_id: uuid().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        user_id: uuid(),
+        agent_id: uuid(),
+        last_read_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('channel_members_agent_idx').using('btree', table.agent_id).where(sql`(agent_id IS NOT NULL)`),
+        uniqueIndex('channel_members_channel_agent_key').using('btree', table.channel_id, table.agent_id).where(sql`(agent_id IS NOT NULL)`),
+        uniqueIndex('channel_members_channel_user_key').using('btree', table.channel_id, table.user_id).where(sql`(user_id IS NOT NULL)`),
+        index('channel_members_user_idx').using('btree', table.user_id, table.workspace_id).where(sql`(user_id IS NOT NULL)`),
+        foreignKey({ columns: [table.agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'channel_members_agent_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.channel_id, table.workspace_id], foreignColumns: [channels.id, channels.workspace_id], name: 'channel_members_channel_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'channel_members_user_id_workspace_id_fkey' }).onDelete('cascade'),
+        check('channel_members_check', sql`num_nonnulls(user_id, agent_id) = 1`),
+    ]
+)
+
+export const channel_messages = pgTable(
+    'channel_messages',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        channel_id: uuid().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        author_user_id: uuid(),
+        author_agent_id: uuid(),
+        body: text().notNull(),
+        parent_message_id: uuid(),
+        mentions: jsonb().$type<Json>().default([]).notNull(),
+        edited_at: timestamptz(),
+        deleted_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('channel_messages_channel_idx').using('btree', table.channel_id, table.created_at.desc().nullsFirst()),
+        index('channel_messages_parent_idx').using('btree', table.parent_message_id, table.created_at).where(sql`(parent_message_id IS NOT NULL)`),
+        index('channel_messages_workspace_idx').using('btree', table.workspace_id),
+        unique('channel_messages_id_channel_id_key').on(table.id, table.channel_id),
+        foreignKey({ columns: [table.author_agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'channel_messages_author_agent_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.author_user_id], foreignColumns: [users.id], name: 'channel_messages_author_user_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.channel_id, table.workspace_id], foreignColumns: [channels.id, channels.workspace_id], name: 'channel_messages_channel_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.parent_message_id, table.channel_id], foreignColumns: [table.id, table.channel_id], name: 'channel_messages_parent_message_id_channel_id_fkey' }).onDelete('cascade'),
+        check('channel_messages_body_check', sql`char_length(body) <= 40000`),
+        check('channel_messages_mentions_check', sql`jsonb_typeof(mentions) = 'array'::text`),
+        check('channel_messages_check', sql`num_nonnulls(author_user_id, author_agent_id) <= 1`),
+        check('channel_messages_check1', sql`(parent_message_id IS NULL) OR (parent_message_id <> id)`),
+    ]
+)
+
+export const channel_agent_turns = pgTable(
+    'channel_agent_turns',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        channel_id: uuid().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        agent_id: uuid().notNull(),
+        thread_message_id: uuid().notNull(),
+        trigger_message_id: uuid().notNull(),
+        requested_by: uuid(),
+        status: text().default('answering').notNull(),
+        failure: text(),
+        engine_run_id: text(),
+        reply_message_id: uuid(),
+        finished_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('channel_agent_turns_channel_idx').using('btree', table.channel_id, table.created_at.desc().nullsFirst()),
+        uniqueIndex('channel_agent_turns_in_flight_key').using('btree', table.agent_id, table.thread_message_id).where(sql`(status = 'answering'::text)`),
+        index('channel_agent_turns_run_idx').using('btree', table.workspace_id, table.engine_run_id).where(sql`(engine_run_id IS NOT NULL)`),
+        foreignKey({ columns: [table.agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'channel_agent_turns_agent_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.channel_id, table.workspace_id], foreignColumns: [channels.id, channels.workspace_id], name: 'channel_agent_turns_channel_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.requested_by], foreignColumns: [users.id], name: 'channel_agent_turns_requested_by_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.thread_message_id, table.channel_id], foreignColumns: [channel_messages.id, channel_messages.channel_id], name: 'channel_agent_turns_thread_message_id_channel_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.trigger_message_id, table.channel_id], foreignColumns: [channel_messages.id, channel_messages.channel_id], name: 'channel_agent_turns_trigger_message_id_channel_id_fkey' }).onDelete('cascade'),
+        check('channel_agent_turns_status_check', sql`status = ANY (ARRAY['answering'::text, 'answered'::text, 'failed'::text])`),
+        check('channel_agent_turns_failure_check', sql`(failure IS NULL) OR (failure = ANY (ARRAY['engine_unreachable'::text, 'engine_outdated'::text, 'coworker_disabled'::text, 'no_model'::text, 'no_access'::text, 'not_member'::text, 'timeout'::text, 'failed'::text, 'needs_input'::text, 'cancelled'::text]))`),
+    ]
+)
+
+export const channel_agent_sessions = pgTable(
+    'channel_agent_sessions',
+    {
+        channel_id: uuid().notNull(),
+        agent_id: uuid().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        engine_session_id: text().notNull(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        primaryKey({ columns: [table.channel_id, table.agent_id], name: 'channel_agent_sessions_pkey'}),
+        foreignKey({ columns: [table.agent_id, table.workspace_id], foreignColumns: [agents.id, agents.workspace_id], name: 'channel_agent_sessions_agent_id_workspace_id_fkey' }).onDelete('cascade'),
+        foreignKey({ columns: [table.channel_id, table.workspace_id], foreignColumns: [channels.id, channels.workspace_id], name: 'channel_agent_sessions_channel_id_workspace_id_fkey' }).onDelete('cascade'),
+    ]
+)
+
+export const assistant_chats = pgTable(
+    'assistant_chats',
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        workspace_id: bigint({ mode: 'number' }).notNull(),
+        user_id: uuid().notNull(),
+        project_id: uuid(),
+        title: text().default('New chat').notNull(),
+        engine_session_id: text(),
+        model: text(),
+        shared: boolean().default(false).notNull(),
+        last_message_at: timestamptz(),
+        archived_at: timestamptz(),
+        created_at: timestamptz().default(sql`now()`).notNull(),
+        updated_at: timestamptz().default(sql`now()`).notNull(),
+        stop_requested_at: timestamptz(),
+    },
+    (table): PgTableExtraConfigValue[] => [
+        index('assistant_chats_owner_idx').using('btree', table.user_id, table.workspace_id, table.last_message_at.desc()),
+        index('assistant_chats_project_idx').using('btree', table.project_id).where(sql`(project_id IS NOT NULL)`),
+        index('assistant_chats_shared_idx').using('btree', table.workspace_id, table.last_message_at.desc()).where(sql`shared`),
+        unique('assistant_chats_engine_session_id_key').on(table.engine_session_id),
+        foreignKey({ columns: [table.project_id, table.workspace_id], foreignColumns: [projects.id, projects.workspace_id], name: 'assistant_chats_project_id_workspace_id_fkey' }).onDelete('set null'),
+        foreignKey({ columns: [table.user_id, table.workspace_id], foreignColumns: [workspace_members.user_id, workspace_members.workspace_id], name: 'assistant_chats_user_id_workspace_id_fkey' }).onDelete('cascade'),
+        check('assistant_chats_title_check', sql`char_length(title) <= 200`),
+        check('assistant_chats_model_check', sql`(model IS NULL) OR (char_length(model) <= 200)`),
     ]
 )

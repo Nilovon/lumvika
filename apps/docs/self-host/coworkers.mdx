@@ -73,6 +73,21 @@ The browser opens the screen directly on your server's address, so the screen ne
 
 A template packages a working coworker setup for someone else to install. The template library of Lumvika Cloud does not ship with this build, so your install starts with none. See [Create a template](/templates/create) to package your own.
 
+## Projects, Chat and Channels
+
+The sidebar areas work on your install as on Lumvika Cloud: [projects and issues](/work/how-it-fits), [Chat](/work/chat), [Channels](/work/channels), goals, teams and the activity trail. They need the database migrations of their release and an engine from the same release.
+
+The app reads what an engine can do from the `capabilities` its `/health` reports: `assistant` for Chat, `assistant.sessions.delete` for erasing a deleted chat, `issues.runs` for coworkers on issues. On an engine from before that release:
+
+| Area | What people see |
+| --- | --- |
+| **Chat** | **Update your machine to use Chat**, in place of the message box |
+| **Deleting a chat** | The chat leaves the list, and a notice says its messages stay on the workspace's machine, which cannot erase them |
+| **Issues** | Issues can be assigned to coworkers, but nothing wakes them. Where a person assigns a coworker, the app says **This workspace's machine is too old to run coworkers on issues.** The assignment is kept |
+| **Channels** | A mentioned coworker does not answer, and the thread says the workspace's machine needs an update |
+
+Issue notices show in the app only, as on Lumvika Cloud. Web search in Chat uses the same `BRAVE_SEARCH_API_KEY` as your coworkers.
+
 ## The API
 
 Every coworker is reachable from Claude Code, Cursor or your own scripts through the Lumvika MCP server, at your own address instead of `app.lumvika.com`. See the [API](/api/introduction).

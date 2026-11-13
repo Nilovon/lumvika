@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception'
 import { ZodError } from 'zod'
 import { auth } from './auth.js'
 import { stewardGuard } from './steward-guard.js'
+import { assistantGuard } from './assistant-guard.js'
 import { healthRoutes } from './routes/health.js'
 import { agentRoutes } from './routes/agents.js'
 import { connectionRoutes } from './routes/connections.js'
@@ -15,6 +16,7 @@ import { createSkillFilesRouter, skillRoutes } from './routes/skills.js'
 import { skillProposalRoutes } from './routes/skill-proposals.js'
 import { scheduleRoutes } from './routes/schedules.js'
 import { triggerRoutes } from './routes/triggers.js'
+import { issueRunRoutes } from './routes/issue-runs.js'
 import { runRoutes, usageRoutes } from './routes/runs.js'
 import { statsRoutes } from './routes/stats.js'
 import { rewindRoutes } from './routes/rewind.js'
@@ -40,6 +42,8 @@ export function createServer(): Hono {
     api.use('*', auth)
     api.use('/agents/:id', stewardGuard)
     api.use('/agents/:id/*', stewardGuard)
+    api.use('/agents/:id', assistantGuard)
+    api.use('/agents/:id/*', assistantGuard)
     api.route('/update', updateRoutes)
     api.route('/doctor', doctorRoutes)
     api.route('/tools', toolRoutes)
@@ -69,6 +73,7 @@ export function createServer(): Hono {
     api.route('/agents/:id/skill-proposals', skillProposalRoutes)
     api.route('/agents/:id/schedules', scheduleRoutes)
     api.route('/agents/:id/triggers', triggerRoutes)
+    api.route('/agents/:id/issue-runs', issueRunRoutes)
     api.route('/agents/:id/runs', runRoutes)
     api.route('/agents/:id/usage', usageRoutes)
     api.route('/agents/:id/stats', statsRoutes)

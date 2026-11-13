@@ -24,6 +24,7 @@ const state = vi.hoisted(() => ({
     runs: [] as Array<{ agentId: string; sessionId: string; message: string; override: unknown; trigger: unknown; runId: string; finish: (o: Outcome) => void }>,
     markFired: vi.fn(async (_agentId: string, _slug: string, _at: string) => {}),
     sweep: vi.fn(async (_ids: string[]) => {}),
+    issueSweep: vi.fn(async (_ids: string[]) => {}),
     sessions: 0,
 }))
 
@@ -59,6 +60,7 @@ vi.mock('../schedules/cron.js', () => ({
     isDue: (schedule: { slug: string }) => state.due.has(schedule.slug),
 }))
 vi.mock('../memory/maintenance.js', () => ({ sweepMemoriesIfDue: state.sweep }))
+vi.mock('./issue-queue.js', () => ({ sweepIssueQueueIfDue: state.issueSweep }))
 vi.mock('./notify.js', () => ({
     sendNotification: async (input: Record<string, unknown>) => {
         state.sent.push(input)
@@ -126,6 +128,7 @@ afterEach(async () => {
     state.sent = []
     state.markFired.mockClear()
     state.sweep.mockClear()
+    state.issueSweep.mockClear()
     clearBudgetLatch()
     clearPlanLimitLatch('claude-sub')
     unregisterRunAbort('live-call')
@@ -289,6 +292,7 @@ describe('startScheduler', () => {
         await vi.advanceTimersByTimeAsync(0)
         expect(state.sweep).toHaveBeenCalledTimes(1)
         expect(state.sweep).toHaveBeenCalledWith(['on'])
+        expect(state.issueSweep).toHaveBeenCalledWith(['on'])
 
         await vi.advanceTimersByTimeAsync(30_000)
         expect(state.sweep).toHaveBeenCalledTimes(2)

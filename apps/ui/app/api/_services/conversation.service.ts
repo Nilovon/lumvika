@@ -8,7 +8,7 @@ import { ATTENTION_NOTIFICATION_COLUMNS, attentionDetailsOf, attentionNotificati
 import { sanitizeIlike } from '@/lib/search/ilike'
 import { cancelRun, getSession, getSessionMessages, listRuns, listSessions, listSkillProposals } from '@/lib/engine/client'
 import type { EngineSkillProposal, SessionSource } from '@/lib/engine/types'
-import { ATTENTION_STATUSES, needsHuman, sessionStatusSchema, type AgentConversationsOverview, type Conversation, type ConversationHit, type SessionKind, type SessionOutcome, type SessionStatus, type ToHandleList } from '@lumvika/contracts'
+import { ATTENTION_STATUSES, needsHuman, sessionSourceForClient, sessionStatusSchema, type AgentConversationsOverview, type Conversation, type ConversationHit, type SessionKind, type SessionOutcome, type SessionStatus, type ToHandleList } from '@lumvika/contracts'
 import { getRequestScope } from '@/lib/auth/session/request'
 import { callRows, selectCount, selectMany, selectMaybeSingle, serviceScope, updateRows } from '@/lib/db'
 import type { UnseenRun } from '@/lib/notifications/unseen-runs'
@@ -46,7 +46,7 @@ export async function listAgentSessions(agentId: string, actor?: Actor): Promise
     const engineSessions = target ? await listSessions(target.conn, target.engineAgentId).catch(() => []) : []
 
     const mirrored = new Set(mirroredRows.map(r => r.engine_session_id))
-    const unmirrored = engineSessions.filter(s => s.originAgentId && !mirrored.has(s.id))
+    const unmirrored = engineSessions.filter(s => s.originAgentId && s.source !== 'channel' && !mirrored.has(s.id))
 
     const engineOriginIds = [...new Set(unmirrored.map(s => s.originAgentId).filter((v): v is string => !!v))]
     const mirroredOriginIds = [...new Set(mirroredRows.map(r => r.origin_agent_id).filter((v): v is string => !!v))]
@@ -143,7 +143,9 @@ export async function listAgentThreads(agentId: string, actor?: Actor): Promise<
 }
 
 // The app's list of a coworker's conversations: the history, plus what the inbox knows of each one,
-// whether a run finished since the caller last opened it, and what a waiting one asks.
+// whether a run finished since the caller last opened it, and what a waiting one asks. Like every
+// conversation the app reads, its source goes through `sessionSourceForClient`: builds in people's
+// hands fail the whole list on a source they were not compiled with.
 export async function listAgentConversations(ctx: WorkspaceContext, agentId: string): Promise<Conversation[]> {
     const entries = await listAgentSessions(agentId, actorFromContext(ctx))
     const waiting = entries.flatMap(entry => (entry.id && needsHuman(entry.status) ? [{ id: entry.id, agent_id: entry.agentId, engine_session_id: entry.engineSessionId, title: entry.title, updated_at: entry.updatedAt }] : []))
@@ -161,6 +163,7 @@ export async function listAgentConversations(ctx: WorkspaceContext, agentId: str
 
     return entries.map(entry => ({
         ...entry,
+        source: sessionSourceForClient(entry.source),
         ...(unseenIds && { unseen: !!entry.id && unseenIds.has(entry.id) }),
         ask: entry.id ? (details[entry.id]?.message ?? null) : null,
     }))
@@ -206,7 +209,7 @@ export async function listWorkspaceConversationOverview(ctx: WorkspaceContext): 
             engineSessionId: row.engine_session_id,
             title: row.title,
             status: row.status,
-            source: (row.source ?? 'dashboard') as SessionSource,
+            source: sessionSourceForClient(row.source),
             updatedAt: row.updated_at,
             // Resolving the origin agent would cost a second lookup for a label the row never
             // shows: the Chats screen prints the status, the agent's own history prints the name.
@@ -312,8 +315,9 @@ export async function adoptEngineSession(agentId: string, engineSessionId: strin
     const target = await resolveAgentTarget(agentId, caller)
     const session = (await getSession(target.conn, target.engineAgentId, engineSessionId)) ?? (await listSessions(target.conn, target.engineAgentId)).find(s => s.id === engineSessionId)
     // A row is only ever a mirror of a session this agent holds: the column is unique across
-    // workspaces, so a made-up id would otherwise squat another workspace's session.
-    if (!session) throw new AuthorizationError('conversationNotFound')
+    // workspaces, so a made-up id would otherwise squat another workspace's session. A channel's
+    // conversation is never mirrored: it belongs to the people of the channel, not of the Box.
+    if (!session || session.source === 'channel') throw new AuthorizationError('conversationNotFound')
 
     let originAgentId: string | null = null
     if (session?.originAgentId) {
