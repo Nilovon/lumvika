@@ -1,0 +1,33 @@
+# Builds the two images from this checkout instead of pulling the published ones: for modified code
+# (the AGPL asks you to link its source with NEXT_PUBLIC_SOURCE_REPO_URL), or for the browser keys only a
+# build bakes in (captcha, PostHog).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+name: lumvika
+
+x-app-build: &app-build
+  context: .
+  dockerfile: apps/ui/Dockerfile
+  args:
+    NEXT_PUBLIC_SOURCE_REPO_URL: ${NEXT_PUBLIC_SOURCE_REPO_URL:-}
+    NEXT_PUBLIC_DOCS_URL: ${NEXT_PUBLIC_DOCS_URL:-}
+    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:-}
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+    NEXT_PUBLIC_HCAPTCHA_SITE_KEY: ${NEXT_PUBLIC_HCAPTCHA_SITE_KEY:-}
+
+# Only `app` builds: `secrets` and `migrate` run the same image once it is built.
+services:
+  secrets:
+    image: lumvika-app:local
+    pull_policy: never
+  migrate:
+    image: lumvika-app:local
+    pull_policy: never
+  app:
+    image: lumvika-app:local
+    build: *app-build
+  engine:
+    image: lumvika-engine:local
+    build:
+      context: .
+      dockerfile: apps/engine/Dockerfile

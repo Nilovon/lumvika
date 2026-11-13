@@ -1,7 +1,9 @@
 name: Release
 
-# Builds the engine image the Servers page tells people to run. The Version workflow calls it on
-# every push to main; a tag pushed by hand runs it too.
+# Builds the two public images docker-compose.yml runs: ghcr.io/<owner>/lumvika-app and lumvika-engine.
+# The Version workflow calls it on every push to main; a tag pushed by hand runs it too. Each platform
+# builds on a native runner (an arm64 Next.js build under QEMU takes hours), then one manifest per tag
+# joins them.
 on:
   push:
     tags: ['v*']
@@ -19,11 +21,16 @@ permissions:
   packages: write
 
 jobs:
-  engine-image:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [app, engine]
+        platform: [linux/amd64, linux/arm64]
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
-      # The two-platform build fills the runner's disk ("No space left on device" on v0.1.0):
-      # the preinstalled toolchains it never uses take ~30 GB.
+      # The images fill the runner's disk ("No space left on device" on v0.1.0): the preinstalled
+      # toolchains they never use take ~30 GB.
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
@@ -32,7 +39,61 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.sha || github.sha }}
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: target
+        run: |
+          {
+            echo "name=ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}"
+            echo "dockerfile=apps/${{ matrix.image == 'app' && 'ui' || 'engine' }}/Dockerfile"
+            echo "pair=${{ matrix.image }}-${{ matrix.platform == 'linux/arm64' && 'arm64' || 'amd64' }}"
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.target.outputs.name }}
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: ${{ steps.target.outputs.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            NEXT_PUBLIC_BUILD_SHA=${{ inputs.sha || github.sha }}
+            NEXT_PUBLIC_SOURCE_REPO_URL=${{ github.server_url }}/${{ github.repository }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ steps.target.outputs.name }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ steps.target.outputs.pair }}
+          cache-to: type=gha,mode=max,scope=${{ steps.target.outputs.pair }}
+      - name: Export digest
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ steps.target.outputs.pair }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [app, engine]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -42,18 +103,16 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/${{ github.repository_owner }}/lumvika-engine
+          images: ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}
           tags: |
             type=semver,pattern={{version}},value=${{ inputs.tag || github.ref_name }}
             type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag || github.ref_name }}
             type=raw,value=latest,enable=${{ !contains(inputs.tag || github.ref_name, '-') }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/engine/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=engine
-          cache-to: type=gha,mode=max,scope=engine
+      - name: Create the multi-platform tags
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}@sha256:%s ' *)
+      - name: Inspect
+        run: docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}:${{ steps.meta.outputs.version }}

@@ -3,17 +3,23 @@ title: "Configuration"
 description: "Every variable of .env, what it does, and what happens when it is empty."
 ---
 
-Lumvika reads its settings from `.env` at the root of your clone. `.env.example` lists every variable with a comment, in the groups below. `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_STORAGE_URL` and one way of sending email are required, the secrets are generated for you by `node scripts/self-host-check.mjs`, and the rest are optional.
+Lumvika reads its settings from `.env`, next to `docker-compose.yml`. [`.env.example`](https://github.com/schnebel-technologie/lumvika/blob/main/.env.example) lists every variable with a comment, in the groups below. Every one is optional: without `.env`, Lumvika runs on `http://localhost:3000`, generates its secrets on the first start, and sends its emails to the mail catcher. On a server, set the public addresses and a way of sending email.
 
 <Note>
-  Variables starting with `NEXT_PUBLIC_` are read by the browser, so they are baked into the app when its image is built. After changing one, run `docker compose up -d --build`. Any other change only needs `docker compose up -d`.
+  After changing `.env`, run `docker compose up -d`: it recreates the containers that read it. The app writes `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_STORAGE_URL`, `NEXT_PUBLIC_OAUTH_PROVIDERS` and `ADMIN_EMAILS` into its pages when it starts. Only the captcha site keys and `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` are baked in by a build: they need [your own build](/self-host/install#build-the-images-yourself).
 </Note>
+
+## Version
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `LUMVIKA_VERSION` | `latest` | The tag of the two images: `latest`, a minor like `0.5` (its patches), or an exact `0.5.1`. |
 
 ## The address people open
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | **Required.** The address people open in their browser, without a trailing slash. Sign-in links, invitations and the servers you pair all point there. |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | The address people open in their browser, without a trailing slash. Sign-in links, invitations and the servers you pair all point there. |
 | `LUMVIKA_APP_PORT` | `3000` | The port of this machine docker compose publishes the app on. |
 
 ## Postgres
@@ -28,7 +34,7 @@ docker compose runs Postgres 17 with pgvector, in the `postgres-data` volume, an
 
 ## Email
 
-People sign in with a code sent by email, so one of the first two is required.
+People sign in with a code sent by email. With neither of the first two, every email lands in the mail catcher docker compose runs, at `http://localhost:3003` on that machine only: enough to try Lumvika alone, not for a team.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -37,6 +43,7 @@ People sign in with a code sent by email, so one of the first two is required.
 | `RESEND_FROM` | Resend's test sender | The sender of sign-in codes and notifications, as `Name <address>`. With Resend, an address on a domain verified there: the test sender only delivers to the address of your Resend account. |
 | `RESEND_MARKETING_FROM` | Resend's test sender | The sender of reminders and nudges, ideally on a domain of its own. |
 | `RESEND_REPLY_TO` | none | Where replies to every email go. |
+| `LUMVIKA_MAIL_PORT` | `3003` | The port the mail catcher's inbox is published on, on `127.0.0.1` only. |
 
 ## File storage
 
@@ -47,7 +54,7 @@ docker compose runs an S3-compatible store ([RustFS](https://rustfs.com)) in the
 | `S3_ACCESS_KEY_ID` | `lumvika` | The access key of the store. |
 | `S3_SECRET_ACCESS_KEY` | generated | Its secret key. |
 | `LUMVIKA_STORAGE_PORT` | `3002` | The port of this machine docker compose publishes the store on. |
-| `NEXT_PUBLIC_STORAGE_URL` | `http://localhost:3002` | **Required.** The address a browser loads files from: avatars, logos, template images. On a server, its `https` domain. See [On a server](/self-host/install#on-a-server). |
+| `NEXT_PUBLIC_STORAGE_URL` | `http://localhost:3002` | The address a browser loads files from: avatars, logos, template images. On a server, its `https` domain. See [On a server](/self-host/install#on-a-server). |
 | `S3_ENDPOINT` | empty | Another S3-compatible store instead (Cloudflare R2, AWS S3, MinIO): its API address. Empty means the one docker compose runs. |
 | `S3_REGION` | `auto` | The region of that store. |
 | `S3_BUCKET_PREFIX` | empty | A prefix for every bucket name, when the account holds other buckets. |
@@ -61,12 +68,10 @@ docker compose runs an S3-compatible store ([RustFS](https://rustfs.com)) in the
 | `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET` | empty | Sign in with Apple, from a Services ID of your Apple developer account. Its return URL is `<NEXT_PUBLIC_APP_URL>/api/auth/callback/apple`. |
 | `APPLE_APP_BUNDLE_IDENTIFIER` | empty | The bundle id of your build of the iOS app, for Sign in with Apple from the app. |
 | `NEXT_PUBLIC_OAUTH_PROVIDERS` | empty | `google`, `apple` or `google,apple` adds those buttons to the sign-in page. Set the provider's id and secret above first. |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | empty | The site key of a Cloudflare Turnstile captcha on sign-up. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | empty | The site key of a Cloudflare Turnstile captcha on sign-up. Baked in by a build: needs [your own build](/self-host/install#build-the-images-yourself). |
 | `TURNSTILE_SECRET_KEY` | empty | Its secret key. |
-| `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` | empty | The site key of an hCaptcha puzzle, shown to a visitor Turnstile could not vouch for, or to every visitor when Turnstile is not set. |
+| `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` | empty | The site key of an hCaptcha puzzle, shown to a visitor Turnstile could not vouch for, or to every visitor when Turnstile is not set. Baked in by a build, like Turnstile's. |
 | `HCAPTCHA_SECRET_KEY` | empty | Its secret key. Without any captcha secret, no captcha. |
-
-The `NEXT_PUBLIC_` values are baked into the app when it is built: rebuild with `docker compose up -d --build` after changing them.
 
 ## The engine of your first workspace
 
@@ -91,7 +96,7 @@ The `NEXT_PUBLIC_` values are baked into the app when it is built: rebuild with 
 
 ## Secrets
 
-These secrets are generated by `self-host-check.mjs` when empty. Keep them stable: changing one invalidates what it already signed.
+Every secret marked "generated" on this page is generated on the first start, into the `secrets` volume, when `.env` leaves it empty. A value in `.env` always wins. Keep them stable: changing one invalidates what it already signed. To copy the generated ones into `.env`, see [The rest of `.env`](/self-host/install#4-the-rest-of-env).
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -112,7 +117,7 @@ Each one switches a feature on. Empty means the feature is off, and the rest of 
 | `BRAVE_SEARCH_API_KEY` | empty | Web search for the coworkers, through the [Brave Search API](https://brave.com/search/api). |
 | `FIRECRAWL_API_KEY` | empty | Reading websites through [Firecrawl](https://firecrawl.dev), including your company site when the Steward builds the Brain. |
 | `APIFY_TOKEN` | empty | LinkedIn and Google Maps research during onboarding, through [Apify](https://apify.com). |
-| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | empty | Product analytics with [PostHog](https://posthog.com). Off when empty, and the cookie banner only shows when it is set. |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | empty | Product analytics with [PostHog](https://posthog.com). Off when empty, and the cookie banner only shows when it is set. Baked in by a build: needs [your own build](/self-host/install#build-the-images-yourself). |
 
 ## Set by docker compose
 
@@ -121,6 +126,7 @@ Each one switches a feature on. Empty means the feature is off, and the rest of 
 | Variable | Value | What it does |
 | --- | --- | --- |
 | `DATABASE_URL` | `postgres://lumvika:<POSTGRES_PASSWORD>@postgres:5432/lumvika` | Where the app and the `migrate` step reach Postgres, unless you set your own. |
+| `SMTP_URL` | `smtp://mailpit:1025` | The mail catcher, unless you set your own SMTP server. |
 | `S3_ENDPOINT` | `http://storage:9000` | Where they reach the file store, unless you set your own. |
 | `LUMVIKA_ENGINE_URL` | `http://engine:3000` | Where the app reaches the engine of the first workspace, inside Docker. |
 | `LUMVIKA_HUB_BASE_URL` | `http://app:3000` | Where that engine calls the app back. |

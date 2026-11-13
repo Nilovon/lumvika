@@ -1,7 +1,7 @@
 name: Version
 
-# Every push to main that ships something publishes the next open source version: the engine
-# image first, then the tag and its GitHub Release, so a release never points at a missing image.
+# Every push to main that ships something publishes the next open source version: the app and engine
+# images first, then the tag and its GitHub Release, so a release never points at a missing image.
 # scripts/release/next-version.mjs picks the number and writes the notes.
 on:
   push:

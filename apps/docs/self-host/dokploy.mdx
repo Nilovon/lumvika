@@ -4,28 +4,34 @@ sidebarTitle: "Dokploy"
 description: "Run Lumvika on a server managed by Dokploy, with a domain and HTTPS."
 ---
 
-[Dokploy](https://dokploy.com) builds the same `docker-compose.yml` as a manual install, then adds the domain and the certificate. Plan for 5 to 8 minutes of build on a server with 4 vCPUs and 8 GB of memory.
+[Dokploy](https://dokploy.com) runs the same `docker-compose.yml` as a manual install, from the published images, then adds the domains and the certificates. Nothing is built on the server.
 
 ## Before you start
 
-- A server attached to Dokploy, with at least 8 GB of memory: the app build needs 6.
-- A way to send email, set up as in [Install](/self-host/install#2-set-up-email).
+- A server attached to Dokploy, with at least 4 GB of memory.
+- A way to send email, set up as in [Install](/self-host/install#3-set-up-email).
 - Three domains pointing at the server, for the app, the engine and the file store: `lumvika.example.com`, `engine.example.com` and `files.example.com`.
 
 ## 1. Create the service
 
 1. In a Dokploy project, add a **Compose** service, type **Docker Compose**.
-2. Point it at your clone of `https://github.com/schnebel-technologie/lumvika.git`, branch `main`, compose path `./docker-compose.yml`.
+2. Point it at `https://github.com/schnebel-technologie/lumvika.git`, branch `main`, compose path `./docker-compose.yml`. Or choose **Raw** and paste the content of [`docker-compose.yml`](https://github.com/schnebel-technologie/lumvika/blob/main/docker-compose.yml).
 
 ## 2. Set the environment
 
-Paste the content of your `.env` in the **Environment** tab. Start from `.env.example` and run `node scripts/self-host-check.mjs` on your machine to generate the secrets. Three values depend on your domains:
+In the **Environment** tab, set your domains and your mailer. The secrets are generated on the first start, into the `secrets` volume:
 
 ```bash .env
 NEXT_PUBLIC_APP_URL=https://lumvika.example.com
 LUMVIKA_ENGINE_BROWSER_URL=https://engine.example.com
 NEXT_PUBLIC_STORAGE_URL=https://files.example.com
+RESEND_API_KEY=re_...
+RESEND_FROM=Lumvika <lumvika@example.com>
+OPENROUTER_API_KEY=sk-or-...
+ADMIN_EMAILS=you@example.com
 ```
+
+Every other variable is in [Configuration](/self-host/configuration).
 
 ## 3. Add the domains
 
@@ -48,7 +54,7 @@ curl -s https://lumvika.example.com/api/version
 curl -s https://engine.example.com/health
 ```
 
-Then [sign in](/self-host/install#7-sign-in).
+Then [sign in](/self-host/install#2-sign-in).
 
 ## 5. Close the published ports
 
@@ -56,4 +62,4 @@ Then [sign in](/self-host/install#7-sign-in).
 
 ## Updating
 
-Pull the new version into your clone, then click **Deploy**. The engine keeps its data in the `engine-data` volume, the database in `postgres-data` and the files in `storage-data`. The `migrate` step applies the database migrations a release adds before the app starts.
+Click **Deploy** again: it pulls the images of the new version. The engine keeps its data in the `engine-data` volume, the database in `postgres-data` and the files in `storage-data`. The `migrate` step applies the database migrations a release adds before the app starts.

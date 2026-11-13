@@ -52,17 +52,45 @@ pnpm i18n:check
 pnpm build
 ```
 
-## Deployment
+## Self-hosting
+
+Lumvika runs from two public images, `ghcr.io/schnebel-technologie/lumvika-app` and
+`ghcr.io/schnebel-technologie/lumvika-engine`. [`docker-compose.yml`](docker-compose.yml) starts them
+with Postgres, an S3 file store and a mail catcher, and generates every password and key on the first
+start. You need Docker with Compose 2.24 or newer, nothing else:
 
 ```bash
-cp .env.example .env
-node scripts/self-host-check.mjs
-docker compose up -d --build
+mkdir lumvika && cd lumvika
+curl -fsSLO https://raw.githubusercontent.com/schnebel-technologie/lumvika/main/docker-compose.yml
+docker compose up -d
 ```
 
-The check generates missing secrets and validates the rest. [INSTALL.md](INSTALL.md) has the full guide.
-Set `NEXT_PUBLIC_APP_URL` to the public address, and `NEXT_PUBLIC_SOURCE_REPO_URL` to the repository
-holding the exact code you run, as the AGPL requires for a network service.
+Open <http://localhost:3000> and sign in with your email. Until email is set up, the code lands in the
+mail catcher at <http://localhost:3003>.
+
+On a server, create a `.env` next to the compose file (every variable is in [.env.example](.env.example)):
+
+```bash
+NEXT_PUBLIC_APP_URL=https://lumvika.example.com
+LUMVIKA_ENGINE_BROWSER_URL=https://engine.example.com
+NEXT_PUBLIC_STORAGE_URL=https://files.example.com
+RESEND_API_KEY=re_...                       # or SMTP_URL=smtps://user:password@smtp.example.com:465
+RESEND_FROM=Lumvika <lumvika@example.com>
+OPENROUTER_API_KEY=sk-or-...                # optional: the Steward's onboarding and default models
+ADMIN_EMAILS=you@example.com
+```
+
+then `docker compose up -d` again, and put a reverse proxy with HTTPS in front of ports 3000 (app),
+3001 (engine) and 3002 (file store). Update with `docker compose pull && docker compose up -d`.
+
+The [install guide](https://docs.lumvika.com/self-host/install) covers the reverse proxy, the firewall,
+backups and updates. [INSTALL.md](INSTALL.md) is the same guide written for an AI assistant doing the
+install for you.
+
+To run modified code, build the images from your clone with
+`docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`, and set
+`NEXT_PUBLIC_SOURCE_REPO_URL` to the repository holding that code, as the AGPL requires for a network
+service.
 
 Billing is not part of Lumvika. Every workspace has all features.
 

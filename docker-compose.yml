@@ -1,46 +1,58 @@
-# Lumvika on one machine: the web app, its database, its file store and the engine of your first workspace.
+# Lumvika on one machine: the web app, its database, its file store, a mail catcher and the engine of
+# your first workspace, from the images published on GitHub. Nothing to build, nothing to fill:
 #
-#   cp .env.example .env && node scripts/self-host-check.mjs   # fills the secrets, checks the rest
-#   docker compose up -d --build
+#   docker compose up -d
+#   open http://localhost:3000            sign-in codes land in http://localhost:3003 until email is set up
 #
-# Every start runs `migrate` first: it applies the database migrations, creates the storage buckets
-# and loads the services catalog into an empty database, then the app starts. See
-# https://docs.lumvika.com/self-host.
+# On the first start the `secrets` step generates every password and key into the `secrets` volume. A
+# value you set in `.env` (next to this file, see .env.example) always wins over the generated one.
+# Every start runs `migrate` before the app: it applies the database migrations, creates the storage
+# buckets and loads the services catalog into an empty database. See https://docs.lumvika.com/self-host.
 name: lumvika
 
-x-app-build: &app-build
-  context: .
-  dockerfile: apps/ui/Dockerfile
-  args:
-    NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-    NEXT_PUBLIC_STORAGE_URL: ${NEXT_PUBLIC_STORAGE_URL:-http://localhost:3002}
-    NEXT_PUBLIC_SOURCE_REPO_URL: ${NEXT_PUBLIC_SOURCE_REPO_URL:-}
-    NEXT_PUBLIC_DOCS_URL: ${NEXT_PUBLIC_DOCS_URL:-}
-    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:-}
-    NEXT_PUBLIC_ADMIN_EMAILS: ${ADMIN_EMAILS:-}
-    NEXT_PUBLIC_OAUTH_PROVIDERS: ${NEXT_PUBLIC_OAUTH_PROVIDERS:-}
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
-    NEXT_PUBLIC_HCAPTCHA_SITE_KEY: ${NEXT_PUBLIC_HCAPTCHA_SITE_KEY:-}
+x-app-image: &app-image ghcr.io/schnebel-technologie/lumvika-app:${LUMVIKA_VERSION:-latest}
+x-engine-image: &engine-image ghcr.io/schnebel-technologie/lumvika-engine:${LUMVIKA_VERSION:-latest}
 
-# Where the app and the migrate step find the database and the file store: the two services below,
-# unless `.env` points DATABASE_URL or S3_ENDPOINT somewhere else.
+x-env-file: &env-file
+  - path: .env
+    required: false
+
+# Empty values are filled from the generated secrets by scripts/docker/env.sh inside each container.
 x-data-env: &data-env
-  DATABASE_URL: ${DATABASE_URL:-postgres://lumvika:${POSTGRES_PASSWORD}@postgres:5432/lumvika}
+  DATABASE_URL: ${DATABASE_URL:-}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
   S3_ENDPOINT: ${S3_ENDPOINT:-http://storage:9000}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
   # The address a browser opens a signed download link at: the published store, not the internal one.
-  S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-${NEXT_PUBLIC_STORAGE_URL}}
-  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-lumvika}
-  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+  S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-${NEXT_PUBLIC_STORAGE_URL:-http://localhost:3002}}
+  NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+  NEXT_PUBLIC_STORAGE_URL: ${NEXT_PUBLIC_STORAGE_URL:-http://localhost:3002}
+  # Without Resend or an SMTP server of yours, every email lands in the mail catcher below.
+  SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
 
 services:
+  secrets:
+    image: *app-image
+    entrypoint: ["/bin/sh", "/app/scripts/docker/init-secrets.sh"]
+    volumes:
+      - secrets:/run/lumvika
+      - engine-secrets:/run/lumvika-engine
+    restart: "no"
+
   postgres:
     image: pgvector/pgvector:0.8.0-pg17
+    entrypoint: ["/bin/sh", "-c", ". /run/lumvika/env.sh && exec docker-entrypoint.sh postgres"]
     environment:
       POSTGRES_USER: lumvika
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_DB: lumvika
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - secrets:/run/lumvika:ro
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lumvika -d lumvika"]
       interval: 2s
@@ -51,22 +63,40 @@ services:
   # Any S3-compatible store works in its place (R2, AWS, MinIO): set S3_* in `.env`.
   storage:
     image: rustfs/rustfs:1.0.4
+    entrypoint: ["/bin/sh", "-c", ". /run/lumvika/env.sh && exec /entrypoint.sh rustfs"]
     environment:
-      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-lumvika}
-      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
     # Browsers load avatars, logos and template images straight from here (NEXT_PUBLIC_STORAGE_URL).
     ports:
       - "${LUMVIKA_STORAGE_PORT:-3002}:9000"
     volumes:
       - storage-data:/data
+      - secrets:/run/lumvika:ro
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Catches every email the app sends while no mailer is set up, sign-in codes included. Whoever reads
+  # it can sign in as anyone: published on this machine only, and on a network only the app shares, so
+  # the engine's coworkers cannot reach it. On a server, set up Resend or SMTP.
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    networks:
+      - mail
+    ports:
+      - "127.0.0.1:${LUMVIKA_MAIL_PORT:-3003}:8025"
     restart: unless-stopped
 
   migrate:
-    build: *app-build
+    image: *app-image
     working_dir: /app
     command: ["node", "scripts/db.mjs", "migrate"]
-    env_file: .env
+    env_file: *env-file
     environment: *data-env
+    volumes:
+      - secrets:/run/lumvika:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,18 +105,26 @@ services:
     restart: "no"
 
   app:
-    build: *app-build
-    env_file: .env
+    image: *app-image
+    env_file: *env-file
     environment:
       <<: *data-env
+      STEWARD_HUB_TOKEN_REQUIRED: ${STEWARD_HUB_TOKEN_REQUIRED:-1}
       # The engine below goes to the first workspace that needs one.
       LUMVIKA_ENGINE_URL: http://engine:3000
-      LUMVIKA_ENGINE_API_KEY: ${LUMVIKA_ENGINE_API_KEY}
+      LUMVIKA_ENGINE_API_KEY: ${LUMVIKA_ENGINE_API_KEY:-}
       # Where a browser reaches the engine below, to watch a coworker's screen.
       LUMVIKA_ENGINE_BROWSER_URL: ${LUMVIKA_ENGINE_BROWSER_URL:-http://localhost:3001}
+    volumes:
+      - secrets:/run/lumvika:ro
     depends_on:
       migrate:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    networks:
+      - default
+      - mail
     ports:
       - "${LUMVIKA_APP_PORT:-3000}:3000"
     extra_hosts:
@@ -94,17 +132,21 @@ services:
     restart: unless-stopped
 
   engine:
-    build:
-      context: .
-      dockerfile: apps/engine/Dockerfile
+    image: *engine-image
+    # Mounts only its own key, never the volume of the app's secrets: its coworkers run shell commands.
+    entrypoint: ["/bin/sh", "-c", ". /run/lumvika-engine/engine.env && exec node dist/cli/bin.js run"]
     environment:
-      LUMVIKA_API_KEY: ${LUMVIKA_ENGINE_API_KEY}
+      LUMVIKA_API_KEY: ${LUMVIKA_ENGINE_API_KEY:-}
       LUMVIKA_HUB_BASE_URL: http://app:3000
       LUMVIKA_LOG_LEVEL: ${LUMVIKA_LOG_LEVEL:-info}
     ports:
       - "${LUMVIKA_ENGINE_PORT:-3001}:3000"
     volumes:
       - engine-data:/data
+      - engine-secrets:/run/lumvika-engine:ro
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
     # The engine calls your own model when you connect one: Ollama or LM Studio on this machine
     # answer it at host.docker.internal.
     extra_hosts:
@@ -113,7 +155,13 @@ services:
     shm_size: 2gb
     restart: unless-stopped
 
+networks:
+  default:
+  mail:
+
 volumes:
+  secrets:
+  engine-secrets:
   postgres-data:
   storage-data:
   engine-data:

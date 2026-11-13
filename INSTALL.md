@@ -16,41 +16,62 @@ here is not enough.
 - Keep it short. One question at a time, plain words, no jargon they did not use first.
 - Never ask them to paste a secret key in the chat. Tell them which line of `.env` to put it on.
 
-## 1. Ask three questions first
+## 1. Ask two questions first
 
 1. **Where should Lumvika run?** On this computer, to try it alone, or on a server, for a team.
-2. **How should it send email?** People sign in with a 6-digit code sent by email. Offer the one
-   that fits:
-   - *Resend* (https://resend.com): an API key, and a sending domain verified there for anyone but
-     the Resend account owner to receive the codes. Recommended on a server.
-   - *Their own SMTP server*: any mailbox provider that gives SMTP credentials.
-   The database and the file storage need no choice: `docker compose` runs both next to the app.
-3. **Do they have an OpenRouter key?** It runs the Steward's guided onboarding. They get one at
+2. **Do they have an OpenRouter key?** It runs the Steward's guided onboarding. They get one at
    https://openrouter.ai/keys. Without it the Steward skips the onboarding and runs on the AI they
    connect in the app, their Claude or ChatGPT subscription included.
 
+On a server, ask a third: **how should it send email?** People sign in with a 6-digit code sent by
+email. On their own computer the codes land in a mail catcher and nothing is needed. On a server,
+offer the one that fits:
+- *Resend* (https://resend.com): an API key, and a sending domain verified there for anyone but the
+  Resend account owner to receive the codes.
+- *Their own SMTP server*: any mailbox provider that gives SMTP credentials.
+
+The database, the file storage and every password need no choice: `docker compose` runs and
+generates them.
+
 ## 2. Check the machine
 
-They need Git, Node.js 22 or newer, and Docker with Docker Compose running. Docker needs at least
-6 GB of memory and 60 GB of free disk: the first build uses about 40.
+They need Docker with Docker Compose 2.24 or newer, running, with at least 4 GB of memory and 15 GB of
+free disk. No Node.js, no Git: the images are published on GitHub.
 
 ```bash
-git --version && node --version && docker compose version && docker info --format '{{.MemTotal}}'
+docker compose version && docker info --format '{{.MemTotal}}'
 ```
 
 Help them install what is missing before going on. On macOS, Docker Desktop's memory is in
 **Settings > Resources**.
 
-## 3. Get the code
+## 3. Get the compose file
 
 ```bash
-git clone https://github.com/schnebel-technologie/lumvika.git && cd lumvika
-cp .env.example .env
+mkdir lumvika && cd lumvika
+curl -fsSLO https://raw.githubusercontent.com/schnebel-technologie/lumvika/main/docker-compose.yml
 ```
 
 Every command below runs from this folder.
 
-## 4. Set up email
+## 4. Write `.env`
+
+On their own computer, only when they have an OpenRouter key:
+
+```bash
+OPENROUTER_API_KEY=sk-or-...
+ADMIN_EMAILS=<their email>
+```
+
+On a server, the public addresses (each on its own https domain) and the mailer too:
+
+```bash
+NEXT_PUBLIC_APP_URL=https://lumvika.their-domain.com
+LUMVIKA_ENGINE_BROWSER_URL=https://engine.their-domain.com
+NEXT_PUBLIC_STORAGE_URL=https://files.their-domain.com
+OPENROUTER_API_KEY=sk-or-...
+ADMIN_EMAILS=<their email>
+```
 
 **Resend:** walk them through it, they do the clicks.
 
@@ -63,71 +84,55 @@ Every command below runs from this folder.
    RESEND_FROM=Lumvika <lumvika@their-domain.com>
    ```
 
-   Until the domain is verified, Resend only delivers to the address of their Resend account: enough
-   for a first sign-in by that person alone.
-
-**Their own SMTP server:** one line in `.env`, `smtps://` for port 465, `smtp://` for 587 or 25:
+**Their own SMTP server:** `smtps://` for port 465, `smtp://` for 587 or 25:
 
 ```bash
 SMTP_URL=smtps://<user>:<password>@<smtp host>:465
+RESEND_FROM=Lumvika <lumvika@their-domain.com>
 ```
 
-with `RESEND_API_KEY` left empty, and `RESEND_FROM` uncommented with an address that server accepts.
+Do not fill the passwords or keys of Lumvika itself before the first start: it generates them into
+the `secrets` volume. Every variable is described in
+https://github.com/schnebel-technologie/lumvika/blob/main/.env.example.
 
-## 5. Fill the rest of `.env`
+On a server, see "On a server" in the human guide for the reverse proxy and the firewall: Docker
+publishes ports past `ufw`, so they must close 3000, 3001 and 3002 at their provider and reach them
+through the proxy.
+
+## 5. Start
 
 ```bash
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-OPENROUTER_API_KEY=sk-or-...
-ADMIN_EMAILS=<their email>
+docker compose up -d
 ```
 
-On a server, `NEXT_PUBLIC_APP_URL` is the https address the team opens,
-`LUMVIKA_ENGINE_BROWSER_URL` the https address of the engine and `NEXT_PUBLIC_STORAGE_URL` the https
-address of the file store, each on its own domain. They are baked in by the build, so set them now.
-See "On a server" in the human guide for the reverse proxy and the firewall: Docker publishes ports
-past `ufw`, so they must close 3000, 3001 and 3002 at their provider and reach them through the proxy.
+The first start pulls the images: a few minutes on a slow connection. Every start runs `secrets`
+(generates the passwords once) and `migrate` (database migrations, storage buckets, services catalog)
+before the app starts.
 
-## 6. Check and start
+## 6. Verify
 
 ```bash
-node scripts/self-host-check.mjs
-```
-
-It generates the secrets (the database password, the session secret, the storage key and the
-engine key among them), checks the rest and prints the start command. When it stops, its message
-says what to fix: do that and run it again. Then start:
-
-```bash
-docker compose up -d --build
-```
-
-The first build takes several minutes: say so, and wait. Every start runs `migrate` first, which
-applies the database migrations, creates the storage buckets and loads the services catalog, then
-the app starts.
-
-## 7. Verify
-
-```bash
-docker compose ps
+docker compose ps -a
 curl -s http://localhost:3000/api/version
 docker compose exec engine curl -s http://localhost:3000/health
 ```
 
-`postgres`, `storage`, `app` and `engine` are running, `migrate` exited with 0, and both
-answer. If not, read `docker compose logs --tail 200 migrate app engine`, fix what it says, and check https://docs.lumvika.com/self-host/troubleshooting.
+`postgres`, `storage`, `mailpit`, `app` and `engine` are running, `secrets` and `migrate` exited with
+0, and both answer. If not, read `docker compose logs --tail 200 migrate app engine`, fix what it says,
+and check https://docs.lumvika.com/self-host/troubleshooting.
 
-## 8. Hand over
+## 7. Hand over
 
-Tell them to open `NEXT_PUBLIC_APP_URL`, sign in with their email and the 6-digit code, and say
-hi to the Steward: it asks what they need done and builds the team. Their coworkers use the AI
-they connect in the app: an Anthropic, OpenAI, Gemini or OpenRouter key, or their Claude or ChatGPT
-subscription.
+Tell them to open `NEXT_PUBLIC_APP_URL` (http://localhost:3000 by default), sign in with their email
+and the 6-digit code, and say hi to the Steward: it asks what they need done and builds the team.
+Without Resend or SMTP, the code is in the mail catcher at http://localhost:3003, reachable from that
+machine only. Their coworkers use the AI they connect in the app: an Anthropic, OpenAI, Gemini or
+OpenRouter key, or their Claude or ChatGPT subscription.
 
 To update later:
 
 ```bash
-git pull && docker compose up -d --build
+docker compose pull && docker compose up -d
 ```
 
 The `migrate` step applies the migrations a release adds before the app starts. Back up the
@@ -135,4 +140,4 @@ database first (`docker compose exec postgres pg_dump -U lumvika lumvika > backu
 
 Versions follow one rule: a patch (`v0.5.1`) only asks to pull, a minor (`v0.6.0`) has an
 `Upgrade` section in its [release notes](https://github.com/schnebel-technologie/lumvika/releases) to read
-first. The engine image `ghcr.io/schnebel-technologie/lumvika-engine:0.5` follows the patches of `0.5`.
+first. `LUMVIKA_VERSION=0.5` in `.env` keeps both images on the patches of `0.5`.

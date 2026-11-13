@@ -32,10 +32,13 @@ You need Node 22, pnpm 8 (`corepack enable`), Docker for the local stack, and an
     SMTP_URL=smtp://127.0.0.1:54435
     ```
 
-    Then generate the secrets and hand the file to the app:
+    Then fill the secrets and hand the file to the app:
 
     ```bash
-    node scripts/self-host-check.mjs
+    for key in BETTER_AUTH_SECRET LUMVIKA_ENGINE_API_KEY STEWARD_HUB_TOKEN_SECRET BOARD_IMAGE_SECRET \
+      UNSUBSCRIBE_SECRET PUBLISHED_ACCESS_SECRET MOBILE_OAUTH_TICKET_SECRET; do
+      sed -i.bak "s/^$key=$/$key=$(openssl rand -hex 32)/" .env
+    done && rm .env.bak
     cp .env apps/ui/.env
     echo "LUMVIKA_ENGINE_URL=http://localhost:3000" >> apps/ui/.env
     ```

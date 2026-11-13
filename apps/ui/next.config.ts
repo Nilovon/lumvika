@@ -4,7 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 // Dokploy builds without .git, so a production build stamps itself. Written back to process.env so
 // every process of the same build inlines one value.
-process.env.NEXT_PUBLIC_BUILD_SHA ??= process.env.NODE_ENV === "production" ? `build-${Date.now()}` : "dev";
+process.env.NEXT_PUBLIC_BUILD_SHA ||= process.env.NODE_ENV === "production" ? `build-${Date.now()}` : "dev";
 
 const nextConfig: NextConfig = {
   // A phone on the same wifi opens the dev server by its LAN address, which Next refuses to serve

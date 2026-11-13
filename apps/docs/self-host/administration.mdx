@@ -13,7 +13,7 @@ A self-hosted Lumvika has no back office. You administer it with one variable, a
 ADMIN_EMAILS=you@example.com,ops@example.com
 ```
 
-Admins see a few extra switches in the app. The list is also baked into the app for the browser, so rebuild after changing it: `docker compose up -d --build`.
+Admins see a few extra switches in the app. After changing the list, run `docker compose up -d`.
 
 There is no `/admin` page in the open source build. Everything else goes through the database.
 
@@ -83,7 +83,7 @@ Members invite people from the workspace menu, as on Lumvika Cloud. See [Teams](
 
 This build sends no invitation email. Send the link yourself: it is `NEXT_PUBLIC_APP_URL/invite/<token>`, with the `token` of the invitation in `workspace_invitations`. The person opens it and signs in with their email code.
 
-Sign-in codes are the one email Lumvika relies on, sent through Resend or your SMTP server. See [Set up email](/self-host/install#2-set-up-email).
+Sign-in codes are the one email Lumvika relies on, sent through Resend or your SMTP server. See [Set up email](/self-host/install#3-set-up-email).
 
 ## Background jobs
 

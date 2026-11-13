@@ -53,7 +53,7 @@ flowchart LR
 
 ## What runs where
 
-`docker compose up` starts four containers on one machine: Postgres, the file store, the app, and the engine of your first workspace, after a one-off `migrate` step. That is enough for a person or a small team.
+`docker compose up` starts five containers on one machine, from the images published on GitHub: Postgres, the file store, a mail catcher, the app, and the engine of your first workspace, after two one-off steps, `secrets` and `migrate`. That is enough for a person or a small team.
 
 Every other workspace needs a server of its own. You start the engine image on any machine with Docker, and it attaches itself to the workspace from the app. See [Servers](/self-host/servers).
 
@@ -77,10 +77,9 @@ The data-dir is a plain folder of files and SQLite databases. Credentials stay t
 
 ## What you need
 
-- A machine with Docker and Docker Compose. Building the images needs about 6 GB of memory available to Docker.
-- A way to send email: a [Resend](https://resend.com) key or any SMTP server, for the sign-in codes.
+- A machine with Docker and Docker Compose, with 4 GB of memory available to Docker.
+- On a server, a way to send email: a [Resend](https://resend.com) key or any SMTP server, for the sign-in codes. On your own computer, the mail catcher docker compose runs is enough.
 - An [OpenRouter key](https://openrouter.ai/keys), for the Steward's onboarding and the default models. Optional if you connect your own AI.
-- Node.js 22, for two small setup commands.
 
 ## Next steps
 

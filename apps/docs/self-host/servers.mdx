@@ -100,7 +100,7 @@ The app must reach the server on its port, and the server must reach the app. Tw
   </Tab>
 </Tabs>
 
-The app itself goes behind HTTPS the same way: a `Caddyfile` block for `lumvika.example.com` with `reverse_proxy localhost:3000`, then `NEXT_PUBLIC_APP_URL=https://lumvika.example.com` and a rebuild with `docker compose up -d --build`.
+The app itself goes behind HTTPS the same way: a `Caddyfile` block for `lumvika.example.com` with `reverse_proxy localhost:3000`, then `NEXT_PUBLIC_APP_URL=https://lumvika.example.com` in `.env` and `docker compose up -d`.
 
 ## The desktop screen
 
@@ -149,8 +149,8 @@ To move a workspace to another machine:
 The app and the engine of your first workspace update together:
 
 ```bash
-git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 A paired server updates by pulling the image and starting it again on the same volume, without a pairing token:
@@ -176,7 +176,9 @@ docker compose exec engine node dist/cli/bin.js doctor                # the engi
 
 Three things hold your data, and you back up all of them.
 
-**The database**: accounts, workspaces, members, the catalog. From the folder of your clone:
+**The secrets**: the passwords and keys generated on the first start. Without them the database dump below cannot be opened by a new install, and everyone is signed out. Copy them into `.env` once (see [The rest of `.env`](/self-host/install#4-the-rest-of-env)) and keep `.env` with your backups.
+
+**The database**: accounts, workspaces, members, the catalog. From the folder of `docker-compose.yml`:
 
 ```bash
 docker compose exec -T postgres pg_dump -U lumvika -Fc lumvika > lumvika-db.dump
