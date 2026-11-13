@@ -1,10 +1,8 @@
 'use client'
 
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { REVIEW_TABS, type ReviewTab } from '@/components/review/review-tab'
 import { useTranslations } from 'next-intl'
-
-export const REVIEW_TABS = ['toReview', 'blocked', 'conversations'] as const
-export type ReviewTab = (typeof REVIEW_TABS)[number]
 
 export function ReviewTabs({ value, onChange, counts }: { value: ReviewTab; onChange: (tab: ReviewTab) => void; counts: Partial<Record<ReviewTab, number>> }) {
     const t = useTranslations('review.tabs')

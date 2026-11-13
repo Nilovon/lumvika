@@ -6,7 +6,8 @@ import { NAV_ICONS } from '@/components/layout/sidebar/nav-icons'
 import { ReviewCommentDialog, type ReviewCommentMode } from '@/components/review/ReviewCommentDialog'
 import { ReviewItemCard } from '@/components/review/ReviewItemCard'
 import { ReviewSkeleton } from '@/components/review/ReviewSkeleton'
-import { REVIEW_TABS, ReviewTabs, type ReviewTab } from '@/components/review/ReviewTabs'
+import { openingReviewTab, REVIEW_TABS, type ReviewTab } from '@/components/review/review-tab'
+import { ReviewTabs } from '@/components/review/ReviewTabs'
 import { useReviewQueue } from '@/components/review/useReviewQueue'
 import { useWaitingConversations } from '@/components/review/useWaitingConversations'
 import { WaitingConversations } from '@/components/review/WaitingConversations'
@@ -20,13 +21,24 @@ import { useState } from 'react'
 
 export function ReviewScreen() {
     const t = useTranslations('review')
-    const [tab, setTab] = useTabParam(REVIEW_TABS)
+    const [tabParam, setTabParam, tabNamed] = useTabParam(REVIEW_TABS)
     const { queue, loadError, reload, approve, requestChanges, unblock } = useReviewQueue()
     const conversations = useWaitingConversations()
     const [openRef, setOpenRef] = useState<string | null>(null)
     const [commenting, setCommenting] = useState<{ mode: ReviewCommentMode; item: ReviewItem } | null>(null)
 
     const counts: Partial<Record<ReviewTab, number>> = { toReview: queue?.toReview.length, blocked: queue?.blocked.length, conversations: conversations?.length }
+    // Without a tab in the address, the screen opens on the first that holds something, decided once:
+    // what arrives later, or the person's own choice, never moves it.
+    const [opening, setOpening] = useState<ReviewTab | null>(null)
+    const picked = opening ?? (tabNamed ? null : openingReviewTab(counts))
+    if (picked && opening === null && !tabNamed) setOpening(picked)
+    const deciding = !tabNamed && picked === null && !loadError
+    const tab = tabNamed ? tabParam : (picked ?? tabParam)
+    const setTab = (next: ReviewTab) => {
+        setOpening(next)
+        setTabParam(next)
+    }
     const loaded = queue !== null && conversations !== null
     const allClear = loaded && !loadError && queue.toReview.length + queue.blocked.length + conversations.length === 0
 
@@ -43,6 +55,8 @@ export function ReviewScreen() {
         <PageFrame title={t('title')} description={t('description')} tabs={<ReviewTabs value={tab} onChange={setTab} counts={counts} />} bodyClassName="max-w-4xl">
             {allClear ? (
                 <EmptyState icon={CircleCheckIcon} title={t('allClear.title')} description={t('allClear.description')} className="py-16" />
+            ) : deciding ? (
+                <ReviewSkeleton />
             ) : tab === 'conversations' ? (
                 conversations === null ? <ReviewSkeleton /> : <WaitingConversations sessions={conversations} onOpenIssue={setOpenRef} />
             ) : queue === null ? (
