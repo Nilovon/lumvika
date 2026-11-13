@@ -91,6 +91,12 @@ jobs:
     name: Docker images build
     runs-on: ubuntu-latest
     steps:
+      # Both images fill the runner's disk: the preinstalled toolchains they never use take ~30 GB.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h /
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Engine
@@ -107,8 +113,5 @@ jobs:
           context: .
           file: apps/ui/Dockerfile
           push: false
-          build-args: |
-            NEXT_PUBLIC_APP_URL=http://localhost:3000
-            NEXT_PUBLIC_STORAGE_URL=http://localhost:3002
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
