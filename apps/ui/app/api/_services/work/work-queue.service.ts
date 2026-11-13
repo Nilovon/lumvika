@@ -109,14 +109,17 @@ type Candidate = { id: string; project_id: string; number: number; title: string
 // When the issue was last touched by its assignee, by anyone else who could have woken it (another
 // coworker, the system, a person who may use the coworker), and by such a person's comment, read
 // exactly per issue and actor (`issue_actor_touches`). Null for what never happened.
-export type IssueTouches = { assigneeTouchedAt: string | null; othersTouchedAt: string | null; personCommentedAt: string | null }
+// `assigneeFailedAt` is the assignee's last failed run on it, one of its own touches.
+export type IssueTouches = { assigneeTouchedAt: string | null; othersTouchedAt: string | null; personCommentedAt: string | null; assigneeFailedAt?: string | null }
 
 const timeOf = (at: string | null | undefined) => (at ? new Date(at).getTime() : 0)
 
 // Due when the coworker never touched it, when someone else acted on it since it last did, or, for
 // work it can still do on its own, when it last touched it a day ago. A blocked issue waits for
-// someone else to move, and one in review for a person's comment after the coworker's last touch. An
-// issue whose touches could not be read is never handed out.
+// someone else to move, and one in review for a person's comment after the coworker's last touch. A
+// run that failed is never started again on its own (no heartbeat, no engine restart, no daily
+// nudge): only someone touching the issue after it, or Try again, sets it off. An issue whose
+// touches could not be read is never handed out.
 export function isDue(issue: Pick<Candidate, 'status'>, touches: IssueTouches | undefined, now: number): boolean {
     if (!touches) return false
     const own = timeOf(touches.assigneeTouchedAt)
@@ -124,7 +127,8 @@ export function isDue(issue: Pick<Candidate, 'status'>, touches: IssueTouches | 
     const outside = timeOf(touches.othersTouchedAt)
     if (issue.status === 'blocked') return outside > own
     if (!own || outside > own) return true
-    return now - own > NUDGE_AFTER_MS
+    const failedLast = !!touches.assigneeFailedAt && timeOf(touches.assigneeFailedAt) >= own
+    return !failedLast && now - own > NUDGE_AFTER_MS
 }
 
 function byWorkingOrder(a: Candidate, b: Candidate): number {
@@ -145,13 +149,14 @@ async function readTouches(scope: WorkScope, issues: ReadonlyArray<Pick<Candidat
     if (error) throw new Error(`Failed to read when the issues were last touched: ${error.message}`)
     const mayWake = wakeRule(scope)
     const assigneeOf = new Map(issues.map(issue => [issue.id, issue.assignee_agent_id]))
-    const touches = new Map<string, IssueTouches>(issues.map(issue => [issue.id, { assigneeTouchedAt: null, othersTouchedAt: null, personCommentedAt: null }]))
+    const touches = new Map<string, IssueTouches>(issues.map(issue => [issue.id, { assigneeTouchedAt: null, othersTouchedAt: null, personCommentedAt: null, assigneeFailedAt: null }]))
     for (const row of data ?? []) {
         const assignee = assigneeOf.get(row.issue_id)
         const current = touches.get(row.issue_id)
         if (!assignee || !current) continue
         if (row.actor_agent_id === assignee) {
             if (row.action !== 'issue.created') current.assigneeTouchedAt = latest(current.assigneeTouchedAt, row.last_at)
+            if (row.action === 'issue.run_failed') current.assigneeFailedAt = latest(current.assigneeFailedAt ?? null, row.last_at)
             continue
         }
         if (row.actor_user_id && !(await mayWake(row.actor_user_id, assignee))) continue

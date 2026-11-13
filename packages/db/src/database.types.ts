@@ -4804,6 +4804,15 @@ export type Database = {
           last_at: string
         }[]
       }
+      issue_run_failures: {
+        Args: { p_issue_ids: string[]; p_workspace_id: number }
+        Returns: {
+          actor_agent_id: string
+          created_at: string
+          issue_id: string
+          metadata: Json
+        }[]
+      }
       issue_touches: {
         Args: { p_issue_ids: string[]; p_workspace_id: number }
         Returns: {

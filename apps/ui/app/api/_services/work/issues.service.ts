@@ -28,6 +28,7 @@ import type { Database } from '@/app/api/database.types'
 import { recordActivity } from '@/app/api/_services/work/activity.service'
 import { reactToIssueChange } from '@/app/api/_services/work/issue-effects.service'
 import { ISSUE_COLUMNS, ISSUE_SUMMARY_COLUMNS, type IssueRow } from '@/app/api/_services/work/columns'
+import { withRunFailures } from '@/app/api/_services/work/issue-run-failures.service'
 import { toIssueDetail, toIssueSummary } from '@/app/api/_services/work/mappers'
 import { assertMemberInWorkspace, authorColumns, clientOf, memberRefOf, parseWorkInput, sameMember, type WorkScope } from '@/app/api/_services/work/refs'
 import { AppError } from '@/lib/i18n/action-error'
@@ -401,7 +402,10 @@ export async function listIssues(scope: WorkScope, input: IssueListFilters, visi
     }
     const { data, error } = await selectManyWithJoins(clientOf(scope), 'issues', ISSUE_SUMMARY_COLUMNS, PROJECT_KEY_JOIN, query, undefined, SORTS[filters.sort ?? 'position'], filters.limit ?? DEFAULT_LIST_LIMIT, filters.offset)
     if (error) throw new Error(`Failed to list the issues: ${error.message}`)
-    return (data ?? []).map(({ project, ...row }) => toIssueSummary(row, project.key))
+    return withRunFailures(
+        scope,
+        (data ?? []).map(({ project, ...row }) => toIssueSummary(row, project.key)),
+    )
 }
 
 // How many cards of each column a board loads at first: an open column up to a generous cap, a closed
@@ -429,7 +433,7 @@ export async function listProjectBoard(scope: WorkScope, projectId: string, limi
     const totals = Object.fromEntries(ISSUE_STATUSES.map(status => [status, 0])) as Record<IssueStatus, number>
     for (const row of counts.data ?? []) if (row.project_id === projectId) totals[row.status] = row.issue_count
     ISSUE_STATUSES.forEach((status, index) => (totals[status] = Math.max(totals[status], columns[index].length)))
-    return { issues: columns.flat(), totals }
+    return { issues: await withRunFailures(scope, columns.flat()), totals }
 }
 
 // Null when the reference names nothing or a project the actor cannot see: both read the same way.
@@ -442,10 +446,7 @@ export async function getIssueByRef(scope: WorkScope, ref: string, visibleProjec
     const { data: issue } = await selectMaybeSingle(supabase, 'issues', ISSUE_COLUMNS, { project_id: project.id, number: parsed.number })
     if (!issue) return null
     const { data: children } = await selectMany(supabase, 'issues', ISSUE_SUMMARY_COLUMNS, { parent_issue_id: issue.id }, { column: 'position', ascending: true })
-    return toIssueDetail(
-        issue,
-        project.key,
-        (children ?? []).map(child => toIssueSummary(child, project.key)),
-        project.visibility === 'restricted',
-    )
+    const subIssues = (children ?? []).map(child => toIssueSummary(child, project.key))
+    const [detail] = await withRunFailures(scope, [toIssueDetail(issue, project.key, subIssues, project.visibility === 'restricted')])
+    return { ...detail, subIssues: await withRunFailures(scope, subIssues) }
 }

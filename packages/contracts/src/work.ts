@@ -86,6 +86,23 @@ export const issueRunRequestSchema = z.object({
 })
 export type IssueRunRequest = z.infer<typeof issueRunRequestSchema>
 
+// Why a coworker's run on an issue ended without the work: the hub reads it from the run's end
+// (`issue.run_failed`) with the classification a channel turn uses.
+export const ISSUE_RUN_FAILURE_REASONS = ['no_model', 'coworker_disabled', 'cancelled', 'failed'] as const
+export const issueRunFailureReasonSchema = z.enum(ISSUE_RUN_FAILURE_REASONS)
+export type IssueRunFailureReason = z.infer<typeof issueRunFailureReasonSchema>
+
+// The coworker's last run on the issue failed, and it did nothing on the issue since. `sessionId` is
+// the hub's conversation of that run, when it has one.
+export const issueRunFailureSchema = z.object({
+    agentId: z.string(),
+    reason: issueRunFailureReasonSchema,
+    sessionId: z.string().nullable(),
+    runId: z.string(),
+    at: z.string(),
+})
+export type IssueRunFailure = z.infer<typeof issueRunFailureSchema>
+
 export const PROJECT_KEY_PATTERN = /^[A-Z][A-Z0-9]{1,5}$/
 export const projectKeySchema = z.string().trim().toUpperCase().regex(PROJECT_KEY_PATTERN, { message: 'projectKeyInvalid' })
 
@@ -131,6 +148,7 @@ export const ACTIVITY_ACTIONS = [
     'issue.comment_edited',
     'issue.checked_out',
     'issue.released',
+    'issue.run_failed',
     'goal.created',
     'goal.updated',
     'goal.status_changed',
@@ -211,6 +229,9 @@ export const issueSummarySchema = z.object({
     completedAt: z.string().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
+    // Absent where the server did not read it (a write's answer, a realtime row): the screen keeps
+    // what it knew.
+    runFailure: issueRunFailureSchema.nullable().optional(),
 })
 export type IssueSummary = z.infer<typeof issueSummarySchema>
 

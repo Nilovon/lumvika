@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { ISSUE_CHECKOUT_STATUSES, formatIssueRef, type IssueStatus, type IssueWakeReason, type WorkAuthor } from '@lumvika/contracts'
+import { ISSUE_CHECKOUT_STATUSES, formatIssueRef, type IssueRunFailureReason, type IssueStatus, type IssueWakeReason, type WorkAuthor } from '@lumvika/contracts'
 import { after } from 'next/server'
 
 import { hasAccess, memberActor, readAgentAccess } from '@/app/api/_auth/access'
@@ -29,6 +29,7 @@ export type IssueChange =
 export type IssueWake = { agentId: string; reason: IssueWakeReason; note?: string }
 
 export const ISSUE_NOTIFICATION_EVENTS = { in_review: 'issue.in_review', blocked: 'issue.blocked' } as const
+export const ISSUE_RUN_FAILED_EVENT = 'issue.run_failed'
 type NoticeStatus = keyof typeof ISSUE_NOTIFICATION_EVENTS
 
 type WakeView = Pick<IssueRow, 'status' | 'assignee_agent_id' | 'checkout_run_id'>
@@ -64,16 +65,21 @@ export function noticeFor(change: IssueChange, issue: Pick<IssueRow, 'status'>):
 
 const enginesWithoutIssueRuns = new Set<string>()
 
-async function wake(issue: IssueRow & { ref: string }, wakeup: IssueWake): Promise<void> {
+// What a wake came to: a run started, or why not. `no_target` is a coworker turned off or a workspace
+// without a machine, `outdated` an engine older than issue runs, anything else the engine's refusal.
+export type WakeOutcome = 'started' | 'no_target' | 'outdated' | (string & {})
+
+export async function wake(issue: Pick<IssueRow, 'title'> & { ref: string }, wakeup: IssueWake): Promise<WakeOutcome> {
     const target = await resolveAgentTargetForTrigger(wakeup.agentId)
-    if (!target) return
+    if (!target) return 'no_target'
     try {
-        await startIssueRun(target.conn, target.engineAgentId, { ref: issue.ref, title: issue.title, reason: wakeup.reason, ...(wakeup.note ? { note: wakeup.note } : {}) })
+        const outcome = await startIssueRun(target.conn, target.engineAgentId, { ref: issue.ref, title: issue.title, reason: wakeup.reason, ...(wakeup.note ? { note: wakeup.note } : {}) })
+        return outcome.started ? 'started' : outcome.reason
     } catch (err) {
         if (err instanceof EngineRequestError && err.status === 404) {
             if (!enginesWithoutIssueRuns.has(target.conn.baseUrl)) console.warn('[work] this engine cannot start issue runs yet, the coworker is not woken', { baseUrl: target.conn.baseUrl })
             enginesWithoutIssueRuns.add(target.conn.baseUrl)
-            return
+            return 'outdated'
         }
         throw err
     }
@@ -95,35 +101,70 @@ async function recipientsFor(scope: WorkScope, issue: IssueRow, agentId: string)
     return Object.fromEntries(concerned.filter(id => memberIds.has(id) && coworkerRuleOf(normalizeNotificationPrefs(prefsOf.get(id)), agentId).mode !== 'muted').map(id => [id, 'mine' as const]))
 }
 
-async function notify(scope: WorkScope, issue: IssueRow & { ref: string }, agentId: string, status: NoticeStatus): Promise<void> {
+type IssueNotice = { event: string; message: string; key: 'issueInReview' | 'issueBlocked' | 'issueRunFailed'; values: Record<string, string> }
+
+// The in-app notice of the people who asked for an issue: its author and its project's lead, unless
+// they muted the coworker. `sessionId` is the conversation it opens, the issue's own by default.
+async function sendIssueNotice(scope: WorkScope, issue: IssueRow & { ref: string }, agentId: string, build: (agentName: string) => IssueNotice, sessionId: string | null = issue.session_id): Promise<void> {
     const recipients = await recipientsFor(scope, issue, agentId)
     if (Object.keys(recipients).length === 0) return
     const supabase = clientOf(scope)
     const [{ data: agent }, { data: session }] = await Promise.all([
         selectMaybeSingle(supabase, 'agents', ['name', 'space_id', 'engine_agent_id'] as const, { id: agentId, workspace_id: scope.workspaceId }),
-        issue.session_id ? selectMaybeSingle(supabase, 'sessions', ['engine_session_id'] as const, { id: issue.session_id }) : Promise.resolve({ data: null }),
+        sessionId ? selectMaybeSingle(supabase, 'sessions', ['engine_session_id'] as const, { id: sessionId }) : Promise.resolve({ data: null }),
     ])
-    const agentName = agent?.name ?? 'A coworker'
-    const reason = issue.blocked_reason ?? ''
-    const message = status === 'in_review' ? `${agentName} moved ${issue.ref} "${issue.title}" to review.` : `${agentName} is blocked on ${issue.ref} "${issue.title}": ${reason}`
+    const notice = build(agent?.name ?? 'A coworker')
     const { error } = await supabase.from('notifications').insert<NotificationInsert>({
         workspace_id: scope.workspaceId,
         space_id: agent?.space_id ?? null,
         agent_id: agentId,
         engine_agent_id: agent?.engine_agent_id ?? null,
         engine_session_id: session?.engine_session_id ?? null,
-        event: ISSUE_NOTIFICATION_EVENTS[status],
+        event: notice.event,
         kind: 'info',
         source: 'issue',
-        message,
-        metadata: { issueId: issue.id, issueRef: issue.ref, notice: { key: status === 'in_review' ? 'issueInReview' : 'issueBlocked', values: { agentName, ref: issue.ref, title: issue.title, reason } } },
+        message: notice.message,
+        metadata: { issueId: issue.id, issueRef: issue.ref, notice: { key: notice.key, values: notice.values } },
         recipients,
         notified_at: new Date().toISOString(),
     })
     if (error) throw new Error(`Failed to store the issue notification: ${error.message}`)
 }
 
-async function readIssue(scope: WorkScope, issueId: string): Promise<(IssueRow & { ref: string }) | null> {
+function notify(scope: WorkScope, issue: IssueRow & { ref: string }, agentId: string, status: NoticeStatus): Promise<void> {
+    const reason = issue.blocked_reason ?? ''
+    return sendIssueNotice(scope, issue, agentId, agentName => ({
+        event: ISSUE_NOTIFICATION_EVENTS[status],
+        message: status === 'in_review' ? `${agentName} moved ${issue.ref} "${issue.title}" to review.` : `${agentName} is blocked on ${issue.ref} "${issue.title}": ${reason}`,
+        key: status === 'in_review' ? 'issueInReview' : 'issueBlocked',
+        values: { agentName, ref: issue.ref, title: issue.title, reason },
+    }))
+}
+
+const RUN_FAILURE_ENGLISH: Record<IssueRunFailureReason, string> = {
+    no_model: 'it has no AI model it can use',
+    coworker_disabled: 'it is switched off',
+    cancelled: 'its run was stopped',
+    failed: 'its run failed',
+}
+
+// A coworker's run on the issue ended without the work: the people who asked for it hear it once.
+export function notifyRunFailed(scope: WorkScope, issue: IssueRow & { ref: string }, agentId: string, failure: { reason: IssueRunFailureReason; sessionId: string | null }): Promise<void> {
+    return sendIssueNotice(
+        scope,
+        issue,
+        agentId,
+        agentName => ({
+            event: ISSUE_RUN_FAILED_EVENT,
+            message: `${agentName} could not work on ${issue.ref} "${issue.title}": ${RUN_FAILURE_ENGLISH[failure.reason]}.`,
+            key: 'issueRunFailed',
+            values: { agentName, ref: issue.ref, title: issue.title, reason: failure.reason },
+        }),
+        failure.sessionId,
+    )
+}
+
+export async function readIssue(scope: WorkScope, issueId: string): Promise<(IssueRow & { ref: string }) | null> {
     const supabase = clientOf(scope)
     const { data: issue } = await selectMaybeSingle(supabase, 'issues', ISSUE_COLUMNS, { id: issueId, workspace_id: scope.workspaceId })
     if (!issue) return null
@@ -142,7 +183,7 @@ export async function authorMayWake(scope: WorkScope, author: WorkAuthor, agentI
 
 // No coworker is woken with the platform switched off, nor on an issue whose conversation waits on a
 // person: that conversation goes on when they answer it, and a second run would start the work over.
-async function issueMayWake(scope: WorkScope, issue: Pick<IssueRow, 'session_id'>): Promise<boolean> {
+export async function issueMayWake(scope: WorkScope, issue: Pick<IssueRow, 'session_id'>): Promise<boolean> {
     if (!PLATFORM_RELEASED) return false
     if (!issue.session_id) return true
     return !(await sessionsPausedOnPerson(scope, [issue.session_id])).has(issue.session_id)

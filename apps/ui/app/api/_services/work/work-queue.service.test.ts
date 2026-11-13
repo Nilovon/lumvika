@@ -39,7 +39,7 @@ function issue(overrides: Row = {}): Row {
     }
 }
 
-const TRACKED = ['issue.created', 'issue.assigned', 'issue.status_changed', 'issue.commented', 'issue.updated', 'issue.checked_out']
+const TRACKED = ['issue.created', 'issue.assigned', 'issue.status_changed', 'issue.commented', 'issue.updated', 'issue.checked_out', 'issue.run_failed']
 
 // `issue_actor_touches` as the migration computes it, over the rows of the fake.
 function issueActorTouches(rows: Tables) {
@@ -188,6 +188,14 @@ describe('isDue', () => {
         expect(isDue({ status: 'todo' }, undefined, NOW)).toBe(false)
     })
 
+    it('never starts a failed run again on its own, the daily nudge included, until someone else acts', () => {
+        const failed = (assignee: number, failedAgo: number, others: number | null = null) => ({ ...touches(assignee, others), assigneeFailedAt: ago(failedAgo) })
+        expect(isDue({ status: 'todo' }, failed(NUDGE_AFTER_MS * 3, NUDGE_AFTER_MS * 3), NOW)).toBe(false)
+        expect(isDue({ status: 'in_progress' }, failed(NUDGE_AFTER_MS * 3, NUDGE_AFTER_MS * 3), NOW)).toBe(false)
+        expect(isDue({ status: 'todo' }, failed(NUDGE_AFTER_MS * 3, NUDGE_AFTER_MS * 3, 1000), NOW)).toBe(true)
+        expect(isDue({ status: 'todo' }, failed(NUDGE_AFTER_MS + 1000, NUDGE_AFTER_MS * 3), NOW)).toBe(true)
+    })
+
     it('hands an issue in review only for a person who commented after the coworker last touched it', () => {
         expect(isDue({ status: 'in_review' }, touches(60_000, 1000), NOW)).toBe(false)
         expect(isDue({ status: 'in_review' }, touches(60_000, 1000, 1000), NOW)).toBe(true)
@@ -286,6 +294,19 @@ describe('nextIssuesFor', () => {
         expect(await nextIssuesFor(outsider.scope, [{ agentId: 'engine-1', skipRefs: ['ENG-1'], wokenAt }], NOW)).toEqual([])
         const member = setup({ issues: [issue()], activity_events: [event('issue-1', 'issue.checked_out', { agent: 'agent-1' }, ago(29 * 60_000)), event('issue-1', 'issue.commented', { user: 'admin' }, ago(5 * 60_000))] })
         expect(await nextIssuesFor(member.scope, [{ agentId: 'engine-1', skipRefs: ['ENG-1'], wokenAt }], NOW)).toHaveLength(1)
+    })
+
+    it('does not start a failed run again after an engine restart, which forgot its cooldown', async () => {
+        const failure = event('issue-1', 'issue.run_failed', { agent: 'agent-1' }, ago(2 * 60_000))
+        const restarted = setup({ issues: [issue()], activity_events: [event('issue-1', 'issue.assigned', { user: 'anna' }, ago(3 * 60_000)), failure] })
+        expect(await nextIssuesFor(restarted.scope, [{ agentId: 'engine-1', skipRefs: [] }], NOW)).toEqual([])
+        expect(await nextIssuesFor(restarted.scope, [{ agentId: 'engine-1', skipRefs: [] }], NOW + NUDGE_AFTER_MS * 2)).toEqual([])
+
+        const touchedAfter = setup({ issues: [issue()], activity_events: [failure, event('issue-1', 'issue.commented', { user: 'anna' }, ago(1000))] })
+        expect(await nextIssuesFor(touchedAfter.scope, [{ agentId: 'engine-1', skipRefs: [] }], NOW)).toEqual([{ agentId: 'engine-1', ref: 'ENG-1', title: 'Write the launch post' }])
+
+        const outsiderAfter = setup({ issues: [issue()], activity_events: [failure, event('issue-1', 'issue.commented', { user: 'outsider' }, ago(1000))] })
+        expect(await nextIssuesFor(outsiderAfter.scope, [{ agentId: 'engine-1', skipRefs: [] }], NOW)).toEqual([])
     })
 
     it('hands out nothing when the touches cannot be read', async () => {
