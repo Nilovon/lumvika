@@ -24,7 +24,7 @@ You need a machine with Docker. It can be the same machine as the app, another c
       -e LUMVIKA_HUB_URL=https://lumvika.example.com \
       -e LUMVIKA_PAIR_TOKEN=rrn_pair_... \
       -e LUMVIKA_PUBLIC_URL=https://engine.example.com \
-      ghcr.io/schnebel-technologie/lumvika-engine:latest
+      ghcr.io/lucabmn/lumvika-engine:latest
     ```
 
     The command works once, for 15 minutes, and only for this workspace.
@@ -132,7 +132,7 @@ To move a workspace to another machine:
     ```bash
     docker run -d --name lumvika-engine --restart unless-stopped --shm-size 2g \
       -p 3000:3000 -v lumvika-engine:/data \
-      ghcr.io/schnebel-technologie/lumvika-engine:latest
+      ghcr.io/lucabmn/lumvika-engine:latest
     ```
   </Step>
   <Step title="Point the workspace at it">
@@ -156,11 +156,11 @@ docker compose up -d
 A paired server updates by pulling the image and starting it again on the same volume, without a pairing token:
 
 ```bash
-docker pull ghcr.io/schnebel-technologie/lumvika-engine:latest
+docker pull ghcr.io/lucabmn/lumvika-engine:latest
 docker rm -f lumvika-engine
 docker run -d --name lumvika-engine --restart unless-stopped --shm-size 2g \
   -p 3000:3000 -v lumvika-engine:/data \
-  ghcr.io/schnebel-technologie/lumvika-engine:latest
+  ghcr.io/lucabmn/lumvika-engine:latest
 ```
 
 Keep the same `-p` you started it with. On start, the engine migrates its data-dir to the new version. An archive taken weeks ago boots on a newer engine the same way.

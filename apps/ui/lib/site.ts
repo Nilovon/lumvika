@@ -25,4 +25,4 @@ export function docsUrl(path = ''): string {
 
 // Where anyone using this install gets its source code (AGPL-3.0, section 13). A deployment that
 // changes the code points this at its own repository.
-export const SOURCE_REPO_URL = (process.env.NEXT_PUBLIC_SOURCE_REPO_URL || 'https://github.com/schnebel-technologie/lumvika').replace(/\/$/, '')
+export const SOURCE_REPO_URL = (process.env.NEXT_PUBLIC_SOURCE_REPO_URL || 'https://github.com/lucabmn/lumvika').replace(/\/$/, '')
