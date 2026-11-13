@@ -1,6 +1,6 @@
 # NOTICE
 
-Basiert auf Rerun (rerun-build/rerun), AGPL-3.0, geändert ab 2026-11-10 durch Schnebel Technologie GmbH.
+Basiert auf Rerun (rerun-build/rerun), AGPL-3.0, geändert ab 2026-11-10 durch Nilovon.
 
 Lumvika is a modified version of Rerun (<https://github.com/rerun-build/rerun>), imported from branch
 `dev` at commit `6f80816d61b3db97b44c4e0b4cff524b40feea5b`. It is licensed under the GNU Affero General

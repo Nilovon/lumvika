@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
-const ENGINE_IMAGE = 'ghcr.io/lucabmn/lumvika-engine:latest'
+const ENGINE_IMAGE = 'ghcr.io/nilovon/lumvika-engine:latest'
 const POLL_MS = 3000
 
 function SectionTitle({ children }: { children: string }) {

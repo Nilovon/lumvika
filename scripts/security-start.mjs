@@ -7,8 +7,8 @@
 
 import { execFileSync, spawnSync } from 'node:child_process'
 
-const PUBLIC_REPO = 'lucabmn/lumvika'
-const PUBLIC_URL = /github\.com[:/]lucabmn\/lumvika(\.git)?\/?$/i
+const PUBLIC_REPO = 'nilovon/lumvika'
+const PUBLIC_URL = /github\.com[:/]nilovon\/lumvika(\.git)?\/?$/i
 // Not a URL git can reach: a push to origin fails here, even with --no-verify.
 const BLOCKED_PUSH_URL = 'no-push://this-workspace-holds-a-vulnerability-fix-push-to-the-advisory-fork'
 const SEVERITIES = ['low', 'medium', 'high', 'critical']

@@ -2,7 +2,7 @@ import { shortenUrl } from './short-link'
 
 describe('shortenUrl', () => {
     it('keeps the host and the last path segment, and marks the dropped query', () => {
-        expect(shortenUrl('https://github.com/lucabmn/lumvika/pull/839/files?diff=split')).toBe('github.com/…/files…')
+        expect(shortenUrl('https://github.com/nilovon/lumvika/pull/839/files?diff=split')).toBe('github.com/…/files…')
     })
 
     it('drops the scheme and www of a short URL and nothing else', () => {

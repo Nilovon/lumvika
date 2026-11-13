@@ -49,7 +49,7 @@ Help them install what is missing before going on. On macOS, Docker Desktop's me
 
 ```bash
 mkdir lumvika && cd lumvika
-curl -fsSLO https://raw.githubusercontent.com/lucabmn/lumvika/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/nilovon/lumvika/main/docker-compose.yml
 ```
 
 Every command below runs from this folder.
@@ -93,7 +93,7 @@ RESEND_FROM=Lumvika <lumvika@their-domain.com>
 
 Do not fill the passwords or keys of Lumvika itself before the first start: it generates them into
 the `secrets` volume. Every variable is described in
-https://github.com/lucabmn/lumvika/blob/main/.env.example.
+https://github.com/nilovon/lumvika/blob/main/.env.example.
 
 On a server, see "On a server" in the human guide for the reverse proxy and the firewall: Docker
 publishes ports past `ufw`, so they must close 3000, 3001 and 3002 at their provider and reach them
@@ -139,5 +139,5 @@ The `migrate` step applies the migrations a release adds before the app starts. 
 database first (`docker compose exec postgres pg_dump -U lumvika lumvika > backup.sql`).
 
 Versions follow one rule: a patch (`v0.5.1`) only asks to pull, a minor (`v0.6.0`) has an
-`Upgrade` section in its [release notes](https://github.com/lucabmn/lumvika/releases) to read
+`Upgrade` section in its [release notes](https://github.com/nilovon/lumvika/releases) to read
 first. `LUMVIKA_VERSION=0.5` in `.env` keeps both images on the patches of `0.5`.

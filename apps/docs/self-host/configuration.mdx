@@ -3,7 +3,7 @@ title: "Configuration"
 description: "Every variable of .env, what it does, and what happens when it is empty."
 ---
 
-Lumvika reads its settings from `.env`, next to `docker-compose.yml`. [`.env.example`](https://github.com/lucabmn/lumvika/blob/main/.env.example) lists every variable with a comment, in the groups below. Every one is optional: without `.env`, Lumvika runs on `http://localhost:3000`, generates its secrets on the first start, and sends its emails to the mail catcher. On a server, set the public addresses and a way of sending email.
+Lumvika reads its settings from `.env`, next to `docker-compose.yml`. [`.env.example`](https://github.com/nilovon/lumvika/blob/main/.env.example) lists every variable with a comment, in the groups below. Every one is optional: without `.env`, Lumvika runs on `http://localhost:3000`, generates its secrets on the first start, and sends its emails to the mail catcher. On a server, set the public addresses and a way of sending email.
 
 <Note>
   After changing `.env`, run `docker compose up -d`: it recreates the containers that read it. The app writes `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_STORAGE_URL`, `NEXT_PUBLIC_OAUTH_PROVIDERS` and `ADMIN_EMAILS` into its pages when it starts. Only the captcha site keys and `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` are baked in by a build: they need [your own build](/self-host/install#build-the-images-yourself).

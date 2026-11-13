@@ -21,8 +21,8 @@ Before digging, make sure the bug is not already known or fixed:
 - Search the history for the symptom and the area: `git log -i --grep=<keyword>`,
   `git log -S<symbol> -- <path>`, and the PRs, merged and open
   (`gh pr list --state all --search "<keyword>"`). History before 2026-10-29 lives in the private
-  `lucabmn/lumvika-monorepo-archive`; what Lumvika Cloud runs differently lives in `cloud/`
-  (`git -C cloud log`, repo `lucabmn/lumvika-cloud`).
+  `nilovon/lumvika-monorepo-archive`; what Lumvika Cloud runs differently lives in `cloud/`
+  (`git -C cloud log`, repo `nilovon/lumvika-cloud`).
 - Search Notion for a card with the same symptom (done or in progress).
 - A fix found: check it reached where the bug was seen. Is the commit on `master`? Is the app's
   `/api/version` (staging or prod) at or after it? Does the customer's engine box run a version

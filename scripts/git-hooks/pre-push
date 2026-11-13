@@ -9,7 +9,7 @@ push_url="$2"
 fetch_url=$(git remote get-url "$remote_name" 2>/dev/null || true)
 
 points_to_public_repo() {
-    printf '%s\n' "$1" | grep -Eiq 'github\.com[:/]lucabmn/lumvika(\.git)?/?$'
+    printf '%s\n' "$1" | grep -Eiq 'github\.com[:/]nilovon/lumvika(\.git)?/?$'
 }
 
 if ! points_to_public_repo "$push_url" && ! points_to_public_repo "$fetch_url"; then
@@ -65,7 +65,7 @@ if [ -z "$findings" ]; then
 fi
 
 {
-    echo "Push refused: it goes to the public repository lucabmn/lumvika and mentions a vulnerability:"
+    echo "Push refused: it goes to the public repository nilovon/lumvika and mentions a vulnerability:"
     printf '%s' "$findings" | sed 's/^/    /'
     echo
     echo "Everything pushed there is public at once, branches included. A vulnerability fix goes to the"
