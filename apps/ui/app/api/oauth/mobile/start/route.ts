@@ -3,6 +3,7 @@ import { workspaceActor } from '@/app/api/_auth/access'
 import { getCustomMcpServer } from '@/app/api/_services/custom-mcp.service'
 import { getServiceDetails, loadManifest } from '@/app/api/_services/services.service'
 import { composioConfigured, composioUserId, initiateConnectedAccount } from '@/lib/composio/client'
+import { resolveAuthConfigId } from '@/lib/composio/settings'
 import { COMPOSIO_COOKIE_PATH, COMPOSIO_COOKIE_PREFIX, type ComposioOAuthContext, composioCallbackUrl, createComposioState, encodeComposioContext } from '@/lib/composio/oauth'
 import { MANAGED_COOKIE_PATH, MANAGED_COOKIE_PREFIX, type ManagedOAuthContext, buildManagedAuthorizeUrl, createPkceState, encodeManagedContext, managedCallbackUrl } from '@/lib/managed/oauth'
 import { getManagedProvider } from '@/lib/managed/registry'
@@ -89,14 +90,16 @@ export async function GET(req: Request) {
         }
 
         if (details.composio) {
-            if (!composioConfigured()) throw new Error('Composio connections are not configured on this server.')
+            if (!(await composioConfigured())) throw new Error('Composio connections are not configured on this server.')
             const manifest = await loadManifest(key)
             const method = manifest?.authMethods.find(m => m.kind === 'composio' && m.composio)
             if (!method?.composio) throw new Error(`${details.name} has no Composio connection to set up.`)
 
+            const authConfigId = await resolveAuthConfigId(method.composio)
+            if (!authConfigId) throw new Error(`${details.name} needs a Composio auth config: an admin sets one for ${method.composio.toolkit} under Composio, in the workspace menu.`)
             const state = createComposioState()
             const userId = composioUserId(agentId, parseServiceRegistryKey(key).instanceId)
-            const { connectedAccountId, redirectUrl } = await initiateConnectedAccount(userId, method.composio.authConfigId, composioCallbackUrl(req, state))
+            const { connectedAccountId, redirectUrl } = await initiateConnectedAccount(userId, authConfigId, composioCallbackUrl(req, state))
             const ctx: ComposioOAuthContext = { agentId, key, toolkit: method.composio.toolkit, serverName: details.composio.serverName, connectedAccountId, mobileGrant }
             return redirect(redirectUrl, { name: COMPOSIO_COOKIE_PREFIX + state, value: encodeComposioContext(ctx), path: COMPOSIO_COOKIE_PATH })
         }

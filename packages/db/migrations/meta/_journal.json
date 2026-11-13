@@ -36,6 +36,13 @@
       "when": 1794565569600,
       "tag": "0004_work_hub",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794601827515,
+      "tag": "0005_instance_settings",
+      "breakpoints": true
     }
   ]
 }

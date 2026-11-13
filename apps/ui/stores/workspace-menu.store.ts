@@ -6,10 +6,12 @@ import type { PowerAction } from '@/components/layout/WorkspacePowerControl'
 type WorkspaceMenuState = {
     createOpen: boolean
     serversOpen: boolean
+    composioOpen: boolean
     profileOpen: boolean
     powerAction: PowerAction | null
     setCreateOpen: (open: boolean) => void
     setServersOpen: (open: boolean) => void
+    setComposioOpen: (open: boolean) => void
     setProfileOpen: (open: boolean) => void
     setPowerAction: (action: PowerAction | null) => void
 }
@@ -17,10 +19,12 @@ type WorkspaceMenuState = {
 export const useWorkspaceMenuStore = create<WorkspaceMenuState>(set => ({
     createOpen: false,
     serversOpen: false,
+    composioOpen: false,
     profileOpen: false,
     powerAction: null,
     setCreateOpen: createOpen => set({ createOpen }),
     setServersOpen: serversOpen => set({ serversOpen }),
+    setComposioOpen: composioOpen => set({ composioOpen }),
     setProfileOpen: profileOpen => set({ profileOpen }),
     setPowerAction: powerAction => set({ powerAction }),
 }))

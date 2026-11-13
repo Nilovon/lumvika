@@ -3,7 +3,8 @@
         "generic": "Fallback when an action failed for a reason the screen cannot explain.",
         "whatsappNumberRefused": "{message} is the provider's own explanation, in English.",
         "projectKeyTaken": "{key} is a project key such as ENG, kept as written.",
-        "issueNotFound": "An issue is a work item of a project (a task or a bug), as in Linear or Jira."
+        "issueNotFound": "An issue is a work item of a project (a task or a bug), as in Linear or Jira.",
+        "composioRejected": "{message} is Composio's own explanation, in English."
     },
     "generic": "Something went wrong. Please try again.",
     "notAuthenticated": "Not authenticated",
@@ -472,5 +473,15 @@
     "channelMessageAuthorOnly": "Only the author can change this message.",
     "mentionNotInWorkspace": "You can only mention people and coworkers of this workspace.",
     "assistantChatNotFound": "Chat not found",
-    "assistantChatReadOnly": "This chat was shared with you to read. Only the person who started it can change it."
+    "assistantChatReadOnly": "This chat was shared with you to read. Only the person who started it can change it.",
+    "adminOnlyComposio": "Only an admin of this install can manage Composio.",
+    "composioManagedByCloud": "Composio is managed by Lumvika Cloud.",
+    "composioKeyEmpty": "Paste your Composio API key.",
+    "composioKeyRejected": "Composio turned this API key away. Check that you copied the whole key of the right project.",
+    "composioUnreachable": "Composio could not be reached. Try again in a moment.",
+    "composioKeyInEnvironment": "The Composio API key is set in the server environment. Change it in .env, then restart the app.",
+    "composioNotConfigured": "Save a Composio API key first.",
+    "composioUnknownToolkit": "No service of the catalog connects through this Composio toolkit.",
+    "composioInvalidAuthConfig": "An auth config id looks like ac_ followed by letters and digits.",
+    "composioRejected": "Composio refused: {message}"
 }

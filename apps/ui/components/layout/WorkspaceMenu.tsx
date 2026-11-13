@@ -4,6 +4,7 @@ import { useErrorText } from '@/hooks/useErrorText'
 import { accountLabel } from '@/lib/auth/placeholder-email'
 import { switchWorkspaceAction } from '@/app/api/_actions/workspace.actions'
 import { SERVERS_ENABLED } from '@lumvika/cloud/servers'
+import { LUMVIKA_CLOUD } from '@lumvika/cloud/edition'
 import { CreditMeter } from '@lumvika/cloud/billing.client'
 import { usePaidAppsStore, AppsMenuSection } from '@lumvika/cloud/apps.client'
 import { useEnabledPaidApps } from '@/components/layout/FeatureFlagsProvider'
@@ -27,7 +28,7 @@ import { useNotificationsStore } from '@/stores/notifications.store'
 import { useWorkspaceMenuStore } from '@/stores/workspace-menu.store'
 import { useWorkspaceSettingsStore } from '@/stores/workspace-settings.store'
 import { useIsWorkspaceAdmin, useSession } from '@/lib/auth/session/SessionProvider'
-import { BellIcon, BrainIcon, CheckIcon, CreditCardIcon, KeyIcon, LockKeyholeIcon, LogOutIcon, PlusIcon, ServerIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@/lib/icons'
+import { BellIcon, BlocksIcon, BrainIcon, CheckIcon, CreditCardIcon, KeyIcon, LockKeyholeIcon, LogOutIcon, PlusIcon, ServerIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { abortWorkspaceSwitch, beginWorkspaceSwitch, enterActiveWorkspace } from '@/lib/workspace/workspace-switch'
 import { Fragment, useState, type ReactNode } from 'react'
@@ -81,7 +82,7 @@ export function WorkspaceMenu({ children, align = 'start', side = 'bottom' }: Wo
     // Held in a store rather than here: the steward opens these three panels too, from a chat that
     // does not own this menu.
     const openWorkspacePanel = useWorkspaceSettingsStore(s => s.openWorkspacePanel)
-    const { setServersOpen, setCreateOpen } = useWorkspaceMenuStore()
+    const { setServersOpen, setComposioOpen, setCreateOpen } = useWorkspaceMenuStore()
     const [busy, setBusy] = useState(false)
     const refreshBrainProposals = useBrainStore(s => s.refreshProposalCount)
     // Polled once, by WorkspaceDialogs: the menu has a trigger in several places at a time.
@@ -188,6 +189,13 @@ export function WorkspaceMenu({ children, align = 'start', side = 'bottom' }: Wo
                         {t('servers')}
                     </DropdownMenuItem>
                 </AdminOnly>
+            )}
+            {/* Instance-wide, unlike everything above: the people of ADMIN_EMAILS, on a self-hosted install. */}
+            {!LUMVIKA_CLOUD && isAdmin && (
+                <DropdownMenuItem onSelect={() => setComposioOpen(true)} className="gap-2 text-muted-foreground">
+                    <BlocksIcon className="size-4" />
+                    {t('composio')}
+                </DropdownMenuItem>
             )}
             {BILLING_ENABLED && !workspace.is_sandbox && (
                 <AdminOnly allowed={workspaceAdmin} reason={t('adminOnly.billing')}>

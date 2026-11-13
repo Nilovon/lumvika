@@ -676,5 +676,78 @@
             "keyDetail": "Deine Coworker laufen jetzt mit diesem Schlüssel.",
             "done": "Fertig"
         }
+    },
+    "composio": {
+        "title": "Composio",
+        "description": "Verbinde Google, Microsoft und andere Apps über dein eigenes Composio-Projekt, für jeden Workspace dieser Installation.",
+        "back": "Zurück",
+        "loadFailed": "Die Composio-Einstellungen konnten nicht gelesen werden.",
+        "retry": "Erneut versuchen",
+        "groups": {
+            "connection": "Verbindung",
+            "services": "Apps"
+        },
+        "key": {
+            "title": "API-Schlüssel",
+            "connected": "Verbunden",
+            "notConnected": "Nicht verbunden",
+            "fromEnvironment": "In der Serverumgebung gesetzt (COMPOSIO_API_KEY)",
+            "fromApp": "In Lumvika gespeichert, endet auf {hint}",
+            "fromAppNoHint": "In Lumvika gespeichert",
+            "missing": "Apps, die sich über Composio anmelden, bleiben aus, bis ein Schlüssel hinterlegt ist.",
+            "namespace": "Konten werden im Namespace {namespace} getrennt gehalten.",
+            "connect": "Schlüssel hinzufügen",
+            "change": "Ändern",
+            "remove": "Entfernen",
+            "environmentOnly": "Änder COMPOSIO_API_KEY in .env und starte die App neu"
+        },
+        "keyPage": {
+            "title": "Composio-API-Schlüssel",
+            "hint": "Aus den Einstellungen deines Composio-Projekts",
+            "label": "API-Schlüssel",
+            "placeholder": "API-Schlüssel einfügen",
+            "help": "Öffne das <link>Composio-Dashboard</link>, wähl dein Projekt und kopier seinen API-Schlüssel. Er bleibt auf diesem Server und erreicht nie einen Coworker.",
+            "save": "Schlüssel speichern",
+            "saved": "Composio verbunden"
+        },
+        "removeKey": {
+            "title": "Composio-Schlüssel entfernen?",
+            "description": "Über Composio verbundene Apps funktionieren für keinen Coworker dieser Installation mehr, bis wieder ein Schlüssel gespeichert ist. Die Konten bleiben in deinem Composio-Projekt.",
+            "confirm": "Entfernen",
+            "removed": "Composio-Schlüssel entfernt"
+        },
+        "services": {
+            "empty": "Keine App des Katalogs meldet sich über Composio an.",
+            "needsKey": "Füg zuerst einen API-Schlüssel hinzu, dann richte die gewünschten Apps ein.",
+            "ready": "Bereit",
+            "notSetUp": "Nicht eingerichtet",
+            "off": "Aus",
+            "toolkitReady": "{toolkit} · {authConfigId}",
+            "toolkitMissing": "{toolkit} · braucht eine Auth-Config"
+        },
+        "service": {
+            "hint": "Composio-Toolkit {toolkit}",
+            "current": "Verwendete Auth-Config",
+            "fromApp": "In Lumvika gesetzt",
+            "fromCatalog": "Kommt mit dem Katalog",
+            "none": "Noch keine. Wähl unten eine aus oder erstell eine.",
+            "off": "Diese App ist im Katalog ausgeschaltet, Coworker sehen sie also nicht.",
+            "pickLabel": "Auth-Configs deines Composio-Projekts",
+            "pickPlaceholder": "Auth-Config auswählen",
+            "noneInProject": "Dein Composio-Projekt hat noch keine Auth-Config für {toolkit}.",
+            "optionManaged": "{name} · App von Composio",
+            "optionCustom": "{name} · deine eigene App",
+            "use": "Verwenden",
+            "createTitle": "Mit der App von Composio erstellen",
+            "createHint": "Der schnellste Weg: Composio meldet Personen mit seiner eigenen OAuth-App an, ohne Einrichtung. Manche Apps brauchen stattdessen deine eigene OAuth-App: Erstell die Auth-Config im Composio-Dashboard und wähl sie oben aus.",
+            "create": "Erstellen",
+            "manualLabel": "Oder Auth-Config-ID einfügen",
+            "manualPlaceholder": "ac_...",
+            "save": "Speichern",
+            "clear": "Zurücksetzen",
+            "clearDisabled": "Nur eine in Lumvika gesetzte ID lässt sich zurücksetzen",
+            "saved": "{name} ist bereit zum Verbinden",
+            "cleared": "Auth-Config zurückgesetzt"
+        }
     }
 }

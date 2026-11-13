@@ -3,6 +3,7 @@ import { assertAgentAccess } from '@/app/api/_auth/access'
 import { resolveAgentTarget } from '@/app/api/_services/chat.service'
 import { loadManifest } from '@/app/api/_services/services.service'
 import { composioConfigured, composioUserId, initiateConnectedAccount } from '@/lib/composio/client'
+import { resolveAuthConfigId } from '@/lib/composio/settings'
 import { COMPOSIO_COOKIE_PATH, COMPOSIO_COOKIE_PREFIX, type ComposioOAuthContext, composioCallbackUrl, createComposioState, encodeComposioContext } from '@/lib/composio/oauth'
 import { readRegistry, resolveRegistryEntry } from '@/lib/services/registry'
 import { describeSignInError } from '@/lib/net/network-error'
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
         const key = body.key ?? body.slug ?? ''
         const { actor } = await assertAgentAccess(agentId, 'manage')
 
-        if (!composioConfigured()) return NextResponse.json({ error: 'Composio connections are not configured on this server.' }, { status: 400 })
+        if (!(await composioConfigured())) return NextResponse.json({ error: 'Composio connections are not configured on this server.' }, { status: 400 })
 
         const { instanceId } = parseServiceRegistryKey(key)
         const manifest = await loadManifest(key)
@@ -30,15 +31,16 @@ export async function POST(req: Request) {
         if (!manifest || !method?.composio || !serverName) {
             return NextResponse.json({ error: `${key} has no Composio connection to set up.` }, { status: 400 })
         }
-        // A self-hosted install ships the catalog without Lumvika Cloud's auth configs: each one is created in
-        // Composio and its id written on the service before the app can connect.
-        if (!method.composio.authConfigId) {
-            return NextResponse.json({ error: `${manifest.name} needs a Composio auth config: create one for ${method.composio.toolkit} in Composio and set its id on the service.` }, { status: 400 })
+        // A self-hosted install ships the catalog without Lumvika Cloud's auth configs: an admin picks or
+        // creates one per toolkit in the Composio panel of the workspace menu before the app can connect.
+        const authConfigId = await resolveAuthConfigId(method.composio)
+        if (!authConfigId) {
+            return NextResponse.json({ error: `${manifest.name} needs a Composio auth config: an admin sets one for ${method.composio.toolkit} under Composio, in the workspace menu.` }, { status: 400 })
         }
 
         const state = createComposioState()
         const userId = composioUserId(agentId, instanceId)
-        const { connectedAccountId, redirectUrl } = await initiateConnectedAccount(userId, method.composio.authConfigId, composioCallbackUrl(req, state))
+        const { connectedAccountId, redirectUrl } = await initiateConnectedAccount(userId, authConfigId, composioCallbackUrl(req, state))
 
         const ctx: ComposioOAuthContext = {
             agentId,
