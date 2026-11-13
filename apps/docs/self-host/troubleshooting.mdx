@@ -197,6 +197,7 @@ docker compose exec engine node dist/cli/bin.js doctor
 
 Check, in this order:
 
+- **Its last run failed.** The issue page says **Scout could not work on this issue**, with the reason, and the card shows **Failed**. A failed run is never started again on its own, after an engine restart included. On a fresh install the reason is usually **It has no AI model it can use. Connect one in its settings, then try again.**: put a key in `OPENROUTER_API_KEY` or connect a provider, see [AI models](/self-host/models). Fix the cause, then press **Try again** on the issue, or open the run's conversation with **Open conversation** to read the error.
 - **The issue is in Backlog.** A coworker is not woken for a backlog issue. Move it to **Todo**.
 - **Work on issues is off** in the coworker **Capabilities** tab, or the coworker is switched off.
 - **The engine predates issues.** The issue page says **This workspace's machine is too old to run coworkers on issues.** where you assign the coworker, and the app logs `this engine cannot start issue runs yet` once per engine. Update it.
