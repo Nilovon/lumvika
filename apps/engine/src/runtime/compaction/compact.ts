@@ -8,6 +8,7 @@ import { withoutQuickRepliesCalls } from '../../agents/quick-replies-stream.js'
 import { CLI_PROVIDERS } from '../../agents/types.js'
 import { ensureCliAuth } from '../../connections/cli-auth.js'
 import { listMessagesAfter } from '../../db/repos/messages.js'
+import type { MessageRow } from '../../db/schema.js'
 import { getLatestCheckpoint, saveCheckpoint } from '../../db/repos/checkpoints.js'
 import { newId } from '../../lib/ids.js'
 import { deadlineSignal, raceAbort } from '../../lib/abort.js'
@@ -102,21 +103,38 @@ export function compactionThreshold(contextWindow: number, provider: Provider): 
     return CLI_PROVIDERS.has(provider) ? ratio : Math.min(ratio, COMPACTION_MAX_TRIGGER_TOKENS)
 }
 
-export async function prepareRunHistory(ctx: RunContext, system: string, override?: ModelOverride, signSenders = false, toolChars = 0): Promise<ModelMessage[]> {
-    const agentId = ctx.agent.id
-    const cp = await getLatestCheckpoint(agentId, ctx.sessionId)
-    const rows = await listMessagesAfter(agentId, ctx.sessionId, cp?.throughCreatedAt)
+// What the session holds before any compaction: the last checkpoint's summary, then every message
+// written after it. Reading it costs no model call, so a turn that resumes a CLI session reads it
+// alone, for the memories it must not recall twice.
+export type RunHistory = { rows: MessageRow[]; priorSummary: ModelMessage | null; working: ModelMessage[] }
+
+export async function loadRunHistory(ctx: RunContext, signSenders = false): Promise<RunHistory> {
+    const cp = await getLatestCheckpoint(ctx.agent.id, ctx.sessionId)
+    const rows = await listMessagesAfter(ctx.agent.id, ctx.sessionId, cp?.throughCreatedAt)
     const priorSummary: ModelMessage | null = cp ? (JSON.parse(cp.summaryJson) as ModelMessage) : null
     const live: ModelMessage[] = rows.flatMap(r => {
         const message = withoutQuickRepliesCalls(withoutReasoning({ role: r.role, content: JSON.parse(r.contentJson) } as ModelMessage))
         if (!message) return []
         return [signSenders ? signHistoryMessage(message, r) : message]
     })
-    const working = priorSummary ? [priorSummary, ...live] : live
+    return { rows, priorSummary, working: priorSummary ? [priorSummary, ...live] : live }
+}
 
+// `knownTokens` is what the provider last reported the conversation weighs, for one that keeps a
+// session of its own: the estimate only sees the rows, not what that session holds beside them.
+export function historyNeedsCompaction(ctx: RunContext, working: ModelMessage[], system: string, toolChars = 0, knownTokens = 0): boolean {
     const contextWindow = runContextWindow(ctx.model, ctx.provider, ctx.agent.resolved.connection)
-    if (!contextWindow) return working
-    if (estimateTokens(working, system, toolChars) < compactionThreshold(contextWindow, ctx.provider)) return working
+    if (!contextWindow) return false
+    return Math.max(estimateTokens(working, system, toolChars), knownTokens) >= compactionThreshold(contextWindow, ctx.provider)
+}
+
+export async function prepareRunHistory(ctx: RunContext, system: string, override?: ModelOverride, signSenders = false, toolChars = 0): Promise<ModelMessage[]> {
+    return compactRunHistory(ctx, await loadRunHistory(ctx, signSenders), system, override, toolChars)
+}
+
+export async function compactRunHistory(ctx: RunContext, { rows, priorSummary, working }: RunHistory, system: string, override?: ModelOverride, toolChars = 0): Promise<ModelMessage[]> {
+    const agentId = ctx.agent.id
+    if (!historyNeedsCompaction(ctx, working, system, toolChars)) return working
 
     const offset = priorSummary ? 1 : 0
     const tailStart = tailStartIndex(working, COMPACTION_TAIL_TOKEN_BUDGET)

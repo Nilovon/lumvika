@@ -12,10 +12,11 @@ import { beginSubRun, endSubRun, followSubRun, renderSubRunOutcome, snapshotSubR
 type CallProgress = SubRunProgress & { agentName: string; sessionId?: string }
 
 // Every coworker on the machine but the caller and the delegates, narrowed to the ones the person
-// behind the run reaches when the hub says who that is.
+// behind the run reaches when the hub says who that is. Sorted, because the roster is part of a tool
+// description and the tools open every cached prompt: the index comes back in no promised order.
 export function callTargetsOf(index: AgentRow[], callerId: string, callableAgentIds?: string[]): AgentRow[] {
     const callable = callableAgentIds ? new Set(callableAgentIds) : null
-    return index.filter(a => a.id !== callerId && !a.name.endsWith(' delegate') && (!callable || callable.has(a.id)))
+    return index.filter(a => a.id !== callerId && !a.name.endsWith(' delegate') && (!callable || callable.has(a.id))).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 }
 
 export function resolveTargetAgent(ref: string, targets: AgentRow[]): { agent: AgentRow } | { error: string } {

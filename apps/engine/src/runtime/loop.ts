@@ -2,12 +2,14 @@ import { streamText, type LanguageModelUsage, type ModelMessage, type StreamText
 import { LUMVIKA_CONNECTION_ID, contextTextPart, type ContextOccupancy, type MessageAuthor } from '@lumvika/contracts'
 import { applyCaching, withTailBreakpoint } from '../agents/caching.js'
 import { mergeProviderOptions, reasoningProviderOptions } from '../agents/reasoning.js'
-import { prepareRunHistory } from './compaction/compact.js'
+import { randomUUID } from 'node:crypto'
+import { compactRunHistory, historyNeedsCompaction, loadRunHistory } from './compaction/compact.js'
 import { repairToolPairs } from './compaction/repair.js'
 import { approvalSummary, canonicalHitlName, findPendingHitl, hitlStepLacksMessage, hitlTurnIsOver, isHitlToolName, secretSummary, takeoverSummary, type PendingHitl } from '../tools/builtin/hitl.js'
-import { CLI_PROVIDERS, resolveModel, type ModelOverride } from '../agents/providers.js'
+import { CLI_PROVIDERS, claudeTranscriptPlace, resolveModel, type ClaudeRunSession, type ModelOverride } from '../agents/providers.js'
 import { offersQuickReplies, quickRepliesCall, type QuickRepliesCapture } from '../agents/quick-replies-stream.js'
 import { codexThreadToResume, forgetCodexThread, rememberCodexThread } from '../agents/codex-threads.js'
+import { claudeSessionToResume, discardTranscript, findTranscript, forgetClaudeSession, promptHash, rememberClaudeSession } from '../agents/claude-sessions.js'
 import { repairBoxDefault, resolveRunModel } from '../agents/availability.js'
 import { claudeTokenOf, claudeTokenOutlived } from '../connections/claude-token.js'
 import { ensureCliAuth } from '../connections/cli-auth.js'
@@ -18,7 +20,7 @@ import { refreshCodexPlanLimits } from '../connections/codex-plan-limits.js'
 import { armPlanLimitLatch, clearPlanLimitLatch } from '../connections/plan-limits.js'
 import { refreshOpencodePlanLimits } from '../connections/opencode-plan-limits.js'
 import { behaviourOf } from '../agents/opencode.js'
-import { buildSystemPrompt, nowBlock, recallMemories, recallSection, systemPromptText, userBlock, userLanguageBlock } from '../agents/systemPrompt.js'
+import { buildSystemPrompt, nowBlock, recallMemories, recallSection, systemPromptText, userBlock, userLanguageBlock, workspaceStateBlock } from '../agents/systemPrompt.js'
 import type { LoadedAgent } from '../agents/types.js'
 import { turnOrder } from '../agents/turn-order.js'
 import { answeringModel } from '../agents/lumvika-upstream.js'
@@ -236,6 +238,8 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
     let cliAuthP: Promise<() => void> | undefined
     let spawnToken: string | undefined
     let codexThreadId: string | undefined
+    let claudeRun: (ClaudeRunSession & { stableHash: string; volatileHash: string }) | undefined
+    let claudeReportedSessionId: string | undefined
     let steps = 0
     const partialResults: PartialResult[] = []
     const skillProposals: SkillProposalNotice[] = []
@@ -300,6 +304,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             if (replies && answerRow && !pending) await setMessageToolCalls(agent.id, answerRow.id, [quickRepliesCall(replies)]).catch(() => {})
             if (provider === 'lumvika') clearBudgetLatch()
             if (provider === 'codex') await keepCodexThread().catch(() => forgetCodexThread(agent.id, sessionId))
+            if (provider === 'claude') await keepClaudeSession().catch(dropClaudeSession)
             await finishRun(agent.id, run.id, settlement.usage, steps, settlement.costMicros, contextUsage?.()).catch(() => {})
             await touchSession(agent.id, sessionId).catch(() => {})
             text = settlement.text
@@ -312,6 +317,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             outcome = { kind: 'done' }
         } else if (settlement.kind === 'cancelled') {
             forgetCodexThread(agent.id, sessionId)
+            dropClaudeSession()
             if (partialResults.length) await appendMessage(agent.id, sessionId, { role: 'assistant', content: partialResultsNote(partialResults) }).catch(() => {})
             await cancelRun(agent.id, run.id).catch(() => {})
             outcome = { kind: 'cancelled' }
@@ -324,6 +330,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             const errorCode = settlement.errorCode ?? null
             const errorMessage = errorMessageOf(settlement.error)
             forgetCodexThread(agent.id, sessionId)
+            dropClaudeSession()
             logger.error({ err: errorMessage, errorCode, agent: agent.id, run: run.id }, 'run error')
             if (errorCode === LUMVIKA_BUDGET_ERROR_CODE) armBudgetLatch()
             if (errorCode === RUN_ERROR_CODES.usageLimit && connection && connection.id !== LUMVIKA_CONNECTION_ID) armPlanLimitLatch(connection.id)
@@ -395,6 +402,33 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
         rememberCodexThread(agent.id, sessionId, { threadId: codexThreadId, connectionId: connection?.id ?? LUMVIKA_CONNECTION_ID, throughMessageId })
     }
 
+    // A turn that did not finish leaves a session holding history the conversation does not: the
+    // next message starts a new one, and the transcript of a session started here goes with it.
+    const dropClaudeSession = (): void => {
+        forgetClaudeSession(agent.id, sessionId)
+        if (claudeRun && !claudeRun.resume) void discardTranscript(claudeTranscriptPlace(agent), claudeRun.id).catch(() => {})
+    }
+
+    // Same marker as the Codex thread. The transcript is looked up once here, so the next turn only
+    // has to see that it is still on disk: an archive restored elsewhere, or a swept home, has none.
+    const keepClaudeSession = async (): Promise<void> => {
+        const claudeSessionId = claudeReportedSessionId ?? claudeRun?.id
+        // A resume answered from another session holds this turn alone, not the conversation.
+        if (!claudeRun || !claudeSessionId || (claudeRun.resume && claudeSessionId !== claudeRun.id)) return dropClaudeSession()
+        const [throughMessageId, transcriptPath] = await Promise.all([lastMessageId(agent.id, sessionId), findTranscript(claudeTranscriptPlace(agent), claudeSessionId)])
+        if (!throughMessageId || !transcriptPath) return dropClaudeSession()
+        rememberClaudeSession(agent.id, sessionId, {
+            claudeSessionId,
+            connectionId: connection?.id ?? LUMVIKA_CONNECTION_ID,
+            model,
+            stableHash: claudeRun.stableHash,
+            volatileHash: claudeRun.volatileHash,
+            throughMessageId,
+            transcriptPath,
+            usedTokens: contextUsage?.()?.usedTokens,
+        })
+    }
+
     // Stop has to be able to end a run the provider refuses to end: codex ignores the abort signal
     // until its turn has started, which is exactly the state an expired token leaves it in.
     setRunCancel(run.id, () => {
@@ -435,6 +469,11 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
 
         const system = await buildSystemPrompt(agent, trigger, provider, order)
         const systemText = systemPromptText(system)
+        // The Claude CLI sends its system prompt ahead of every turn of a session, so a session keeps
+        // the stable block it started on and gets the volatile one in a turn (`workspaceStateBlock`).
+        const claudeCli = provider === 'claude'
+        const stableHash = promptHash(system.stable)
+        const volatileHash = promptHash(system.volatile)
 
         const pastAuthorIds = await listSessionAuthorIds(agent.id, sessionId).catch(() => [])
         const shared = isSharedConversation(author ? [...pastAuthorIds, author.id] : pastAuthorIds)
@@ -444,14 +483,27 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
         const built = await toolsP
         closeTools = built.close
         const { tools } = built
-        const history = repairToolPairs(await prepareRunHistory(ctx, systemText, override, shared, toolPayloadChars(tools)))
+        const toolChars = toolPayloadChars(tools)
+        const loaded = await loadRunHistory(ctx, shared)
+
+        // Read before the turn is stored: a resumed thread or session only gets this turn, so the
+        // conversation must hold nothing it has not seen.
+        const connectionId = connection?.id ?? LUMVIKA_CONNECTION_ID
+        const marker = CLI_PROVIDERS.has(provider) ? await lastMessageId(agent.id, sessionId) : undefined
+        const resumeThreadId = provider === 'codex' ? codexThreadToResume(agent.id, sessionId, connectionId, marker) : undefined
+        let resumeClaude = claudeCli ? claudeSessionToResume(agent.id, sessionId, { connectionId, model, stableHash, lastMessageId: marker }) : undefined
+        // The CLI never compacts a session itself (DISABLE_AUTO_COMPACT): one about to outgrow the
+        // window is dropped, and the turn starts a new one from the compacted history.
+        if (resumeClaude && historyNeedsCompaction(ctx, loaded.working, systemText, toolChars, resumeClaude.usedTokens)) {
+            forgetClaudeSession(agent.id, sessionId)
+            resumeClaude = undefined
+        }
+        // A resumed thread or session never reads the history, so a compaction would pay for a
+        // summary nothing sends. Codex compacts its own thread.
+        const history = repairToolPairs(resumeThreadId || resumeClaude ? loaded.working : await compactRunHistory(ctx, loaded, systemText, override, toolChars))
 
         const [memories, mcpServers] = await Promise.all([memoriesP, mcpServersP, cliAuthP])
         const recall = recallSection(memories, history)
-
-        // Read before the turn is stored: a resumed thread only gets this turn, so the session must
-        // hold nothing the thread has not seen.
-        const resumeThreadId = provider === 'codex' ? codexThreadToResume(agent.id, sessionId, connection?.id ?? LUMVIKA_CONNECTION_ID, await lastMessageId(agent.id, sessionId)) : undefined
 
         // The turn is stored as it is sent, its context part included: the history the next turn
         // replays is then byte for byte the prompt the provider already cached. Only the signature
@@ -462,14 +514,18 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
         appendP = appendMessage(agent.id, sessionId, { role: 'user', content: [{ type: 'text', text: userText }, ...context] }, author)
         appendP.catch(err => logger.error({ err: String(err), agent: agent.id }, 'append user message failed'))
 
+        // Sent, never stored: a replay starts a new session, which gets it again on its first turn.
+        const workspaceState = claudeCli && resumeClaude?.volatileHash !== volatileHash ? workspaceStateBlock(system.volatile) : ''
         const turnText = shared ? signText(userText, author) : userText
-        const turnMessages: ModelMessage[] = [...history, { role: 'user', content: [{ type: 'text', text: turnText }, ...context] }]
+        const turn: ModelMessage = { role: 'user', content: [{ type: 'text', text: turnText }, ...(workspaceState ? [contextTextPart(workspaceState)] : []), ...context] }
+        const turnMessages: ModelMessage[] = resumeClaude ? [turn] : [...history, turn]
+        if (claudeCli) claudeRun = { id: resumeClaude?.claudeSessionId ?? randomUUID(), resume: Boolean(resumeClaude), stableHash, volatileHash }
 
         const cached = applyCaching(provider, { system, messages: turnMessages, sessionId, model })
-        logger.debug({ agent: agent.id, provider, prepMs: Date.now() - t0 }, 'run prep done')
+        logger.debug({ agent: agent.id, provider, prepMs: Date.now() - t0, resumed: Boolean(resumeThreadId || resumeClaude) }, 'run prep done')
 
         spawnToken = claudeTokenOf(connection)
-        const resolvedModel = resolveModel(agent, override, tools, mcpServers, { system: systemText, screenshots: id => ctx.screenshots?.get(id), sessionId })
+        const resolvedModel = resolveModel(agent, override, tools, mcpServers, { system: claudeCli ? system.stable : systemText, screenshots: id => ctx.screenshots?.get(id), sessionId, claudeSession: claudeRun })
         closeModel = resolvedModel.close
         contextUsage = resolvedModel.contextUsage
         // Cut out of the text whoever wrote it; only a coworker that offers replies gets the buttons.
@@ -530,6 +586,8 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
                 logger.info({ agent: agent.id, provider, cachedInputTokens: totalUsage.cachedInputTokens, costMicros: runCostMicros, anthropic: providerMetadata?.anthropic }, 'run usage')
                 const threadId = providerMetadata?.['codex-app-server']?.threadId
                 if (typeof threadId === 'string') codexThreadId = threadId
+                const claudeSessionId = providerMetadata?.['claude-code']?.sessionId
+                if (typeof claudeSessionId === 'string') claudeReportedSessionId = claudeSessionId
                 // A CLI provider reports a spent subscription or a blown context as a plain finish,
                 // not as an error. Taken at face value it stores an empty turn as a success and the
                 // reason the agent said nothing is lost.

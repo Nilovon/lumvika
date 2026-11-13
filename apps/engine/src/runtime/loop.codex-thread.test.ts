@@ -5,9 +5,10 @@ import { vi } from 'vitest'
 
 process.env.LUMVIKA_DATA_DIR = mkdtempSync(resolve(tmpdir(), 'lumvika-codex-thread-'))
 
-const { calls, turn } = vi.hoisted(() => ({
+const { calls, turn, summaries } = vi.hoisted(() => ({
     calls: [] as Array<Record<string, unknown> | undefined>,
-    turn: { threadId: 'thread-1', fail: false },
+    turn: { threadId: 'thread-1', fail: false, reply: 'ok' },
+    summaries: { count: 0 },
 }))
 
 vi.mock('./notify.js', async importOriginal => ({ ...(await importOriginal<typeof import('./notify.js')>()), sendNotification: async () => ({ delivered: true }) }))
@@ -25,6 +26,13 @@ vi.mock('../agents/providers.js', async importOriginal => {
     const { MockLanguageModelV3 } = await import('ai/test')
     return {
         ...actual,
+        modelFor: () =>
+            new MockLanguageModelV3({
+                doGenerate: async ({ prompt }: { prompt: Array<{ role: string; content: unknown }> }) => {
+                    if (prompt.some(message => message.role === 'system' && String(message.content).includes('handoff summary'))) summaries.count += 1
+                    return { content: [{ type: 'text', text: 'summary' }], finishReason: { unified: 'stop', raw: 'stop' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 }, warnings: [] } as never
+                },
+            }),
         resolveModel: () => ({
             model: new MockLanguageModelV3({
                 doStream: async (options: { providerOptions?: Record<string, Record<string, unknown>> }) => {
@@ -35,7 +43,7 @@ vi.mock('../agents/providers.js', async importOriginal => {
                             start(controller) {
                                 controller.enqueue({ type: 'stream-start', warnings: [] })
                                 controller.enqueue({ type: 'text-start', id: '0' })
-                                controller.enqueue({ type: 'text-delta', id: '0', delta: 'ok' })
+                                controller.enqueue({ type: 'text-delta', id: '0', delta: turn.reply })
                                 controller.enqueue({ type: 'text-end', id: '0' })
                                 controller.enqueue({
                                     type: 'finish',
@@ -84,6 +92,8 @@ describe('a Codex conversation keeps its thread', () => {
         calls.length = 0
         turn.threadId = 'thread-1'
         turn.fail = false
+        turn.reply = 'ok'
+        summaries.count = 0
         forgetCodexThreadsOf('codex-cnx')
     })
 
@@ -120,5 +130,29 @@ describe('a Codex conversation keeps its thread', () => {
         await send(second.id, 'two')
         await send(first.id, 'one again')
         expect(calls).toEqual([undefined, undefined, { threadId: 'thread-1' }])
+    })
+
+    // Past the compaction threshold of Codex's window (272k tokens at 0.75, four characters a token).
+    const OVERSIZED_REPLY = 'x'.repeat(900_000)
+
+    it('compacts nothing for a turn that resumes its thread, which never reads the history', async () => {
+        const session = await createSession(id, 'hello')
+        turn.reply = OVERSIZED_REPLY
+        await send(session.id, 'hello')
+        turn.reply = 'ok'
+        await send(session.id, 'and then?')
+        expect(calls).toEqual([undefined, { threadId: 'thread-1' }])
+        expect(summaries.count).toBe(0)
+    })
+
+    it('still compacts the history a new thread starts from', async () => {
+        const session = await createSession(id, 'hello')
+        turn.reply = OVERSIZED_REPLY
+        await send(session.id, 'hello')
+        turn.reply = 'ok'
+        forgetCodexThreadsOf('codex-cnx')
+        await send(session.id, 'and then?')
+        expect(calls).toEqual([undefined, undefined])
+        expect(summaries.count).toBe(1)
     })
 })
