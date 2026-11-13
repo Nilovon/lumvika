@@ -45,10 +45,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # GHCR rejects upper case, and the owner is "Nilovon".
       - id: target
+        env:
+          OWNER: ${{ github.repository_owner }}
         run: |
           {
-            echo "name=ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}"
+            echo "name=ghcr.io/${OWNER,,}/lumvika-${{ matrix.image }}"
             echo "dockerfile=apps/${{ matrix.image == 'app' && 'ui' || 'engine' }}/Dockerfile"
             echo "pair=${{ matrix.image }}-${{ matrix.platform == 'linux/arm64' && 'arm64' || 'amd64' }}"
           } >> "$GITHUB_OUTPUT"
@@ -94,6 +97,10 @@ jobs:
           path: ${{ runner.temp }}/digests
           pattern: digests-${{ matrix.image }}-*
           merge-multiple: true
+      - id: target
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "name=ghcr.io/${OWNER,,}/lumvika-${{ matrix.image }}" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -103,7 +110,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}
+          images: ${{ steps.target.outputs.name }}
           tags: |
             type=semver,pattern={{version}},value=${{ inputs.tag || github.ref_name }}
             type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag || github.ref_name }}
@@ -113,6 +120,6 @@ jobs:
         run: |
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}@sha256:%s ' *)
+            $(printf '${{ steps.target.outputs.name }}@sha256:%s ' *)
       - name: Inspect
-        run: docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/lumvika-${{ matrix.image }}:${{ steps.meta.outputs.version }}
+        run: docker buildx imagetools inspect ${{ steps.target.outputs.name }}:${{ steps.meta.outputs.version }}
