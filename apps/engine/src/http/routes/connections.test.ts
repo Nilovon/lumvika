@@ -34,6 +34,30 @@ vi.mock('../../connections/opencode-catalog.js', async importOriginal => {
     }
 })
 vi.mock('../../connections/opencode-plan-limits.js', () => ({ refreshOpencodePlanLimits: async () => {}, refreshStaleOpencodePlanLimits: () => {}, forgetOpencodePlanLimitsAttempt: () => {}, pendingOpencodePlanLimits: () => undefined }))
+// The Claude usage probe spawns the CLI: the routes only see what it records, as the test poses it.
+const claudeProbes = vi.hoisted(() => ({ stale: 0, forced: [] as string[] }))
+vi.mock('../../connections/claude-plan-limits.js', async () => {
+    const { recordPlanLimitsReading } = await import('../../connections/plan-limits.js')
+    return {
+        refreshClaudePlanLimits: async (connection: { id: string } | null) => {
+            if (!connection) return
+            claudeProbes.forced.push(connection.id)
+            recordPlanLimitsReading(connection.id, {
+                windows: [
+                    { id: 'five_hour', kind: 'session', label: null, usedPercent: 31, resetsAt: '2026-11-13T18:00:00.000Z', windowDurationMins: 300 },
+                    { id: 'seven_day_fable', kind: 'model', label: 'Fable', usedPercent: 12, resetsAt: '2026-11-18T08:00:00.000Z', windowDurationMins: 10080 },
+                ],
+                plan: 'max',
+                extraUsage: { enabled: true, usedPercent: 40, zeroCap: false },
+            })
+        },
+        refreshStaleClaudePlanLimits: () => {
+            claudeProbes.stale += 1
+        },
+        pendingClaudePlanLimits: () => undefined,
+        forgetClaudePlanLimitsAttempt: () => {},
+    }
+})
 const { mkdir, readFile, rm, writeFile } = await import('node:fs/promises')
 const { DEFAULT_CONNECTION_MODELS, LUMVIKA_CONNECTION_ID } = await import('@lumvika/contracts')
 const { connectionRoutes } = await import('./connections.js')
@@ -417,5 +441,99 @@ describe('plan limits on the list', () => {
             pendingReads.delete(claude.id)
             vi.useRealTimers()
         }
+    })
+})
+
+describe('plan limits of one subscription', () => {
+    it('reads a subscription again when asked, and paces a second ask', async () => {
+        const claude = await createClaude()
+        claudeProbes.forced = []
+
+        const first = await connectionRoutes.request(`/${claude.id}/plan-limits?refresh=1`)
+        expect(first.status).toBe(200)
+        const body = (await first.json()) as { connectionId: string; planLimits: { windows: { id: string }[]; plan: string; extraUsage: unknown } }
+        expect(body.connectionId).toBe(claude.id)
+        expect(body.planLimits.windows.map(window => window.id)).toEqual(['five_hour', 'seven_day_fable'])
+        expect(body.planLimits).toMatchObject({ plan: 'max', extraUsage: { enabled: true, usedPercent: 40 } })
+
+        await connectionRoutes.request(`/${claude.id}/plan-limits?refresh=1`)
+        expect(claudeProbes.forced).toEqual([claude.id])
+    })
+
+    it('answers with the reading it holds without spawning anything', async () => {
+        const claude = await createClaude()
+        claudeProbes.forced = []
+        const res = await connectionRoutes.request(`/${claude.id}/plan-limits`)
+        expect(await res.json()).toEqual({ connectionId: claude.id, planLimits: null })
+        expect(claudeProbes.forced).toEqual([])
+    })
+
+    it('answers 404 for a connection that does not exist', async () => {
+        expect((await connectionRoutes.request('/ghost/plan-limits?refresh=1')).status).toBe(404)
+    })
+
+    it('kicks the stale Claude reads off the list, without waiting for them', async () => {
+        await createClaude()
+        const before = claudeProbes.stale
+        await connectionRoutes.request('/')
+        expect(claudeProbes.stale).toBe(before + 1)
+    })
+})
+
+describe('token usage', () => {
+    type Usage = { inputTokens: number; outputTokens: number; cachedInputTokens: number }
+
+    async function finishedRun(agentId: string, id: string, provider: string, usage: Usage, cacheWriteTokens: number): Promise<void> {
+        const { finishRun, setRunContext, startRun } = await import('../../db/repos/runs.js')
+        const { insertRunStep } = await import('../../db/repos/telemetry.js')
+        await startRun(agentId, 's1', id)
+        await setRunContext(agentId, id, { provider, model: 'm', triggerSource: 'chat', triggerSlug: null })
+        await insertRunStep(agentId, {
+            id: `${id}-step`,
+            runId: id,
+            agentId,
+            sessionId: 's1',
+            stepNumber: 1,
+            provider,
+            model: 'm',
+            finishReason: 'stop',
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+            cachedInputTokens: usage.cachedInputTokens,
+            reasoningTokens: null,
+            totalTokens: null,
+            cacheWriteTokens,
+            costMicros: null,
+            toolCallCount: 0,
+            textLength: 0,
+            durationMs: 10,
+            createdAt: new Date().toISOString(),
+        })
+        await finishRun(agentId, id, usage, 1)
+    }
+
+    it('sums the finished runs of every agent per provider, cache reads and writes apart', async () => {
+        const { startRun } = await import('../../db/repos/runs.js')
+        await writeAgent('ada', { connectionId: null, provider: null, model: null })
+        await writeAgent('bob', { connectionId: null, provider: null, model: null })
+        await finishedRun('ada', 'ada-1', 'claude', { inputTokens: 1000, outputTokens: 100, cachedInputTokens: 800 }, 150)
+        await finishedRun('ada', 'ada-2', 'claude', { inputTokens: 500, outputTokens: 50, cachedInputTokens: 400 }, 0)
+        await finishedRun('bob', 'bob-1', 'claude', { inputTokens: 3000, outputTokens: 10, cachedInputTokens: 0 }, 3000)
+        await finishedRun('bob', 'bob-2', 'codex', { inputTokens: 200, outputTokens: 20, cachedInputTokens: 100 }, 0)
+        await startRun('bob', 's1', 'bob-unfinished')
+
+        const res = await connectionRoutes.request('/token-usage?range=7d')
+        const usage = (await res.json()) as { range: string; providers: { provider: string; totals: Record<string, number>; agents: { agentName: string; inputTokens: number }[] }[] }
+        expect(usage.range).toBe('7d')
+        expect(usage.providers.map(entry => entry.provider)).toEqual(['claude', 'codex'])
+        expect(usage.providers[0].totals).toEqual({ runCount: 3, inputTokens: 4500, outputTokens: 160, cacheReadTokens: 1200, cacheWriteTokens: 3150, reasoningTokens: 0, costMicros: 0 })
+        expect(usage.providers[0].agents.map(agent => [agent.agentName, agent.inputTokens])).toEqual([
+            ['bob', 3000],
+            ['ada', 1500],
+        ])
+    })
+
+    it('refuses a range it does not know', async () => {
+        expect((await connectionRoutes.request('/token-usage?range=1y')).status).toBe(400)
     })
 })

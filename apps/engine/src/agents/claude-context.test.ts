@@ -77,7 +77,7 @@ describe('claudeContextCapture', () => {
             const query = { getContextUsage: occupancy, [PLAN_USAGE]: async () => ({ rate_limits: { five_hour: { utilization: 42, resets_at: null } } }) }
             capture.settings.onQueryCreated?.(query as unknown as Query)
             await stopHookOf(capture)()
-            expect(readPlanLimits('conn')?.windows).toEqual([{ kind: 'session', label: null, usedPercent: 42, resetsAt: null }])
+            expect(readPlanLimits('conn')?.windows).toEqual([{ id: 'five_hour', kind: 'session', label: null, usedPercent: 42, resetsAt: null, windowDurationMins: 300 }])
             expect(capture.read()).toEqual({ usedTokens: 1000, maxTokens: 200_000 })
         })
 

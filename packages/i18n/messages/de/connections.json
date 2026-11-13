@@ -114,13 +114,60 @@
         "helper": "Anfragen an deinen eigenen OpenRouter-kompatiblen Router senden",
         "inputLabel": "OpenRouter-Basis-URL"
     },
+    "usage": {
+        "plan": "Tarif {plan}",
+        "checkedJustNow": "Gerade geprüft",
+        "checkedAgo": "Vor {age} geprüft",
+        "refresh": "Nutzung aktualisieren",
+        "refreshFailed": "Aktualisierung fehlgeschlagen. Angezeigt wird der Stand von vor {age}.",
+        "leftAndUsed": "<strong>{left} % übrig</strong> · {used} % verbraucht",
+        "resets": "Setzt sich {when} zurück · {date}",
+        "resetsOn": "Setzt sich am {date} zurück",
+        "resetUnknown": "Zeitpunkt des Zurücksetzens unbekannt",
+        "pace": {
+            "ahead": "Schneller als geplant",
+            "on": "Im Plan",
+            "under": "Langsamer als geplant"
+        },
+        "paceTick": "{percent} % des Zeitfensters sind vergangen",
+        "extra": {
+            "title": "Zusätzliche Nutzung",
+            "off": "Aus",
+            "used": "{percent} % des Monatslimits verbraucht",
+            "on": "An",
+            "zeroCap": "An, mit einem Ausgabenlimit von null",
+            "hint": "Wird von Anthropic abgerechnet, sobald die Limits des Tarifs erreicht sind."
+        },
+        "empty": "Noch kein Stand. Aktualisiere, um das Abo nach seinem Stand zu fragen.",
+        "unsupported": {
+            "claude": "Ein eingefügtes Token kann die Tariflimits nicht lesen. Melde dich erneut mit Claude an, um sie hier zu sehen.",
+            "other": "Für dieses Konto gibt es keine Tariflimits."
+        },
+        "probeFailed": "Die Limits konnten gerade nicht gelesen werden. Versuche es in einer Minute erneut."
+    },
+    "tokens": {
+        "title": "Token-Nutzung",
+        "range": {
+            "7d": "7 Tage",
+            "30d": "30 Tage"
+        },
+        "input": "Eingabe",
+        "output": "Ausgabe",
+        "cacheRead": "Cache gelesen",
+        "cacheWrite": "Cache geschrieben",
+        "uncached": "Ohne Cache",
+        "hitRate": "Cache-Trefferquote",
+        "runs": "Ausführungen",
+        "cost": "Abgerechnete Kosten",
+        "composition": "Eingabe-Token: {uncached} ohne Cache, {read} aus dem Cache gelesen, {write} in den Cache geschrieben",
+        "byAgent": "Nach Coworker",
+        "agentLine": "{input} rein · {output} raus · {rate} aus dem Cache",
+        "empty": "In diesem Zeitraum wurde keine Ausführung mit {provider} abgeschlossen.",
+        "note": "Gezählt aus den abgeschlossenen Ausführungen mit {provider}, über alle Coworker. Eine Ausführung speichert ihren Anbieter, nicht ihr Abo, daher teilen sich alle {provider}-Abos dieses Workspace diese Zahlen. Eine Ausführung kann viele Modellaufrufe machen, die jeweils die Unterhaltung erneut lesen, und die Summen zählen sie alle zusammen.",
+        "unavailable": "Aktualisiere die Maschine dieses Workspace, um ihre Token-Nutzung zu sehen."
+    },
     "planLimits": {
-        "title": "Tarifnutzung",
-        "empty": "Die Nutzung erscheint hier nach der nächsten Ausführung mit diesem Tarif.",
-        "updatedJustNow": "Gerade aktualisiert",
-        "updatedAgo": "Vor {age} aktualisiert",
-        "used": "{percent} verbraucht",
-        "usedWithReset": "{percent} verbraucht, {reset}"
+        "title": "Tarifnutzung"
     },
     "meter": {
         "planLimit": "{name}-Limit verbraucht",

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { LUMVIKA_CONNECTION_ID, boxDefaultModelSchema, createConnectionSchema, customProbeInputSchema, updateConnectionKeysSchema, updateConnectionSchema } from '@lumvika/contracts'
+import { LUMVIKA_CONNECTION_ID, boxDefaultModelSchema, createConnectionSchema, customProbeInputSchema, tokenUsageRangeSchema, updateConnectionKeysSchema, updateConnectionSchema } from '@lumvika/contracts'
 import { connectionExists, isConnected, toSummary } from '../../connections/loader.js'
 import { findConnection, getConnection, listConnections } from '../../connections/registry.js'
 import { assertConnectionDeletable, createConnection, deleteConnection, patchConnection, updateConnectionKeys } from '../../connections/store.js'
@@ -11,6 +11,10 @@ import { pendingCodexPlanLimits, refreshCodexPlanLimits, refreshStaleCodexPlanLi
 import { refreshOpencodeCatalog, refreshStaleOpencodeCatalog } from '../../connections/opencode-catalog.js'
 import { pendingOpencodePlanLimits, refreshOpencodePlanLimits, refreshStaleOpencodePlanLimits } from '../../connections/opencode-plan-limits.js'
 import { probeCustomEndpoint, refreshCustomCatalog, refreshStaleCustomCatalogs } from '../../connections/custom-catalog.js'
+import { refreshStaleClaudePlanLimits } from '../../connections/claude-plan-limits.js'
+import { readPlanLimits } from '../../connections/plan-limits.js'
+import { refreshPlanLimitsNow } from '../../connections/plan-limits-refresh.js'
+import { readTokenUsage } from '../../connections/token-usage.js'
 import type { LoadedConnection } from '../../connections/types.js'
 import { sendNotification } from '../../runtime/notify.js'
 import { logger } from '../../lib/logger.js'
@@ -53,6 +57,7 @@ connectionRoutes.get('/', async c => {
     await awaitPendingPlanLimits(connections)
     refreshStaleCodexPlanLimits(connections)
     refreshStaleOpencodePlanLimits(connections)
+    refreshStaleClaudePlanLimits(connections)
     if (connections.some(connection => connection.config.provider === 'opencode')) refreshStaleOpencodeCatalog()
     refreshStaleCustomCatalogs(connections)
     return c.json({ connections: connections.map(toSummary), default: await readBoxDefault() })
@@ -78,6 +83,24 @@ connectionRoutes.delete('/default', async c => {
 connectionRoutes.post('/probe', async c => {
     const input = customProbeInputSchema.parse(await c.req.json())
     return c.json(await probeCustomEndpoint(input))
+})
+
+// What the runs on each provider went through, for the usage view. Registered before `/:id` with
+// the other fixed paths.
+connectionRoutes.get('/token-usage', async c => {
+    const range = tokenUsageRangeSchema.safeParse(c.req.query('range') ?? '7d')
+    if (!range.success) return c.json({ error: 'invalid range' }, 400)
+    return c.json(await readTokenUsage(range.data))
+})
+
+// One subscription's reading. `?refresh=1` reads it again first, paced so a button pressed twice
+// spawns one CLI; the answer waits for that read, capped, and falls back on the reading it had.
+connectionRoutes.get('/:id/plan-limits', async c => {
+    const id = c.req.param('id')
+    const connection = await findConnection(id)
+    if (!connection) return c.json({ error: 'connection not found' }, 404)
+    if (c.req.query('refresh') === '1' && isConnected(connection)) await refreshPlanLimitsNow(connection)
+    return c.json({ connectionId: id, planLimits: readPlanLimits(id) })
 })
 
 connectionRoutes.post('/', async c => {
