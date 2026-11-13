@@ -168,5 +168,11 @@
         "created": "#{name} is ready.",
         "archived": "#{name} is archived.",
         "left": "You left #{name}."
+    },
+    "links": {
+        "project": "Project",
+        "team": "Team",
+        "noProject": "No project",
+        "noTeam": "No team"
     }
 }

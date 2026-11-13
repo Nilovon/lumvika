@@ -5,12 +5,13 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
-import { addChannelMembersAction, archiveChannelAction, joinChannelAction, leaveChannelAction, removeChannelMemberAction } from '@/app/api/_actions/channels.actions'
+import { addChannelMembersAction, archiveChannelAction, joinChannelAction, leaveChannelAction, removeChannelMemberAction, updateChannelAction } from '@/app/api/_actions/channels.actions'
 import type { ChannelListItem } from '@/app/api/_services/work/channels.service'
 import { ChannelComposer } from '@/components/channels/ChannelComposer'
 import { ChannelDetailsPanel } from '@/components/channels/ChannelDetailsPanel'
 import { ChannelFormDialog } from '@/components/channels/ChannelFormDialog'
 import { ChannelHeader } from '@/components/channels/ChannelHeader'
+import type { ChannelLinkValue } from '@/components/channels/ChannelLinkFields'
 import { MemberPickerDialog } from '@/components/channels/MemberPickerDialog'
 import { personEntries } from '@/components/channels/picker-entries'
 import { MessageStream, MessageStreamSkeleton } from '@/components/channels/MessageStream'
@@ -107,6 +108,12 @@ export function ChannelView({ channelId, listItem, userId, side, directory, onNa
         await reloadDetail()
     }
 
+    const link = async (links: Partial<ChannelLinkValue>) => {
+        const result = await updateChannelAction(channelId, links)
+        if (!result.ok) toast.error(errorText(result))
+        await reloadDetail()
+    }
+
     const addMember = async (ref: WorkMemberRef) => {
         const result = await addChannelMembersAction(channelId, [ref])
         if (!result.ok) return void toast.error(errorText(result))
@@ -190,7 +197,7 @@ export function ChannelView({ channelId, listItem, userId, side, directory, onNa
                     {side.kind === 'thread' ? (
                         <ThreadPane key={side.rootId} {...listProps} channelId={channelId} rootId={side.rootId} turns={stream.turns} canPost={canPost} candidates={candidates} onClose={closeSide} onAddOutsider={addOutsider} />
                     ) : (
-                        <ChannelDetailsPanel detail={detail} me={me} directory={directory} authorName={authorName} onClose={closeSide} onEdit={() => setEditing(true)} onAddMembers={() => setAdding(true)} onRemove={remove} onLeave={leave} onArchive={archive} />
+                        <ChannelDetailsPanel detail={detail} me={me} directory={directory} authorName={authorName} onClose={closeSide} onEdit={() => setEditing(true)} onAddMembers={() => setAdding(true)} onRemove={remove} onLeave={leave} onArchive={archive} onLink={link} />
                     )}
                 </aside>
             )}

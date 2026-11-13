@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 import type { ChannelDetail } from '@/app/api/_actions/channels.actions'
+import { ChannelLinkFields, useChannelLinkOptions, type ChannelLinkValue } from '@/components/channels/ChannelLinkFields'
 import { MemberAvatar } from '@/components/channels/MemberAvatar'
 import { SidePaneHeader } from '@/components/channels/SidePaneHeader'
 import { refKey } from '@/components/channels/channel-rows'
@@ -26,19 +27,28 @@ type ChannelDetailsPanelProps = {
     onRemove: (member: WorkMemberRef) => Promise<void>
     onLeave: () => Promise<void>
     onArchive: () => Promise<void>
+    onLink: (links: Partial<ChannelLinkValue>) => Promise<void>
 }
 
 type Confirming = { kind: 'remove'; member: WorkMemberRef } | { kind: 'leave' } | { kind: 'archive' } | null
 
 // What a channel is, who is in it, what it links to, and the moves on it: add or remove members
 // (public: anyone adds; private: its manager), leave, archive.
-export function ChannelDetailsPanel({ detail, me, directory, authorName, onClose, onEdit, onAddMembers, onRemove, onLeave, onArchive }: ChannelDetailsPanelProps) {
+export function ChannelDetailsPanel({ detail, me, directory, authorName, onClose, onEdit, onAddMembers, onRemove, onLeave, onArchive, onLink }: ChannelDetailsPanelProps) {
     const t = useTranslations('channels.details')
     const [confirming, setConfirming] = useState<Confirming>(null)
     const [pending, setPending] = useState(false)
     const manages = detail.access === 'manage'
     const isDm = detail.kind === 'dm'
     const canAdd = !isDm && !detail.archivedAt && (detail.kind === 'public' ? detail.isMember || manages : manages)
+    const canLink = manages && !isDm && !detail.archivedAt
+    const linkOptions = useChannelLinkOptions(canLink)
+    const [linking, setLinking] = useState(false)
+    const link = async (links: Partial<ChannelLinkValue>) => {
+        setLinking(true)
+        await onLink(links)
+        setLinking(false)
+    }
 
     const run = async (action: () => Promise<void>) => {
         setPending(true)
@@ -70,7 +80,12 @@ export function ChannelDetailsPanel({ detail, me, directory, authorName, onClose
                     )}
                 </section>
 
-                {(detail.project || detail.team) && (
+                {canLink ? (
+                    <section className="space-y-3">
+                        <h3 className="text-xs font-medium text-muted-foreground">{t('linked')}</h3>
+                        <ChannelLinkFields idPrefix="channel-link" value={{ projectId: detail.projectId, teamId: detail.teamId }} options={linkOptions} disabled={linking} onChange={next => void link(next)} />
+                    </section>
+                ) : (detail.project || detail.team) && (
                     <section className="space-y-2">
                         <h3 className="text-xs font-medium text-muted-foreground">{t('linked')}</h3>
                         {detail.project && (

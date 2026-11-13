@@ -6,6 +6,7 @@ import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 
 import { createChannelAction, updateChannelAction } from '@/app/api/_actions/channels.actions'
+import { ChannelLinkFields, useChannelLinkOptions, type ChannelLinkValue } from '@/components/channels/ChannelLinkFields'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
@@ -34,6 +35,8 @@ function ChannelForm({ channel, onSaved, onCancel }: { channel?: ChannelFormDial
     const [name, setName] = useState(channel?.name ?? '')
     const [description, setDescription] = useState(channel?.description ?? '')
     const [privateChannel, setPrivateChannel] = useState(false)
+    const [links, setLinks] = useState<ChannelLinkValue>({ projectId: null, teamId: null })
+    const linkOptions = useChannelLinkOptions(!channel)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -42,7 +45,7 @@ function ChannelForm({ channel, onSaved, onCancel }: { channel?: ChannelFormDial
         setSaving(true)
         setError(null)
         const fields = { name: name.trim(), description: description.trim() || null }
-        const result = channel ? await updateChannelAction(channel.id, fields) : await createChannelAction({ ...fields, kind: privateChannel ? 'private' : 'public' })
+        const result = channel ? await updateChannelAction(channel.id, fields) : await createChannelAction({ ...fields, ...links, kind: privateChannel ? 'private' : 'public' })
         setSaving(false)
         if (!result.ok) {
             setError(errorText(result))
@@ -61,6 +64,7 @@ function ChannelForm({ channel, onSaved, onCancel }: { channel?: ChannelFormDial
                 </DialogHeader>
                 <Input id="channel-name" label={t('name')} placeholder={t('namePlaceholder')} value={name} maxLength={80} autoFocus onChange={event => setName(event.target.value)} />
                 <Textarea id="channel-about" label={t('about')} optional placeholder={t('aboutPlaceholder')} value={description} maxLength={2000} rows={3} onChange={event => setDescription(event.target.value)} />
+                {!channel && <ChannelLinkFields idPrefix="new-channel" value={links} options={linkOptions} onChange={next => setLinks(current => ({ ...current, ...next }))} />}
                 {!channel && (
                     <Field orientation="row" label={t('private')} helperText={t('privateHint')} htmlFor="channel-private">
                         <Switch id="channel-private" checked={privateChannel} onCheckedChange={setPrivateChannel} />
