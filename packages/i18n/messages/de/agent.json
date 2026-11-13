@@ -431,7 +431,23 @@
         "coworkerDefault": "Coworker-Standard",
         "setCoworkerDefault": "Als Coworker-Standard festlegen",
         "makeDefault": "{model} zum Standard dieses Coworkers machen",
-        "refused": "{model} · {reason}. Wähle unten ein anderes Modell."
+        "refused": "{model} · {reason}. Wähle unten ein anderes Modell.",
+        "withEffort": "{model} · {effort}",
+        "effort": {
+            "title": "Denkaufwand",
+            "auto": "Auto",
+            "autoDescription": "Das Modell entscheidet",
+            "low": "Niedrig",
+            "medium": "Mittel",
+            "high": "Hoch",
+            "xhigh": "Sehr hoch",
+            "max": "Maximal",
+            "lowShort": "Niedr.",
+            "mediumShort": "Mittel",
+            "highShort": "Hoch",
+            "xhighShort": "XHoch",
+            "maxShort": "Max"
+        }
     },
     "modelPickerProviders": {
         "pitch": {

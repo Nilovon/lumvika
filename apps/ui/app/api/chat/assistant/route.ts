@@ -1,4 +1,4 @@
-import { ASSISTANT_AGENT_ID, ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND } from '@lumvika/contracts'
+import { ASSISTANT_AGENT_ID, ENGINE_SESSION_NOT_FOUND, SESSION_NOT_FOUND, parseReasoningEffort } from '@lumvika/contracts'
 import { after } from 'next/server'
 
 import { actorFromContext, type Actor } from '@/app/api/_auth/access'
@@ -16,7 +16,7 @@ import { assistantStreamResponse } from '@/app/api/chat/assistant/stream-respons
 // chat writes in it: a shared chat is read-only for everyone else, and someone else's private chat
 // answers as if it did not exist. The engine key never leaves the server.
 
-type AssistantBody = { chatId?: unknown; text?: unknown; connectionId?: unknown; model?: unknown; queued?: unknown }
+type AssistantBody = { chatId?: unknown; text?: unknown; connectionId?: unknown; model?: unknown; effort?: unknown; queued?: unknown }
 
 type Caller = { ctx: WorkspaceContext; actor: Actor; scope: { workspaceId: number } }
 
@@ -77,6 +77,7 @@ export async function POST(req: Request): Promise<Response> {
                 text,
                 connectionId: optionalString(body.connectionId),
                 model,
+                effort: parseReasoningEffort(body.effort),
                 author: messageAuthorOf(caller.ctx),
                 brief: project ? { project } : {},
                 queued: queuedTurn,

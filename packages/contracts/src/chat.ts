@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { providerSchema } from './agent.js'
+import { reasoningEffortSchema } from './reasoning-effort.js'
 import { sessionSourceSchema } from './session.js'
 import { stewardBriefSchema } from './steward.js'
 import { assistantBriefSchema } from './assistant.js'
@@ -17,6 +18,9 @@ export const chatRequestSchema = z.object({
     connectionId: z.string().optional(),
     provider: providerSchema.optional(),
     model: z.string().optional(),
+    // Dropped by the engine when the model that runs does not take it, so a level picked for another
+    // model never turns into a refused request.
+    effort: reasoningEffortSchema.optional(),
     source: sessionSourceSchema.optional(),
     // Read only when the target is the steward; any other agent ignores it.
     steward: stewardBriefSchema.optional(),

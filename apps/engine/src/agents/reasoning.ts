@@ -1,5 +1,5 @@
 import type { streamText } from 'ai'
-import type { Provider } from '@lumvika/contracts'
+import type { Provider, ReasoningEffort } from '@lumvika/contracts'
 import { opencodeModel } from '../connections/opencode-catalog.js'
 import { behaviourOf } from './opencode.js'
 
@@ -18,10 +18,28 @@ const REASONING_OPTIONS: Partial<Record<Provider, ProviderOptions>> = {
 
 // An OpenCode model is asked the way its format asks, and only when OpenCode says it reasons: the
 // chat format has no field for it, the model reasons or not on its own.
-export function reasoningProviderOptions(provider: Provider, model = ''): ProviderOptions | undefined {
-    if (provider !== 'opencode') return REASONING_OPTIONS[provider]
-    if (!opencodeModel(model)?.reasoning) return undefined
-    return REASONING_OPTIONS[behaviourOf(provider, model)]
+//
+// `effort` is only ever one the model takes (see `reasoningEffortLevels`): the caller drops any other.
+// Absent, every request stays the one the provider default gives. `claude` takes it through its
+// `defaultSettings` (see providers.ts), the CLI having no per-call option for it.
+export function reasoningProviderOptions(provider: Provider, model = '', effort?: ReasoningEffort): ProviderOptions | undefined {
+    if (provider === 'opencode') return opencodeModel(model)?.reasoning ? REASONING_OPTIONS[behaviourOf(provider, model)] : undefined
+    return mergeProviderOptions(REASONING_OPTIONS[provider], effort ? effortOptions(provider, effort) : undefined)
+}
+
+function effortOptions(provider: Provider, effort: ReasoningEffort): ProviderOptions | undefined {
+    switch (provider) {
+        case 'anthropic':
+            return { anthropic: { effort } }
+        case 'openai':
+            return { openai: { reasoningEffort: effort } }
+        case 'google':
+            return { google: { thinkingConfig: { includeThoughts: true, thinkingLevel: effort } } }
+        case 'codex':
+            return { 'codex-app-server': { effort } }
+        default:
+            return undefined
+    }
 }
 
 // One level deep on purpose: `openai` already carries the `promptCacheKey` that applyCaching put

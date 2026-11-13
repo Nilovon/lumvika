@@ -1,5 +1,6 @@
 'use client'
 
+import { parseReasoningEffort, type ReasoningEffort } from '@lumvika/contracts'
 import { useCallback, useSyncExternalStore } from 'react'
 
 // Per-agent model selection used as a per-message override. Kept in localStorage
@@ -8,9 +9,10 @@ import { useCallback, useSyncExternalStore } from 'react'
 // message without mutating the agent's persisted default config.
 //
 // An empty selection ({}) means "no override" — the engine falls back to the
-// agent's configured connection and model.
+// agent's configured connection and model. `effort` stands on its own: a conversation that follows
+// the agent's model can still ask it to think harder, and the engine drops a level that model refuses.
 
-export type ModelSelection = { connectionId?: string; model?: string }
+export type ModelSelection = { connectionId?: string; model?: string; effort?: ReasoningEffort }
 
 function storageKey(agentId: string) {
     return `lumvika-agent-model-${agentId}`
@@ -25,7 +27,9 @@ function load(agentId: string): ModelSelection {
         const raw = localStorage.getItem(storageKey(agentId))
         if (!raw) return {}
         const parsed = JSON.parse(raw) as ModelSelection & { provider?: string }
-        return parsed.connectionId ? { connectionId: parsed.connectionId, model: parsed.model } : {}
+        const pick: ModelSelection = parsed.connectionId ? { connectionId: parsed.connectionId, model: parsed.model } : {}
+        const effort = parseReasoningEffort(parsed.effort)
+        return effort ? { ...pick, effort } : pick
     } catch {
         return {}
     }

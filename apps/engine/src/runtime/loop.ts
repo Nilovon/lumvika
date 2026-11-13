@@ -1,5 +1,5 @@
 import { streamText, type LanguageModelUsage, type ModelMessage, type StreamTextResult, type ToolSet, type UIMessageStreamWriter } from 'ai'
-import { LUMVIKA_CONNECTION_ID, contextTextPart, type ContextOccupancy, type MessageAuthor } from '@lumvika/contracts'
+import { LUMVIKA_CONNECTION_ID, contextTextPart, supportsReasoningEffort, type ContextOccupancy, type MessageAuthor } from '@lumvika/contracts'
 import { applyCaching, withTailBreakpoint } from '../agents/caching.js'
 import { mergeProviderOptions, reasoningProviderOptions } from '../agents/reasoning.js'
 import { prepareRunHistory } from './compaction/compact.js'
@@ -414,6 +414,10 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
         const t0 = Date.now()
         const order = turnOrder(provider, await answeringModel(provider, model))
         const callableAgentIds = trigger.source === 'chat' ? trigger.callableAgentIds : undefined
+        // A level picked for another model (a pick kept across a switch) is dropped, not sent to a
+        // provider that would refuse the whole request over it.
+        const requestedEffort = trigger.source === 'chat' ? trigger.effort : undefined
+        const effort = supportsReasoningEffort(provider, model, requestedEffort) ? requestedEffort : undefined
         const ctx: RunContext = { agent, sessionId, logger, provider, model, turnOrder: order, author, writer, abortSignal: controller.signal, callTargets: [], callableAgentIds, channel: trigger.source === 'chat' && trigger.channel === true, hostBreaker: new HostBreaker(), partialResults, skillProposals }
 
         ctx.runId = run.id
@@ -466,10 +470,10 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
         const turnMessages: ModelMessage[] = [...history, { role: 'user', content: [{ type: 'text', text: turnText }, ...context] }]
 
         const cached = applyCaching(provider, { system, messages: turnMessages, sessionId, model })
-        logger.debug({ agent: agent.id, provider, prepMs: Date.now() - t0 }, 'run prep done')
+        logger.debug({ agent: agent.id, provider, effort, prepMs: Date.now() - t0 }, 'run prep done')
 
         spawnToken = claudeTokenOf(connection)
-        const resolvedModel = resolveModel(agent, override, tools, mcpServers, { system: systemText, screenshots: id => ctx.screenshots?.get(id), sessionId })
+        const resolvedModel = resolveModel(agent, override, tools, mcpServers, { system: systemText, screenshots: id => ctx.screenshots?.get(id), sessionId, effort })
         closeModel = resolvedModel.close
         contextUsage = resolvedModel.contextUsage
         // Cut out of the text whoever wrote it; only a coworker that offers replies gets the buttons.
@@ -482,7 +486,7 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
             model: languageModel,
             system: cached.system,
             messages: cached.messages,
-            providerOptions: mergeProviderOptions(mergeProviderOptions(cached.providerOptions, reasoningProviderOptions(provider, model)), resumeThreadId ? { 'codex-app-server': { threadId: resumeThreadId } } : undefined),
+            providerOptions: mergeProviderOptions(mergeProviderOptions(cached.providerOptions, reasoningProviderOptions(provider, model, effort)), resumeThreadId ? { 'codex-app-server': { threadId: resumeThreadId } } : undefined),
             tools,
             abortSignal: controller.signal,
             experimental_repairToolCall: repairToolCall,

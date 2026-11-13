@@ -510,7 +510,23 @@
         "coworkerDefault": "Coworker default",
         "setCoworkerDefault": "Set as coworker default",
         "makeDefault": "Make {model} this coworker's default",
-        "refused": "{model} · {reason}. Pick another model below."
+        "refused": "{model} · {reason}. Pick another model below.",
+        "withEffort": "{model} · {effort}",
+        "effort": {
+            "title": "Thinking effort",
+            "auto": "Auto",
+            "autoDescription": "The model decides",
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "xhigh": "Extra high",
+            "max": "Max",
+            "lowShort": "Low",
+            "mediumShort": "Med",
+            "highShort": "High",
+            "xhighShort": "XHigh",
+            "maxShort": "Max"
+        }
     },
     "modelPickerProviders": {
         "pitch": {
