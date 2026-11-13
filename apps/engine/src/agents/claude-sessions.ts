@@ -28,7 +28,7 @@ export type TranscriptPlace = { configDir: string; cwd: string }
 
 export type ClaudeResumeCheck = { connectionId: string; model: string; stableHash: string; lastMessageId: string | undefined }
 
-const sessions = new Map<string, ClaudeSession>()
+const sessions = new Map<string, ClaudeSession & { keptAt: number }>()
 
 const keyOf = (agentId: string, sessionId: string) => `${agentId}:${sessionId}`
 
@@ -106,7 +106,7 @@ export function rememberClaudeSession(agentId: string, sessionId: string, sessio
     const key = keyOf(agentId, sessionId)
     const previous = sessions.get(key)
     if (previous && previous.transcriptPath !== session.transcriptPath) dropTranscript(previous.transcriptPath)
-    sessions.set(key, session)
+    sessions.set(key, { ...session, keptAt: Date.now() })
 }
 
 export function forgetClaudeSession(agentId: string, sessionId: string): void {
@@ -123,11 +123,23 @@ export function forgetClaudeSessionsOf(connectionId: string): void {
     }
 }
 
-// The transcripts an engine restart orphaned, and those of turns that failed before their session
-// was kept: every one in a project folder of an agent workspace that no conversation can resume.
-// Only the engine runs the CLI in those folders. Called with no run in flight, so no transcript
-// being written is taken for an orphan.
-export async function sweepClaudeTranscripts(configDir: string, agentsDir: string): Promise<number> {
+// A session left alone longer than the CLI's prompt cache lives (an hour on a subscription) saves
+// nothing over a replay: resumed or started over, its whole prefix is written to the cache again.
+// Forgetting it is what keeps a box running a schedule every few minutes, each fire a conversation
+// of its own, from piling up transcripts.
+export const CLAUDE_SESSION_MAX_IDLE_MS = 3_600_000
+
+// Then the transcripts an engine restart orphaned, and those of turns that failed before their
+// session was kept: every one in a project folder of an agent workspace that no conversation can
+// resume. Only the engine runs the CLI in those folders. Called with no run in flight, so no
+// transcript being written is taken for an orphan.
+export async function sweepClaudeTranscripts(configDir: string, agentsDir: string, maxIdleMs = CLAUDE_SESSION_MAX_IDLE_MS): Promise<number> {
+    const now = Date.now()
+    for (const [key, session] of sessions) {
+        if (now - session.keptAt <= maxIdleMs) continue
+        dropTranscript(session.transcriptPath)
+        sessions.delete(key)
+    }
     const projects = resolve(configDir, 'projects')
     const prefixes = [...new Set([agentsDir, realPath(agentsDir)])].map(path => projectDirName(path).slice(0, PROJECT_DIR_NAME_MAX))
     const kept = new Set([...sessions.values()].map(session => session.claudeSessionId))
@@ -138,8 +150,7 @@ export async function sweepClaudeTranscripts(configDir: string, agentsDir: strin
         for (const entry of await readdir(folder).catch(() => [])) {
             const id = entry.replace(/\.jsonl$/, '')
             if (!SESSION_ID.test(id) || kept.has(id)) continue
-            await rm(resolve(folder, entry), { recursive: true, force: true })
-            removed += 1
+            if (await rm(resolve(folder, entry), { recursive: true, force: true }).then(() => true, () => false)) removed += 1
         }
     }
     return removed

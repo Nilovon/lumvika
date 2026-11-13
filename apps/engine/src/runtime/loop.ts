@@ -413,7 +413,8 @@ async function runTurn(baseAgent: LoadedAgent, sessionId: string, userText: stri
     // has to see that it is still on disk: an archive restored elsewhere, or a swept home, has none.
     const keepClaudeSession = async (): Promise<void> => {
         const claudeSessionId = claudeReportedSessionId ?? claudeRun?.id
-        if (!claudeRun || !claudeSessionId) return dropClaudeSession()
+        // A resume answered from another session holds this turn alone, not the conversation.
+        if (!claudeRun || !claudeSessionId || (claudeRun.resume && claudeSessionId !== claudeRun.id)) return dropClaudeSession()
         const [throughMessageId, transcriptPath] = await Promise.all([lastMessageId(agent.id, sessionId), findTranscript(claudeTranscriptPlace(agent), claudeSessionId)])
         if (!throughMessageId || !transcriptPath) return dropClaudeSession()
         rememberClaudeSession(agent.id, sessionId, {

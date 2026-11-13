@@ -25,7 +25,7 @@ async function seedOrphan(): Promise<string> {
 describe('sweepClaudeTranscriptsIfDue', () => {
     afterEach(() => vi.useRealTimers())
 
-    it('waits for the box to be idle, sweeps once, then holds off for a day', async () => {
+    it('waits for the box to be idle, sweeps once, then holds off for an hour', async () => {
         vi.useFakeTimers({ toFake: ['Date'] })
         const orphan = await seedOrphan()
 
@@ -38,11 +38,11 @@ describe('sweepClaudeTranscriptsIfDue', () => {
         expect(existsSync(orphan)).toBe(false)
 
         await seedOrphan()
-        vi.setSystemTime(Date.now() + 3_600_000)
+        vi.setSystemTime(Date.now() + 1_800_000)
         await sweepClaudeTranscriptsIfDue()
         expect(existsSync(orphan)).toBe(true)
 
-        vi.setSystemTime(Date.now() + 86_400_000)
+        vi.setSystemTime(Date.now() + 1_800_000)
         await sweepClaudeTranscriptsIfDue()
         expect(existsSync(orphan)).toBe(false)
     })

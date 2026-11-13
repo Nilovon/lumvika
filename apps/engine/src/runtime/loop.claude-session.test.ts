@@ -11,7 +11,7 @@ type Call = { system?: string; claudeSession?: { id: string; resume: boolean }; 
 
 const { calls, turn, run, prompt } = vi.hoisted(() => ({
     calls: [] as Call[],
-    turn: { fail: false, reply: 'ok', usedTokens: 1_000, writeTranscript: true },
+    turn: { fail: false, reply: 'ok', usedTokens: 1_000, writeTranscript: true, reportedId: undefined as string | undefined },
     run: { model: 'claude-opus-4-8' },
     prompt: { stable: '<identity>\nYou are a test coworker.\n</identity>', volatile: '<memory_index>\n- likes tea\n</memory_index>' },
 }))
@@ -58,7 +58,7 @@ vi.mock('../agents/providers.js', async importOriginal => {
                                     type: 'finish',
                                     finishReason: { unified: 'stop', raw: 'end_turn' },
                                     usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
-                                    providerMetadata: { 'claude-code': { sessionId: id } },
+                                    providerMetadata: { 'claude-code': { sessionId: turn.reportedId ?? id } },
                                 })
                                 controller.close()
                             },
@@ -112,7 +112,7 @@ describe('a Claude CLI conversation keeps its session', () => {
 
     beforeEach(() => {
         calls.length = 0
-        Object.assign(turn, { fail: false, reply: 'ok', usedTokens: 1_000, writeTranscript: true })
+        Object.assign(turn, { fail: false, reply: 'ok', usedTokens: 1_000, writeTranscript: true, reportedId: undefined })
         run.model = 'claude-opus-4-8'
         Object.assign(prompt, { stable: STABLE, volatile: VOLATILE })
         forgetClaudeSessionsOf('claude-cnx')
@@ -213,6 +213,16 @@ describe('a Claude CLI conversation keeps its session', () => {
 
         expect(resumes()).toEqual([false, false])
         expect(promptText(calls[1]!)).toContain('hello')
+    })
+
+    it('keeps no session the CLI answered a resume from with another one', async () => {
+        const session = await createSession(id, 'hello')
+        await send(session.id, 'hello')
+        turn.reportedId = '44444444-4444-4444-8444-444444444444'
+        await send(session.id, 'and then?')
+        turn.reportedId = undefined
+        await send(session.id, 'still there?')
+        expect(resumes()).toEqual([false, true, false])
     })
 
     it('keeps no session the CLI wrote no transcript for', async () => {

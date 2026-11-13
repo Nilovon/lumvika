@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, realpathSync, symlinkSync } from 'node:fs'
 import { mkdir, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     claudeConfigDir,
     claudeSessionToResume,
@@ -175,6 +175,28 @@ describe('sweepClaudeTranscripts', () => {
         expect(existsSync(kept)).toBe(true)
         expect(existsSync(elsewhere)).toBe(true)
         expect((await readdir(resolve(configDir, 'projects', sanitized(cwd)))).sort()).toEqual([`${ID_A}.jsonl`, 'notes.md'])
+    })
+
+    it('forgets the sessions left alone past the life of the prompt cache, transcripts included', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        try {
+            const idle = await writeTranscript(sanitized(cwd), ID_A)
+            const recent = await writeTranscript(sanitized(cwd), ID_B)
+            rememberClaudeSession('agent-1', 'conv-1', sessionOn(idle))
+            vi.setSystemTime(Date.now() + 50 * 60_000)
+            rememberClaudeSession('agent-1', 'conv-2', sessionOn(recent, { claudeSessionId: ID_B }))
+            vi.setSystemTime(Date.now() + 20 * 60_000)
+
+            await sweepClaudeTranscripts(configDir, agentsDir)
+            await settleDisk()
+
+            expect(existsSync(idle)).toBe(false)
+            expect(claudeSessionToResume('agent-1', 'conv-1', expected)).toBeUndefined()
+            expect(existsSync(recent)).toBe(true)
+            expect(claudeSessionToResume('agent-1', 'conv-2', expected)?.claudeSessionId).toBe(ID_B)
+        } finally {
+            vi.useRealTimers()
+        }
     })
 
     it('does nothing in a home the CLI never wrote to', async () => {
